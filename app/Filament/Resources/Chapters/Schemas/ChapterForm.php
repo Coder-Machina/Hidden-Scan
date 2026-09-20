@@ -2,10 +2,12 @@
 
 namespace App\Filament\Resources\Chapters\Schemas;
 
+use App\Models\Manga;
 use Filament\Forms\Components\DateTimePicker;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Schemas\Schema;
+use Illuminate\Support\Facades\Auth;
 
 class ChapterForm
 {
@@ -13,34 +15,34 @@ class ChapterForm
     {
         return $schema
             ->components([
-                TextInput::make('manga_id')
-                    ->required()
-                    ->numeric(),
+                Select::make('manga_id')
+                    ->label('Manga / Manhwa / Manhua')
+                    ->options(Manga::all()->pluck('title', 'id'))
+                    ->searchable()
+                    ->required(),
                 TextInput::make('number')
-                    ->required()
-                    ->numeric(),
+                    ->label('Numéro')
+                    ->numeric()
+                    ->required(),
                 TextInput::make('title')
+                    ->label('Titre (optionnel)')
                     ->default(null),
                 TextInput::make('slug')
                     ->required(),
                 Select::make('status')
+                    ->label('Statut')
                     ->options([
-            'brouillon' => 'Brouillon',
-            'controle' => 'Controle',
-            'programme' => 'Programme',
-            'publie' => 'Publie',
-        ])
+                        'brouillon'  => 'Brouillon',
+                        'controle'   => 'Contrôle',
+                        'programme'  => 'Programmé',
+                        'publie'     => 'Publié',
+                    ])
                     ->default('brouillon')
                     ->required(),
-                TextInput::make('uploaded_by')
-                    ->numeric()
-                    ->default(null),
-                DateTimePicker::make('scheduled_at'),
-                DateTimePicker::make('published_at'),
-                TextInput::make('views_count')
-                    ->required()
-                    ->numeric()
-                    ->default(0),
+                DateTimePicker::make('scheduled_at')
+                    ->label('Programmé le'),
+                DateTimePicker::make('published_at')
+                    ->label('Publié le'),
             ]);
     }
 }
