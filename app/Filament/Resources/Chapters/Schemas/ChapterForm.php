@@ -49,7 +49,7 @@ class ChapterForm
                     ->disk('local')
                     ->directory('uploads/zips')
                     ->acceptedFileTypes(['application/zip', 'application/x-zip-compressed'])
-                    ->maxSize(102400)
+                    ->maxSize(512000)
                     ->afterStateUpdated(function ($state, $get, $set) {
                         // Le Job sera lancé après la création du chapitre
                     }),

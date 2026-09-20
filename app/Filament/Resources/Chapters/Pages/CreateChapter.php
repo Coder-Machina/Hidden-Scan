@@ -11,13 +11,16 @@ class CreateChapter extends CreateRecord
     protected static string $resource = ChapterResource::class;
 
     protected function afterCreate(): void
-    {
-        $zipPath = $this->data['zip_file'] ?? null;
+{
+    $zipPath = $this->data['zip_file'] ?? null;
 
-        if ($zipPath) {
-            ProcessChapterZip::dispatch($this->record, $zipPath);
+    if ($zipPath) {
+        if (is_array($zipPath)) {
+            $zipPath = array_values($zipPath)[0];
         }
+        ProcessChapterZip::dispatch($this->record, $zipPath);
     }
+}
 
     protected function mutateFormDataBeforeCreate(array $data): array
     {
