@@ -2,12 +2,13 @@
 
 namespace App\Filament\Resources\Chapters\Schemas;
 
+use App\Jobs\ProcessChapterZip;
 use App\Models\Manga;
 use Filament\Forms\Components\DateTimePicker;
+use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Schemas\Schema;
-use Illuminate\Support\Facades\Auth;
 
 class ChapterForm
 {
@@ -43,6 +44,15 @@ class ChapterForm
                     ->label('Programmé le'),
                 DateTimePicker::make('published_at')
                     ->label('Publié le'),
+                FileUpload::make('zip_file')
+                    ->label('Pages du chapitre (ZIP)')
+                    ->disk('local')
+                    ->directory('uploads/zips')
+                    ->acceptedFileTypes(['application/zip', 'application/x-zip-compressed'])
+                    ->maxSize(102400)
+                    ->afterStateUpdated(function ($state, $get, $set) {
+                        // Le Job sera lancé après la création du chapitre
+                    }),
             ]);
     }
 }
