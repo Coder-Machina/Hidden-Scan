@@ -26,13 +26,13 @@ class Manga extends Model
     }
 
     public function genres()
-    {
-        return $this->belongsToMany(Genre::class);
+    {   
+        return $this->belongsToMany(Genre::class, 'manga_genre');
     }
 
     public function tags()
     {
-        return $this->belongsToMany(Tag::class);
+         return $this->belongsToMany(Tag::class, 'manga_tag');
     }
 
     public function chapters()
