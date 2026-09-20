@@ -23,9 +23,11 @@ class MangaForm
                     ->default(null)
                     ->columnSpanFull(),
                 FileUpload::make('cover_image')
-                    ->image(),
+                    ->image()
+                    ->disk('public'),
                 FileUpload::make('banner_image')
-                    ->image(),
+                    ->image()
+                    ->disk('public'),
                 TextInput::make('author_id')
                     ->numeric()
                     ->default(null),
