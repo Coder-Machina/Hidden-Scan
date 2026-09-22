@@ -80,5 +80,11 @@
             localStorage.setItem('hiddenscan', JSON.stringify(data));
         } catch(e) {}
     </script>
-
+        {{-- Commentaires --}}
+    <div class="max-w-3xl mx-auto mt-8">
+        <livewire:public.comment-section
+            type="App\Models\Chapter"
+            :id="$chapter->id"
+        />
+    </div>
 </x-layouts.public>

@@ -10,8 +10,9 @@ class Comment extends Model
     use HasFactory;
 
     protected $fillable = [
-        'pseudo', 'content', 'ip_hash', 'is_hidden', 'is_pinned', 'parent_id',
-    ];
+    'commentable_type', 'commentable_id',
+    'pseudo', 'content', 'ip_hash', 'is_hidden', 'is_pinned', 'parent_id',
+];
 
     public function commentable()
     {
