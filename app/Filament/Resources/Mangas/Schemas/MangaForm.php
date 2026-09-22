@@ -41,6 +41,18 @@ class MangaForm
                     ->searchable()
                     ->preload()
                     ->default(null),
+                Select::make('genres')
+                    ->relationship('genres', 'name')
+                    ->multiple()
+                    ->preload()
+                    ->searchable()
+                    ->label('Genres'),
+                Select::make('tags')
+                    ->relationship('tags', 'name')
+                    ->multiple()
+                    ->preload()
+                    ->searchable()
+                    ->label('Tags'),
                 Select::make('type')
                     ->options(['manga' => 'Manga', 'manhwa' => 'Manhwa', 'manhua' => 'Manhua'])
                     ->default('manga')
