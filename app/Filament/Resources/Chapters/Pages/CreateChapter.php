@@ -21,11 +21,12 @@ class CreateChapter extends CreateRecord
             unset($data['zip_file']);
         }
 
-        Log::info('mutateFormDataBeforeCreate', ['zipFilePath' => $this->zipFilePath]);
+        // Auto-génère le slug depuis le numéro de chapitre
+        $data['slug'] = 'chapitre-' . str_replace('.', '-', $data['number']);
 
         return $data;
     }
-
+    
     protected function afterCreate(): void
     {
         Log::info('afterCreate déclenché', ['zipFilePath' => $this->zipFilePath]);

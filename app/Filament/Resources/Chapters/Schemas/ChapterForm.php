@@ -28,8 +28,6 @@ class ChapterForm
                 TextInput::make('title')
                     ->label('Titre (optionnel)')
                     ->default(null),
-                TextInput::make('slug')
-                    ->required(),
                 Select::make('status')
                     ->label('Statut')
                     ->options([

@@ -9,6 +9,7 @@ use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\Toggle;
 use Filament\Schemas\Schema;
 
+
 class MangaForm
 {
     public static function configure(Schema $schema): Schema
@@ -28,11 +29,17 @@ class MangaForm
                 FileUpload::make('banner_image')
                     ->image()
                     ->disk('public'),
-                TextInput::make('author_id')
-                    ->numeric()
+                Select::make('author_id')
+                    ->label('Auteur')
+                    ->relationship('author', 'name')
+                    ->searchable()
+                    ->preload()
                     ->default(null),
-                TextInput::make('artist_id')
-                    ->numeric()
+                Select::make('artist_id')
+                    ->label('Artiste')
+                    ->relationship('artist', 'name')
+                    ->searchable()
+                    ->preload()
                     ->default(null),
                 Select::make('type')
                     ->options(['manga' => 'Manga', 'manhwa' => 'Manhwa', 'manhua' => 'Manhua'])
