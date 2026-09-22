@@ -4,8 +4,34 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{ $title ?? 'Hidden Scan' }}</title>
+    <script>
+    
+    // Système de favoris Hidden Scan
+    window.HiddenScan = {
+        toggleFavorite(slug, title, cover) {
+            const data = JSON.parse(localStorage.getItem('hiddenscan') || '{}');
+            if (!data.favorites) data.favorites = {};
+            if (data.favorites[slug]) {
+                delete data.favorites[slug];
+            } else {
+                data.favorites[slug] = { slug, title, cover, addedAt: new Date().toISOString() };
+            }
+            localStorage.setItem('hiddenscan', JSON.stringify(data));
+            return !!data.favorites[slug];
+        },
+        isFavorite(slug) {
+            const data = JSON.parse(localStorage.getItem('hiddenscan') || '{}');
+            return !!(data.favorites && data.favorites[slug]);
+        },
+        getFavorites() {
+            const data = JSON.parse(localStorage.getItem('hiddenscan') || '{}');
+            return Object.values(data.favorites || {});
+        }
+    };
+    </script>
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
+
 <body class="bg-[#14111f] text-[#ece9f7] min-h-screen">
 
     <nav class="bg-[#1d1930] border-b border-[#3d3660] px-4 py-3">
@@ -15,7 +41,7 @@
             </a>
             <div class="flex items-center gap-6">
                 <a href="{{ route('manga.index') }}" class="text-[#a39fc0] hover:text-[#ece9f7] transition">Catalogue</a>
-                <form action="{{ route('manga.index') }}" method="GET">
+                <a href="{{ route('library') }}" class="text-[#a39fc0] hover:text-[#ece9f7] transition">Ma bibliothèque</a>             <form action="{{ route('manga.index') }}" method="GET">
                     <input
                         type="text"
                         name="q"

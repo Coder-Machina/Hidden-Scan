@@ -20,6 +20,35 @@
             <div>
                 <span class="text-xs px-2 py-0.5 rounded bg-[#9b7bff] text-white mb-2 inline-block">{{ ucfirst($manga->type) }}</span>
                 <h1 class="text-3xl font-bold text-white">{{ $manga->title }}</h1>
+                    <<button
+                        id="fav-btn"
+                        onclick="toggleFav()"
+                        class="mt-3 flex items-center gap-2 px-4 py-2 rounded-lg border transition text-sm font-semibold border-[#3d3660] text-[#a39fc0] hover:border-[#9b7bff]"
+                     >
+                        ♡ Ajouter aux favoris
+                    </button>
+
+                <script>
+                    (function() {
+                        const slug = "{{ $manga->slug }}";
+                        const title = "{{ addslashes($manga->title) }}";
+                        const cover = "{{ $manga->cover_image ? Storage::url($manga->cover_image) : '' }}";
+                        const btn = document.getElementById('fav-btn');
+
+                        function update(isFav) {
+                            btn.textContent = isFav ? '♥ Dans vos favoris' : '♡ Ajouter aux favoris';
+                            btn.className = 'mt-3 flex items-center gap-2 px-4 py-2 rounded-lg border transition text-sm font-semibold '
+                                + (isFav ? 'bg-[#9b7bff] border-[#9b7bff] text-white' : 'border-[#3d3660] text-[#a39fc0] hover:border-[#9b7bff]');
+                        }
+
+                        window.toggleFav = function() {
+                            const isFav = window.HiddenScan.toggleFavorite(slug, title, cover);
+                            update(isFav);
+                        };
+
+                        update(window.HiddenScan.isFavorite(slug));
+                    })();
+                </script>
                 @if($manga->author)
                     <p class="text-[#a39fc0] text-sm mt-1">{{ $manga->author->name }}</p>
                 @endif
