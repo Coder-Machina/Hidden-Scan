@@ -9,8 +9,10 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
-use Intervention\Image\Laravel\Facades\Image;
+use Intervention\Image\ImageManager;
+use Intervention\Image\Drivers\Gd\Driver;
 use ZipArchive;
 
 class ProcessChapterZip implements ShouldQueue
@@ -25,8 +27,10 @@ class ProcessChapterZip implements ShouldQueue
     public function handle(): void
     {
         $zip = new ZipArchive();
+        $fullPath = Storage::path($this->zipPath);
 
-        if ($zip->open(Storage::path($this->zipPath)) !== true) {
+        if ($zip->open($fullPath) !== true) {
+            Log::error('Impossible d\'ouvrir le ZIP', ['path' => $fullPath]);
             return;
         }
 
@@ -34,20 +38,32 @@ class ProcessChapterZip implements ShouldQueue
         $zip->extractTo($extractPath);
         $zip->close();
 
-        $files = glob($extractPath . '/*.{jpg,jpeg,png,webp,JPG,JPEG,PNG,WEBP}', GLOB_BRACE);
+        $files = [];
+        $iterator = new \RecursiveIteratorIterator(
+            new \RecursiveDirectoryIterator($extractPath)
+        );
+        foreach ($iterator as $file) {
+            if ($file->isFile() && preg_match('/\.(jpg|jpeg|png|webp)$/i', $file->getFilename())) {
+                $files[] = $file->getPathname();
+            }
+        }
+
+        if (empty($files)) {
+            Log::error('Aucun fichier image trouvé dans le ZIP');
+            return;
+        }
+
         natsort($files);
         $files = array_values($files);
 
+        $manager = new ImageManager(new Driver());
         $destFolder = 'chapters/' . $this->chapter->id;
 
         foreach ($files as $index => $file) {
             $pageNumber = $index + 1;
-            $filename   = $pageNumber . '.webp';
-            $destPath   = $destFolder . '/' . $filename;
+            $destPath   = $destFolder . '/' . $pageNumber . '.webp';
 
-            $image = Image::read($file)->toWebp(85);
-            Storage::put($destPath, $image);
-
+          $encoded = $manager->decode($file)->encode(new \Intervention\Image\Encoders\WebpEncoder(quality: 85));
             ChapterPage::create([
                 'chapter_id'  => $this->chapter->id,
                 'image_path'  => $destPath,
@@ -57,5 +73,7 @@ class ProcessChapterZip implements ShouldQueue
 
         Storage::deleteDirectory('temp/chapter_' . $this->chapter->id);
         Storage::delete($this->zipPath);
+
+        Log::info('Job ZIP terminé', ['pages' => count($files)]);
     }
 }

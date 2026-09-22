@@ -5,26 +5,33 @@ namespace App\Filament\Resources\Chapters\Pages;
 use App\Filament\Resources\Chapters\ChapterResource;
 use App\Jobs\ProcessChapterZip;
 use Filament\Resources\Pages\CreateRecord;
+use Illuminate\Support\Facades\Log;
 
 class CreateChapter extends CreateRecord
 {
     protected static string $resource = ChapterResource::class;
 
-    protected function afterCreate(): void
-{
-    $zipPath = $this->data['zip_file'] ?? null;
-
-    if ($zipPath) {
-        if (is_array($zipPath)) {
-            $zipPath = array_values($zipPath)[0];
-        }
-        ProcessChapterZip::dispatch($this->record, $zipPath);
-    }
-}
+    public ?string $zipFilePath = null;
 
     protected function mutateFormDataBeforeCreate(array $data): array
     {
-        unset($data['zip_file']);
+        if (isset($data['zip_file'])) {
+            $zip = $data['zip_file'];
+            $this->zipFilePath = is_array($zip) ? array_values($zip)[0] : $zip;
+            unset($data['zip_file']);
+        }
+
+        Log::info('mutateFormDataBeforeCreate', ['zipFilePath' => $this->zipFilePath]);
+
         return $data;
+    }
+
+    protected function afterCreate(): void
+    {
+        Log::info('afterCreate déclenché', ['zipFilePath' => $this->zipFilePath]);
+
+        if ($this->zipFilePath) {
+            ProcessChapterZip::dispatch($this->record, $this->zipFilePath);
+        }
     }
 }
