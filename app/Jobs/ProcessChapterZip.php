@@ -13,6 +13,7 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Intervention\Image\ImageManager;
 use Intervention\Image\Drivers\Gd\Driver;
+use Intervention\Image\Encoders\WebpEncoder;
 use ZipArchive;
 
 class ProcessChapterZip implements ShouldQueue
@@ -63,7 +64,9 @@ class ProcessChapterZip implements ShouldQueue
             $pageNumber = $index + 1;
             $destPath   = $destFolder . '/' . $pageNumber . '.webp';
 
-          $encoded = $manager->decode($file)->encode(new \Intervention\Image\Encoders\WebpEncoder(quality: 85));
+            $encoded = $manager->decode($file)->encode(new WebpEncoder(quality: 85));
+            Storage::disk('public')->put($destPath, $encoded);
+
             ChapterPage::create([
                 'chapter_id'  => $this->chapter->id,
                 'image_path'  => $destPath,
