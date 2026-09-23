@@ -19,7 +19,7 @@ class CommentReportResource extends Resource
     protected static ?string $model = CommentReport::class;
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedFlag;
-    protected static ?string $navigationGroup = 'Modération';
+    protected static string|\UnitEnum|null $navigationGroup = 'Modération';
 
     public static function form(Schema $schema): Schema
     {

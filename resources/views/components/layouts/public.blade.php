@@ -202,10 +202,10 @@
                 <div>
                     <h4 class="font-display font-bold text-sm text-chalk mb-3 uppercase tracking-wider">Légal</h4>
                     <ul class="space-y-2">
-                        <li><a href="{{ route('pages.mentions') }}" class="text-sm text-mist hover:text-violet transition">Mentions légales</a></li>
-                        <li><a href="{{ route('pages.cgu') }}" class="text-sm text-mist hover:text-violet transition">CGU</a></li>
-                        <li><a href="{{ route('pages.confidentialite') }}" class="text-sm text-mist hover:text-violet transition">Confidentialité</a></li>
-                        <li><a href="{{ route('pages.dmca') }}" class="text-sm text-mist hover:text-violet transition">DMCA</a></li>
+                        <li><a href="{{ route('legal.mentions') }}" class="text-sm text-mist hover:text-violet transition">Mentions légales</a></li>
+                        <li><a href="{{ route('legal.cgu') }}" class="text-sm text-mist hover:text-violet transition">CGU</a></li>
+                        <li><a href="{{ route('legal.privacy') }}" class="text-sm text-mist hover:text-violet transition">Confidentialité</a></li>
+                        <li><a href="{{ route('legal.dmca') }}" class="text-sm text-mist hover:text-violet transition">DMCA</a></li>
                     </ul>
                 </div>
 
