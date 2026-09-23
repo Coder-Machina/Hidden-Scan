@@ -15,6 +15,7 @@ class Chapter extends Model
     ];
 
     protected $casts = [
+        'status' => \App\Enums\ChapterStatus::class,
         'scheduled_at' => 'datetime',
         'published_at' => 'datetime',
     ];

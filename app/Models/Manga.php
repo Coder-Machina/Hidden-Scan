@@ -16,6 +16,12 @@ class Manga extends Model
         'average_rating', 'ratings_count',
     ];
 
+    protected $casts = [
+        'type' => \App\Enums\MangaType::class,
+        'status' => \App\Enums\MangaStatus::class,
+        'is_featured' => 'boolean',
+    ];
+
     public function author()
     {
         return $this->belongsTo(Author::class);
