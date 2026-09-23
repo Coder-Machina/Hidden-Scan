@@ -28,13 +28,26 @@ class MangaController extends Controller
         }
 
         if ($request->filled('q')) {
-            $query->where('title', 'like', '%' . $request->q . '%');
+            $q = $request->q;
+            $query->where(function($sub) use ($q) {
+                $sub->where('title', 'like', '%' . $q . '%')
+                    ->orWhereHas('author', function($qAuthor) use ($q) {
+                        $qAuthor->where('name', 'like', '%' . $q . '%');
+                    })
+                    ->orWhereHas('artist', function($qArtist) use ($q) {
+                        $qArtist->where('name', 'like', '%' . $q . '%');
+                    })
+                    ->orWhereHas('tags', function($qTag) use ($q) {
+                        $qTag->where('name', 'like', '%' . $q . '%');
+                    });
+            });
         }
 
         $sort = $request->get('sort', 'latest');
         match($sort) {
             'popular'   => $query->orderBy('views_count', 'desc'),
             'title'     => $query->orderBy('title', 'asc'),
+            'rating'    => $query->orderBy('average_rating', 'desc'),
             default     => $query->latest(),
         };
 
@@ -48,7 +61,7 @@ class MangaController extends Controller
     {
         $manga = Manga::where('slug', $slug)
             ->with(['author', 'artist', 'genres', 'tags', 'chapters' => function ($q) {
-                $q->where('status', 'publie')->orderBy('number', 'desc');
+                $q->where('status', \App\Enums\ChapterStatus::PUBLIE)->orderBy('number', 'desc');
             }])
             ->firstOrFail();
 

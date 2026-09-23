@@ -11,17 +11,19 @@ class HomeController extends Controller
     public function index()
     {
         $featured = Manga::where('is_featured', true)
+            ->withCount('chapters')
             ->latest()
             ->take(6)
             ->get();
 
-        $latest_chapters = Chapter::where('status', 'publie')
+        $latest_chapters = Chapter::where('status', \App\Enums\ChapterStatus::PUBLIE)
             ->with('manga')
             ->orderBy('published_at', 'desc')
             ->take(12)
             ->get();
 
         $popular = Manga::orderBy('views_count', 'desc')
+            ->withCount('chapters')
             ->take(12)
             ->get();
 
