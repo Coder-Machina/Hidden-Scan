@@ -1,0 +1,1144 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="dark">
+<title>Hidden Scan, plan de développement v2</title>
+<meta name="description" content="Plan de développement de Hidden Scan, site de lecture de mangas, manhwas et manhuas en Laravel. Accès libre sans compte et dashboard admin séparé.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Hanken+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#14111f;
+  --panel:#1d1930;
+  --panel-hi:#2a2445;
+  --line:#3d3660;
+  --chalk:#ece9f7;
+  --mist:#a39fc0;
+  --violet:#9b7bff;
+  --mint:#5fd3a6;
+  --amber:#f5b84b;
+  --sky:#6fb3ff;
+  --rose:#ff7ba8;
+  --font-display:"Bricolage Grotesque","Trebuchet MS",system-ui,sans-serif;
+  --font-body:"Hanken Grotesk",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  --font-mono:"JetBrains Mono",ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+}
+*,*::before,*::after{box-sizing:border-box}
+html{scroll-behavior:smooth;scroll-padding-top:24px}
+body{margin:0;background:var(--ink);color:var(--chalk);font-family:var(--font-body);font-size:1.0625rem;line-height:1.65;-webkit-font-smoothing:antialiased}
+a{color:var(--violet);text-underline-offset:3px}
+a:hover{color:#c2b0ff}
+:focus-visible{outline:2px solid var(--violet);outline-offset:3px;border-radius:3px}
+::selection{background:var(--violet);color:var(--ink)}
+
+/* ---------- Hero en planches de manga ---------- */
+.hero{max-width:1180px;margin:0 auto;padding:40px 24px 8px}
+.panels{display:grid;grid-template-columns:repeat(12,1fr);grid-template-rows:repeat(3,auto);gap:12px}
+.panel{position:relative;overflow:hidden;background:var(--panel);border:3px solid var(--chalk);border-radius:3px;padding:22px 24px;animation:panel-in .55s cubic-bezier(.2,.7,.2,1) both}
+.panel:nth-child(2){animation-delay:.09s}
+.panel:nth-child(3){animation-delay:.18s}
+.panel:nth-child(4){animation-delay:.27s}
+@keyframes panel-in{from{opacity:0;transform:translateY(14px) rotate(-.4deg)}to{opacity:1;transform:none}}
+.panel-title{grid-column:1/8;grid-row:1/4;min-height:400px;display:flex;flex-direction:column;justify-content:flex-end;gap:18px;background:var(--panel)}
+.panel-title::before{content:"";position:absolute;inset:0;background-image:radial-gradient(circle,var(--violet) 1.3px,transparent 1.7px);background-size:11px 11px;opacity:.5;-webkit-mask-image:linear-gradient(205deg,#000 0%,transparent 58%);mask-image:linear-gradient(205deg,#000 0%,transparent 58%);pointer-events:none}
+.panel-title>*{position:relative}
+.panel-title h1{margin:0;font-family:var(--font-display);font-weight:800;font-size:clamp(3.4rem,9vw,7rem);line-height:.9;letter-spacing:-.035em}
+.panel-title .sub{margin:0;max-width:34ch;font-size:1.15rem;color:var(--chalk)}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip-meta{border:1px solid var(--line);background:var(--ink);border-radius:999px;padding:3px 12px;font-size:.88rem;color:var(--mist)}
+.panel-side:nth-child(2){grid-column:8/13;grid-row:1}
+.panel-side:nth-child(3){grid-column:8/13;grid-row:2}
+.panel-side:nth-child(4){grid-column:8/13;grid-row:3}
+.panel-head{margin:0 0 4px;font-family:var(--font-display);font-weight:800;font-size:1.35rem;line-height:1.15}
+.panel-side p:last-child{margin:0;color:var(--mist);font-size:.98rem;line-height:1.5}
+.lead{max-width:74ch;margin:28px 0 0;color:var(--mist)}
+.lead strong{color:var(--chalk);font-weight:600}
+
+/* ---------- Mise en page ---------- */
+.layout{display:grid;grid-template-columns:250px minmax(0,1fr);gap:56px;max-width:1180px;margin:0 auto;padding:24px 24px 80px}
+.toc{position:sticky;top:24px;align-self:start;max-height:calc(100vh - 48px);overflow:auto;padding-right:8px;font-size:.95rem}
+.toc summary{cursor:pointer;list-style:none;margin-bottom:6px;font-family:var(--font-display);font-weight:800;font-size:1.2rem}
+.toc summary::-webkit-details-marker{display:none}
+.toc-group{margin:18px 0 6px;font-size:.88rem;font-weight:600;color:var(--mist)}
+.toc a{display:block;padding:5px 12px;border-left:2px solid var(--line);color:var(--mist);text-decoration:none}
+.toc a:hover{color:var(--chalk)}
+.toc a[aria-current="true"]{color:var(--chalk);border-left-color:var(--violet);background:linear-gradient(90deg,rgba(155,123,255,.16),transparent)}
+main{min-width:0}
+
+.part{margin:110px 0 6px;font-family:var(--font-display);font-weight:800;font-size:clamp(2.8rem,7vw,4.8rem);line-height:1;letter-spacing:-.02em;color:transparent;-webkit-text-stroke:1.5px var(--mist)}
+.part:first-child{margin-top:24px}
+.part-intro{margin:0 0 8px;color:var(--mist);max-width:60ch}
+section{margin-top:56px;padding-top:40px;border-top:1px solid var(--line)}
+.part-intro + section{margin-top:32px;padding-top:0;border-top:0}
+h3{display:flex;align-items:baseline;gap:16px;margin:0 0 18px;font-family:var(--font-display);font-weight:800;font-size:clamp(1.7rem,3.4vw,2.2rem);line-height:1.12;letter-spacing:-.015em}
+h3 .num{min-width:2ch;color:var(--violet);font-variant-numeric:tabular-nums}
+h4{margin:34px 0 10px;font-family:var(--font-display);font-weight:800;font-size:1.28rem;line-height:1.2}
+p{margin:.8em 0}
+.prose{max-width:70ch}
+ul,ol{padding-left:1.25em;margin:.8em 0}
+li{margin:.4em 0}
+li::marker{color:var(--violet)}
+strong{font-weight:600}
+code{font-family:var(--font-mono);font-size:.86em;background:var(--panel-hi);color:#d9ccff;padding:2px 6px;border-radius:4px}
+.muted{color:var(--mist)}
+
+/* ---------- Tableaux ---------- */
+.table-wrap{margin:22px 0;overflow-x:auto;border:1px solid var(--line);border-radius:8px}
+table{width:100%;border-collapse:collapse;font-size:.97rem;min-width:520px}
+th{padding:12px 16px;text-align:left;font-weight:600;color:var(--mist);background:var(--panel);border-bottom:1px solid var(--line);white-space:nowrap}
+td{padding:12px 16px;vertical-align:top;border-top:1px solid var(--line)}
+tbody tr:first-child td{border-top:0}
+td:first-child{font-weight:600}
+
+/* ---------- Encadrés ---------- */
+.callout{--c:var(--violet);margin:26px 0;padding:16px 20px;background:var(--panel);border-left:4px solid var(--c);border-radius:0 8px 8px 0;max-width:78ch}
+.callout>:first-child{margin-top:0}
+.callout>:last-child{margin-bottom:0}
+.callout .callout-title{display:block;margin-bottom:4px;font-family:var(--font-display);font-weight:800;font-size:1.05rem;color:var(--c)}
+.callout.warn{--c:var(--amber)}
+.callout.ok{--c:var(--mint)}
+
+/* ---------- Badges ---------- */
+.badge{--c:var(--mist);display:inline-block;padding:1px 11px;border:1px solid var(--c);border-radius:999px;color:var(--c);font-size:.85rem;font-weight:600;line-height:1.6;white-space:nowrap}
+.badge.mint{--c:var(--mint)}
+.badge.amber{--c:var(--amber)}
+.badge.sky{--c:var(--sky)}
+.badge.violet{--c:var(--violet)}
+.badge.rose{--c:var(--rose)}
+
+/* ---------- Rail des versions ---------- */
+.rail{list-style:none;position:relative;margin:26px 0;padding:0}
+.rail::before{content:"";position:absolute;left:19px;top:10px;bottom:10px;width:2px;background:var(--line)}
+.rail>li{position:relative;margin:0 0 40px;padding-left:66px}
+.rail>li:last-child{margin-bottom:0}
+.rail .node{position:absolute;left:0;top:0;width:40px;height:40px;display:grid;place-items:center;background:var(--ink);border:2px solid var(--c);border-radius:50%;color:var(--c);font-family:var(--font-display);font-weight:800;font-size:.92rem}
+.rail h4{margin:0 0 6px;display:flex;flex-wrap:wrap;align-items:center;gap:10px}
+.rail .two{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:4px 32px}
+.rail .two h5{margin:10px 0 0;font-size:.95rem;font-weight:600;color:var(--mist)}
+
+/* ---------- Flux ---------- */
+.flow{display:flex;flex-wrap:wrap;align-items:center;gap:8px 10px;margin:22px 0}
+.flow span{background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:6px 14px;font-weight:600;font-size:.95rem}
+.flow span.badge{background:transparent;padding:1px 11px;font-weight:600;font-size:.85rem}
+.flow i{font-style:normal;color:var(--violet)}
+
+/* ---------- Code ---------- */
+.code{margin:18px 0;background:#0e0c17;border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.code-head{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:7px 8px 7px 16px;background:var(--panel);border-bottom:1px solid var(--line);font-size:.86rem;color:var(--mist)}
+.code pre{margin:0;padding:16px;overflow-x:auto;font-family:var(--font-mono);font-size:.86rem;line-height:1.65;color:#e6e0ff}
+.code pre code{background:none;padding:0;color:inherit;font-size:inherit}
+.copy{font:inherit;font-size:.82rem;color:var(--chalk);background:var(--panel-hi);border:1px solid var(--line);border-radius:6px;padding:3px 12px;cursor:pointer}
+.copy:hover{border-color:var(--violet)}
+
+/* ---------- Palette ---------- */
+.swatches{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px;margin:14px 0 6px}
+.swatch{font:inherit;color:inherit;text-align:left;background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:8px;cursor:pointer}
+.swatch:hover{border-color:var(--violet)}
+.swatch .chip{display:block;height:54px;border-radius:5px;border:1px solid rgba(255,255,255,.14);background:var(--c)}
+.swatch strong{display:block;margin-top:8px;font-size:.95rem;line-height:1.2}
+.swatch .role{display:block;font-size:.85rem;color:var(--mist);line-height:1.3}
+.swatch code{display:inline-block;margin-top:5px}
+.swatch .state{margin-left:6px;font-size:.8rem;color:var(--mint)}
+.swatch-title{margin:26px 0 0;font-weight:600}
+
+/* ---------- Modèle de données ---------- */
+.model{margin:30px 0}
+.model h4{margin:0 0 6px}
+.model dl{display:grid;grid-template-columns:minmax(150px,250px) 1fr;column-gap:24px;margin:0;border-bottom:1px solid var(--line)}
+.model dt,.model dd{margin:0;padding:10px 0;border-top:1px solid var(--line)}
+.model dt{font-family:var(--font-mono);font-size:.86rem;color:#c9b8ff;word-break:break-word}
+
+/* ---------- Roadmap et listes à cocher ---------- */
+.progress{display:flex;align-items:center;gap:16px;margin:18px 0 4px;max-width:640px}
+.bar{flex:1;height:10px;background:var(--panel-hi);border-radius:999px;overflow:hidden}
+.bar>span{display:block;width:0;height:100%;background:var(--mint);transition:width .3s}
+.progress output{font-weight:600;white-space:nowrap;font-size:.95rem}
+.save-note{margin:0 0 14px;color:var(--mist);font-size:.92rem}
+.phases{list-style:none;margin:16px 0;padding:0}
+.phase{display:grid;grid-template-columns:auto 1fr auto;column-gap:16px;row-gap:2px;margin:0;padding:16px 0;border-top:1px solid var(--line);align-items:baseline}
+.phase:last-child{border-bottom:1px solid var(--line)}
+.phase input,.check input{width:20px;height:20px;accent-color:var(--violet);cursor:pointer;align-self:start;margin:4px 0 0}
+.phase label{font-family:var(--font-display);font-weight:800;font-size:1.12rem;cursor:pointer}
+.phase .time{color:var(--mist);font-size:.92rem;white-space:nowrap}
+.phase p{grid-column:2/4;margin:0;color:var(--mist)}
+.phase.done label{color:var(--mint)}
+.checks{list-style:none;margin:16px 0;padding:0;max-width:78ch}
+.check{display:grid;grid-template-columns:auto 1fr;gap:14px;margin:0;padding:12px 0;border-top:1px solid var(--line)}
+.check:last-child{border-bottom:1px solid var(--line)}
+.check label{cursor:pointer}
+.check.done label{color:var(--mist)}
+
+/* ---------- Pied de page ---------- */
+footer{max-width:1180px;margin:0 auto;padding:0 24px 56px;color:var(--mist);font-size:.92rem}
+footer p{margin:0;padding-top:24px;border-top:1px solid var(--line)}
+
+/* ---------- Adaptation ---------- */
+@media (max-width:960px){
+  .layout{grid-template-columns:1fr;gap:20px}
+  .toc{position:static;max-height:none;padding:14px 16px;border:1px solid var(--line);border-radius:8px}
+}
+@media (max-width:820px){
+  .panels{grid-template-columns:1fr}
+  .panel-title,.panel-side:nth-child(2),.panel-side:nth-child(3),.panel-side:nth-child(4){grid-column:1;grid-row:auto}
+  .panel-title{min-height:300px}
+  .model dl{grid-template-columns:1fr}
+  .model dt{padding-bottom:0;border-bottom:0}
+  .model dd{border-top:0;padding-top:2px}
+  .phase{grid-template-columns:auto 1fr}
+  .phase .time{grid-column:2}
+  .phase p{grid-column:2}
+}
+@media (prefers-reduced-motion:reduce){
+  html{scroll-behavior:auto}
+  .panel{animation:none}
+  .bar>span{transition:none}
+}
+</style>
+</head>
+<body>
+
+<header class="hero">
+  <div class="panels">
+    <div class="panel panel-title">
+      <h1>Hidden Scan</h1>
+      <p class="sub">Plan de développement d'un site de lecture de mangas, manhwas et manhuas, en Laravel.</p>
+      <div class="chips">
+        <span class="chip-meta">Version 2.0</span>
+        <span class="chip-meta">Septembre 2026</span>
+        <span class="chip-meta">Laravel et Livewire</span>
+      </div>
+    </div>
+    <div class="panel panel-side">
+      <p class="panel-head">Lecture libre</p>
+      <p>Aucun compte, aucune inscription. Le visiteur arrive et lit tout de suite.</p>
+    </div>
+    <div class="panel panel-side">
+      <p class="panel-head">Progression dans le navigateur</p>
+      <p>Favoris et historique restent chez le lecteur. Le serveur n'en garde rien.</p>
+    </div>
+    <div class="panel panel-side">
+      <p class="panel-head">Dashboard séparé</p>
+      <p>La team publie depuis un espace à part, avec sa propre connexion.</p>
+    </div>
+  </div>
+  <p class="lead"><strong>Ce document fusionne le premier plan et le cahier des charges Hidden Scan v1.0</strong>, en appliquant deux changements structurants: un accès 100% libre pour les lecteurs et un dashboard admin totalement séparé. Les phases et les critères de lancement se cochent, et ta progression reste enregistrée dans ton navigateur.</p>
+</header>
+
+<div class="layout">
+
+<details class="toc" open>
+  <summary>Sommaire</summary>
+  <nav aria-label="Sommaire">
+    <p class="toc-group">Cadrage</p>
+    <a href="#vision">1 Vision du projet</a>
+    <a href="#objectifs">2 Objectifs</a>
+    <a href="#references">3 Références à étudier</a>
+    <a href="#changements">4 Ce qui change dans la v2</a>
+    <a href="#perimetre">5 Périmètre par version</a>
+    <p class="toc-group">Produit</p>
+    <a href="#publiques">6 Fonctionnalités publiques</a>
+    <a href="#lecteur">7 Le lecteur</a>
+    <a href="#dashboard">8 Dashboard admin</a>
+    <a href="#upload">9 Upload des chapitres</a>
+    <a href="#roles">10 Rôles de la team</a>
+    <p class="toc-group">Technique</p>
+    <a href="#architecture">11 Architecture</a>
+    <a href="#donnees">12 Modèle de données</a>
+    <a href="#stack">13 Stack technique</a>
+    <a href="#api">14 API</a>
+    <a href="#securite">15 Sécurité</a>
+    <a href="#performance">16 Performance</a>
+    <p class="toc-group">Design</p>
+    <a href="#design">17 Design system et écrans</a>
+    <p class="toc-group">Réalisation</p>
+    <a href="#demarrage">18 Démarrer sur Linux</a>
+    <a href="#roadmap">19 Roadmap</a>
+    <a href="#tests">20 Tests et qualité</a>
+    <a href="#git">21 Git et branches</a>
+    <a href="#qualite">22 Avant le lancement</a>
+    <a href="#hebergement">23 Hébergement à petit budget</a>
+    <a href="#legal">24 Points légaux</a>
+    <a href="#suites">25 Prochaines étapes</a>
+  </nav>
+</details>
+
+<main>
+
+<!-- =================== CADRAGE =================== -->
+<h2 class="part" id="cadrage">Cadrage</h2>
+<p class="part-intro">Pourquoi ce site existe, ce qu'il doit faire, et ce qui a changé depuis la première version.</p>
+
+<section id="vision">
+  <h3><span class="num">1</span>Vision du projet</h3>
+  <div class="prose">
+    <p>Hidden Scan est une plateforme web de lecture de mangas, manhwas et manhuas. Trois mots la résument: <strong>rapide, immersive, mobile d'abord</strong>. Le visiteur arrive, il lit. Pas d'inscription, pas de connexion, rien à remplir.</p>
+    <p>En parallèle, la team travaille dans un outil de production séparé: le dashboard admin. C'est le seul endroit du projet où une authentification existe. Il sert à gérer le catalogue, publier les chapitres et suivre l'activité du site.</p>
+    <p>L'ambition est de reprendre les bonnes pratiques d'ergonomie de Raijin Scans, Mangas Origines et de l'ancien site de La Phénix, tout en construisant une identité graphique, une architecture technique et un workflow propres à Hidden Scan.</p>
+  </div>
+</section>
+
+<section id="objectifs">
+  <h3><span class="num">2</span>Objectifs</h3>
+  <ul class="prose">
+    <li>Créer une plateforme robuste et maintenable avec Laravel.</li>
+    <li>Offrir un accès totalement libre, sans inscription, à tout le contenu.</li>
+    <li>Proposer un lecteur rapide, configurable et fluide sur mobile comme sur ordinateur.</li>
+    <li>Donner à la team un espace de gestion séparé et sécurisé pour piloter œuvres, chapitres et pages.</li>
+    <li>Gérer la progression de lecture uniquement dans le navigateur du lecteur.</li>
+    <li>Préparer l'architecture à une future API et à une application mobile.</li>
+    <li>Construire une identité visuelle propre à Hidden Scan.</li>
+    <li>Garantir sécurité, performance, tests et évolutivité.</li>
+  </ul>
+</section>
+
+<section id="references">
+  <h3><span class="num">3</span>Références à étudier</h3>
+  <p class="prose">Ouvre ces sites et observe la navigation, le catalogue, la recherche, la page d'une œuvre et le lecteur. Tu adaptes ensuite les bonnes idées, sans le volet compte utilisateur.</p>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Site</th><th>Ce qu'il faut observer</th></tr></thead>
+      <tbody>
+        <tr><td><a href="https://raijin-scans.fr/" target="_blank" rel="noopener">Raijin Scans</a></td><td>Navigation, catalogue, recherche, page d'œuvre, lecteur.</td></tr>
+        <tr><td><a href="https://mangas-origines.fr/" target="_blank" rel="noopener">Mangas Origines</a></td><td>Les mêmes éléments, plus la progression de lecture et l'intégration communautaire.</td></tr>
+        <tr><td>Ancien site de La Phénix</td><td>Référence visuelle et fonctionnelle.</td></tr>
+        <tr><td><a href="https://mangadex.org/" target="_blank" rel="noopener">MangaDex</a></td><td>Structure d'une fiche série, liste des chapitres, filtres, tags et recherche avancée.</td></tr>
+        <tr><td><a href="https://www.webtoons.com/" target="_blank" rel="noopener">Webtoon</a></td><td>Lecteur vertical, page d'accueil avec les classements.</td></tr>
+        <tr><td><a href="https://tapas.io/" target="_blank" rel="noopener">Tapas</a></td><td>Organisation des catégories.</td></tr>
+        <tr><td>Mihon (application)</td><td>Lecteur mobile: modes de lecture et zones de tap.</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="callout">
+    <span class="callout-title">Commence par trois pages</span>
+    <p>L'accueil, la fiche d'une série et le lecteur. Pour chacune, note ce qu'il y a à l'écran, ce qui se passe quand on clique, et ce qui te gêne. Tu t'en serviras pour dessiner les tiens.</p>
+  </div>
+</section>
+
+<section id="changements">
+  <h3><span class="num">4</span>Ce qui change dans la v2</h3>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Point</th><th>Avant</th><th>Maintenant (v2 retenue)</th></tr></thead>
+      <tbody>
+        <tr><td>Accès au site</td><td>Compte obligatoire pour favoris, historique, commentaires, notation.</td><td>Accès 100% libre, sans inscription ni connexion pour les lecteurs.</td></tr>
+        <tr><td>Favoris et progression</td><td>Stockés en base, liés à un <code>user_id</code>.</td><td>Stockés côté navigateur (localStorage), aucune donnée personnelle liée à un profil.</td></tr>
+        <tr><td>Commentaires</td><td>Liés à un compte avec profil.</td><td>Par pseudo libre, sans compte, avec une modération renforcée.</td></tr>
+        <tr><td>Administration</td><td>Espace membre et admin dans la même appli.</td><td>Dashboard totalement séparé (<code>/admin</code> ou <code>admin.hiddenscan.com</code>), avec sa propre authentification réservée à la team.</td></tr>
+        <tr><td>Notifications, gamification, profils publics</td><td>Prévus dès le MVP ou la V2.</td><td>Supprimés du périmètre, sauf si un compte optionnel revient en V3 ou V4.</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p class="prose muted">Le reste (stack, lecteur, workflow de publication, sécurité, performance) reprend et enrichit le cahier des charges v1.0.</p>
+</section>
+
+<section id="perimetre">
+  <h3><span class="num">5</span>Périmètre par version</h3>
+  <p class="prose">Construis dans cet ordre. Chaque version doit être utilisable avant de passer à la suivante.</p>
+  <ol class="rail">
+    <li style="--c:var(--mint)">
+      <span class="node">V1</span>
+      <h4>Lancement <span class="badge mint">MVP</span></h4>
+      <div class="two">
+        <div>
+          <h5>Côté public, sans compte</h5>
+          <ul>
+            <li>Accueil: nouveautés, tendances, populaires</li>
+            <li>Catalogue avec filtres (genre, statut, type, tri) et pagination</li>
+            <li>Recherche par titre, titre alternatif, auteur, artiste, genre, tags</li>
+            <li>Page œuvre: cover, bannière, synopsis, genres, chapitres</li>
+            <li>Lecteur en mode vertical et page par page</li>
+            <li>Favoris et progression en local</li>
+            <li>Commentaires par pseudo, modérés</li>
+            <li>Pages légales</li>
+          </ul>
+        </div>
+        <div>
+          <h5>Côté admin, staff uniquement</h5>
+          <ul>
+            <li>Authentification staff séparée</li>
+            <li>Dashboard avec statistiques de base</li>
+            <li>Gestion des œuvres, genres, tags</li>
+            <li>Gestion des chapitres et des pages</li>
+            <li>Upload de chapitres par archive ZIP</li>
+            <li>Workflow brouillon, contrôle, programmé, publié</li>
+            <li>Modération des commentaires</li>
+            <li>Gestion des rôles et permissions</li>
+          </ul>
+        </div>
+      </div>
+    </li>
+    <li style="--c:var(--violet)">
+      <span class="node">V2</span>
+      <h4>Confort et communauté <span class="badge violet">V2</span></h4>
+      <ul>
+        <li>Notation des œuvres, anonyme et limitée par cookie ou empreinte contre le spam de votes</li>
+        <li>Recherche avancée avec Meilisearch</li>
+        <li>Intégration Discord (webhook de publication)</li>
+        <li>PWA: installation sur mobile, accès hors ligne partiel</li>
+        <li>Export et import de la progression de lecture (fichier ou QR code)</li>
+      </ul>
+    </li>
+    <li style="--c:var(--sky)">
+      <span class="node">V3</span>
+      <h4>Comptes optionnels <span class="badge sky">V3</span></h4>
+      <ul>
+        <li>Système de compte optionnel, seulement si la communauté le demande, en plus du mode sans compte et jamais à sa place</li>
+        <li>Classements, badges, gamification légère</li>
+        <li>Recommandations basées sur les genres consultés (cookies, sans profil serveur)</li>
+      </ul>
+    </li>
+    <li style="--c:var(--rose)">
+      <span class="node">V4</span>
+      <h4>Écosystème <span class="badge rose">V4</span></h4>
+      <ul>
+        <li>API publique et privée versionnée (<code>/api/v1</code>)</li>
+        <li>Application mobile Android et iOS</li>
+        <li>Infrastructure CDN avancée</li>
+      </ul>
+    </li>
+  </ol>
+</section>
+
+<!-- =================== PRODUIT =================== -->
+<h2 class="part" id="produit">Produit</h2>
+<p class="part-intro">Ce que voient les lecteurs, et ce que fait la team pour alimenter le site.</p>
+
+<section id="publiques">
+  <h3><span class="num">6</span>Fonctionnalités publiques</h3>
+
+  <h4>Accueil</h4>
+  <p class="prose">Hero Hidden Scan, tendances, sorties récentes, œuvres populaires, recommandations basées sur la navigation, accès au Discord.</p>
+
+  <h4>Catalogue et recherche</h4>
+  <ul class="prose">
+    <li>Filtres combinables: genre, statut, type, tri, avec pagination (<code>paginate(24)</code> dans Laravel).</li>
+    <li>Recherche par titre, titre alternatif, auteur, artiste, genre et tags. Meilisearch arrive en V2; au début, de simples requêtes <code>LIKE</code> suffisent.</li>
+  </ul>
+
+  <h4>Favoris, historique et progression, sans compte</h4>
+  <p class="prose">Sans connexion, tout se passe dans le navigateur du lecteur:</p>
+  <ul class="prose">
+    <li>Le <code>localStorage</code> garde la liste des favoris, la dernière page lue par chapitre, le pourcentage de progression et l'historique des dernières lectures.</li>
+    <li>La bibliothèque personnelle est reconstruite en JavaScript (Alpine) à partir de ces données, avec un appel à l'API publique pour récupérer les infos à jour des œuvres.</li>
+    <li>Option V2: un bouton « Exporter ma bibliothèque » (fichier JSON) et « Importer », pour changer d'appareil sans compte.</li>
+  </ul>
+  <div class="callout warn">
+    <span class="callout-title">Limite assumée</span>
+    <p>Ces données sont perdues si le lecteur change de navigateur, d'appareil ou vide son cache. C'est le compromis du choix « sans compte »: explique-le dans une FAQ sur le site.</p>
+  </div>
+  <p class="prose">Proposition de départ pour le format sauvegardé, à affiner avec le lecteur:</p>
+  <div class="code">
+    <div class="code-head"><span>Exemple de contenu du localStorage</span><button class="copy" type="button">Copier</button></div>
+<pre><code>{
+  "version": 1,
+  "favorites": ["exemple-serie", "autre-serie"],
+  "progress": {
+    "exemple-serie": {
+      "chapter": 12,
+      "page": 7,
+      "percent": 43,
+      "updatedAt": "2026-09-19T10:00:00Z"
+    }
+  },
+  "history": [
+    { "manga": "exemple-serie", "chapter": 12, "readAt": "2026-09-19T10:00:00Z" }
+  ]
+}</code></pre>
+  </div>
+
+  <h4>Page œuvre</h4>
+  <p class="prose">Cover, bannière, synopsis, informations (auteur, artiste, année, statut), genres et tags, note moyenne (votes anonymes limités), et la liste des chapitres avec un indicateur « déjà lu » calculé depuis le localStorage.</p>
+
+  <h4>Commentaires, sans compte</h4>
+  <ul class="prose">
+    <li>Publication par pseudo libre (un simple champ texte).</li>
+    <li>Réponses imbriquées, likes limités par cookie ou empreinte, signalement par les visiteurs.</li>
+    <li>Modération renforcée, puisqu'aucun compte ne responsabilise les auteurs: validation manuelle possible pour les nouveaux pseudos, filtre de mots interdits, limite de fréquence stricte par IP hashée.</li>
+  </ul>
+
+  <h4>Pages légales</h4>
+  <p class="prose">Mentions légales, CGU, politique de confidentialité (qui précise l'absence de compte et la collecte minimale de données) et procédure de retrait de contenu type DMCA.</p>
+</section>
+
+<section id="lecteur">
+  <h3><span class="num">7</span>Le lecteur</h3>
+  <p class="prose">C'est la pièce la plus importante du projet: c'est là que les lecteurs passent leur temps. Soigne-le avant tout le reste.</p>
+  <ul class="prose">
+    <li>Mode vertical continu (webtoon) et mode page par page.</li>
+    <li>Navigation vers le chapitre précédent et suivant.</li>
+    <li>Panneau de réglages: largeur d'affichage, sens de lecture si pertinent.</li>
+    <li>Chargement paresseux des images (<code>loading="lazy"</code>) avec préchargement des pages proches de la position actuelle.</li>
+    <li>Sauvegarde de la progression dans le <code>localStorage</code> (dernière page, pourcentage) et reprise automatique à la dernière position.</li>
+    <li>Gestion propre des images qui ne se chargent pas (message clair et bouton pour réessayer).</li>
+    <li>Interface tactile: swipe et zones de tap.</li>
+  </ul>
+</section>
+
+<section id="dashboard">
+  <h3><span class="num">8</span>Dashboard admin séparé</h3>
+  <p class="prose">Le dashboard est une application dans l'application: même code Laravel, mais routes, middleware, vues et, idéalement, sous-domaine distincts.</p>
+
+  <h4>Accès</h4>
+  <ul class="prose">
+    <li>URL dédiée: <code>admin.hiddenscan.com</code>, ou <code>/admin</code> au début si tu n'as pas encore de sous-domaine.</li>
+    <li>Authentification réservée à la team, avec 2FA obligatoire pour les rôles Owner et Administrateur.</li>
+    <li>Aucun lien vers le dashboard depuis le site public. Ce n'est qu'une discrétion en plus des vraies protections techniques.</li>
+  </ul>
+
+  <h4>Fonctionnalités</h4>
+  <ul class="prose">
+    <li>Statistiques: membres de la team, œuvres, chapitres, vues, activité récente.</li>
+    <li>Gestion complète des œuvres (genres, tags, auteurs, artistes).</li>
+    <li>Gestion des chapitres et des pages: réordonner, prévisualiser, modifier.</li>
+    <li>Upload de chapitres par archive ZIP (voir la section 9).</li>
+    <li>Modération des commentaires et des signalements.</li>
+    <li>Gestion des rôles et permissions de la team.</li>
+    <li>Journal d'audit pour toutes les actions sensibles.</li>
+    <li>Statistiques détaillées: œuvres les plus vues, chapitres les plus populaires.</li>
+  </ul>
+
+  <h4>Workflow de publication</h4>
+  <div class="flow" aria-label="Workflow de publication">
+    <span class="badge">Brouillon</span><i aria-hidden="true">→</i>
+    <span class="badge amber">Contrôle</span><i aria-hidden="true">→</i>
+    <span class="badge sky">Programmé</span><i aria-hidden="true">→</i>
+    <span class="badge mint">Publié</span>
+  </div>
+
+  <div class="callout ok">
+    <span class="callout-title">Utilise Filament pour ce dashboard</span>
+    <p><a href="https://filamentphp.com/" target="_blank" rel="noopener">Filament PHP</a> génère des écrans de gestion à partir de tes modèles: formulaires riches avec glisser-déposer d'images, tables filtrables, le tout en Laravel et Livewire. Il s'installe sur son propre panel isolé (<code>admin</code>) sans toucher au reste du site, et tu gagnes des semaines par rapport à tout coder à la main.</p>
+  </div>
+</section>
+
+<section id="upload">
+  <h3><span class="num">9</span>Upload des chapitres</h3>
+  <p class="prose">Le workflow visé, de l'archive à la publication:</p>
+  <div class="flow" aria-label="Pipeline d'upload">
+    <span>ZIP</span><i aria-hidden="true">→</i>
+    <span>Validation</span><i aria-hidden="true">→</i>
+    <span>Extraction</span><i aria-hidden="true">→</i>
+    <span>Tri des pages</span><i aria-hidden="true">→</i>
+    <span>Conversion</span><i aria-hidden="true">→</i>
+    <span>Stockage</span><i aria-hidden="true">→</i>
+    <span>Enregistrements</span><i aria-hidden="true">→</i>
+    <span>Publication</span>
+  </div>
+
+  <h4>Contrôles serveur obligatoires</h4>
+  <ul class="prose">
+    <li>Vérifier l'extension et le type MIME réel de l'archive, pas seulement son nom.</li>
+    <li>Limiter la taille du fichier et le nombre de pages.</li>
+    <li>Extraire dans un dossier temporaire isolé, jamais directement dans le stockage public.</li>
+    <li>Trier les pages en ordre naturel, pas alphabétique: sinon <code>page10.jpg</code> passe avant <code>page2.jpg</code>. En PHP, <code>natsort()</code> ou <code>strnatcasecmp()</code> font le travail.</li>
+    <li>Convertir en WebP ou AVIF et générer plusieurs résolutions.</li>
+    <li>Analyser le contenu avec un antivirus avant le stockage définitif (recommandé).</li>
+    <li>Créer les enregistrements <code>chapter_pages</code> seulement après un traitement complet réussi, dans une transaction.</li>
+    <li>Laisser le chapitre en « brouillon » ou « contrôle » tant que la team ne l'a pas validé.</li>
+  </ul>
+  <div class="callout">
+    <span class="callout-title">En file d'attente</span>
+    <p>Ce traitement est lourd. Lance-le dans un Job Laravel pour ne jamais bloquer l'interface admin pendant l'envoi. Au début, la file d'attente peut être stockée en base de données; Redis vient plus tard.</p>
+  </div>
+</section>
+
+<section id="roles">
+  <h3><span class="num">10</span>Rôles de la team</h3>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Rôle</th><th>Permissions typiques</th></tr></thead>
+      <tbody>
+        <tr><td>Owner</td><td>Accès total, gestion de la plateforme et des autres comptes staff.</td></tr>
+        <tr><td>Administrateur</td><td>Utilisateurs staff, configuration, modération, publication.</td></tr>
+        <tr><td>Manager</td><td>Gestion éditoriale, suivi des projets de traduction.</td></tr>
+        <tr><td>Traducteur</td><td>Accès aux tâches et contenus de traduction selon le workflow.</td></tr>
+        <tr><td>Checker / Q-Checker</td><td>Contrôle qualité avant publication.</td></tr>
+        <tr><td>Cleaner</td><td>Préparation des pages (nettoyage des scans).</td></tr>
+        <tr><td>Éditeur</td><td>Mise en page et préparation finale du chapitre.</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p class="prose">Les rôles sont gérés avec <strong>Spatie Laravel-Permission</strong>, selon le principe du moindre privilège: un traducteur ne publie pas directement, un cleaner ne gère pas les utilisateurs. Chaque permission est vérifiée par une Policy Laravel.</p>
+</section>
+
+<!-- =================== TECHNIQUE =================== -->
+<h2 class="part" id="technique">Technique</h2>
+<p class="part-intro">Comment le site est construit: code, données, outils, sécurité et vitesse.</p>
+
+<section id="architecture">
+  <h3><span class="num">11</span>Architecture générale</h3>
+  <p class="prose">Un monolithe Laravel avec deux fronts distincts qui partagent le même cœur métier.</p>
+  <div class="code">
+    <div class="code-head"><span>Arborescence du projet</span><button class="copy" type="button">Copier</button></div>
+<pre><code>Hidden-Scan/
+├── app/
+│   ├── Http/
+│   │   ├── Controllers/
+│   │   │   ├── Public/        (catalogue, œuvres, lecteur, commentaires)
+│   │   │   └── Admin/         (dashboard staff)
+│   │   └── Middleware/
+│   │       ├── EnsureIsStaff.php     (protège tout /admin)
+│   │       └── RateLimitComments.php
+│   ├── Models/
+│   ├── Services/              (logique métier réutilisable)
+│   ├── Actions/               (opérations métier ciblées)
+│   ├── Policies/              (autorisations, staff uniquement)
+│   ├── Jobs/                  (traitement asynchrone: ZIP, images)
+│   ├── Events/ et Notifications/  (publication de chapitre: Discord, cache)
+│   ├── Livewire/
+│   │   ├── Public/            (composants du site public)
+│   │   └── Admin/             (composants du back-office)
+│   └── Enums/                 (statuts, rôles, types d'œuvre)
+├── routes/
+│   ├── web.php                (site public, aucune route protégée par login lecteur)
+│   ├── admin.php              (préfixe /admin, protégé par le guard "staff")
+│   └── api.php</code></pre>
+  </div>
+  <h4>Séparation stricte entre public et admin</h4>
+  <ul class="prose">
+    <li>Le guard d'authentification <code>staff</code> (dans <code>config/auth.php</code>) est indépendant de tout système de compte lecteur, qui n'existe pas.</li>
+    <li>Le dashboard peut vivre sur un sous-domaine dédié: cookies de session séparés et règles de pare-feu spécifiques possibles.</li>
+    <li>Il n'existe aucune table « lecteurs ». La seule table <code>users</code> concerne exclusivement la team.</li>
+  </ul>
+  <div class="callout">
+    <span class="callout-title">Avec Filament</span>
+    <p>Le panel <code>admin</code> gère lui-même ses pages et ses routes. Tu peux lui indiquer d'utiliser le guard <code>staff</code>. Le fichier <code>routes/admin.php</code> ne sert alors que pour des routes staff supplémentaires.</p>
+  </div>
+</section>
+
+<section id="donnees">
+  <h3><span class="num">12</span>Modèle de données</h3>
+  <p class="prose">Chaque table devient une migration. Le nom à gauche est celui de la table, la description à droite dit ce qu'elle contient.</p>
+
+  <div class="model">
+    <h4>Équipe et accès (staff uniquement)</h4>
+    <dl>
+      <dt>users</dt><dd>Les membres de la team: id, name, email, password, role_id, is_active, timestamps.</dd>
+      <dt>roles, permissions, role_user</dt><dd>Gérées par Spatie Laravel-Permission.</dd>
+      <dt>audit_logs</dt><dd>Traçabilité des actions admin: qui a publié, modifié ou supprimé quoi.</dd>
+    </dl>
+  </div>
+
+  <div class="model">
+    <h4>Catalogue</h4>
+    <dl>
+      <dt>mangas</dt><dd>id, title, slug, synopsis, cover_image, banner_image, author_id, artist_id, type (manga, manhwa, manhua), status, release_year, views_count, average_rating, is_featured, timestamps.</dd>
+      <dt>manga_alternatives</dt><dd>Titres alternatifs, pour la recherche.</dd>
+      <dt>authors, artists</dt><dd>Auteurs et artistes.</dd>
+      <dt>genres, manga_genre</dt><dd>Genres et table pivot.</dd>
+      <dt>tags, manga_tag</dt><dd>Tags et table pivot.</dd>
+    </dl>
+  </div>
+
+  <div class="model">
+    <h4>Publication</h4>
+    <dl>
+      <dt>chapters</dt><dd>id, manga_id, chapter_number, title, volume, status (brouillon, contrôle, programmé, publié), scheduled_at, published_at, uploaded_by, timestamps.</dd>
+      <dt>chapter_pages</dt><dd>id, chapter_id, image_path, page_number.</dd>
+      <dt>chapter_releases</dt><dd>Historique des publications, utile pour Discord et les statistiques.</dd>
+    </dl>
+  </div>
+
+  <div class="model">
+    <h4>Communauté (sans compte)</h4>
+    <dl>
+      <dt>comments</dt><dd>id, commentable_id, commentable_type (manga ou chapter), pseudo, content, ip_hash, is_hidden, is_pinned, parent_id, timestamps.</dd>
+      <dt>comment_reports</dt><dd>id, comment_id, reason, ip_hash, timestamps.</dd>
+      <dt>ratings</dt><dd>id, manga_id, score, ip_hash. Le hash empêche le vote multiple sans compte.</dd>
+    </dl>
+  </div>
+
+  <div class="model">
+    <h4>Statistiques et configuration</h4>
+    <dl>
+      <dt>manga_views, chapter_views, daily_statistics</dt><dd>Compteurs de vues et agrégats quotidiens.</dd>
+      <dt>settings, reports</dt><dd>Réglages du site et signalements.</dd>
+    </dl>
+  </div>
+
+  <div class="callout">
+    <span class="callout-title">Rien côté serveur pour la lecture</span>
+    <p>Aucune donnée de progression, de favoris ou d'historique n'est stockée sur le serveur. Elle vit uniquement dans le <code>localStorage</code> du visiteur.</p>
+  </div>
+
+  <h4>Relations essentielles</h4>
+  <ul class="prose">
+    <li>Un manga possède plusieurs chapitres, genres et tags.</li>
+    <li>Un chapitre possède plusieurs pages ordonnées.</li>
+    <li>Un chapitre peut recevoir plusieurs commentaires, par pseudo.</li>
+    <li>Les commentaires peuvent avoir des réponses (<code>parent_id</code>).</li>
+    <li>Les membres de la team ont des rôles et des permissions.</li>
+    <li>Les actions administratives importantes sont enregistrées dans <code>audit_logs</code>.</li>
+  </ul>
+</section>
+
+<section id="stack">
+  <h3><span class="num">13</span>Stack technique</h3>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Couche</th><th>Technologie</th><th>Rôle</th></tr></thead>
+      <tbody>
+        <tr><td>Backend</td><td>Laravel 12, PHP 8.3 ou plus</td><td>Logique métier, sécurité, administration.</td></tr>
+        <tr><td>Frontend public</td><td>Blade, Livewire 3, Alpine.js</td><td>Interfaces dynamiques sans SPA inutile.</td></tr>
+        <tr><td>Dashboard admin</td><td>Filament PHP (panel isolé)</td><td>Gestion rapide et robuste pour la team.</td></tr>
+        <tr><td>UI</td><td>Tailwind CSS</td><td>Design system et responsive.</td></tr>
+        <tr><td>Base de données</td><td>MariaDB ou MySQL</td><td>Catalogue, publication, communauté.</td></tr>
+        <tr><td>Cache et files</td><td>Redis, Laravel Horizon</td><td>Cache, limitation de fréquence, files d'attente.</td></tr>
+        <tr><td>Recherche</td><td>Meilisearch via Laravel Scout</td><td>Recherche rapide dans le catalogue.</td></tr>
+        <tr><td>Images</td><td>WebP ou AVIF, stockage objet et CDN</td><td>Pages de chapitres et couvertures.</td></tr>
+        <tr><td>Rôles et permissions</td><td>Spatie Laravel-Permission</td><td>Rôles de la team uniquement.</td></tr>
+        <tr><td>Tests</td><td>Pest ou PHPUnit, Laravel Dusk</td><td>Fiabilité et non-régression.</td></tr>
+        <tr><td>Monitoring</td><td>Sentry, Telescope, Horizon</td><td>Erreurs et performance.</td></tr>
+        <tr><td>Versioning</td><td>Git et GitHub</td><td>Branches, revue, historique.</td></tr>
+        <tr><td>CI/CD</td><td>GitHub Actions</td><td>Tests et déploiement automatisés.</td></tr>
+        <tr><td>Documentation API</td><td>Scribe</td><td>Documentation de l'API v1.</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p class="prose muted">Vérifie la dernière version stable de Laravel sur laravel.com avant de commencer. Redis, Horizon et Meilisearch ne sont pas nécessaires pour démarrer: ajoute-les quand le site en a besoin.</p>
+</section>
+
+<section id="api">
+  <h3><span class="num">14</span>API et évolutivité</h3>
+  <p class="prose">Même sans compte utilisateur, une API versionnée est utile: elle découple le front et prépare l'application mobile.</p>
+  <div class="code">
+    <div class="code-head"><span>Routes de l'API v1</span><button class="copy" type="button">Copier</button></div>
+<pre><code>GET /api/v1/mangas
+GET /api/v1/mangas/{slug}
+GET /api/v1/chapters/{id}
+GET /api/v1/search?q=...</code></pre>
+  </div>
+  <p class="prose muted">Pas de route <code>POST /api/v1/progress</code>: la progression reste locale. Elle n'aurait de sens qu'avec un compte optionnel en V3.</p>
+</section>
+
+<section id="securite">
+  <h3><span class="num">15</span>Sécurité</h3>
+  <p class="prose">Ces points sont renforcés pour compenser l'absence de comptes lecteurs.</p>
+  <ul class="prose">
+    <li>Validation systématique côté serveur (Form Requests).</li>
+    <li>Policies et Gates pour toutes les actions admin.</li>
+    <li>Protection CSRF et XSS natives de Laravel.</li>
+    <li>Limitation de fréquence renforcée sur les commentaires, les votes et la recherche, puisque seules l'IP et l'empreinte permettent d'identifier un abus.</li>
+    <li>Mots de passe staff hashés avec bcrypt ou argon2.</li>
+    <li>2FA obligatoire pour Owner et Administrateur. Regarde l'authentification multi-facteurs disponible dans la version de Filament que tu installes, ou passe par Fortify.</li>
+    <li>Contrôle strict des uploads: type, taille, contenu.</li>
+    <li>Sessions et cookies sécurisés en production. Le seul cookie public sert à la limitation de fréquence anonyme, jamais à un profil identifiable.</li>
+    <li>Journalisation des actions sensibles dans <code>audit_logs</code>.</li>
+    <li>Séparation claire entre site public et dashboard: sous-domaine et, éventuellement, restriction par IP en plus du login.</li>
+  </ul>
+  <div class="callout warn">
+    <span class="callout-title">Parle de « collecte minimale », pas d'« aucune donnée »</span>
+    <p>Le plan v2 dit qu'aucune donnée personnelle n'est collectée côté lecteur. En pratique, un hash d'adresse IP (<code>ip_hash</code>) peut encore être considéré comme une donnée personnelle par le RGPD. Utilise un hash avec un sel secret, garde-le peu de temps, et mentionne-le dans la politique de confidentialité. Fais valider ce point par un professionnel du droit.</p>
+  </div>
+</section>
+
+<section id="performance">
+  <h3><span class="num">16</span>Performance et scalabilité</h3>
+  <ul class="prose">
+    <li>Index SQL sur les colonnes de recherche et de relation.</li>
+    <li>Pagination systématique des listes.</li>
+    <li>Cache (Redis, plus tard) pour le catalogue, les fiches œuvres et les classements.</li>
+    <li>Files d'attente Laravel pour le traitement d'images et les tâches lourdes.</li>
+    <li>Chargement paresseux et préchargement contrôlé des images dans le lecteur.</li>
+    <li>Conversion et optimisation automatiques des images (WebP ou AVIF), par exemple avec <code>intervention/image</code>.</li>
+    <li>Stockage objet ou CDN (S3, Bunny) dès que le trafic augmente.</li>
+    <li>Surveillance des requêtes lentes et de la consommation serveur: Telescope en développement, Sentry en production.</li>
+    <li>Recherche déportée sur Meilisearch pour ne pas surcharger la base pendant les pics.</li>
+  </ul>
+  <div class="callout ok">
+    <span class="callout-title">Commence simple</span>
+    <p>Pour le MVP, garde la base par défaut (SQLite en local, MariaDB en ligne), une file d'attente en base de données (<code>QUEUE_CONNECTION=database</code>) et le cache par défaut. Ajoute Redis quand les mesures montrent qu'il en faut.</p>
+  </div>
+</section>
+
+<!-- =================== DESIGN =================== -->
+<h2 class="part" id="identite">Design</h2>
+<p class="part-intro">L'identité visuelle de Hidden Scan et la liste des écrans à dessiner.</p>
+
+<section id="design">
+  <h3><span class="num">17</span>Design system et écrans à concevoir</h3>
+
+  <h4>Direction artistique</h4>
+  <ul class="prose">
+    <li>Interface sombre, premium, lisible et immersive. On lit longtemps, souvent le soir.</li>
+    <li>Fond très sombre, surfaces secondaires légèrement plus claires.</li>
+    <li>Accent violet pour la marque Hidden Scan.</li>
+    <li>Typographie sans-serif moderne.</li>
+    <li>Cartes avec une hiérarchie visuelle nette, animations discrètes et rapides.</li>
+    <li>Mobile d'abord: la plupart des lecteurs lisent sur téléphone.</li>
+    <li>Logo utilisable seul, comme favicon et icône PWA.</li>
+  </ul>
+
+  <p class="swatch-title">Palette proposée (clique sur une couleur pour copier son code)</p>
+  <div class="swatches">
+    <button class="swatch" type="button" data-copy="#14111f" style="--c:#14111f"><span class="chip"></span><strong>Encre</strong><span class="role">Fond principal</span><code>#14111f</code><span class="state" aria-live="polite"></span></button>
+    <button class="swatch" type="button" data-copy="#1d1930" style="--c:#1d1930"><span class="chip"></span><strong>Panneau</strong><span class="role">Cartes et blocs</span><code>#1d1930</code><span class="state" aria-live="polite"></span></button>
+    <button class="swatch" type="button" data-copy="#2a2445" style="--c:#2a2445"><span class="chip"></span><strong>Panneau clair</strong><span class="role">Survol, éléments relevés</span><code>#2a2445</code><span class="state" aria-live="polite"></span></button>
+    <button class="swatch" type="button" data-copy="#3d3660" style="--c:#3d3660"><span class="chip"></span><strong>Trait</strong><span class="role">Bordures et séparateurs</span><code>#3d3660</code><span class="state" aria-live="polite"></span></button>
+    <button class="swatch" type="button" data-copy="#ece9f7" style="--c:#ece9f7"><span class="chip"></span><strong>Craie</strong><span class="role">Texte principal</span><code>#ece9f7</code><span class="state" aria-live="polite"></span></button>
+    <button class="swatch" type="button" data-copy="#a39fc0" style="--c:#a39fc0"><span class="chip"></span><strong>Brume</strong><span class="role">Texte secondaire</span><code>#a39fc0</code><span class="state" aria-live="polite"></span></button>
+    <button class="swatch" type="button" data-copy="#9b7bff" style="--c:#9b7bff"><span class="chip"></span><strong>Violet</strong><span class="role">Accent, boutons, liens</span><code>#9b7bff</code><span class="state" aria-live="polite"></span></button>
+  </div>
+  <p class="swatch-title">Couleurs de statut</p>
+  <div class="swatches">
+    <button class="swatch" type="button" data-copy="#5fd3a6" style="--c:#5fd3a6"><span class="chip"></span><strong>Menthe</strong><span class="role">Publié, succès</span><code>#5fd3a6</code><span class="state" aria-live="polite"></span></button>
+    <button class="swatch" type="button" data-copy="#f5b84b" style="--c:#f5b84b"><span class="chip"></span><strong>Ambre</strong><span class="role">Contrôle, attention</span><code>#f5b84b</code><span class="state" aria-live="polite"></span></button>
+    <button class="swatch" type="button" data-copy="#6fb3ff" style="--c:#6fb3ff"><span class="chip"></span><strong>Ciel</strong><span class="role">Programmé, information</span><code>#6fb3ff</code><span class="state" aria-live="polite"></span></button>
+    <button class="swatch" type="button" data-copy="#ff7ba8" style="--c:#ff7ba8"><span class="chip"></span><strong>Rose</strong><span class="role">Signalement, erreur</span><code>#ff7ba8</code><span class="state" aria-live="polite"></span></button>
+  </div>
+
+  <h4>Utiliser la palette dans Tailwind</h4>
+  <p class="prose">Le projet Laravel arrive avec Tailwind. Déclare tes couleurs une fois dans <code>resources/css/app.css</code>, et tu pourras écrire <code>bg-ink</code>, <code>text-chalk</code>, <code>border-line</code>, <code>text-violet</code> dans tes vues.</p>
+  <div class="code">
+    <div class="code-head"><span>resources/css/app.css</span><button class="copy" type="button">Copier</button></div>
+<pre><code>@import "tailwindcss";
+
+@theme {
+  --color-ink: #14111f;
+  --color-panel: #1d1930;
+  --color-panel-hi: #2a2445;
+  --color-line: #3d3660;
+  --color-chalk: #ece9f7;
+  --color-mist: #a39fc0;
+  --color-violet: #9b7bff;
+  --color-mint: #5fd3a6;
+  --color-amber: #f5b84b;
+  --color-sky: #6fb3ff;
+  --color-rose: #ff7ba8;
+}</code></pre>
+  </div>
+
+  <h4>Typographie</h4>
+  <p class="prose">Bricolage Grotesque pour les titres, Hanken Grotesk pour le texte, deux polices gratuites. Héberge-les sur ton propre serveur plutôt que de les charger depuis Google: sinon l'adresse IP de chaque lecteur part chez un tiers, ce qui contredit la promesse de collecte minimale.</p>
+
+  <h4>Détails qui font la différence</h4>
+  <ul class="prose">
+    <li>Cartes d'œuvres avec une couverture verticale au ratio 2:3 et un badge de type (manga, manhwa, manhua).</li>
+    <li>Lecteur sans distraction: une barre discrète qui se masque quand on défile.</li>
+    <li>Badges de statut cohérents dans tout le dashboard: brouillon, contrôle, programmé, publié.</li>
+  </ul>
+
+  <h4>Écrans à concevoir dans Figma</h4>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Site public</th><th>Dashboard admin</th></tr></thead>
+      <tbody>
+        <tr><td>Design system (couleurs, typographie, composants)</td><td>Accueil et statistiques</td></tr>
+        <tr><td>Accueil, ordinateur et mobile</td><td>Gestion des œuvres</td></tr>
+        <tr><td>Catalogue, ordinateur et mobile</td><td>Gestion des chapitres</td></tr>
+        <tr><td>Recherche</td><td>Écran d'upload ZIP</td></tr>
+        <tr><td>Page œuvre</td><td>Modération des commentaires</td></tr>
+        <tr><td>Lecteur, mode vertical et mode page</td><td>Gestion des rôles staff</td></tr>
+        <tr><td>Bibliothèque locale et favoris</td><td></td></tr>
+        <tr><td>Commentaires avec champ pseudo</td><td></td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<!-- =================== RÉALISATION =================== -->
+<h2 class="part" id="realisation">Réalisation</h2>
+<p class="part-intro">Dans quel ordre construire, tester et lancer.</p>
+
+<section id="demarrage">
+  <h3><span class="num">18</span>Démarrer pas à pas sur Linux</h3>
+  <p class="prose">Les commandes ci-dessous supposent Debian ou Ubuntu. Chaque bloc se copie et se colle dans un terminal. Vérifie toujours la commande dans la documentation officielle (<a href="https://laravel.com/docs" target="_blank" rel="noopener">laravel.com/docs</a>, <a href="https://filamentphp.com/docs" target="_blank" rel="noopener">filamentphp.com/docs</a>): les versions bougent.</p>
+
+  <h4>Étape 1: installer les outils</h4>
+  <div class="code">
+    <div class="code-head"><span>Terminal</span><button class="copy" type="button">Copier</button></div>
+<pre><code>sudo apt update
+sudo apt install php php-cli php-mbstring php-xml php-curl php-zip php-sqlite3 php-mysql php-gd php-intl unzip git curl
+php -v</code></pre>
+  </div>
+  <p class="prose">La dernière commande affiche ta version de PHP: il en faut 8.3 ou plus. Si <code>apt</code> en propose une plus ancienne, cherche « php 8.3 ubuntu ppa ondrej ». Installe ensuite Composer en suivant <a href="https://getcomposer.org/download/" target="_blank" rel="noopener">getcomposer.org/download</a>, et Node.js (version 20 ou plus) avec <a href="https://github.com/nvm-sh/nvm" target="_blank" rel="noopener">nvm</a>.</p>
+
+  <h4>Étape 2: créer le projet</h4>
+  <div class="code">
+    <div class="code-head"><span>Terminal</span><button class="copy" type="button">Copier</button></div>
+<pre><code>composer create-project laravel/laravel hidden-scan
+cd hidden-scan
+git init
+git add .
+git commit -m "Projet Laravel initial"
+php artisan serve</code></pre>
+  </div>
+  <p class="prose">Ouvre <code>http://localhost:8000</code> dans ton navigateur: tu dois voir la page d'accueil de Laravel. Laravel utilise SQLite par défaut, ce qui est parfait pour débuter. Tu passeras à MariaDB avant la mise en ligne.</p>
+
+  <h4>Étape 3: installer le dashboard admin</h4>
+  <div class="code">
+    <div class="code-head"><span>Terminal (dans le dossier du projet)</span><button class="copy" type="button">Copier</button></div>
+<pre><code>composer require filament/filament
+php artisan filament:install --panels
+php artisan make:filament-user</code></pre>
+  </div>
+  <p class="prose">Filament installe Livewire avec lui. Choisis <code>admin</code> comme identifiant de panel quand la commande te le demande, puis connecte-toi sur <code>/admin</code> avec le compte que tu viens de créer.</p>
+
+  <h4>Étape 4: ajouter les rôles</h4>
+  <div class="code">
+    <div class="code-head"><span>Terminal</span><button class="copy" type="button">Copier</button></div>
+<pre><code>composer require spatie/laravel-permission
+php artisan vendor:publish --provider="Spatie\Permission\PermissionServiceProvider"
+php artisan migrate</code></pre>
+  </div>
+
+  <h4>Étape 5: créer les modèles et les migrations</h4>
+  <div class="code">
+    <div class="code-head"><span>Terminal</span><button class="copy" type="button">Copier</button></div>
+<pre><code>php artisan make:model Manga -m
+php artisan make:model Chapter -m
+php artisan make:model ChapterPage -m
+php artisan make:model Genre -m
+php artisan make:model Tag -m
+php artisan make:model Author -m
+php artisan make:model Artist -m
+php artisan make:model Comment -m</code></pre>
+  </div>
+  <p class="prose">Chaque commande crée un modèle et sa migration dans <code>database/migrations</code>. Remplis les colonnes selon la section 12, puis lance <code>php artisan migrate</code>. Définis ensuite les relations dans les modèles: <code>hasMany</code> pour un manga et ses chapitres, <code>belongsToMany</code> pour un manga et ses genres.</p>
+
+  <h4>Étape 6: lancer le front</h4>
+  <div class="code">
+    <div class="code-head"><span>Terminal (deuxième fenêtre)</span><button class="copy" type="button">Copier</button></div>
+<pre><code>npm install
+npm run dev</code></pre>
+  </div>
+  <p class="prose">Laisse cette commande tourner pendant que tu codes: Vite recompile le CSS et le JavaScript à chaque enregistrement.</p>
+
+  <div class="callout warn">
+    <span class="callout-title">N'installe pas Breeze</span>
+    <p>Breeze crée des inscriptions et des connexions pour des utilisateurs, ce que Hidden Scan ne veut pas côté lecteurs. La connexion de la team est fournie par Filament.</p>
+  </div>
+</section>
+
+<section id="roadmap">
+  <h3><span class="num">19</span>Roadmap de développement</h3>
+  <p class="prose">Coche les phases au fur et à mesure.</p>
+  <div class="progress">
+    <div class="bar" aria-hidden="true"><span id="phase-bar"></span></div>
+    <output id="phase-count" aria-live="polite">0 sur 13 phases terminées</output>
+  </div>
+  <p class="save-note">Ta progression est enregistrée dans ce navigateur, sur cet appareil.</p>
+
+  <ol class="phases">
+    <li class="phase"><input type="checkbox" id="phase-0" data-key="phase-0"><label for="phase-0">Phase 0, Cadrage</label><span class="time">2 à 4 jours</span><p>Validation des fonctionnalités, des rôles, des parcours et de l'architecture.</p></li>
+    <li class="phase"><input type="checkbox" id="phase-1" data-key="phase-1"><label for="phase-1">Phase 1, UX/UI</label><span class="time">1 à 2 semaines</span><p>Figma, design system, écrans ordinateur et mobile.</p></li>
+    <li class="phase"><input type="checkbox" id="phase-2" data-key="phase-2"><label for="phase-2">Phase 2, Fondations Laravel</label><span class="time">3 à 5 jours</span><p>Projet, base de données, connexion staff, Livewire, rôles, policies.</p></li>
+    <li class="phase"><input type="checkbox" id="phase-3" data-key="phase-3"><label for="phase-3">Phase 3, Catalogue</label><span class="time">1 à 2 semaines</span><p>Œuvres, genres, recherche, page œuvre, chapitres.</p></li>
+    <li class="phase"><input type="checkbox" id="phase-4" data-key="phase-4"><label for="phase-4">Phase 4, Lecteur</label><span class="time">1 à 2 semaines</span><p>Modes de lecture, progression locale, lazy loading, navigation.</p></li>
+    <li class="phase"><input type="checkbox" id="phase-5" data-key="phase-5"><label for="phase-5">Phase 5, Favoris et historique locaux</label><span class="time">3 à 4 jours</span><p>Bibliothèque en localStorage, export et import.</p></li>
+    <li class="phase"><input type="checkbox" id="phase-6" data-key="phase-6"><label for="phase-6">Phase 6, Communauté sans compte</label><span class="time">environ 1 semaine</span><p>Commentaires par pseudo, likes, signalements, anti-spam.</p></li>
+    <li class="phase"><input type="checkbox" id="phase-7" data-key="phase-7"><label for="phase-7">Phase 7, Dashboard admin</label><span class="time">1 à 2 semaines</span><p>Connexion staff, dashboard, publication, gestion des rôles.</p></li>
+    <li class="phase"><input type="checkbox" id="phase-8" data-key="phase-8"><label for="phase-8">Phase 8, Upload automatisé</label><span class="time">4 à 7 jours</span><p>Pipeline ZIP, traitement, optimisation, stockage.</p></li>
+    <li class="phase"><input type="checkbox" id="phase-9" data-key="phase-9"><label for="phase-9">Phase 9, Performance</label><span class="time">3 à 5 jours</span><p>Redis, files d'attente, cache, CDN, indexation.</p></li>
+    <li class="phase"><input type="checkbox" id="phase-10" data-key="phase-10"><label for="phase-10">Phase 10, Sécurité</label><span class="time">3 à 5 jours</span><p>Audit, 2FA staff, durcissement.</p></li>
+    <li class="phase"><input type="checkbox" id="phase-11" data-key="phase-11"><label for="phase-11">Phase 11, SEO et PWA</label><span class="time">3 à 5 jours</span><p>Sitemap, balises meta, manifest, expérience installable.</p></li>
+    <li class="phase"><input type="checkbox" id="phase-12" data-key="phase-12"><label for="phase-12">Phase 12, Bêta</label><span class="time">variable</span><p>Tests réels, corrections, stabilisation.</p></li>
+  </ol>
+
+  <div class="callout">
+    <span class="callout-title">Combien de temps, vraiment</span>
+    <p>L'estimation du MVP est de 12 à 16 semaines pour une équipe. Si tu codes seul en apprenant, prévois plutôt le double. Pour un premier prototype qui fonctionne, les phases 2, 3, 4 et 7 suffisent: ajoute les chapitres à la main depuis Filament au début, et construis le pipeline ZIP (phase 8) ensuite.</p>
+  </div>
+</section>
+
+<section id="tests">
+  <h3><span class="num">20</span>Tests et qualité</h3>
+  <ul class="prose">
+    <li>Tests unitaires des services et des règles métier (calcul de la note moyenne, workflow de publication).</li>
+    <li>Tests fonctionnels des parcours publics: recherche, lecture d'un chapitre, dépôt d'un commentaire.</li>
+    <li>Tests d'autorisation des rôles staff: un traducteur ne doit jamais pouvoir publier directement.</li>
+    <li>Tests du pipeline d'upload ZIP: fichiers valides, invalides, cas limites.</li>
+    <li>Tests de la progression de lecture côté navigateur (JavaScript), avec Cypress ou Playwright si besoin.</li>
+    <li>Tests sur navigateur mobile et ordinateur avec Laravel Dusk.</li>
+    <li>Tests de non-régression avant chaque déploiement, lancés par l'intégration continue.</li>
+  </ul>
+</section>
+
+<section id="git">
+  <h3><span class="num">21</span>Git et workflow de développement</h3>
+  <div class="code">
+    <div class="code-head"><span>Branches recommandées</span><button class="copy" type="button">Copier</button></div>
+<pre><code>main                    production
+develop                 intégration
+feature/catalog
+feature/reader
+feature/admin
+feature/community       commentaires sans compte
+feature/upload-pipeline</code></pre>
+  </div>
+  <p class="prose">Chaque fonctionnalité importante se développe sur sa branche, se teste, puis se fusionne dans <code>develop</code>. Les migrations et changements de schéma sont versionnés.</p>
+</section>
+
+<section id="qualite">
+  <h3><span class="num">22</span>Critères de qualité avant le lancement</h3>
+  <div class="progress">
+    <div class="bar" aria-hidden="true"><span id="quality-bar"></span></div>
+    <output id="quality-count" aria-live="polite">0 sur 10 critères validés</output>
+  </div>
+  <ul class="checks">
+    <li class="check"><input type="checkbox" id="q-1" data-key="quality-1"><label for="q-1">Aucun rôle staff ne possède de permission excessive par défaut.</label></li>
+    <li class="check"><input type="checkbox" id="q-2" data-key="quality-2"><label for="q-2">Un visiteur peut ouvrir un chapitre et naviguer sans erreur sur mobile et ordinateur, sans jamais être invité à se connecter.</label></li>
+    <li class="check"><input type="checkbox" id="q-3" data-key="quality-3"><label for="q-3">La progression de lecture est correctement sauvegardée et restaurée en local.</label></li>
+    <li class="check"><input type="checkbox" id="q-4" data-key="quality-4"><label for="q-4">Les images sont optimisées et chargées progressivement.</label></li>
+    <li class="check"><input type="checkbox" id="q-5" data-key="quality-5"><label for="q-5">Les uploads invalides sont refusés proprement côté admin.</label></li>
+    <li class="check"><input type="checkbox" id="q-6" data-key="quality-6"><label for="q-6">Les actions administratives critiques sont journalisées.</label></li>
+    <li class="check"><input type="checkbox" id="q-7" data-key="quality-7"><label for="q-7">Le dashboard est inaccessible sans authentification staff, et invisible depuis le site public.</label></li>
+    <li class="check"><input type="checkbox" id="q-8" data-key="quality-8"><label for="q-8">Les tests critiques passent avant chaque mise en production.</label></li>
+    <li class="check"><input type="checkbox" id="q-9" data-key="quality-9"><label for="q-9">Les sauvegardes de la base de données et des fichiers sont prévues.</label></li>
+    <li class="check"><input type="checkbox" id="q-10" data-key="quality-10"><label for="q-10">Une stratégie de surveillance et de restauration existe.</label></li>
+  </ul>
+</section>
+
+<section id="hebergement">
+  <h3><span class="num">23</span>Hébergement à petit budget</h3>
+  <ul class="prose">
+    <li>Pour les premiers tests, un petit VPS à quelques euros par mois suffit, avec PHP 8.3, MariaDB et un accès SSH.</li>
+    <li>Les images sont ce qui coûte le plus quand le trafic monte. Passe au stockage objet avec CDN (Cloudflare R2, Bunny) quand c'est nécessaire, et vérifie les tarifs actuels: R2 ne facture pas la sortie de données.</li>
+    <li>Cloudflare (offre gratuite) devant le site apporte un CDN et une protection de base.</li>
+    <li>N'ajoute Redis, Meilisearch et un CDN payant qu'une fois que tu as des visiteurs.</li>
+    <li>Mets en place des sauvegardes automatiques de la base et des images dès le premier jour.</li>
+  </ul>
+</section>
+
+<section id="legal">
+  <h3><span class="num">24</span>Points d'attention légaux</h3>
+  <div class="callout warn">
+    <span class="callout-title">Le risque dépend du contenu publié</span>
+    <p>La diffusion de traductions non officielles d'œuvres protégées par le droit d'auteur pose des questions de propriété intellectuelle dans la plupart des pays, quel que soit le modèle de compte choisi. Le code du site est le même, mais le contenu change tout: privilégie les œuvres libres de droits, les œuvres originales et celles pour lesquelles tu as l'accord écrit des ayants droit.</p>
+  </div>
+  <ul class="prose">
+    <li>Renseigne-toi sur la législation de ton pays et de celui de tes lecteurs.</li>
+    <li>Prévois une procédure de retrait de contenu à la demande des ayants droit (type DMCA), accessible sur le site.</li>
+    <li>Rédige clairement les CGU, les mentions légales et la politique de confidentialité, en insistant sur la collecte minimale de données côté public.</li>
+    <li>Prévois de retirer les séries qui obtiennent une licence officielle en français.</li>
+  </ul>
+  <p class="prose muted">Ces questions sont à valider avec un professionnel du droit pour sécuriser durablement le projet.</p>
+</section>
+
+<section id="suites">
+  <h3><span class="num">25</span>Prochaines étapes techniques</h3>
+  <p class="prose">Une fois ce document validé, la conception passe au niveau détaillé:</p>
+  <ul class="prose">
+    <li>Schéma complet des tables et colonnes (MCD et MLD).</li>
+    <li>Clés étrangères, index et enums définitifs.</li>
+    <li>Routes Laravel détaillées (<code>web.php</code>, <code>admin.php</code>, <code>api.php</code>).</li>
+    <li>Middleware et Policies précis.</li>
+    <li>Arborescence complète des composants Livewire (<code>Public/</code> et <code>Admin/</code>).</li>
+    <li>Spécification détaillée du lecteur: format de sauvegarde localStorage et structure JSON de la progression.</li>
+    <li>Choix définitif entre <code>/admin</code> en préfixe de route et un sous-domaine dédié.</li>
+  </ul>
+</section>
+
+</main>
+</div>
+
+<footer>
+  <p>Fin du document. Plan de développement Hidden Scan v2.0, fusion sans compte lecteur et dashboard admin séparé.</p>
+</footer>
+
+<script>
+(function () {
+  /* Sommaire: replié sur mobile */
+  var toc = document.querySelector('.toc');
+  if (toc && window.innerWidth < 960) { toc.open = false; }
+
+  /* Sommaire: section active pendant le défilement */
+  var links = [].slice.call(document.querySelectorAll('.toc a'));
+  var byId = {};
+  links.forEach(function (a) { byId[a.getAttribute('href').slice(1)] = a; });
+  if ('IntersectionObserver' in window) {
+    var io = new IntersectionObserver(function (entries) {
+      entries.forEach(function (e) {
+        if (!e.isIntersecting) { return; }
+        links.forEach(function (a) { a.removeAttribute('aria-current'); });
+        var a = byId[e.target.id];
+        if (a) { a.setAttribute('aria-current', 'true'); }
+      });
+    }, { rootMargin: '-15% 0px -75% 0px' });
+    [].slice.call(document.querySelectorAll('main section[id]')).forEach(function (s) { io.observe(s); });
+  }
+
+  /* Copier du texte */
+  function copyText(text) {
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      return navigator.clipboard.writeText(text);
+    }
+    return new Promise(function (resolve, reject) {
+      var ta = document.createElement('textarea');
+      ta.value = text;
+      ta.style.position = 'fixed';
+      ta.style.opacity = '0';
+      document.body.appendChild(ta);
+      ta.select();
+      var ok = false;
+      try { ok = document.execCommand('copy'); } catch (err) { ok = false; }
+      document.body.removeChild(ta);
+      ok ? resolve() : reject();
+    });
+  }
+
+  document.addEventListener('click', function (e) {
+    var btn = e.target.closest('.copy');
+    if (btn) {
+      var code = btn.closest('.code').querySelector('code');
+      copyText(code.innerText).then(function () {
+        btn.textContent = 'Copié';
+        setTimeout(function () { btn.textContent = 'Copier'; }, 1600);
+      }, function () {
+        btn.textContent = 'Échec';
+        setTimeout(function () { btn.textContent = 'Copier'; }, 1600);
+      });
+      return;
+    }
+    var sw = e.target.closest('.swatch');
+    if (sw) {
+      var state = sw.querySelector('.state');
+      copyText(sw.getAttribute('data-copy')).then(function () {
+        state.textContent = 'Copié';
+        setTimeout(function () { state.textContent = ''; }, 1600);
+      }, function () {});
+    }
+  });
+
+  /* Cases à cocher enregistrées dans le navigateur */
+  var PREFIX = 'hiddenscan-plan:';
+  function read(k) { try { return localStorage.getItem(PREFIX + k); } catch (err) { return null; } }
+  function write(k, v) { try { localStorage.setItem(PREFIX + k, v); } catch (err) {} }
+
+  var boxes = [].slice.call(document.querySelectorAll('input[data-key]'));
+
+  function reflect(box) {
+    var li = box.closest('li');
+    if (li) { li.classList.toggle('done', box.checked); }
+  }
+
+  function update(prefix, barId, countId, total, wordOne, wordMany) {
+    var done = boxes.filter(function (b) {
+      return b.getAttribute('data-key').indexOf(prefix) === 0 && b.checked;
+    }).length;
+    document.getElementById(barId).style.width = (done / total * 100) + '%';
+    document.getElementById(countId).textContent = done + ' sur ' + total + ' ' + (done > 1 ? wordMany : wordOne);
+  }
+
+  function updateAll() {
+    update('phase-', 'phase-bar', 'phase-count', 13, 'phase terminée', 'phases terminées');
+    update('quality-', 'quality-bar', 'quality-count', 10, 'critère validé', 'critères validés');
+  }
+
+  boxes.forEach(function (box) {
+    if (read(box.getAttribute('data-key')) === '1') { box.checked = true; }
+    reflect(box);
+    box.addEventListener('change', function () {
+      write(box.getAttribute('data-key'), box.checked ? '1' : '0');
+      reflect(box);
+      updateAll();
+    });
+  });
+  updateAll();
+})();
+</script>
+</body>
+</html>

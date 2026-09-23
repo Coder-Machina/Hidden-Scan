@@ -9,10 +9,11 @@ class Manga extends Model
 {
     use HasFactory;
 
-    protected $fillable = [
+   protected $fillable = [
         'title', 'slug', 'synopsis', 'cover_image', 'banner_image',
         'author_id', 'artist_id', 'type', 'status',
         'release_year', 'views_count', 'is_featured',
+        'average_rating', 'ratings_count',
     ];
 
     public function author()

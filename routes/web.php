@@ -8,6 +8,7 @@ use App\Http\Controllers\Public\LibraryController;
 
 Route::get('/', [HomeController::class, 'index'])->name('home');
 Route::get('/bibliotheque', [LibraryController::class, 'index'])->name('library');
+Route::post('/manga/{slug}/noter', [MangaController::class, 'rate'])->name('manga.rate');
 
 Route::prefix('manga')->name('manga.')->group(function () {
     Route::get('/', [MangaController::class, 'index'])->name('index');

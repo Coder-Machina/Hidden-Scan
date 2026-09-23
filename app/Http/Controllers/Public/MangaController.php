@@ -56,4 +56,23 @@ class MangaController extends Controller
 
         return view('public.manga.show', compact('manga'));
     }
+
+    public function rate(string $slug, \Illuminate\Http\Request $request)
+    {
+        $request->validate(['score' => 'required|integer|min:1|max:5']);
+
+        $manga = Manga::where('slug', $slug)->firstOrFail();
+        $score = $request->score;
+
+        // Recalcule la moyenne
+        $total = ($manga->average_rating * $manga->ratings_count) + $score;
+        $manga->ratings_count += 1;
+        $manga->average_rating = round($total / $manga->ratings_count, 1);
+        $manga->save();
+
+        return response()->json([
+            'average' => $manga->average_rating,
+            'count'   => $manga->ratings_count,
+        ]);
+    }
 }
