@@ -60,20 +60,20 @@
                         <p class="text-sm text-mist leading-relaxed mb-3 whitespace-pre-wrap">{{ $comment->content }}</p>
                         
                         <div class="flex items-center gap-4 text-xs font-semibold text-mist/70">
-                            {{-- TODO: Likes feature (Phase 6) --}}
-                            <button class="flex items-center gap-1.5 hover:text-rose transition">
+                            {{-- Likes feature --}}
+                            <button wire:click="toggleLike({{ $comment->id }})" class="flex items-center gap-1.5 hover:text-rose transition">
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/></svg>
-                                0
+                                {{ $comment->likes_count ?? 0 }}
                             </button>
                             
                             {{-- Formulaire de réponse (bientôt) --}}
-                            <button class="flex items-center gap-1.5 hover:text-chalk transition">
+                            <button wire:click="replyTo({{ $comment->id }}, '{{ addslashes($comment->pseudo) }}')" class="flex items-center gap-1.5 hover:text-chalk transition">
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6"/></svg>
                                 Répondre
                             </button>
                             
                             {{-- Bouton de signalement --}}
-                            <button class="flex items-center gap-1.5 hover:text-amber ml-auto transition" title="Signaler">
+                            <button wire:click="report({{ $comment->id }})" onclick="confirm('Signaler ce commentaire à la modération ?') || event.stopImmediatePropagation()" class="flex items-center gap-1.5 hover:text-amber ml-auto transition" title="Signaler">
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
                             </button>
                         </div>
