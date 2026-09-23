@@ -22,8 +22,6 @@ class ChaptersTable
                     ->sortable(),
                 TextColumn::make('title')
                     ->searchable(),
-                TextColumn::make('slug')
-                    ->searchable(),
                 TextColumn::make('status')
                     ->badge(),
                 TextColumn::make('uploaded_by')
@@ -51,6 +49,25 @@ class ChaptersTable
                 //
             ])
             ->recordActions([
+                \Filament\Tables\Actions\Action::make('publish')
+                    ->label('Publier')
+                    ->icon('heroicon-m-check-circle')
+                    ->color('success')
+                    ->requiresConfirmation()
+                    ->visible(fn (Chapter $record): bool => $record->status !== \App\Enums\ChapterStatus::PUBLIE)
+                    ->action(function (Chapter $record) {
+                        $record->update([
+                            'status' => \App\Enums\ChapterStatus::PUBLIE,
+                            'published_at' => now(),
+                        ]);
+                        // Action Logging here if needed
+                    }),
+                \Filament\Tables\Actions\Action::make('control')
+                    ->label('Contrôler')
+                    ->icon('heroicon-m-magnifying-glass')
+                    ->color('warning')
+                    ->visible(fn (Chapter $record): bool => $record->status === \App\Enums\ChapterStatus::BROUILLON)
+                    ->action(fn (Chapter $record) => $record->update(['status' => \App\Enums\ChapterStatus::CONTROLE])),
                 EditAction::make(),
             ])
             ->toolbarActions([
