@@ -1,0 +1,12 @@
+node_modules
+vendor
+.git
+.github
+.env
+.env.backup
+.env.production
+tests
+storage/*.key
+.phpunit.result.cache
+*.log
+cloudflared

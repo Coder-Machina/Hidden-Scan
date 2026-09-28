@@ -1,0 +1,39 @@
+services:
+  - type: web
+    name: hidden-scan
+    runtime: docker
+    plan: free
+    region: frankfurt
+    dockerfilePath: Dockerfile
+    envVars:
+      - key: APP_NAME
+        value: "Hidden Scan"
+      - key: APP_ENV
+        value: production
+      - key: APP_DEBUG
+        value: false
+      - key: APP_KEY
+        generateValue: true
+      - key: LOG_CHANNEL
+        value: stderr
+      - key: APP_TIMEZONE
+        value: Europe/Paris
+      - key: SESSION_DRIVER
+        value: file
+      - key: CACHE_STORE
+        value: file
+      - key: DB_CONNECTION
+        value: sqlite
+      # Décommentez et remplissez ci-dessous si vous utilisez une base MySQL/MariaDB externe :
+      # - key: DB_CONNECTION
+      #   value: mysql
+      # - key: DB_HOST
+      #   sync: false
+      # - key: DB_PORT
+      #   value: "3306"
+      # - key: DB_DATABASE
+      #   sync: false
+      # - key: DB_USERNAME
+      #   sync: false
+      # - key: DB_PASSWORD
+      #   sync: false
