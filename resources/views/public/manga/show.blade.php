@@ -519,9 +519,10 @@
                 <h2 class="section-title-tags">Tags</h2>
                 <div class="tags-wrap-list">
                     @foreach($manga->tags as $tag)
-                        <span class="tag-item-neutral">
-                            {{ $tag->name }}
-                        </span>
+                        <a href="{{ route('manga.index', ['tag' => $tag->slug]) }}"
+                           class="tag-item-neutral hover:!border-red-500/50 hover:!text-white hover:!bg-red-950/20 transition-all cursor-pointer">
+                            #{{ $tag->name }}
+                        </a>
                     @endforeach
                 </div>
             </div>

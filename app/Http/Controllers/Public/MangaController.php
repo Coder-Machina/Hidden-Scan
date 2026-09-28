@@ -33,6 +33,19 @@ class MangaController extends Controller
             });
         }
 
+        // Inclusion de tags
+        if ($request->filled('include_tags') && is_array($request->include_tags)) {
+            foreach ($request->include_tags as $tagSlug) {
+                $query->whereHas('tags', function ($q) use ($tagSlug) {
+                    $q->where('slug', $tagSlug);
+                });
+            }
+        } elseif ($request->filled('tag')) {
+            $query->whereHas('tags', function ($q) use ($request) {
+                $q->where('slug', $request->tag);
+            });
+        }
+
         if ($request->filled('type')) {
             $query->where('type', $request->type);
         }
@@ -67,8 +80,9 @@ class MangaController extends Controller
 
         $mangas = $query->paginate(24);
         $genres = Genre::orderBy('name')->get();
+        $tags = \App\Models\Tag::orderBy('name')->get();
 
-        return view('public.manga.index', compact('mangas', 'genres'));
+        return view('public.manga.index', compact('mangas', 'genres', 'tags'));
     }
 
     public function show(string $slug)

@@ -257,38 +257,43 @@
             </a>
         </div>
 
-        {{-- Category Filter Bar (Seamless & Borderless) --}}
-        <div class="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-none mb-7">
+        {{-- Category Filter Bar (Seamless & Borderless, Mobile-friendly Edge-to-Edge) --}}
+        <div class="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-none mb-7 -mx-4 px-4 sm:mx-0 sm:px-0">
             <button type="button" @click="category = 'all'" 
                     :class="category === 'all' ? 'bg-[#1e2029] text-white font-semibold' : 'text-[#7d849a] hover:text-white hover:bg-[#1e2029]/50'" 
-                    class="px-5 py-2 rounded-full text-sm transition-colors duration-200 cursor-pointer select-none">
-                Tout
+                    class="px-4 py-2 rounded-full text-sm transition-colors duration-200 cursor-pointer select-none whitespace-nowrap flex-shrink-0 flex items-center gap-1.5">
+                <span>Tout</span>
+                <span class="text-[11px] px-1.5 py-0.2 rounded-full bg-white/10 text-mist" x-text="items.length"></span>
             </button>
             <button type="button" @click="category = 'manhwa'" 
                     :class="category === 'manhwa' ? 'bg-[#1e2029] text-white font-semibold' : 'text-[#7d849a] hover:text-white hover:bg-[#1e2029]/50'" 
-                    class="px-5 py-2 rounded-full text-sm transition-colors duration-200 cursor-pointer select-none">
-                Manhwa
+                    class="px-4 py-2 rounded-full text-sm transition-colors duration-200 cursor-pointer select-none whitespace-nowrap flex-shrink-0 flex items-center gap-1.5">
+                <span>Manhwa</span>
+                <span class="text-[11px] px-1.5 py-0.2 rounded-full bg-white/10 text-mist" x-text="items.filter(i => i.type === 'manhwa').length"></span>
             </button>
             <button type="button" @click="category = 'manhua'" 
                     :class="category === 'manhua' ? 'bg-[#1e2029] text-white font-semibold' : 'text-[#7d849a] hover:text-white hover:bg-[#1e2029]/50'" 
-                    class="px-5 py-2 rounded-full text-sm transition-colors duration-200 cursor-pointer select-none">
-                Manhua
+                    class="px-4 py-2 rounded-full text-sm transition-colors duration-200 cursor-pointer select-none whitespace-nowrap flex-shrink-0 flex items-center gap-1.5">
+                <span>Manhua</span>
+                <span class="text-[11px] px-1.5 py-0.2 rounded-full bg-white/10 text-mist" x-text="items.filter(i => i.type === 'manhua').length"></span>
             </button>
             <button type="button" @click="category = 'manga'" 
                     :class="category === 'manga' ? 'bg-[#1e2029] text-white font-semibold' : 'text-[#7d849a] hover:text-white hover:bg-[#1e2029]/50'" 
-                    class="px-5 py-2 rounded-full text-sm transition-colors duration-200 cursor-pointer select-none">
-                Manga
+                    class="px-4 py-2 rounded-full text-sm transition-colors duration-200 cursor-pointer select-none whitespace-nowrap flex-shrink-0 flex items-center gap-1.5">
+                <span>Manga</span>
+                <span class="text-[11px] px-1.5 py-0.2 rounded-full bg-white/10 text-mist" x-text="items.filter(i => i.type === 'manga').length"></span>
             </button>
             <button type="button" @click="category = 'favorites'" 
                     :class="category === 'favorites' ? 'bg-[#1e2029] text-white font-semibold' : 'text-[#7d849a] hover:text-white hover:bg-[#1e2029]/50'" 
-                    class="px-5 py-2 rounded-full text-sm transition-colors duration-200 cursor-pointer select-none flex items-center gap-1.5">
+                    class="px-4 py-2 rounded-full text-sm transition-colors duration-200 cursor-pointer select-none whitespace-nowrap flex-shrink-0 flex items-center gap-1.5">
                 <svg class="w-3.5 h-3.5 text-rose" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z" clip-rule="evenodd"/></svg>
-                Favoris
+                <span>Favoris</span>
+                <span class="text-[11px] px-1.5 py-0.2 rounded-full bg-rose-500/20 text-rose-300" x-text="items.filter(i => favSlugs.includes(i.slug)).length"></span>
             </button>
         </div>
 
         {{-- Manga Grid --}}
-        <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
+        <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4" x-show="count > 0">
             @foreach($latest_updates as $index => $manga)
                 <div x-show="isVisible('{{ $manga->type->value }}', '{{ $manga->slug }}')"
                      x-transition:enter="transition ease-out duration-200"
@@ -298,6 +303,29 @@
                     <x-manga-card :manga="$manga" :show-chapters="true" />
                 </div>
             @endforeach
+        </div>
+
+        {{-- Message d'état vide explicite si aucun résultat pour le filtre sélectionné --}}
+        <div x-show="count === 0" x-cloak class="p-8 text-center bg-panel/70 border border-line/50 rounded-2xl animate-fade-in my-4">
+            <div class="w-12 h-12 mx-auto mb-3 rounded-2xl bg-panel-hi flex items-center justify-center text-xl shadow-inner">
+                <span x-show="category === 'favorites'">💖</span>
+                <span x-show="category !== 'favorites'">📚</span>
+            </div>
+            <p class="text-sm font-bold text-chalk" x-text="emptyMessage"></p>
+            <p class="text-xs text-mist mt-1 max-w-md mx-auto" x-show="category === 'favorites'">
+                Vous n'avez pas encore de série en favoris parmi les sorties récentes. Cliquez sur le cœur ❤️ d'un manga pour l'épingler ici !
+            </p>
+            <p class="text-xs text-mist mt-1 max-w-md mx-auto" x-show="category !== 'favorites'">
+                Aucune œuvre de cette catégorie n'a eu de nouveau chapitre récemment publié.
+            </p>
+            <div class="mt-4 flex items-center justify-center gap-3">
+                <button type="button" @click="category = 'all'" class="px-3.5 py-1.5 rounded-lg bg-panel-hi hover:bg-panel-hover text-xs font-semibold text-chalk border border-line transition">
+                    Voir toutes les sorties
+                </button>
+                <a href="{{ route('manga.index') }}" class="px-3.5 py-1.5 rounded-lg bg-violet/20 hover:bg-violet/30 text-xs font-semibold text-violet-glow border border-violet/30 transition">
+                    Tout le catalogue →
+                </a>
+            </div>
         </div>
     </section>
     @endif

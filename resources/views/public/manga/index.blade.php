@@ -105,24 +105,43 @@
                         Genres
                         <svg class="w-4 h-4 transition-transform" :class="open ? 'rotate-180' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
                     </button>
-                    <div x-show="open" x-collapse class="space-y-1 max-h-60 overflow-y-auto custom-scrollbar pr-2">
+                    <div x-show="open" x-collapse class="space-y-1 max-h-52 overflow-y-auto custom-scrollbar pr-2">
                         @foreach($genres as $genre)
                         <div class="flex items-center justify-between group">
                             <label class="flex items-center gap-2 cursor-pointer flex-grow text-sm text-chalk group-hover:text-violet transition py-1">
                                 <input type="checkbox" name="include_genres[]" value="{{ $genre->slug }}" class="rounded bg-ink-deep border-line text-violet focus:ring-violet/50"
-                                    {{ in_array($genre->slug, (array)request('include_genres', [])) ? 'checked' : '' }}>
+                                    {{ in_array($genre->slug, (array)request('include_genres', [])) || request('genre') === $genre->slug ? 'checked' : '' }}>
                                 {{ $genre->name }}
                             </label>
-                            {{-- Checkbox pour exclure (Optionnel, affiché au survol ou si déjà coché pour exclusion) --}}
                             <label class="cursor-pointer" title="Exclure ce genre">
                                 <input type="checkbox" name="exclude_genres[]" value="{{ $genre->slug }}" class="rounded-full bg-ink-deep border-line text-rose focus:ring-rose/50"
                                     {{ in_array($genre->slug, (array)request('exclude_genres', [])) ? 'checked' : '' }}>
                             </label>
                         </div>
                         @endforeach
-                        <p class="text-[10px] text-mist/70 mt-2 italic">Cochez la case ronde pour exclure un genre.</p>
                     </div>
                 </div>
+
+                {{-- Tags --}}
+                @if(isset($tags) && $tags->count())
+                <div class="mb-6" x-data="{ open: {{ request('tag') || request('include_tags') ? 'true' : 'false' }} }">
+                    <button type="button" @click="open = !open" class="flex items-center justify-between w-full text-xs font-semibold text-mist mb-2 uppercase tracking-wider focus:outline-none">
+                        <span>Tags <span class="text-[10px] text-mist/60 lowercase">({{ $tags->count() }})</span></span>
+                        <svg class="w-4 h-4 transition-transform" :class="open ? 'rotate-180' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                    </button>
+                    <div x-show="open" x-collapse class="space-y-1 max-h-48 overflow-y-auto custom-scrollbar pr-2">
+                        @foreach($tags as $t)
+                        <div class="flex items-center justify-between group">
+                            <label class="flex items-center gap-2 cursor-pointer flex-grow text-sm text-chalk group-hover:text-red-400 transition py-1">
+                                <input type="checkbox" name="include_tags[]" value="{{ $t->slug }}" class="rounded bg-ink-deep border-line text-red-500 focus:ring-red-500/50"
+                                    {{ in_array($t->slug, (array)request('include_tags', [])) || request('tag') === $t->slug ? 'checked' : '' }}>
+                                #{{ $t->name }}
+                            </label>
+                        </div>
+                        @endforeach
+                    </div>
+                </div>
+                @endif
 
                 <button type="submit" class="btn-primary w-full justify-center !py-3 shadow-lg shadow-violet/20 hover:shadow-violet/40">
                     Appliquer les filtres
@@ -132,6 +151,44 @@
 
         {{-- Contenu Principal --}}
         <div class="flex-grow w-full">
+            {{-- Badges des filtres actifs --}}
+            @if(request()->hasAny(['q', 'include_genres', 'exclude_genres', 'type', 'status', 'tag', 'genre', 'include_tags']))
+            <div class="flex flex-wrap items-center gap-2 mb-6 p-3 rounded-xl bg-panel border border-line/40 animate-fade-in">
+                <span class="text-xs text-mist font-semibold">Filtres actifs :</span>
+                @if(request('tag'))
+                    <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-red-600/20 border border-red-500/30 text-xs text-red-300 font-semibold">
+                        Tag: #{{ request('tag') }}
+                        <a href="{{ route('manga.index', request()->except('tag')) }}" class="hover:text-white">✕</a>
+                    </span>
+                @endif
+                @if(request('genre'))
+                    <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-violet/20 border border-violet/30 text-xs text-violet-glow font-semibold">
+                        Genre: {{ request('genre') }}
+                        <a href="{{ route('manga.index', request()->except('genre')) }}" class="hover:text-white">✕</a>
+                    </span>
+                @endif
+                @if(request('type'))
+                    <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-panel-hi border border-line text-xs text-chalk font-semibold">
+                        Type: {{ ucfirst(request('type')) }}
+                        <a href="{{ route('manga.index', request()->except('type')) }}" class="hover:text-white">✕</a>
+                    </span>
+                @endif
+                @if(request('status'))
+                    <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-panel-hi border border-line text-xs text-chalk font-semibold">
+                        Statut: {{ ucfirst(request('status')) }}
+                        <a href="{{ route('manga.index', request()->except('status')) }}" class="hover:text-white">✕</a>
+                    </span>
+                @endif
+                @if(request('q'))
+                    <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-panel-hi border border-line text-xs text-chalk font-semibold">
+                        « {{ request('q') }} »
+                        <a href="{{ route('manga.index', request()->except('q')) }}" class="hover:text-white">✕</a>
+                    </span>
+                @endif
+                <a href="{{ route('manga.index') }}" class="text-xs text-rose hover:underline ml-auto font-medium">Tout effacer</a>
+            </div>
+            @endif
+
             {{-- ═══ Grille ═══ --}}
     @if($mangas->count())
         <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4 mb-10">
