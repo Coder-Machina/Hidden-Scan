@@ -25,7 +25,7 @@ class ProductionDataSeeder extends Seeder
   array (
     'name' => 'Meliodas',
     'email' => 'meliodasdsama006@gmail.com',
-    'password' => '$2y$12$YfvutpWtyw16jTZTcBkPnepjz9JaE7x5kNLt3GvRWgNKCScd6XVaS',
+    'password' => '$2y$12$gp.qpgcG2PgTX8ETHv412OVRDOUbqj54Alv2upWdMKX1PTe0R1QiW',
     'email_verified_at' => NULL,
     'roles' => 
     array (
@@ -178,12 +178,13 @@ class ProductionDataSeeder extends Seeder
             $roles = $uData['roles'] ?? [];
             unset($uData['roles']);
 
-            $user = User::updateOrCreate(
+            \Illuminate\Support\Facades\DB::table('users')->updateOrInsert(
                 ['email' => $uData['email']],
-                $uData
+                array_merge($uData, ['updated_at' => now(), 'created_at' => now()])
             );
 
-            if (!empty($roles)) {
+            $user = User::where('email', $uData['email'])->first();
+            if ($user && !empty($roles)) {
                 try {
                     foreach ($roles as $roleName) {
                         \Spatie\Permission\Models\Role::firstOrCreate(['name' => $roleName, 'guard_name' => 'web']);
