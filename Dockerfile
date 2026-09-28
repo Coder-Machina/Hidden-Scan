@@ -11,7 +11,7 @@ RUN npm run build
 # ══════════════════════════════════════════
 # Étape 2 : Image PHP-FPM + Nginx pour la production
 # ══════════════════════════════════════════
-FROM php:8.3-fpm-alpine
+FROM php:8.4-fpm-alpine
 
 # Installation des dépendances système & extensions PHP
 RUN apk add --no-cache \
@@ -51,7 +51,7 @@ WORKDIR /var/www/html
 
 # Optimisation du cache Docker pour Composer
 COPY composer.json composer.lock ./
-RUN composer install --no-dev --no-interaction --prefer-dist --optimize-autoloader --no-scripts
+RUN composer install --no-dev --no-interaction --prefer-dist --optimize-autoloader --no-scripts --ignore-platform-reqs
 
 # Copie du code source complet
 COPY . .
