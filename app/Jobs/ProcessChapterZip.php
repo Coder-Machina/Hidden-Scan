@@ -98,14 +98,32 @@ class ProcessChapterZip implements ShouldQueue
         foreach ($files as $index => $file) {
             @set_time_limit(120); // Reset timer for each page being processed
             $pageNumber = $index + 1;
-            $destPath   = $destFolder . '/' . $pageNumber . '.webp';
-
             $ext = strtolower(pathinfo($file, PATHINFO_EXTENSION));
+
             if ($ext === 'webp') {
+                $destPath = $destFolder . '/' . $pageNumber . '.webp';
                 Storage::disk('public')->put($destPath, file_get_contents($file));
             } else {
-                $encoded = $manager->decode($file)->encode(new WebpEncoder(quality: 82));
-                Storage::disk('public')->put($destPath, (string) $encoded);
+                $saved = false;
+                try {
+                    $image = $manager->decode($file);
+                    // WebP ne supporte pas les dimensions supérieures à 16383px (fréquent sur les strips webtoons très hauts)
+                    if ($image->width() <= 16380 && $image->height() <= 16380) {
+                        $destPath = $destFolder . '/' . $pageNumber . '.webp';
+                        $encoded = $image->encode(new WebpEncoder(quality: 82));
+                        Storage::disk('public')->put($destPath, (string) $encoded);
+                        $saved = true;
+                    }
+                } catch (\Throwable $e) {
+                    Log::warning("Échec conversion WebP pour la page {$pageNumber} du chapitre {$this->chapter->id}: " . $e->getMessage());
+                }
+
+                // Fallback : conserve l'image originale si l'encodage WebP échoue ou dépasse 16383px
+                if (!$saved) {
+                    $fallbackExt = in_array($ext, ['jpg', 'jpeg', 'png', 'gif', 'avif']) ? $ext : 'jpg';
+                    $destPath = $destFolder . '/' . $pageNumber . '.' . $fallbackExt;
+                    Storage::disk('public')->put($destPath, file_get_contents($file));
+                }
             }
 
             ChapterPage::create([
