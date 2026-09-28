@@ -39,5 +39,13 @@ php artisan config:cache || true
 php artisan route:cache || true
 php artisan view:cache || true
 
+# Permissions indispensables pour SQLite et le serveur web (évite 'attempt to write a readonly database')
+echo "🔒 Applying strict permissions for www-data..."
+chown -R www-data:www-data /var/www/html/database /var/www/html/storage /var/www/html/bootstrap/cache
+chmod -R 775 /var/www/html/database /var/www/html/storage /var/www/html/bootstrap/cache
+if [ -f /var/www/html/database/database.sqlite ]; then
+    chmod 664 /var/www/html/database/database.sqlite
+fi
+
 echo "✨ Ready! Starting supervisord (Nginx + PHP-FPM)..."
 exec /usr/bin/supervisord -c /etc/supervisor/conf.d/supervisord.conf

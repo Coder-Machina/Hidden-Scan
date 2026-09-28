@@ -10,4 +10,3 @@ storage/*.key
 .phpunit.result.cache
 *.log
 cloudflared
-storage/app/public/chapters
