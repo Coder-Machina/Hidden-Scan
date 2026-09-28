@@ -35,7 +35,7 @@ class ExportProductionData extends Command
         $genres = Genre::all()->map(fn ($g) => ['name' => $g->name, 'slug' => $g->slug])->toArray();
         $tags = Tag::all()->map(fn ($t) => ['name' => $t->name, 'slug' => $t->slug])->toArray();
 
-        $mangas = Manga::with(['genres', 'tags', 'authors', 'artists', 'chapters'])->get()->map(function ($m) {
+        $mangas = Manga::with(['genres', 'tags', 'authors', 'artists', 'chapters.pages'])->get()->map(function ($m) {
             return [
                 'title' => $m->title,
                 'slug' => $m->slug,
@@ -61,6 +61,10 @@ class ExportProductionData extends Command
                         'status' => $c->status?->value ?? (string) $c->status,
                         'views_count' => (int) $c->views_count,
                         'published_at' => $c->published_at?->toDateTimeString(),
+                        'pages' => $c->pages->map(fn ($p) => [
+                            'page_number' => $p->page_number,
+                            'image_path' => $p->image_path,
+                        ])->toArray(),
                     ];
                 })->toArray(),
             ];
@@ -175,13 +179,26 @@ class ProductionDataSeeder extends Seeder
             }
 
             foreach (\$chapters as \$cData) {
-                Chapter::updateOrCreate(
+                \$pages = \$cData['pages'] ?? [];
+                unset(\$cData['pages']);
+
+                \$chapter = Chapter::updateOrCreate(
                     [
                         'manga_id' => \$manga->id,
                         'number' => \$cData['number'],
                     ],
                     \$cData
                 );
+
+                foreach (\$pages as \$pData) {
+                    \App\Models\ChapterPage::updateOrCreate(
+                        [
+                            'chapter_id' => \$chapter->id,
+                            'page_number' => \$pData['page_number'],
+                        ],
+                        \$pData
+                    );
+                }
             }
         }
     }
