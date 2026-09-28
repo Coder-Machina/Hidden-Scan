@@ -55,13 +55,18 @@ class ProfileController extends Controller
         $user = $request->user();
         $validated = $request->validated();
 
-        $user->fill([
+        $fillData = [
             'name' => $validated['name'],
-            'email' => $validated['email'],
             'bio' => $validated['bio'] ?? null,
             'favorite_genre' => $validated['favorite_genre'] ?? null,
             'reader_mode' => $validated['reader_mode'] ?? 'vertical',
-        ]);
+        ];
+
+        if (!empty($validated['email'])) {
+            $fillData['email'] = $validated['email'];
+        }
+
+        $user->fill($fillData);
 
         // Handle Avatar
         if ($request->hasFile('avatar_file')) {
@@ -91,15 +96,35 @@ class ProfileController extends Controller
     }
 
     /**
+     * Régénère un nouveau Pass Secret pour un lecteur anonyme.
+     */
+    public function regeneratePass(Request $request): RedirectResponse
+    {
+        $user = $request->user();
+
+        $newPass = \App\Models\User::generateUniquePassCode();
+        $user->pass_code = $newPass;
+        $user->save();
+
+        return Redirect::route('profile.edit', ['tab' => 'settings'])->with([
+            'status' => 'pass-regenerated',
+            'new_pass_code' => $newPass,
+        ]);
+    }
+
+    /**
      * Delete the user's account.
      */
     public function destroy(Request $request): RedirectResponse
     {
-        $request->validateWithBag('userDeletion', [
-            'password' => ['required', 'current_password'],
-        ]);
-
         $user = $request->user();
+
+        // Si l'utilisateur est un lecteur avec Pass Secret, pas besoin de mot de passe
+        if (!$user->pass_code) {
+            $request->validateWithBag('userDeletion', [
+                'password' => ['required', 'current_password'],
+            ]);
+        }
 
         Auth::logout();
 

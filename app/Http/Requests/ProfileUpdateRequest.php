@@ -16,15 +16,18 @@ class ProfileUpdateRequest extends FormRequest
      */
     public function rules(): array
     {
+        $user = $this->user();
+        $isAnonymous = !empty($user->pass_code);
+
         return [
             'name' => ['required', 'string', 'max:255'],
             'email' => [
-                'required',
+                $isAnonymous ? 'nullable' : 'required',
                 'string',
                 'lowercase',
                 'email',
                 'max:255',
-                Rule::unique(User::class)->ignore($this->user()->id),
+                Rule::unique(User::class)->ignore($user->id),
             ],
             'bio' => ['nullable', 'string', 'max:1000'],
             'favorite_genre' => ['nullable', 'string', 'max:100'],

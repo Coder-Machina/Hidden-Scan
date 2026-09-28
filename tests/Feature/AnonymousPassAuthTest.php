@@ -98,4 +98,47 @@ class AnonymousPassAuthTest extends TestCase
         $registerRes->assertDontSee('Créer un compte classique');
         $registerRes->assertDontSee('admin@hidden-scan.com');
     }
+
+    public function test_reader_settings_shows_pass_manager_and_not_password_form(): void
+    {
+        $user = User::factory()->create([
+            'name' => 'AnonReader',
+            'pass_code' => 'HS-AAAA-BBBB-CCCC',
+        ]);
+
+        $response = $this->actingAs($user)->get(route('profile.edit', ['tab' => 'settings']));
+        $response->assertStatus(200);
+        $response->assertSee('Mon Pass Secret');
+        $response->assertSee('HS-AAAA-BBBB-CCCC');
+        $response->assertDontSee('Modifier le mot de passe');
+        $response->assertDontSee('Mot de passe actuel');
+    }
+
+    public function test_reader_can_regenerate_pass_secret(): void
+    {
+        $user = User::factory()->create([
+            'pass_code' => 'HS-OLD1-OLD2-OLD3',
+        ]);
+
+        $response = $this->actingAs($user)->post(route('profile.pass.regenerate'));
+        $response->assertRedirect(route('profile.edit', ['tab' => 'settings']));
+        $response->assertSessionHas('status', 'pass-regenerated');
+
+        $user->refresh();
+        $this->assertNotEquals('HS-OLD1-OLD2-OLD3', $user->pass_code);
+        $this->assertStringStartsWith('HS-', $user->pass_code);
+    }
+
+    public function test_reader_can_delete_account_without_password(): void
+    {
+        $user = User::factory()->create([
+            'pass_code' => 'HS-DEL1-DEL2-DEL3',
+        ]);
+
+        $response = $this->actingAs($user)->delete(route('profile.destroy'));
+        $response->assertRedirect('/');
+
+        $this->assertGuest();
+        $this->assertDatabaseMissing('users', ['id' => $user->id]);
+    }
 }

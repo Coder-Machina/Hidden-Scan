@@ -32,20 +32,26 @@
                     Êtes-vous sûr de vouloir supprimer votre compte ?
                 </h3>
                 <p style="font-size: 13px; color: #7070a0; margin-top: 6px; line-height: 1.5;">
-                    Cette action est irréversible. Veuillez entrer votre mot de passe pour confirmer la suppression définitive.
+                    @if(Auth::user()->pass_code)
+                        Cette action est irréversible. Vos favoris, votre historique de lecture et votre Pass Secret seront immédiatement effacés.
+                    @else
+                        Cette action est irréversible. Veuillez entrer votre mot de passe pour confirmer la suppression définitive.
+                    @endif
                 </p>
             </div>
 
-            <div>
-                <label style="font-size: 12px; color: #7070a0; display: block; margin-bottom: 6px;">Mot de passe de confirmation</label>
-                <input
-                    type="password"
-                    name="password"
-                    class="input-dark"
-                    placeholder="Entrez votre mot de passe"
-                />
-                <x-input-error :messages="$errors->userDeletion->get('password')" class="mt-2" />
-            </div>
+            @if(!Auth::user()->pass_code)
+                <div>
+                    <label style="font-size: 12px; color: #7070a0; display: block; margin-bottom: 6px;">Mot de passe de confirmation</label>
+                    <input
+                        type="password"
+                        name="password"
+                        class="input-dark"
+                        placeholder="Entrez votre mot de passe"
+                    />
+                    <x-input-error :messages="$errors->userDeletion->get('password')" class="mt-2" />
+                </div>
+            @endif
 
             <div style="display: flex; align-items: center; justify-content: flex-end; gap: 10px; margin-top: 8px;">
                 <button

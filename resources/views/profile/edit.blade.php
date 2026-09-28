@@ -1260,10 +1260,12 @@
                                 <label style="font-size: 13px; color: #7070a0; display: block; margin-bottom: 6px;">Pseudo</label>
                                 <input type="text" name="name" value="{{ old('name', $user->name) }}" required class="input-dark">
                             </div>
-                            <div>
-                                <label style="font-size: 13px; color: #7070a0; display: block; margin-bottom: 6px;">Adresse Email</label>
-                                <input type="email" name="email" value="{{ old('email', $user->email) }}" required class="input-dark">
-                            </div>
+                            @if(!$user->pass_code)
+                                <div>
+                                    <label style="font-size: 13px; color: #7070a0; display: block; margin-bottom: 6px;">Adresse Email Staff</label>
+                                    <input type="email" name="email" value="{{ old('email', $user->email) }}" required class="input-dark">
+                                </div>
+                            @endif
                         </div>
 
                         {{-- Bio & Préférences --}}
@@ -1314,10 +1316,20 @@
                             <svg style="width: 20px; height: 20px; stroke: #dc2626; fill: none;" viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
                             Paramètres & Sécurité
                         </h2>
-                        <p style="font-size: 14px; color: #7070a0; margin-top: 4px;">Gérez la sécurité de votre compte et votre mot de passe.</p>
+                        <p style="font-size: 14px; color: #7070a0; margin-top: 4px;">
+                            @if($user->pass_code)
+                                Gérez votre Pass Secret et la sécurité de votre espace de lecture anonyme.
+                            @else
+                                Gérez la sécurité de votre compte et votre mot de passe.
+                            @endif
+                        </p>
                     </div>
 
-                    @include('profile.partials.update-password-form')
+                    @if($user->pass_code)
+                        @include('profile.partials.pass-secret-manager')
+                    @else
+                        @include('profile.partials.update-password-form')
+                    @endif
 
                     <div class="line-divider"></div>
 
