@@ -15,7 +15,10 @@ class ProductionDataSeeder extends Seeder
 {
     public function run(): void
     {
-        $this->call(RolesAndPermissionsSeeder::class);
+        $this->call([
+            RoleSeeder::class,
+            RolesAndPermissionsSeeder::class,
+        ]);
 
         $users = array (
   0 => 
@@ -181,7 +184,14 @@ class ProductionDataSeeder extends Seeder
             );
 
             if (!empty($roles)) {
-                $user->syncRoles($roles);
+                try {
+                    foreach ($roles as $roleName) {
+                        \Spatie\Permission\Models\Role::firstOrCreate(['name' => $roleName, 'guard_name' => 'web']);
+                    }
+                    $user->syncRoles($roles);
+                } catch (\Throwable $e) {
+                    \Illuminate\Support\Facades\Log::warning("Could not sync roles for user {$user->email}: " . $e->getMessage());
+                }
             }
         }
 
