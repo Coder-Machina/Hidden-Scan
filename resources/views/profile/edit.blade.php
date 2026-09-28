@@ -928,6 +928,37 @@
 
             {{-- ── Panel 1 : Aperçu ── --}}
             <div class="profile-tab-panel" :class="currentTab === 'overview' ? 'active' : ''">
+
+                {{-- Carte Pass Secret (pour compte anonyme) --}}
+                @if($user->pass_code)
+                <div class="mb-6 p-4 sm:p-5 rounded-2xl bg-gradient-to-r from-red-950/40 via-[#161824] to-[#12131c] border border-red-500/30 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-lg shadow-black/50"
+                     x-data="{ copied: false }">
+                    <div class="flex items-center gap-3.5">
+                        <div class="w-12 h-12 rounded-xl bg-red-600/20 border border-red-500/30 flex items-center justify-center text-xl flex-shrink-0">
+                            🔑
+                        </div>
+                        <div>
+                            <div class="flex items-center gap-2">
+                                <span class="text-xs font-bold text-white uppercase tracking-wider">Votre Pass Secret Anonyme</span>
+                                <span class="text-[10px] px-2 py-0.5 rounded-full bg-red-600/20 text-red-300 border border-red-500/30 font-bold uppercase">Personnel</span>
+                            </div>
+                            <p class="text-xs text-mist mt-0.5">Utilisez ce code pour vous connecter sur mobile ou un autre appareil.</p>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-2 w-full sm:w-auto justify-between sm:justify-end">
+                        <code class="px-3.5 py-1.5 rounded-xl bg-[#0c0d12] border border-red-500/40 text-red-400 font-mono font-bold text-sm tracking-wider select-all">
+                            {{ $user->pass_code }}
+                        </code>
+                        <button type="button" 
+                                @click="navigator.clipboard.writeText('{{ $user->pass_code }}'); copied = true; setTimeout(() => copied = false, 2500)"
+                                class="px-3.5 py-1.5 rounded-xl bg-red-600/20 hover:bg-red-600/30 text-white text-xs font-bold border border-red-500/30 transition flex items-center gap-1.5 cursor-pointer flex-shrink-0">
+                            <span x-show="!copied">Copier 📋</span>
+                            <span x-show="copied" x-cloak class="text-green-400">Copié ! ✓</span>
+                        </button>
+                    </div>
+                </div>
+                @endif
+
                 {{-- Grille Statistiques --}}
                 <div class="profile-stats-grid">
                     <div class="profile-stat-box">

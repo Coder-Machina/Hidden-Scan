@@ -955,9 +955,47 @@
     </nav>
     @endunless
 
-    {{-- ═══ Contenu principal ═══ --}}
     <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 {{ $hideNavbar ? '' : 'pt-20' }} pb-24 sm:pb-12 relative z-10 overflow-x-hidden">
         {{ $slot }}
+
+        {{-- Modal de remise du Pass Secret --}}
+        @if(session('new_pass_code'))
+        <div x-data="{ open: true, copied: false }" x-show="open" x-cloak 
+             class="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/85 backdrop-blur-md animate-fade-in">
+            <div class="relative w-full max-w-md bg-[#13141d] border-2 border-red-500/40 rounded-3xl p-6 sm:p-8 shadow-2xl shadow-red-950/70 text-center animate-fade-in-up">
+                <div class="w-16 h-16 mx-auto mb-4 rounded-2xl bg-gradient-to-tr from-red-600 to-amber-600 flex items-center justify-center text-3xl shadow-lg shadow-red-600/40 animate-pulse">
+                    🎉
+                </div>
+                <h3 class="font-display text-xl sm:text-2xl font-extrabold text-white mb-2">Bienvenue sur Hidden Scan !</h3>
+                <p class="text-xs sm:text-sm text-gray-300 mb-6 leading-relaxed">
+                    Votre compte anonyme est prêt. Voici votre <strong>Pass Secret</strong> unique, il remplace votre email et votre mot de passe :
+                </p>
+
+                {{-- Le Pass Code affiché en grand --}}
+                <div class="p-4 rounded-2xl bg-[#0c0d12] border border-red-500/40 mb-4 flex items-center justify-between gap-3 shadow-inner">
+                    <span class="font-mono font-bold text-base sm:text-lg text-red-400 tracking-wider select-all">
+                        {{ session('new_pass_code') }}
+                    </span>
+                    <button type="button" 
+                            @click="navigator.clipboard.writeText('{{ session('new_pass_code') }}'); copied = true; setTimeout(() => copied = false, 2500)"
+                            class="px-3 py-1.5 rounded-xl bg-red-600/20 hover:bg-red-600/30 text-white text-xs font-bold border border-red-500/30 transition flex items-center gap-1.5 flex-shrink-0 cursor-pointer">
+                        <span x-show="!copied">Copier 📋</span>
+                        <span x-show="copied" x-cloak class="text-green-400">Copié ! ✓</span>
+                    </button>
+                </div>
+
+                <div class="p-3.5 rounded-xl bg-amber-500/10 border border-amber-500/25 text-[11px] text-amber-200/90 leading-relaxed mb-6 text-left flex items-start gap-2.5">
+                    <span class="text-sm">⚠️</span>
+                    <span><strong>Conservez ce code précieusement</strong> (dans vos notes ou gestionnaire). C'est le seul moyen de vous reconnecter sur votre téléphone ou un autre navigateur.</span>
+                </div>
+
+                <button type="button" @click="open = false" 
+                        class="w-full py-3.5 bg-gradient-to-r from-red-600 to-red-700 hover:from-red-500 hover:to-red-600 text-white font-extrabold text-sm rounded-xl transition shadow-lg shadow-red-600/30 cursor-pointer hover:scale-[1.01] active:scale-[0.99]">
+                    C'est noté, commencer à lire ! 🚀
+                </button>
+            </div>
+        </div>
+        @endif
     </main>
 
     {{-- ═══ Footer ═══ --}}

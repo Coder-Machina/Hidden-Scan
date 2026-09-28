@@ -27,6 +27,12 @@ class LoginRequest extends FormRequest
      */
     public function rules(): array
     {
+        if ($this->filled('pass_code')) {
+            return [
+                'pass_code' => ['required', 'string', 'min:6', 'max:40'],
+            ];
+        }
+
         return [
             'email' => ['required', 'string', 'email'],
             'password' => ['required', 'string'],
@@ -42,6 +48,34 @@ class LoginRequest extends FormRequest
     {
         $this->ensureIsNotRateLimited();
 
+        // 1. Authentification par Pass Secret
+        if ($this->filled('pass_code')) {
+            $code = strtoupper(trim($this->input('pass_code')));
+            $user = \App\Models\User::where('pass_code', $code)->first();
+
+            if (! $user) {
+                RateLimiter::hit($this->throttleKey());
+
+                throw ValidationException::withMessages([
+                    'pass_code' => 'Pass secret invalide ou introuvable. Vérifiez votre saisie.',
+                ]);
+            }
+
+            if ($user->isBanned()) {
+                $reason = $user->ban_reason ? ' Motif : ' . $user->ban_reason : '';
+
+                throw ValidationException::withMessages([
+                    'pass_code' => 'Ce compte a été suspendu par un administrateur.' . $reason,
+                ]);
+            }
+
+            $user->update(['last_ip_address' => $this->ip()]);
+            Auth::login($user, $this->boolean('remember', true));
+            RateLimiter::clear($this->throttleKey());
+            return;
+        }
+
+        // 2. Authentification classique (Email / Mot de passe pour staff & utilisateurs)
         if (! Auth::attempt($this->only('email', 'password'), $this->boolean('remember'))) {
             RateLimiter::hit($this->throttleKey());
 
@@ -61,6 +95,7 @@ class LoginRequest extends FormRequest
             ]);
         }
 
+        Auth::user()->update(['last_ip_address' => $this->ip()]);
         RateLimiter::clear($this->throttleKey());
     }
 
@@ -79,8 +114,10 @@ class LoginRequest extends FormRequest
 
         $seconds = RateLimiter::availableIn($this->throttleKey());
 
+        $field = $this->filled('pass_code') ? 'pass_code' : 'email';
+
         throw ValidationException::withMessages([
-            'email' => trans('auth.throttle', [
+            $field => trans('auth.throttle', [
                 'seconds' => $seconds,
                 'minutes' => ceil($seconds / 60),
             ]),
@@ -92,6 +129,10 @@ class LoginRequest extends FormRequest
      */
     public function throttleKey(): string
     {
+        if ($this->filled('pass_code')) {
+            return Str::transliterate('pass|' . $this->input('pass_code') . '|' . $this->ip());
+        }
+
         return Str::transliterate(Str::lower($this->string('email')).'|'.$this->ip());
     }
 }

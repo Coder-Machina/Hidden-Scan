@@ -55,4 +55,32 @@ class RegisteredUserController extends Controller
 
         return redirect(route('dashboard', absolute: false));
     }
+
+    /**
+     * Génère un nouveau Pass secret anonyme en 1 clic.
+     */
+    public function storePass(Request $request): RedirectResponse
+    {
+        $passCode = User::generateUniquePassCode();
+        $shortId = substr(str_replace('-', '', $passCode), 2, 4);
+        $name = $request->filled('name')
+            ? \Illuminate\Support\Str::limit(strip_tags($request->input('name')), 30, '')
+            : 'Lecteur-' . $shortId;
+
+        $dummyEmail = 'pass_' . strtolower(str_replace('-', '', $passCode)) . '@anon.hiddenscan.local';
+
+        $user = User::create([
+            'name' => $name,
+            'email' => $dummyEmail,
+            'pass_code' => $passCode,
+            'password' => Hash::make(\Illuminate\Support\Str::random(40)),
+            'last_ip_address' => $request->ip(),
+        ]);
+
+        event(new Registered($user));
+
+        Auth::login($user, remember: true);
+
+        return redirect()->route('home')->with('new_pass_code', $passCode);
+    }
 }

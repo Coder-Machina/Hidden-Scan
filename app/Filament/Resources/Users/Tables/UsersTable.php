@@ -32,6 +32,19 @@ class UsersTable
                     ->searchable()
                     ->copyable()
                     ->sortable(),
+                TextColumn::make('pass_code')
+                    ->label('Pass Secret')
+                    ->searchable()
+                    ->copyable()
+                    ->fontFamily(\Filament\Support\Enums\FontFamily::Mono)
+                    ->color('danger')
+                    ->placeholder('Compte classique')
+                    ->toggleable(),
+                TextColumn::make('last_ip_address')
+                    ->label('IP')
+                    ->searchable()
+                    ->copyable()
+                    ->toggleable(isToggledHiddenByDefault: true),
                 TextColumn::make('status')
                     ->label('Statut')
                     ->getStateUsing(function (User $record) {

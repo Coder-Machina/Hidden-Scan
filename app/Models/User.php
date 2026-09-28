@@ -15,6 +15,7 @@ use Filament\Panel;
 
 #[Fillable([
     'name', 'email', 'password',
+    'pass_code', 'last_ip_address',
     'avatar', 'banner', 'bio', 'xp', 'favorite_genre', 'reader_mode',
     'is_banned', 'banned_at', 'ban_reason',
     'is_comment_banned', 'comment_banned_at', 'comment_ban_reason',
@@ -24,6 +25,23 @@ class User extends Authenticatable implements FilamentUser
 {
     /** @use HasFactory<UserFactory> */
     use HasFactory, Notifiable, \Spatie\Permission\Traits\HasRoles;
+
+    /**
+     * Génère un code Pass secret unique (ex: HS-7F2A-9K3M-P8X4)
+     */
+    public static function generateUniquePassCode(): string
+    {
+        $chars = '23456789ABCDEFGHJKLMNPQRSTUVWXYZ';
+        do {
+            $p1 = ''; $p2 = ''; $p3 = '';
+            for ($i = 0; $i < 4; $i++) $p1 .= $chars[random_int(0, strlen($chars) - 1)];
+            for ($i = 0; $i < 4; $i++) $p2 .= $chars[random_int(0, strlen($chars) - 1)];
+            for ($i = 0; $i < 4; $i++) $p3 .= $chars[random_int(0, strlen($chars) - 1)];
+            $code = "HS-{$p1}-{$p2}-{$p3}";
+        } while (static::where('pass_code', $code)->exists());
+
+        return $code;
+    }
 
     public function canAccessPanel(Panel $panel): bool
     {
