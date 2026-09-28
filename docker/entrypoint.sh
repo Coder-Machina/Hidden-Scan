@@ -29,6 +29,10 @@ fi
 echo "📦 Running database migrations..."
 php artisan migrate --force || true
 
+# Remplir automatiquement la base de données avec les mangas, genres et comptes admin
+echo "🌱 Seeding initial production data..."
+php artisan db:seed --class=ProductionDataSeeder --force || true
+
 # Mettre en cache la configuration, les routes et les vues
 echo "⚡ Caching configuration, routes, and views..."
 php artisan config:cache || true
