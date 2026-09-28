@@ -79,8 +79,6 @@ class MangaController extends Controller
             }])
             ->firstOrFail();
 
-        $manga->increment('views_count');
-
         $readChapterIds = [];
         $firstUnreadChapter = null;
         if (auth()->check()) {

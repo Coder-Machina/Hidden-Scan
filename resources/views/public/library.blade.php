@@ -55,6 +55,17 @@
                 <svg class="w-3.5 h-3.5 sm:w-4 sm:h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
                 <span>Historique (<span x-text="history.length">0</span>)</span>
             </button>
+
+            {{-- Onglet : Recommandations "Si t'as aimé..." --}}
+            <button @click="setTab('recommendations')"
+                    class="flex-1 min-w-max py-2 sm:py-2.5 px-3 sm:px-4 rounded-lg text-xs sm:text-sm font-semibold transition-all whitespace-nowrap flex items-center justify-center gap-1.5 sm:gap-2 group"
+                    :class="activeTab === 'recommendations' ? 'bg-[#dc2626] text-white shadow-lg shadow-[#dc2626]/30' : 'text-[#7070a0] hover:text-[#e8e8f0] hover:bg-white/5'">
+                <svg class="w-3.5 h-3.5 sm:w-4 sm:h-4 flex-shrink-0 text-amber-400 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+                </svg>
+                <span>Si t'as aimé...</span>
+                <span class="text-[10px] px-1.5 py-0.5 rounded-full bg-amber-500/20 text-amber-300 font-extrabold border border-amber-500/30">POUR TOI</span>
+            </button>
         </div>
 
         {{-- ══════════════════════════════════════════════════════════════ --}}
@@ -537,6 +548,172 @@
             </template>
         </div>
 
+        {{-- ══════════════════════════════════════════════════════════════ --}}
+        {{-- ═══ Onglet 4 : RECOMMANDATIONS "SI T'AS AIMÉ..."         ═══ --}}
+        {{-- ══════════════════════════════════════════════════════════════ --}}
+        <div x-show="activeTab === 'recommendations'" x-cloak class="animate-fade-in-up">
+
+            {{-- Bannière explicative --}}
+            <div class="mb-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-gradient-to-r from-[#1c162b] via-[#12111c] to-[#1a1215] border border-amber-500/20 rounded-2xl p-4 sm:p-5 shadow-xl">
+                <div class="flex items-center gap-3.5">
+                    <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-amber-500/20 to-[#dc2626]/20 border border-amber-500/30 flex items-center justify-center text-amber-400 flex-shrink-0 shadow-inner">
+                        <svg class="w-6 h-6 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+                        </svg>
+                    </div>
+                    <div>
+                        <div class="flex items-center gap-2 flex-wrap">
+                            <h2 class="text-white font-display font-extrabold text-lg sm:text-xl">Si t'as aimé X, lis Y</h2>
+                            <span class="text-[10px] px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 font-extrabold border border-amber-500/30 tracking-wider uppercase">Algorithme d'affinité</span>
+                        </div>
+                        <p class="text-xs sm:text-sm text-[#9090b8] mt-0.5">Recommandations générées sur-mesure à partir des séries cochées comme lues dans votre bibliothèque.</p>
+                    </div>
+                </div>
+                <div class="flex items-center gap-2 flex-shrink-0">
+                    <a href="{{ route('manga.random') }}" class="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl bg-[#dc2626]/10 hover:bg-[#dc2626]/20 border border-[#dc2626]/30 text-white text-xs font-semibold transition group">
+                        <span class="group-hover:rotate-12 transition-transform">🎲</span>
+                        <span>Surprise-moi</span>
+                    </a>
+                </div>
+            </div>
+
+            {{-- Chargement dynamique (notamment pour les invités) --}}
+            <template x-if="loadingRecommendations">
+                <div class="bg-[#111118] border border-[#1e1e2e] rounded-2xl p-12 text-center">
+                    <div class="inline-block w-8 h-8 border-2 border-amber-400 border-t-transparent rounded-full animate-spin mb-3"></div>
+                    <p class="text-white font-bold text-sm">Calcul de vos affinités personnalisées...</p>
+                    <p class="text-xs text-[#7070a0] mt-1">Analyse des auteurs, illustrateurs et genres en cours</p>
+                </div>
+            </template>
+
+            {{-- Liste des groupes de recommandations --}}
+            <template x-if="!loadingRecommendations && recommendations.length > 0">
+                <div class="space-y-6 sm:space-y-8">
+                    <template x-for="group in recommendations" :key="group.source_manga.id">
+                        <div class="bg-[#111118] border border-[#1e1e2e] hover:border-amber-500/30 rounded-2xl p-4 sm:p-6 shadow-xl transition-all duration-300">
+                            
+                            {{-- En-tête de la source --}}
+                            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 mb-5 border-b border-[#1e1e2e]">
+                                <div class="flex items-center gap-3.5 min-w-0">
+                                    <a :href="group.source_manga.url" class="relative w-12 sm:w-14 aspect-[2/3] rounded-xl overflow-hidden bg-[#16161f] border border-white/10 flex-shrink-0 hover:scale-105 transition-transform duration-300 shadow-md">
+                                        <template x-if="group.source_manga.cover_image">
+                                            <img :src="group.source_manga.cover_image" :alt="group.source_manga.title" class="w-full h-full object-cover">
+                                        </template>
+                                        <template x-if="!group.source_manga.cover_image">
+                                            <div class="w-full h-full flex items-center justify-center text-xs text-[#7070a0]">📖</div>
+                                        </template>
+                                    </a>
+                                    <div class="min-w-0">
+                                        <div class="flex items-center gap-2 flex-wrap">
+                                            <span class="text-[10px] font-extrabold uppercase tracking-wider text-amber-400 bg-amber-400/10 border border-amber-400/20 px-2 py-0.5 rounded-full flex items-center gap-1">
+                                                <span>🎯</span> Lu dans ta bibliothèque
+                                            </span>
+                                            <span class="text-[10px] font-bold uppercase tracking-wider text-[#a78bfa] bg-[#2a1a4a]/60 border border-[#4a2a8a]/40 px-1.5 py-0.5 rounded" x-text="group.source_manga.type"></span>
+                                        </div>
+                                        <a :href="group.source_manga.url" class="font-display font-extrabold text-white hover:text-[#dc2626] transition text-base sm:text-xl block mt-1 truncate">
+                                            <span class="text-[#7070a0] font-normal text-sm sm:text-base">Si t'as aimé</span> <span class="text-white" x-text="group.source_manga.title"></span>...
+                                        </a>
+                                    </div>
+                                </div>
+
+                                <div class="flex items-center gap-2 self-start sm:self-center flex-shrink-0">
+                                    <span class="text-xs text-[#9090b8] bg-[#161622] px-3 py-1.5 rounded-xl border border-white/5 flex items-center gap-1.5 font-medium">
+                                        <span>👉</span> Tu devrais adorer :
+                                    </span>
+                                </div>
+                            </div>
+
+                            {{-- Grille des mangas recommandés Y --}}
+                            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                                <template x-for="item in group.recommendations" :key="item.id">
+                                    <div class="bg-[#151520] border border-[#1e1e2e] hover:border-[#dc2626]/50 rounded-xl p-3 flex flex-col justify-between transition-all duration-300 hover:-translate-y-1 hover:shadow-2xl hover:shadow-[#dc2626]/10 group/card relative">
+                                        <div>
+                                            {{-- Cover + Badges --}}
+                                            <div class="relative w-full aspect-[3/4] rounded-lg overflow-hidden bg-[#1a1a26] border border-white/5 mb-3 group/cover">
+                                                <template x-if="item.cover_image">
+                                                    <img :src="item.cover_image" :alt="item.title" class="w-full h-full object-cover group-hover/card:scale-105 transition-transform duration-500" loading="lazy">
+                                                </template>
+                                                <template x-if="!item.cover_image">
+                                                    <div class="w-full h-full flex items-center justify-center text-[#7070a0] text-sm">📖</div>
+                                                </template>
+
+                                                <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-black/30 pointer-events-none"></div>
+
+                                                {{-- Badges flottants --}}
+                                                <div class="absolute top-2 left-2 right-2 flex items-center justify-between gap-1 pointer-events-none">
+                                                    <span class="text-[9px] font-black uppercase tracking-wider text-white bg-black/70 backdrop-blur-md border border-white/10 px-1.5 py-0.5 rounded shadow" x-text="item.type"></span>
+                                                    <span class="text-[9px] font-black tracking-wide text-emerald-300 bg-emerald-950/80 backdrop-blur-md border border-emerald-500/40 px-2 py-0.5 rounded-full shadow flex items-center gap-1">
+                                                        <span>⚡</span> <span x-text="item.match_percent + '%'"></span>
+                                                    </span>
+                                                </div>
+
+                                                {{-- Infos bas de jaquette --}}
+                                                <div class="absolute bottom-2 left-2 right-2 flex items-center justify-between text-[10px] text-white/90 pointer-events-none">
+                                                    <span class="font-medium bg-black/60 backdrop-blur-sm px-1.5 py-0.5 rounded border border-white/10" x-text="item.chapters_count + ' ch.'"></span>
+                                                    <template x-if="item.rating">
+                                                        <span class="flex items-center gap-0.5 font-bold text-amber-400 bg-black/60 backdrop-blur-sm px-1.5 py-0.5 rounded border border-white/10">
+                                                            ★ <span x-text="item.rating"></span>
+                                                        </span>
+                                                    </template>
+                                                </div>
+                                            </div>
+
+                                            {{-- Titre --}}
+                                            <h4 class="font-bold text-white group-hover/card:text-[#dc2626] transition text-sm line-clamp-1 mb-1.5" :title="item.title">
+                                                <a :href="item.url" x-text="item.title"></a>
+                                            </h4>
+
+                                            {{-- Raison de la reco --}}
+                                            <div class="min-h-[38px] mb-3">
+                                                <p class="text-[11px] text-amber-300/90 font-medium leading-snug line-clamp-2 bg-amber-500/10 border border-amber-500/20 rounded-md px-2 py-1 flex items-start gap-1">
+                                                    <span class="text-amber-400 text-xs mt-0.5 flex-shrink-0">💡</span>
+                                                    <span x-text="item.reason"></span>
+                                                </p>
+                                            </div>
+                                        </div>
+
+                                        {{-- Actions --}}
+                                        <div class="pt-2 border-t border-[#1e1e2e] flex items-center gap-2">
+                                            <a :href="item.first_chapter_url" class="flex-1 py-2 px-2.5 rounded-lg bg-[#dc2626] hover:bg-[#b91c1c] text-white text-xs font-bold transition flex items-center justify-center gap-1 text-center shadow-md shadow-[#dc2626]/20">
+                                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
+                                                <span>Lire Ch. 1</span>
+                                            </a>
+                                            <a :href="item.url" class="p-2 rounded-lg bg-white/5 hover:bg-white/10 text-[#a0a6b8] hover:text-white transition" title="Fiche de la série">
+                                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                                            </a>
+                                        </div>
+                                    </div>
+                                </template>
+                            </div>
+                        </div>
+                    </template>
+                </div>
+            </template>
+
+            {{-- État vide --}}
+            <template x-if="!loadingRecommendations && recommendations.length === 0">
+                <div class="text-center py-16 sm:py-20 bg-[#111118] border border-[#1e1e2e] rounded-2xl p-6 sm:p-8">
+                    <div class="w-16 h-16 mx-auto rounded-2xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-400 mb-4 shadow-inner">
+                        <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+                        </svg>
+                    </div>
+                    <h3 class="text-lg text-white font-bold mb-2">Aucune recommandation disponible pour le moment</h3>
+                    <p class="text-[#7070a0] max-w-lg mx-auto mb-6 text-xs sm:text-sm">
+                        Pour que l'algorithme "Si t'as aimé X, lis Y" puisse analyser vos préférences, commencez par cocher des chapitres comme lus dans le lecteur ou ajoutez des mangas à vos favoris !
+                    </p>
+                    <div class="flex flex-wrap items-center justify-center gap-3">
+                        <a href="{{ route('manga.index') }}" class="btn-primary text-xs py-2 px-5">
+                            Explorer le catalogue
+                        </a>
+                        <a href="{{ route('manga.random') }}" class="px-4 py-2 rounded-xl bg-white/10 hover:bg-white/15 text-white text-xs font-semibold transition flex items-center gap-2">
+                            <span>🎲</span> Surprise-moi
+                        </a>
+                    </div>
+                </div>
+            </template>
+        </div>
+
     </div>
 
     <script>
@@ -558,9 +735,16 @@
             sortOrder: 'desc',   // 'desc' | 'asc'
             filterText: '',
 
+            // Recommandations state
+            recommendations: @json($recommendations),
+            loadingRecommendations: false,
+
             init() {
                 this.loadData();
                 this.fetchProgress();
+                if (this.recommendations.length === 0) {
+                    this.fetchGuestRecommendations();
+                }
             },
 
             setTab(tab) {
@@ -686,6 +870,40 @@
                         }
                     })
                     .catch(err => console.debug('Failed to fetch server progress:', err));
+            },
+
+            fetchGuestRecommendations() {
+                if (this.recommendations && this.recommendations.length > 0) return;
+
+                const slugs = new Set();
+                if (Array.isArray(this.history) && this.history.length > 0) {
+                    this.history.forEach(h => {
+                        const s = h.manga || h.slug;
+                        if (s) slugs.add(s);
+                    });
+                }
+                if (Array.isArray(this.favorites) && this.favorites.length > 0) {
+                    this.favorites.forEach(f => {
+                        if (f.slug) slugs.add(f.slug);
+                    });
+                }
+
+                if (slugs.size === 0) return;
+
+                this.loadingRecommendations = true;
+                const slugsParam = Array.from(slugs).slice(0, 10).join(',');
+
+                fetch('/api/recommendations?slugs=' + encodeURIComponent(slugsParam))
+                    .then(r => r.json())
+                    .then(data => {
+                        if (data && data.success && Array.isArray(data.recommendations) && data.recommendations.length > 0) {
+                            this.recommendations = data.recommendations;
+                        }
+                    })
+                    .catch(err => console.debug('Recommandations fetch err:', err))
+                    .finally(() => {
+                        this.loadingRecommendations = false;
+                    });
             },
 
             removeFavorite(slug) {

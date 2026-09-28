@@ -19,6 +19,8 @@ class ProfileTest extends TestCase
             ->get('/profile');
 
         $response->assertOk();
+        $response->assertDontSee('Rang global');
+        $response->assertDontSee('/ 50 XP');
     }
 
     public function test_profile_information_can_be_updated(): void

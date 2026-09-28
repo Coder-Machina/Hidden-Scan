@@ -21,6 +21,11 @@ class ListChapters extends ListRecords
 {
     protected static string $resource = ChapterResource::class;
 
+    public function mount(): void
+    {
+        redirect()->to(\App\Filament\Resources\Mangas\MangaResource::getUrl('index'));
+    }
+
     protected function getHeaderActions(): array
     {
         return [

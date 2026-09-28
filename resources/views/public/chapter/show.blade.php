@@ -44,8 +44,16 @@
                     {{-- Réglages --}}
                     <button @click="showSettings = !showSettings"
                             class="p-2 rounded-lg transition"
-                            :class="showSettings ? 'text-violet bg-violet/10' : 'text-mist hover:text-chalk hover:bg-panel-hi'">
+                            :class="showSettings ? 'text-violet bg-violet/10' : 'text-mist hover:text-chalk hover:bg-panel-hi'"
+                            title="Paramètres de lecture">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+                    </button>
+
+                    {{-- Signaler un problème --}}
+                    <button @click="openReportModal()"
+                            class="p-2 rounded-lg text-mist hover:text-crimson hover:bg-crimson/10 transition"
+                            title="Signaler un problème sur ce chapitre">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 21v-4m0 0V5a2 2 0 012-2h6.5l1 1H21l-3 6 3 6h-8.5l-1-1H5a2 2 0 00-2 2zm9-13.5V9"/></svg>
                     </button>
                 </div>
             </div>
@@ -248,6 +256,108 @@
         }
         </script>
 
+        {{-- ═══ Modal Signaler un problème ═══ --}}
+        <div x-show="showReportModal" x-cloak class="fixed inset-0 z-50 overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+            <div class="fixed inset-0 bg-black/80 backdrop-blur-sm transition-opacity" @click="showReportModal = false"></div>
+
+            <div class="flex min-h-full items-center justify-center p-4 text-center">
+                <div class="relative transform overflow-hidden rounded-2xl bg-[#14141c] border border-white/10 text-left shadow-2xl transition-all sm:my-8 sm:w-full sm:max-w-lg p-5 sm:p-6"
+                     @click.stop>
+                    {{-- En-tête --}}
+                    <div class="flex items-center justify-between pb-4 border-b border-white/10">
+                        <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 rounded-xl bg-crimson/15 border border-crimson/30 flex items-center justify-center text-crimson">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 21v-4m0 0V5a2 2 0 012-2h6.5l1 1H21l-3 6 3 6h-8.5l-1-1H5a2 2 0 00-2 2zm9-13.5V9"/></svg>
+                            </div>
+                            <div>
+                                <h3 class="text-base sm:text-lg font-bold text-white leading-tight">Signaler un problème</h3>
+                                <p class="text-xs text-mist mt-0.5">{{ $manga->title }} • Ch. {{ $chapter->number }}</p>
+                            </div>
+                        </div>
+                        <button @click="showReportModal = false" class="text-mist hover:text-white p-1 rounded-lg hover:bg-white/5 transition">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                        </button>
+                    </div>
+
+                    {{-- Formulaire --}}
+                    <form @submit.prevent="submitReport()" class="mt-5 space-y-4">
+                        {{-- Type d'erreur --}}
+                        <div>
+                            <label class="block text-xs font-semibold text-mist uppercase tracking-wider mb-2">Type d'anomalie</label>
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                                <label class="flex items-center gap-2.5 p-3 rounded-xl border cursor-pointer transition text-xs sm:text-sm"
+                                       :class="reportType === 'page_manquante' ? 'bg-crimson/15 border-crimson text-white' : 'bg-white/[0.03] border-white/10 text-mist hover:border-white/20'">
+                                    <input type="radio" value="page_manquante" x-model="reportType" class="hidden">
+                                    <span>📄 Page manquante</span>
+                                </label>
+                                <label class="flex items-center gap-2.5 p-3 rounded-xl border cursor-pointer transition text-xs sm:text-sm"
+                                       :class="reportType === 'image_corrompue' ? 'bg-crimson/15 border-crimson text-white' : 'bg-white/[0.03] border-white/10 text-mist hover:border-white/20'">
+                                    <input type="radio" value="image_corrompue" x-model="reportType" class="hidden">
+                                    <span>⚠️ Image illisible / blanche</span>
+                                </label>
+                                <label class="flex items-center gap-2.5 p-3 rounded-xl border cursor-pointer transition text-xs sm:text-sm"
+                                       :class="reportType === 'ordre_inverse' ? 'bg-crimson/15 border-crimson text-white' : 'bg-white/[0.03] border-white/10 text-mist hover:border-white/20'">
+                                    <input type="radio" value="ordre_inverse" x-model="reportType" class="hidden">
+                                    <span>🔄 Pages inversées</span>
+                                </label>
+                                <label class="flex items-center gap-2.5 p-3 rounded-xl border cursor-pointer transition text-xs sm:text-sm"
+                                       :class="reportType === 'mauvaise_traduction' ? 'bg-crimson/15 border-crimson text-white' : 'bg-white/[0.03] border-white/10 text-mist hover:border-white/20'">
+                                    <input type="radio" value="mauvaise_traduction" x-model="reportType" class="hidden">
+                                    <span>✏️ Traduction / Coquille</span>
+                                </label>
+                                <label class="flex items-center gap-2.5 p-3 rounded-xl border cursor-pointer transition text-xs sm:text-sm sm:col-span-2"
+                                       :class="reportType === 'autre' ? 'bg-crimson/15 border-crimson text-white' : 'bg-white/[0.03] border-white/10 text-mist hover:border-white/20'">
+                                    <input type="radio" value="autre" x-model="reportType" class="hidden">
+                                    <span>❓ Autre souci technique</span>
+                                </label>
+                            </div>
+                        </div>
+
+                        {{-- Page concernée --}}
+                        <div>
+                            <div class="flex items-center justify-between mb-1.5">
+                                <label class="text-xs font-semibold text-mist uppercase tracking-wider">Page concernée</label>
+                                <span class="text-xs text-mist/60">(optionnel)</span>
+                            </div>
+                            <input type="number" min="1" max="{{ $chapter->pages->count() }}" x-model="reportPage"
+                                   placeholder="Numéro de la page"
+                                   class="input-field !py-2 w-full text-sm">
+                        </div>
+
+                        {{-- Précisions --}}
+                        <div>
+                            <div class="flex items-center justify-between mb-1.5">
+                                <label class="text-xs font-semibold text-mist uppercase tracking-wider">Précisions</label>
+                                <span class="text-xs text-mist/60">(optionnel)</span>
+                            </div>
+                            <textarea x-model="reportMessage" rows="3"
+                                      placeholder="Ex: La bulle en haut à droite est illisible, la page 14 est en double..."
+                                      class="input-field !py-2.5 w-full text-sm resize-none"></textarea>
+                        </div>
+
+                        {{-- Message d'erreur ou succès --}}
+                        <div x-show="reportError" x-cloak class="p-3 rounded-xl bg-crimson/20 border border-crimson/40 text-crimson text-sm" x-text="reportError"></div>
+                        <div x-show="reportSuccess" x-cloak class="p-3 rounded-xl bg-emerald-500/20 border border-emerald-500/40 text-emerald-400 text-sm flex items-center gap-2">
+                            <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                            <span>Signalement envoyé ! Merci de votre aide.</span>
+                        </div>
+
+                        {{-- Actions du modal --}}
+                        <div class="flex items-center justify-end gap-3 pt-3 border-t border-white/10">
+                            <button type="button" @click="showReportModal = false" class="btn-ghost !py-2 !px-4 text-sm">
+                                Annuler
+                            </button>
+                            <button type="submit" :disabled="reportSubmitting || reportSuccess"
+                                    class="btn-primary !bg-crimson hover:!bg-crimson/90 !py-2 !px-5 text-sm font-semibold flex items-center gap-2">
+                                <span x-show="!reportSubmitting">Envoyer le signalement</span>
+                                <span x-show="reportSubmitting" x-cloak>Envoi...</span>
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
         {{-- ═══ Commentaires ═══ --}}
         <div class="max-w-3xl mx-auto mt-6 bg-[#131318] rounded-xl sm:rounded-2xl p-3.5 sm:p-7" style="border: 1px solid #252535;">
             <livewire:public.comment-section
@@ -271,6 +381,75 @@
             progressPercent: 0,
             currentPage: 1,
             totalPages: {{ $chapter->pages->count() }},
+            viewTracked: false,
+
+            async trackReadingView() {
+                if (this.viewTracked) return;
+                this.viewTracked = true;
+                try {
+                    const token = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '{{ csrf_token() }}';
+                    await fetch("{{ route('chapter.track_view', $chapter->id) }}", {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRF-TOKEN': token,
+                            'Accept': 'application/json'
+                        }
+                    });
+                } catch(e) {}
+            },
+
+            // Signalement state
+            showReportModal: false,
+            reportType: 'page_manquante',
+            reportPage: 1,
+            reportMessage: '',
+            reportSubmitting: false,
+            reportSuccess: false,
+            reportError: '',
+
+            openReportModal() {
+                this.reportPage = this.currentPage || 1;
+                this.reportError = '';
+                this.reportSuccess = false;
+                this.showReportModal = true;
+            },
+
+            async submitReport() {
+                this.reportSubmitting = true;
+                this.reportError = '';
+                try {
+                    const token = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '{{ csrf_token() }}';
+                    const res = await fetch("{{ route('chapter.report', $chapter->id) }}", {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRF-TOKEN': token,
+                            'Accept': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            type: this.reportType,
+                            page_number: this.reportPage ? parseInt(this.reportPage) : null,
+                            message: this.reportMessage
+                        })
+                    });
+                    const data = await res.json();
+                    if (res.ok && data.success) {
+                        this.reportSuccess = true;
+                        setTimeout(() => {
+                            this.showReportModal = false;
+                            this.reportSuccess = false;
+                            this.reportMessage = '';
+                        }, 2000);
+                    } else {
+                        this.reportError = data.message || 'Une erreur est survenue lors du signalement.';
+                    }
+                } catch(e) {
+                    this.reportError = 'Erreur réseau, veuillez réessayer.';
+                } finally {
+                    this.reportSubmitting = false;
+                }
+            },
             pages: [
                 @foreach($chapter->pages as $page)
                 { page: {{ $page->page_number }}, src: "{{ Storage::url($page->image_path) }}" },
@@ -296,6 +475,11 @@
 
                 // Sauvegarder la progression
                 this.saveProgress();
+
+                // Déclencher le comptage réaliste si le lecteur reste actif au moins 10 secondes
+                setTimeout(() => {
+                    this.trackReadingView();
+                }, 10000);
             },
 
             onScroll() {
@@ -312,6 +496,11 @@
                 // Progress
                 const docHeight = document.documentElement.scrollHeight - window.innerHeight;
                 this.progressPercent = docHeight > 0 ? Math.min(100, (y / docHeight) * 100) : 0;
+
+                // Comptage de vue réaliste dès 15% de défilement (lecture active)
+                if (this.progressPercent > 15) {
+                    this.trackReadingView();
+                }
 
                 // Save progress periodically
                 if (this.progressPercent > 5) {
@@ -363,6 +552,7 @@
             nextPage() {
                 if (this.currentPage < this.totalPages) {
                     this.currentPage++;
+                    this.trackReadingView();
                     this.saveProgress();
                     window.scrollTo({ top: 0, behavior: 'smooth' });
                 }

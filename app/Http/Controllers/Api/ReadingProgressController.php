@@ -327,4 +327,25 @@ class ReadingProgressController extends Controller
             ] : null,
         ];
     }
+
+    /**
+     * Get recommendations "Si t'as aimé X, lis Y" for user or given slugs.
+     * GET /api/recommendations
+     */
+    public function getRecommendations(Request $request, \App\Services\RecommendationService $service): JsonResponse
+    {
+        $user = Auth::user();
+
+        if ($user) {
+            $recommendations = $service->getRecommendationsForUser($user);
+        } else {
+            $slugs = array_filter(explode(',', (string) $request->query('slugs', '')));
+            $recommendations = $service->getRecommendationsForSlugs($slugs);
+        }
+
+        return response()->json([
+            'success' => true,
+            'recommendations' => $recommendations,
+        ]);
+    }
 }

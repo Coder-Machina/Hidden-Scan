@@ -133,12 +133,12 @@ class MangaForm
                         Toggle::make('is_featured')
                             ->label('Mise en avant')
                             ->helperText('Afficher dans la section "Recommandés".'),
-                        TextInput::make('views_count')->label('Vues')
+                        TextInput::make('views_count')
                             ->label('Compteur de vues')
                             ->numeric()
                             ->default(0)
                             ->disabled()
-                            ->dehydrated(),
+                            ->dehydrateStateUsing(fn ($state) => (int) ($state ?? 0)),
                     ]),
             ]);
     }

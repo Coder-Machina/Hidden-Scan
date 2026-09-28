@@ -6,20 +6,24 @@ use App\Enums\ChapterStatus;
 use App\Http\Controllers\Controller;
 use App\Models\Manga;
 use App\Models\ReadingProgress;
+use App\Services\RecommendationService;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
 
 class LibraryController extends Controller
 {
-    public function index()
+    public function index(RecommendationService $recommendationService)
     {
         $mangasWithProgress = [];
         $catchUpChapters = [];
         $catchUpByManga = [];
         $unreadTotal = 0;
+        $recommendations = [];
 
         if (Auth::check()) {
-            $userId = Auth::id();
+            $user = Auth::user();
+            $userId = $user->id;
+            $recommendations = $recommendationService->getRecommendationsForUser($user);
 
             // Find all manga IDs where user has at least one read chapter
             $mangaIds = ReadingProgress::where('user_id', $userId)
@@ -120,6 +124,6 @@ class LibraryController extends Controller
             $unreadTotal = count($catchUpChapters);
         }
 
-        return view('public.library', compact('mangasWithProgress', 'catchUpChapters', 'catchUpByManga', 'unreadTotal'));
+        return view('public.library', compact('mangasWithProgress', 'catchUpChapters', 'catchUpByManga', 'unreadTotal', 'recommendations'));
     }
 }

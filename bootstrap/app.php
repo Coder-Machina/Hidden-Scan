@@ -19,6 +19,10 @@ return Application::configure(basePath: dirname(__DIR__))
             'api/*',
         ]);
 
+        $middleware->web(append: [
+            \App\Http\Middleware\CheckScheduledChaptersMiddleware::class,
+        ]);
+
         $middleware->alias([
             'staff' => \App\Http\Middleware\EnsureIsStaff::class,
             'throttle.comments' => \App\Http\Middleware\RateLimitComments::class,

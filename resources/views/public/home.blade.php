@@ -3,13 +3,32 @@
 
     {{-- ═══ Hero Slider ═══ --}}
     @if($featured->count())
+    <style>
+        .hero-swiper .swiper-slide {
+            pointer-events: none !important;
+            opacity: 0 !important;
+            visibility: hidden !important;
+            z-index: 1 !important;
+            transition: opacity 0.4s ease, visibility 0.4s ease;
+        }
+        .hero-swiper .swiper-slide.swiper-slide-active {
+            pointer-events: auto !important;
+            opacity: 1 !important;
+            visibility: visible !important;
+            z-index: 10 !important;
+        }
+    </style>
     <section class="relative mb-14 animate-fade-in -mx-4 sm:-mx-6 mt-[-1.5rem] overflow-hidden">
         <div class="swiper hero-swiper h-[55vh] min-h-[420px] max-h-[600px] w-full overflow-hidden">
             <div class="swiper-wrapper">
                 @foreach($featured as $manga)
-                <div class="swiper-slide relative overflow-hidden">
+                @php
+                    $mangaUrl = route('manga.show', $manga->slug);
+                    $firstChapter = $manga->chapters->first();
+                @endphp
+                <div class="swiper-slide relative overflow-hidden" data-url="{{ $mangaUrl }}">
                     {{-- Background (Clickable direct navigation to manga) --}}
-                    <a href="{{ route('manga.show', $manga->slug) }}" class="absolute inset-0 z-0 cursor-pointer block" aria-label="{{ $manga->title }}">
+                    <a href="{{ $mangaUrl }}" class="absolute inset-0 z-0 cursor-pointer block" aria-label="{{ $manga->title }}">
                         @if($manga->banner_image)
                             <img src="{{ Storage::url($manga->banner_image) }}" alt="" class="absolute inset-0 w-full h-full object-cover opacity-40">
                         @elseif($manga->cover_image)
@@ -25,8 +44,8 @@
                     
                     {{-- Content --}}
                     <div class="absolute inset-0 flex items-center pointer-events-none">
-                        <div class="max-w-7xl mx-auto px-4 sm:px-8 lg:px-10 w-full flex gap-8 items-center pointer-events-auto">
-                            <div class="flex-1 max-w-2xl">
+                        <div class="max-w-7xl mx-auto px-4 sm:px-8 lg:px-10 w-full flex gap-8 items-center pointer-events-none">
+                            <div class="flex-1 max-w-2xl pointer-events-auto">
                                 <div class="flex flex-wrap items-center gap-2 mb-2.5 sm:mb-3">
                                     <span class="badge-type badge-{{ $manga->type->value }}">{{ $manga->type->getLabel() }}</span>
                                     <span class="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-amber/20 text-amber text-xs font-bold backdrop-blur-md border border-amber/30">
@@ -34,7 +53,7 @@
                                     </span>
                                 </div>
                                 <h2 class="font-display font-extrabold text-2xl sm:text-4xl lg:text-6xl tracking-tight text-chalk leading-tight mb-3 sm:mb-4 drop-shadow-lg line-clamp-2 sm:line-clamp-none">
-                                    <a href="{{ route('manga.show', $manga->slug) }}" class="hover:text-violet transition-colors">
+                                    <a href="{{ $mangaUrl }}" class="hover:text-violet transition-colors">
                                         {{ $manga->title }}
                                     </a>
                                 </h2>
@@ -44,21 +63,21 @@
                                     </p>
                                 @endif
                                 <div class="flex flex-wrap gap-2.5 sm:gap-3">
-                                    <a href="{{ route('manga.show', $manga->slug) }}" class="btn-primary !px-5 sm:!px-6 !py-2.5 sm:!py-3 !text-sm sm:!text-base shadow-[0_0_20px_rgba(155,123,255,0.4)]">
+                                    <a href="{{ $mangaUrl }}" class="btn-primary !px-5 sm:!px-6 !py-2.5 sm:!py-3 !text-sm sm:!text-base shadow-[0_0_20px_rgba(155,123,255,0.4)]">
                                         Voir l'œuvre
                                     </a>
-                                    @if($manga->chapters->count())
-                                    <a href="{{ route('chapter.show', [$manga->slug, $manga->chapters->last()->slug]) }}" class="btn-secondary !px-4 sm:!px-6 !py-2.5 sm:!py-3 !text-sm sm:!text-base bg-panel-hi/60 backdrop-blur-md">
+                                    @if($firstChapter)
+                                    <a href="{{ route('chapter.show', [$manga->slug, $firstChapter->slug]) }}" class="btn-secondary !px-4 sm:!px-6 !py-2.5 sm:!py-3 !text-sm sm:!text-base bg-panel-hi/60 backdrop-blur-md">
                                         <svg class="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/></svg>
-                                        Ch. {{ $manga->chapters->last()->number }}
+                                        Ch. {{ $firstChapter->number }}
                                     </a>
                                     @endif
                                 </div>
                             </div>
                             
                             {{-- Image Cover flottante (Desktop only, Clickable) --}}
-                            <div class="hidden md:block flex-shrink-0 relative group perspective-1000">
-                                <a href="{{ route('manga.show', $manga->slug) }}" class="block cursor-pointer">
+                            <div class="hidden md:block flex-shrink-0 relative group perspective-1000 pointer-events-auto">
+                                <a href="{{ $mangaUrl }}" class="block cursor-pointer">
                                     @if($manga->cover_image)
                                         <img src="{{ Storage::url($manga->cover_image) }}" alt="{{ $manga->title }}" 
                                              class="w-48 lg:w-64 aspect-[2/3] object-cover rounded-xl border border-line shadow-2xl transition-transform duration-500 ease-out transform rotate-y-[-10deg] group-hover:rotate-y-0 group-hover:scale-105">
@@ -91,9 +110,9 @@
                 clickable: true,
             },
             touchStartPreventDefault: false,
-            preventClicks: true,
-            preventClicksPropagation: true,
-            resistanceRatio: 0,
+            preventClicks: false,
+            preventClicksPropagation: false,
+            watchSlidesProgress: true,
         });
     });
     </script>

@@ -23,6 +23,17 @@ class Manga extends Model
         'is_featured' => 'boolean',
     ];
 
+    protected $attributes = [
+        'views_count' => 0,
+        'average_rating' => 0,
+        'ratings_count' => 0,
+    ];
+
+    public function setViewsCountAttribute($value): void
+    {
+        $this->attributes['views_count'] = (int) ($value ?? 0);
+    }
+
     public function authors()
     {
         return $this->belongsToMany(Author::class, 'author_manga');
@@ -61,5 +72,10 @@ class Manga extends Model
     public function favoritedByUsers()
     {
         return $this->belongsToMany(User::class, 'favorites')->withTimestamps();
+    }
+
+    public function reports()
+    {
+        return $this->hasMany(ChapterReport::class);
     }
 }

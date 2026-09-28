@@ -41,7 +41,8 @@ class MangaResource extends Resource
     public static function getRelations(): array
     {
         return [
-            //
+            \App\Filament\Resources\Mangas\RelationManagers\ChaptersRelationManager::class,
+            \App\Filament\Resources\Mangas\RelationManagers\ReportsRelationManager::class,
         ];
     }
 

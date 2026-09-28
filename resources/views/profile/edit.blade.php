@@ -1,16 +1,6 @@
 <x-layouts.public title="Profil — Hidden Scan">
     @php
         $initials = strtoupper(substr($user->name, 0, 2));
-        $tier = $user->tier_badge;
-        $tierStyles = match($tier) {
-            'DIAMANT' => ['color' => '#c084fc', 'bg' => 'rgba(192,132,252,.15)', 'border' => 'rgba(192,132,252,.3)'],
-            'PLATINE' => ['color' => '#38bdf8', 'bg' => 'rgba(56,189,248,.15)', 'border' => 'rgba(56,189,248,.3)'],
-            'OR'      => ['color' => '#eab308', 'bg' => 'rgba(234,179,8,.15)', 'border' => 'rgba(234,179,8,.3)'],
-            'ARGENT'  => ['color' => '#94a3b8', 'bg' => 'rgba(148,163,184,.15)', 'border' => 'rgba(148,163,184,.3)'],
-            default   => ['color' => '#c77c32', 'bg' => 'rgba(199,124,50,.15)', 'border' => 'rgba(199,124,50,.3)'],
-        };
-        $xpCurrent = $user->xp_in_current_level;
-        $xpPercent = min(100, max(0, round(($xpCurrent / 50) * 100)));
     @endphp
 
     <style>
@@ -116,22 +106,6 @@
             display: block;
         }
 
-        .profile-level-badge {
-            position: absolute;
-            bottom: -7px;
-            left: 50%;
-            transform: translateX(-50%);
-            background-color: #111118;
-            border: 1px solid #1e1e2e;
-            color: #a0a0c0;
-            font-size: 11px;
-            font-weight: 800;
-            padding: 2px 10px;
-            border-radius: 12px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.6);
-            white-space: nowrap;
-        }
-
         /* Détails Utilisateur */
         .profile-user-details {
             display: flex;
@@ -154,19 +128,6 @@
             line-height: 1.2;
             text-shadow: 0 2px 8px rgba(0,0,0,0.9);
             word-break: break-word;
-        }
-
-        .profile-tier-badge {
-            display: inline-flex;
-            align-items: center;
-            gap: 5px;
-            font-size: 11px;
-            font-weight: 800;
-            padding: 3px 10px;
-            border-radius: 20px;
-            letter-spacing: 0.5px;
-            text-transform: uppercase;
-            flex-shrink: 0;
         }
 
         .profile-meta-info {
@@ -219,37 +180,6 @@
             stroke: currentColor;
             fill: none;
             flex-shrink: 0;
-        }
-
-        .profile-xp-box {
-            display: flex;
-            flex-direction: column;
-            align-items: flex-end;
-            gap: 6px;
-            min-width: 180px;
-        }
-
-        .profile-xp-text {
-            font-size: 12px;
-            color: #d0d0e0;
-            font-weight: 700;
-            text-shadow: 0 1px 3px rgba(0,0,0,0.8);
-        }
-
-        .profile-xp-bar {
-            width: 100%;
-            height: 7px;
-            background: #0d0d15;
-            border: 1px solid #222234;
-            border-radius: 4px;
-            overflow: hidden;
-        }
-
-        .profile-xp-fill {
-            height: 100%;
-            background: linear-gradient(90deg, #dc2626, #ef4444);
-            border-radius: 4px;
-            transition: width 0.3s ease;
         }
 
         /* ── Barre d'onglets Pleine Page ── */
@@ -326,7 +256,7 @@
         /* ── Grille de statistiques ── */
         .profile-stats-grid {
             display: grid;
-            grid-template-columns: repeat(4, 1fr);
+            grid-template-columns: repeat(3, 1fr);
             gap: 16px;
             margin-bottom: 28px;
         }
@@ -720,11 +650,6 @@
                 gap: 12px;
             }
 
-            .profile-xp-box {
-                width: 100%;
-                align-items: stretch;
-            }
-
             .profile-hero-buttons {
                 display: grid;
                 grid-template-columns: 1fr 1fr;
@@ -752,7 +677,7 @@
             }
 
             .profile-stats-grid {
-                grid-template-columns: repeat(2, 1fr);
+                grid-template-columns: repeat(3, 1fr);
                 gap: 10px;
                 margin-bottom: 20px;
             }
@@ -947,33 +872,19 @@
                                 <img :src="avatarPreview" class="profile-avatar-img" alt="Avatar">
                             </template>
                         </div>
-                        <div class="profile-level-badge">{{ $user->level }}</div>
                     </div>
 
                     <div class="profile-user-details">
                         <div class="profile-username-row">
                             <span class="profile-username">{{ $user->name }}</span>
-                            <span class="profile-tier-badge" style="color: {{ $tierStyles['color'] }}; background: {{ $tierStyles['bg'] }}; border: 1px solid {{ $tierStyles['border'] }};">
-                                ◆ {{ $tier }}
-                            </span>
                         </div>
                         <div class="profile-meta-info">
-                            Membre depuis {{ $user->created_at->translatedFormat('F Y') }} · Rang global #{{ $globalRank }}
+                            Membre depuis {{ $user->created_at->translatedFormat('F Y') }}
                         </div>
                     </div>
                 </div>
 
                 <div class="profile-hero-right">
-                    <div class="profile-xp-box">
-                        <div style="display: flex; justify-content: space-between; width: 100%; gap: 12px;">
-                            <span class="profile-xp-text">Niveau {{ $user->level }}</span>
-                            <span class="profile-xp-text">{{ $xpCurrent }} / 50 XP</span>
-                        </div>
-                        <div class="profile-xp-bar">
-                            <div class="profile-xp-fill" style="width: {{ $xpPercent }}%;"></div>
-                        </div>
-                    </div>
-
                     <div class="profile-hero-buttons">
                         <button type="button" class="btn-profile-ghost" @click="switchTab('edit')">
                             <svg viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
@@ -1030,10 +941,6 @@
                     <div class="profile-stat-box">
                         <span class="profile-stat-num">{{ $commentsCount }}</span>
                         <span class="profile-stat-label">Commentaires</span>
-                    </div>
-                    <div class="profile-stat-box">
-                        <span class="profile-stat-num" style="color: {{ $tierStyles['color'] }};">{{ $tier }}</span>
-                        <span class="profile-stat-label">Niveau {{ $user->level }}</span>
                     </div>
                 </div>
 

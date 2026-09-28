@@ -35,4 +35,9 @@ return [
         ],
     ],
 
+    'discord' => [
+        'webhook_url' => env('DISCORD_WEBHOOK_URL'),
+        'role_id' => env('DISCORD_ROLE_ID'),
+    ],
+
 ];

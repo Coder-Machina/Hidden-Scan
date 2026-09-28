@@ -20,12 +20,22 @@ class ChapterForm
                     ->label('Œuvre')
                     ->options(Manga::all()->pluck('title', 'id'))
                     ->searchable()
-                    ->required(),
-                TextInput::make('number')->label('Numéro')
+                    ->hidden(fn ($livewire) => $livewire instanceof \Filament\Resources\RelationManagers\RelationManager)
+                    ->required(fn ($livewire) => ! ($livewire instanceof \Filament\Resources\RelationManagers\RelationManager)),
+                TextInput::make('number')
                     ->label('Numéro')
                     ->numeric()
+                    ->default(function ($livewire) {
+                        if ($livewire instanceof \Filament\Resources\RelationManagers\RelationManager) {
+                            $owner = $livewire->getOwnerRecord();
+                            if ($owner) {
+                                return (int) (($owner->chapters()->max('number') ?? 0) + 1);
+                            }
+                        }
+                        return 1;
+                    })
                     ->required(),
-                TextInput::make('title')->label('Titre')
+                TextInput::make('title')
                     ->label('Titre (optionnel)')
                     ->default(null),
                 Select::make('status')->label('Statut')

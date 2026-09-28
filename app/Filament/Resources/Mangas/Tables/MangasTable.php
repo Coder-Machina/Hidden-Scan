@@ -47,12 +47,17 @@ class MangasTable
                     ->placeholder('—')
                     ->sortable()
                     ->toggleable(),
-                TextColumn::make('chapters_count')->label('Chapitres')
+                TextColumn::make('chapters_count')
                     ->label('Chapitres')
                     ->counts('chapters')
                     ->sortable()
                     ->badge()
-                    ->color('primary'),
+                    ->color('primary')
+                    ->tooltip('Cliquer pour gérer les chapitres de cette œuvre')
+                    ->url(fn (\App\Models\Manga $record): string => \App\Filament\Resources\Mangas\MangaResource::getUrl('edit', [
+                        'record' => $record,
+                        'activeRelationManager' => 0,
+                    ])),
                 TextColumn::make('views_count')->label('Vues')
                     ->label('Vues')
                     ->numeric()
@@ -89,6 +94,15 @@ class MangasTable
                     ]),
             ])
             ->recordActions([
+                \Filament\Actions\Action::make('chapters')
+                    ->label(fn (\App\Models\Manga $record) => "Chapitres (" . $record->chapters()->count() . ")")
+                    ->icon('heroicon-o-book-open')
+                    ->color('success')
+                    ->tooltip('Gérer les chapitres de cette œuvre')
+                    ->url(fn (\App\Models\Manga $record): string => \App\Filament\Resources\Mangas\MangaResource::getUrl('edit', [
+                        'record' => $record,
+                        'activeRelationManager' => 0,
+                    ])),
                 EditAction::make(),
             ])
             ->toolbarActions([

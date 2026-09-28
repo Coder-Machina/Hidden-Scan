@@ -15,6 +15,10 @@ class Chapter extends Model
         'uploaded_by', 'scheduled_at', 'published_at', 'views_count',
     ];
 
+    protected $attributes = [
+        'views_count' => 0,
+    ];
+
     protected $casts = [
         'status' => \App\Enums\ChapterStatus::class,
         'scheduled_at' => 'datetime',
@@ -53,15 +57,70 @@ class Chapter extends Model
         return $this->hasMany(ReadingProgress::class);
     }
 
+    public function reports()
+    {
+        return $this->hasMany(ChapterReport::class);
+    }
+
+    /**
+     * Enregistre une vue réaliste pour ce chapitre et pour le manga parent,
+     * avec protection anti-spam par cooldown (IP ou compte connecté).
+     */
+    public function recordView(?string $ip = null, ?int $userId = null): bool
+    {
+        $ip = $ip ?? request()->ip();
+        $userId = $userId ?? auth()->id();
+        $identifier = $userId ? "user_{$userId}" : "ip_" . md5($ip ?? '127.0.0.1');
+        $cacheKey = "view_cooldown:chapter_{$this->id}:{$identifier}";
+
+        // Cooldown de 1 heure par utilisateur/IP sur ce chapitre
+        if (\Illuminate\Support\Facades\Cache::has($cacheKey)) {
+            return false;
+        }
+
+        \Illuminate\Support\Facades\Cache::put($cacheKey, true, now()->addHours(1));
+
+        // Incrémente les vues du chapitre
+        $this->increment('views_count');
+
+        // Incrémente également les vues globales du manga parent
+        if ($this->manga_id) {
+            $this->manga()->increment('views_count');
+        }
+
+        return true;
+    }
+
+    public function scopePublished($query)
+    {
+        return $query->where('status', \App\Enums\ChapterStatus::PUBLIE)
+            ->where(function ($q) {
+                $q->whereNull('published_at')->orWhere('published_at', '<=', now()->addMinutes(1));
+            });
+    }
+
     protected static function booted(): void
     {
         static::saved(function (Chapter $chapter) {
             if ($chapter->status === \App\Enums\ChapterStatus::PUBLIE) {
                 if ($chapter->wasRecentlyCreated || $chapter->wasChanged('status') || $chapter->wasChanged('published_at')) {
                     $chapter->notifyFavoriteUsers();
+                    $chapter->notifyDiscord();
                 }
             }
         });
+    }
+
+    /**
+     * Notify Discord Webhook.
+     */
+    public function notifyDiscord(): void
+    {
+        try {
+            app(\App\Services\DiscordWebhookService::class)->sendChapterNotification($this);
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::warning('Discord webhook notification failed: ' . $e->getMessage());
+        }
     }
 
     /**

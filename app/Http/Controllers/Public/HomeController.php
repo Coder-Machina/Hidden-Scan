@@ -11,6 +11,9 @@ class HomeController extends Controller
     public function index()
     {
         $featured = Manga::where('is_featured', true)
+            ->with(['chapters' => function($q) {
+                $q->published()->orderBy('number', 'asc');
+            }])
             ->withCount('chapters')
             ->latest()
             ->take(6)

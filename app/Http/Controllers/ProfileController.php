@@ -27,9 +27,6 @@ class ProfileController extends Controller
             ->take(6)
             ->get();
 
-        // Calculate dynamic global rank
-        $globalRank = \App\Models\User::where('xp', '>', $user->xp ?? 0)->count() + 1;
-
         $genres = \App\Models\Genre::orderBy('name')->get();
 
         // Manga lookup mapping for covers & titles in library / reading history
@@ -45,7 +42,6 @@ class ProfileController extends Controller
             'commentsCount' => $commentsCount,
             'likesReceived' => $likesReceived,
             'recentComments' => $recentComments,
-            'globalRank' => $globalRank,
             'genres' => $genres,
             'mangasLookup' => $mangasLookup,
         ]);

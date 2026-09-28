@@ -10,6 +10,9 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 
+use Filament\Models\Contracts\FilamentUser;
+use Filament\Panel;
+
 #[Fillable([
     'name', 'email', 'password',
     'avatar', 'banner', 'bio', 'xp', 'favorite_genre', 'reader_mode',
@@ -17,10 +20,15 @@ use Illuminate\Notifications\Notifiable;
     'is_comment_banned', 'comment_banned_at', 'comment_ban_reason',
 ])]
 #[Hidden(['password', 'remember_token'])]
-class User extends Authenticatable
+class User extends Authenticatable implements FilamentUser
 {
     /** @use HasFactory<UserFactory> */
-    use HasFactory, Notifiable, \Spatie\Permission\Traits\HasRoles;    
+    use HasFactory, Notifiable, \Spatie\Permission\Traits\HasRoles;
+
+    public function canAccessPanel(Panel $panel): bool
+    {
+        return ! $this->isBanned();
+    }    
 
     /**
      * Get the attributes that should be cast.

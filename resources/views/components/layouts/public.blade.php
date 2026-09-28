@@ -590,9 +590,8 @@
                             >
                                 {{-- En-tête profil --}}
                                 <div style="border-bottom: 1px solid #222234; padding: 10px 12px 12px;">
-                                    <div class="font-bold text-sm text-[#ffffff] truncate flex items-center justify-between gap-2">
-                                        <span class="truncate">{{ Auth::user()->name }}</span>
-                                        <span class="text-[10px] px-1.5 py-0.5 rounded bg-red-950/80 border border-red-500/40 text-red-400 font-bold uppercase flex-shrink-0">{{ Auth::user()->tier_badge }}</span>
+                                    <div class="font-bold text-sm text-[#ffffff] truncate">
+                                        {{ Auth::user()->name }}
                                     </div>
                                     <div class="text-xs text-[#7070a0] truncate mt-1">{{ Auth::user()->email }}</div>
                                 </div>
@@ -712,9 +711,8 @@
                             >
                                 {{-- En-tête profil --}}
                                 <div style="border-bottom: 1px solid #222234; padding: 6px 8px 10px;">
-                                    <div class="font-bold text-sm text-[#ffffff] truncate flex items-center justify-between gap-2">
-                                        <span class="truncate">{{ Auth::user()->name }}</span>
-                                        <span class="text-[10px] px-1.5 py-0.5 rounded bg-red-950/80 border border-red-500/40 text-red-400 font-bold uppercase flex-shrink-0">{{ Auth::user()->tier_badge }}</span>
+                                    <div class="font-bold text-sm text-[#ffffff] truncate">
+                                        {{ Auth::user()->name }}
                                     </div>
                                     <div class="text-xs text-[#7070a0] truncate mt-1">{{ Auth::user()->email }}</div>
                                 </div>

@@ -28,4 +28,7 @@ Route::middleware(['web'])->group(function () {
     Route::get('/notifications', [NotificationController::class, 'index'])->name('api.notifications.index');
     Route::post('/notifications/mark-all-read', [NotificationController::class, 'markAllAsRead'])->name('api.notifications.mark-all-read');
     Route::post('/notifications/{id}/read', [NotificationController::class, 'markAsRead'])->name('api.notifications.read');
+
+    // Recommendations ("Si t'as aimé X, lis Y")
+    Route::get('/recommendations', [ReadingProgressController::class, 'getRecommendations'])->name('api.recommendations');
 });
