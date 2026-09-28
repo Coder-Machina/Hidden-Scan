@@ -877,6 +877,12 @@
                     <div class="profile-user-details">
                         <div class="profile-username-row">
                             <span class="profile-username">{{ $user->name }}</span>
+                            @if($user->staff_badge)
+                                <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-extrabold uppercase tracking-wider border {{ $user->staff_badge['bg'] }} {{ $user->staff_badge['text'] }} {{ $user->staff_badge['border'] }} shadow-sm">
+                                    <span class="w-1.5 h-1.5 rounded-full" style="background-color: {{ $user->staff_badge['hex'] }}"></span>
+                                    {{ $user->staff_badge['name'] }}
+                                </span>
+                            @endif
                         </div>
                         <div class="profile-meta-info">
                             Membre depuis {{ $user->created_at->translatedFormat('F Y') }}

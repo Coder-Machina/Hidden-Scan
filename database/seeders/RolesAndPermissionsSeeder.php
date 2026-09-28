@@ -50,48 +50,42 @@ class RolesAndPermissionsSeeder extends Seeder
             Permission::firstOrCreate(['name' => $permission]);
         }
 
-        // 2. Définir les rôles et associer les permissions
+        // 2. Définir les 3 rôles Staff et associer les permissions
         
-        // Owner : Tous les droits
-        $ownerRole = Role::firstOrCreate(['name' => StaffRole::OWNER->value]);
-        $ownerRole->givePermissionTo(Permission::all());
-
-        // Administrateur : Presque tous les droits sauf potentiellement la gestion des rôles sensibles
-        $adminRole = Role::firstOrCreate(['name' => StaffRole::ADMINISTRATEUR->value]);
+        // Admin (Rouge) : Tous les droits
+        $adminRole = Role::firstOrCreate(['name' => StaffRole::ADMIN->value]);
         $adminRole->givePermissionTo(Permission::all());
 
-        // Manager : Gère le contenu et la modération
-        $managerRole = Role::firstOrCreate(['name' => StaffRole::MANAGER->value]);
-        $managerRole->givePermissionTo([
+        // Modo (Violet) : Modération des commentaires & signalements
+        $modoRole = Role::firstOrCreate(['name' => StaffRole::MODO->value]);
+        $modoRole->givePermissionTo([
+            'view_any_manga', 'view_manga',
+            'view_comments', 'delete_comments', 'manage_reports',
+            'view_dashboard_stats',
+        ]);
+
+        // Uploader (Bleu ciel) : Gestion & upload des mangas et chapitres
+        $uploaderRole = Role::firstOrCreate(['name' => StaffRole::UPLOADER->value]);
+        $uploaderRole->givePermissionTo([
             'view_any_manga', 'view_manga', 'create_manga', 'update_manga',
             'view_any_chapter', 'view_chapter', 'create_chapter', 'update_chapter', 'publish_chapter',
             'manage_taxonomies',
-            'view_comments', 'delete_comments', 'manage_reports',
-            'view_dashboard_stats'
+            'view_dashboard_stats',
         ]);
 
-        // Éditeur : Upload et publication
-        $editeurRole = Role::firstOrCreate(['name' => StaffRole::EDITEUR->value]);
-        $editeurRole->givePermissionTo([
-            'view_any_manga', 'view_manga',
-            'view_any_chapter', 'view_chapter', 'create_chapter', 'update_chapter', 'publish_chapter'
-        ]);
+        // Migrer les anciens rôles vers les 3 nouveaux rôles pour la base de données
+        foreach (\App\Models\User::all() as $user) {
+            if ($user->hasAnyRole(['owner', 'Owner', 'Administrateur', 'admin'])) {
+                $user->assignRole($adminRole);
+            }
+            if ($user->hasAnyRole(['modo', 'Modérateur', 'moderateur'])) {
+                $user->assignRole($modoRole);
+            }
+            if ($user->hasAnyRole(['uploader'])) {
+                $user->assignRole($uploaderRole);
+            }
+        }
 
-        // Traducteur, Checker, Cleaner : Upload basique (Brouillon)
-        $basicStaffPermissions = [
-            'view_any_manga', 'view_manga',
-            'view_any_chapter', 'view_chapter', 'create_chapter', 'update_chapter'
-        ];
-
-        $traducteurRole = Role::firstOrCreate(['name' => StaffRole::TRADUCTEUR->value]);
-        $traducteurRole->givePermissionTo($basicStaffPermissions);
-
-        $checkerRole = Role::firstOrCreate(['name' => StaffRole::CHECKER->value]);
-        $checkerRole->givePermissionTo($basicStaffPermissions);
-
-        $cleanerRole = Role::firstOrCreate(['name' => StaffRole::CLEANER->value]);
-        $cleanerRole->givePermissionTo($basicStaffPermissions);
-        
         // 3. Créer le compte admin par défaut si non existant
         if (!\App\Models\User::where('email', 'admin@hiddenscan.com')->exists()) {
             $admin = \App\Models\User::create([
@@ -100,7 +94,7 @@ class RolesAndPermissionsSeeder extends Seeder
                 'password' => bcrypt('password'),
             ]);
             
-            $admin->assignRole($ownerRole);
+            $admin->assignRole($adminRole);
         }
     }
 }

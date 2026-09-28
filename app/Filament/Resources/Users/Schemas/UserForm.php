@@ -24,8 +24,12 @@ class UserForm
                     ->maxLength(255)
                     ->unique(ignoreRecord: true),
                 Select::make('roles')
-                    ->label('Rôles')
-                    ->relationship('roles', 'name')
+                    ->label('Rôles (Admin, Modo, Uploader)')
+                    ->relationship(
+                        name: 'roles',
+                        titleAttribute: 'name',
+                        modifyQueryUsing: fn ($query) => $query->whereIn('name', ['admin', 'Admin', 'modo', 'Modo', 'uploader', 'Uploader'])
+                    )
                     ->multiple()
                     ->preload()
                     ->searchable(),

@@ -15,7 +15,7 @@ class EnsureIsStaff
      */
     public function handle(Request $request, Closure $next): Response
     {
-        if (!$request->user() || !$request->user()->hasAnyRole(\App\Enums\StaffRole::values())) {
+        if (!$request->user() || !$request->user()->canAccessPanel(filament()->getPanel('admin'))) {
             abort(403, 'Accès réservé au staff.');
         }
 

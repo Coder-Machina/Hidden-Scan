@@ -4,13 +4,9 @@ namespace App\Enums;
 
 enum StaffRole: string
 {
-    case OWNER = 'Owner';
-    case ADMINISTRATEUR = 'Administrateur';
-    case MANAGER = 'Manager';
-    case TRADUCTEUR = 'Traducteur';
-    case CHECKER = 'Checker';
-    case CLEANER = 'Cleaner';
-    case EDITEUR = 'Éditeur';
+    case ADMIN = 'Admin';
+    case MODO = 'Modo';
+    case UPLOADER = 'Uploader';
     
     public static function values(): array
     {

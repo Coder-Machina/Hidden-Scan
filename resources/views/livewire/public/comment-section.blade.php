@@ -882,7 +882,15 @@
                                 </div>
 
                                 <div class="comment-user-text">
-                                    <span class="comment-pseudo">{{ $comment->pseudo ?: 'Anonyme' }}</span>
+                                    <div class="flex items-center gap-2 flex-wrap">
+                                        <span class="comment-pseudo">{{ $comment->pseudo ?: 'Anonyme' }}</span>
+                                        @if($comment->user?->staff_badge)
+                                            <span class="inline-flex items-center gap-1 text-[10px] font-extrabold uppercase tracking-wider px-2 py-0.5 rounded border {{ $comment->user->staff_badge['bg'] }} {{ $comment->user->staff_badge['text'] }} {{ $comment->user->staff_badge['border'] }}">
+                                                <span class="w-1.5 h-1.5 rounded-full" style="background-color: {{ $comment->user->staff_badge['hex'] }}"></span>
+                                                {{ $comment->user->staff_badge['name'] }}
+                                            </span>
+                                        @endif
+                                    </div>
                                     <span class="comment-time">{{ $comment->created_at->diffForHumans() }}</span>
                                 </div>
                             </div>
@@ -1024,7 +1032,15 @@
                                                         @endif
                                                     </div>
                                                     <div class="comment-user-text">
-                                                        <span class="comment-pseudo" style="font-size: 12px;">{{ $reply->pseudo ?: 'Anonyme' }}</span>
+                                                        <div class="flex items-center gap-1.5 flex-wrap">
+                                                            <span class="comment-pseudo" style="font-size: 12px;">{{ $reply->pseudo ?: 'Anonyme' }}</span>
+                                                            @if($reply->user?->staff_badge)
+                                                                <span class="inline-flex items-center gap-1 text-[9px] font-extrabold uppercase tracking-wider px-1.5 py-0.5 rounded border {{ $reply->user->staff_badge['bg'] }} {{ $reply->user->staff_badge['text'] }} {{ $reply->user->staff_badge['border'] }}">
+                                                                    <span class="w-1 h-1 rounded-full" style="background-color: {{ $reply->user->staff_badge['hex'] }}"></span>
+                                                                    {{ $reply->user->staff_badge['name'] }}
+                                                                </span>
+                                                            @endif
+                                                        </div>
                                                         <span class="comment-time">{{ $reply->created_at->diffForHumans() }}</span>
                                                     </div>
                                                 </div>

@@ -24,6 +24,8 @@ class MangaChaptersPanelTest extends TestCase
     public function test_global_chapters_page_redirects_to_mangas_index(): void
     {
         $admin = User::factory()->create();
+        $role = \Spatie\Permission\Models\Role::firstOrCreate(['name' => 'admin']);
+        $admin->assignRole($role);
 
         $response = $this->actingAs($admin)->get('/admin/chapters');
 
@@ -34,6 +36,8 @@ class MangaChaptersPanelTest extends TestCase
     public function test_admin_can_access_manga_edit_page_with_chapters(): void
     {
         $admin = User::factory()->create();
+        $role = \Spatie\Permission\Models\Role::firstOrCreate(['name' => 'admin']);
+        $admin->assignRole($role);
 
         $manga = Manga::create([
             'title' => 'Test Manga',

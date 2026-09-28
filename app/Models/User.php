@@ -45,7 +45,57 @@ class User extends Authenticatable implements FilamentUser
 
     public function canAccessPanel(Panel $panel): bool
     {
-        return ! $this->isBanned();
+        if ($this->isBanned()) {
+            return false;
+        }
+
+        return $this->hasAnyRole([
+            'owner', 'Owner',
+            'admin', 'Admin', 'Administrateur',
+            'modo', 'Modérateur', 'moderateur',
+            'uploader', 'Uploader',
+        ]);
+    }
+
+    /**
+     * Badge Staff : Admin (rouge), Modo (violet), Uploader (bleu ciel)
+     */
+    public function getStaffBadgeAttribute(): ?array
+    {
+        if ($this->hasAnyRole(['owner', 'Owner', 'admin', 'Admin', 'Administrateur'])) {
+            return [
+                'name' => 'Admin',
+                'color' => 'red',
+                'bg' => 'bg-red-600/20',
+                'text' => 'text-red-400',
+                'border' => 'border-red-500/40',
+                'hex' => '#dc2626',
+            ];
+        }
+
+        if ($this->hasAnyRole(['modo', 'Modo', 'Modérateur', 'moderateur'])) {
+            return [
+                'name' => 'Modo',
+                'color' => 'purple',
+                'bg' => 'bg-purple-600/20',
+                'text' => 'text-purple-300',
+                'border' => 'border-purple-500/40',
+                'hex' => '#8b5cf6',
+            ];
+        }
+
+        if ($this->hasAnyRole(['uploader', 'Uploader'])) {
+            return [
+                'name' => 'Uploader',
+                'color' => 'sky',
+                'bg' => 'bg-sky-500/20',
+                'text' => 'text-sky-300',
+                'border' => 'border-sky-400/40',
+                'hex' => '#0284c7',
+            ];
+        }
+
+        return null;
     }    
 
     /**

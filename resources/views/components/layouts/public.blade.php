@@ -590,10 +590,21 @@
                             >
                                 {{-- En-tête profil --}}
                                 <div style="border-bottom: 1px solid #222234; padding: 10px 12px 12px;">
-                                    <div class="font-bold text-sm text-[#ffffff] truncate">
-                                        {{ Auth::user()->name }}
+                                    <div class="font-bold text-sm text-[#ffffff] truncate flex items-center justify-between gap-2">
+                                        <span class="truncate">{{ Auth::user()->name }}</span>
+                                        @if(Auth::user()->staff_badge)
+                                            <span class="text-[10px] uppercase font-extrabold px-1.5 py-0.5 rounded border {{ Auth::user()->staff_badge['bg'] }} {{ Auth::user()->staff_badge['text'] }} {{ Auth::user()->staff_badge['border'] }}">
+                                                {{ Auth::user()->staff_badge['name'] }}
+                                            </span>
+                                        @endif
                                     </div>
-                                    <div class="text-xs text-[#7070a0] truncate mt-1">{{ Auth::user()->email }}</div>
+                                    <div class="text-xs text-[#7070a0] truncate mt-1">
+                                        @if(Auth::user()->pass_code)
+                                            <span class="font-mono text-[#a0a0c0]">{{ Auth::user()->pass_code }}</span>
+                                        @else
+                                            {{ Auth::user()->email }}
+                                        @endif
+                                    </div>
                                 </div>
 
                                 {{-- Liens --}}
@@ -626,10 +637,32 @@
                                         Paramètres & Sécurité
                                     </a>
 
-                                    @if(Auth::user()->canAccessPanel(filament()->getPanel('admin')) || Auth::user()->hasAnyRole(['owner', 'Owner', 'admin', 'Admin', 'Administrateur', 'Modérateur', 'modo', 'Uploader']))
-                                        <a href="/admin" target="_blank" class="flex items-center gap-3 px-3 py-2 rounded-lg text-xs font-bold text-purple-300 hover:bg-purple-600/20 transition">
-                                            <svg class="w-4 h-4 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
-                                            Administration
+                                    @if(Auth::user()->canAccessPanel(filament()->getPanel('admin')))
+                                        @php
+                                            $staffBadge = Auth::user()->staff_badge;
+                                            $admClass = match($staffBadge['color'] ?? '') {
+                                                'red' => 'text-red-400 hover:bg-red-600/20 border-red-500/25',
+                                                'purple' => 'text-purple-300 hover:bg-purple-600/20 border-purple-500/25',
+                                                'sky' => 'text-sky-300 hover:bg-sky-500/20 border-sky-400/25',
+                                                default => 'text-purple-300 hover:bg-purple-600/20 border-purple-500/25',
+                                            };
+                                            $iconColor = match($staffBadge['color'] ?? '') {
+                                                'red' => 'text-red-400',
+                                                'purple' => 'text-purple-400',
+                                                'sky' => 'text-sky-400',
+                                                default => 'text-purple-400',
+                                            };
+                                        @endphp
+                                        <a href="/admin" target="_blank" class="flex items-center justify-between px-3 py-2 rounded-lg text-xs font-bold transition border {{ $admClass }}">
+                                            <span class="flex items-center gap-3">
+                                                <svg class="w-4 h-4 {{ $iconColor }}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
+                                                Administration
+                                            </span>
+                                            @if($staffBadge)
+                                                <span class="text-[9px] uppercase tracking-wider font-extrabold px-1.5 py-0.5 rounded border {{ $staffBadge['bg'] }} {{ $staffBadge['text'] }} {{ $staffBadge['border'] }}">
+                                                    {{ $staffBadge['name'] }}
+                                                </span>
+                                            @endif
                                         </a>
                                     @endif
                                 </div>
@@ -711,10 +744,21 @@
                             >
                                 {{-- En-tête profil --}}
                                 <div style="border-bottom: 1px solid #222234; padding: 6px 8px 10px;">
-                                    <div class="font-bold text-sm text-[#ffffff] truncate">
-                                        {{ Auth::user()->name }}
+                                    <div class="font-bold text-sm text-[#ffffff] truncate flex items-center justify-between gap-2">
+                                        <span class="truncate">{{ Auth::user()->name }}</span>
+                                        @if(Auth::user()->staff_badge)
+                                            <span class="text-[10px] uppercase font-extrabold px-1.5 py-0.5 rounded border {{ Auth::user()->staff_badge['bg'] }} {{ Auth::user()->staff_badge['text'] }} {{ Auth::user()->staff_badge['border'] }}">
+                                                {{ Auth::user()->staff_badge['name'] }}
+                                            </span>
+                                        @endif
                                     </div>
-                                    <div class="text-xs text-[#7070a0] truncate mt-1">{{ Auth::user()->email }}</div>
+                                    <div class="text-xs text-[#7070a0] truncate mt-1">
+                                        @if(Auth::user()->pass_code)
+                                            <span class="font-mono text-[#a0a0c0]">{{ Auth::user()->pass_code }}</span>
+                                        @else
+                                            {{ Auth::user()->email }}
+                                        @endif
+                                    </div>
                                 </div>
 
                                 {{-- Navigation Principale Mobile --}}
@@ -768,10 +812,32 @@
                                         <span>Paramètres & Sécurité</span>
                                     </a>
 
-                                    @if(Auth::user()->canAccessPanel(filament()->getPanel('admin')) || Auth::user()->hasAnyRole(['owner', 'Owner', 'admin', 'Admin', 'Administrateur', 'Modérateur', 'modo', 'Uploader']))
-                                        <a href="/admin" target="_blank" class="flex items-center gap-3 px-3 py-2 rounded-lg text-xs font-bold text-purple-300 hover:bg-purple-600/20 transition">
-                                            <svg class="w-4 h-4 text-purple-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
-                                            <span>Administration</span>
+                                    @if(Auth::user()->canAccessPanel(filament()->getPanel('admin')))
+                                        @php
+                                            $staffBadge = Auth::user()->staff_badge;
+                                            $admClass = match($staffBadge['color'] ?? '') {
+                                                'red' => 'text-red-400 hover:bg-red-600/20 border-red-500/25',
+                                                'purple' => 'text-purple-300 hover:bg-purple-600/20 border-purple-500/25',
+                                                'sky' => 'text-sky-300 hover:bg-sky-500/20 border-sky-400/25',
+                                                default => 'text-purple-300 hover:bg-purple-600/20 border-purple-500/25',
+                                            };
+                                            $iconColor = match($staffBadge['color'] ?? '') {
+                                                'red' => 'text-red-400',
+                                                'purple' => 'text-purple-400',
+                                                'sky' => 'text-sky-400',
+                                                default => 'text-purple-400',
+                                            };
+                                        @endphp
+                                        <a href="/admin" target="_blank" class="flex items-center justify-between px-3 py-2 rounded-lg text-xs font-bold transition border {{ $admClass }}">
+                                            <span class="flex items-center gap-3">
+                                                <svg class="w-4 h-4 {{ $iconColor }} flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
+                                                <span>Administration</span>
+                                            </span>
+                                            @if($staffBadge)
+                                                <span class="text-[9px] uppercase tracking-wider font-extrabold px-1.5 py-0.5 rounded border {{ $staffBadge['bg'] }} {{ $staffBadge['text'] }} {{ $staffBadge['border'] }}">
+                                                    {{ $staffBadge['name'] }}
+                                                </span>
+                                            @endif
                                         </a>
                                     @endif
                                 </div>
