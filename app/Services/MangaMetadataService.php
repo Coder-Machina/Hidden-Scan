@@ -20,7 +20,9 @@ class MangaMetadataService
     {
         $results = match ($source) {
             'mangadex' => $this->searchMangaDex($query),
-            'jikan' => $this->searchJikan($query),
+            'mangaupdates' => $this->searchMangaUpdates($query),
+            'kitsu' => $this->searchKitsu($query),
+            'myanimelist', 'jikan' => $this->searchMyAnimeList($query),
             default => $this->searchAniList($query),
         };
 
@@ -37,18 +39,24 @@ class MangaMetadataService
     public function getDetails(string $source, string $id): ?array
     {
         $cached = \Illuminate\Support\Facades\Cache::get("manga_meta:{$source}:{$id}");
-        if ($cached) {
+        if ($cached && !empty($cached['synopsis']) && !empty($cached['authors'])) {
             return $cached;
         }
 
-        $results = $this->search($id, $source);
-        foreach ($results as $item) {
-            if ((string) $item['id'] === (string) $id) {
-                return $item;
-            }
+        $item = match ($source) {
+            'mangadex' => $this->getMangaDexDetails($id, $cached),
+            'mangaupdates' => $this->getMangaUpdatesDetails($id, $cached),
+            'kitsu' => $this->getKitsuDetails($id, $cached),
+            'myanimelist', 'jikan' => $this->getMyAnimeListDetails($id, $cached),
+            default => $this->getAniListDetails($id, $cached),
+        };
+
+        if ($item) {
+            \Illuminate\Support\Facades\Cache::put("manga_meta:{$source}:{$id}", $item, 600);
+            return $item;
         }
 
-        return $results[0] ?? null;
+        return $cached;
     }
 
     /**
@@ -264,12 +272,612 @@ class MangaMetadataService
     }
 
     /**
-     * Recherche via Jikan / MyAnimeList (REST v4)
+     * Recherche via MyAnimeList (API officielle rapide + fallback Jikan)
+     */
+    protected function searchMyAnimeList(string $query): array
+    {
+        // 1. Essai direct via l'API officielle préfixe de MyAnimeList
+        try {
+            $response = Http::timeout(6)->withHeaders([
+                'User-Agent' => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+                'Referer' => 'https://myanimelist.net/',
+                'Accept' => 'application/json',
+            ])->get('https://myanimelist.net/search/prefix.json', [
+                'type' => 'manga',
+                'keyword' => $query,
+                'v' => '1',
+            ]);
+
+            if ($response->successful()) {
+                $categories = $response->json('categories', []);
+                $results = [];
+
+                foreach ($categories as $cat) {
+                    if (($cat['type'] ?? '') !== 'manga') continue;
+                    foreach ($cat['items'] ?? [] as $item) {
+                        $payload = $item['payload'] ?? [];
+                        $type = match (strtolower($payload['media_type'] ?? 'manga')) {
+                            'manhwa' => 'manhwa',
+                            'manhua' => 'manhua',
+                            default => 'manga',
+                        };
+
+                        $status = match (strtolower($payload['status'] ?? '')) {
+                            'finished' => 'termine',
+                            'publishing' => 'en_cours',
+                            'on hiatus' => 'pause',
+                            default => 'en_cours',
+                        };
+
+                        // Nettoie l'URL pour obtenir l'image haute définition
+                        $coverUrl = $item['image_url'] ?? null;
+                        if ($coverUrl) {
+                            $coverUrl = preg_replace('/\/r\/\d+x\d+\//', '/', $coverUrl);
+                        }
+
+                        $results[] = [
+                            'source' => 'myanimelist',
+                            'id' => (string) $item['id'],
+                            'title' => $item['name'] ?? 'Sans titre',
+                            'alt_title' => null,
+                            'type' => $type,
+                            'status' => $status,
+                            'synopsis' => '',
+                            'release_year' => !empty($payload['start_year']) ? (int) $payload['start_year'] : null,
+                            'authors' => [],
+                            'artists' => [],
+                            'genres' => [],
+                            'cover_url' => $coverUrl,
+                            'banner_url' => null,
+                        ];
+                    }
+                }
+
+                if (!empty($results)) {
+                    return $results;
+                }
+            }
+        } catch (\Throwable $e) {
+            Log::warning('MAL prefix search warning: ' . $e->getMessage());
+        }
+
+        // 2. Fallback Jikan
+        return $this->searchJikan($query);
+    }
+
+    /**
+     * Récupère les détails complets d'un manga sur MyAnimeList
+     */
+    protected function getMyAnimeListDetails(string $id, ?array $cached = null): ?array
+    {
+        try {
+            $response = Http::timeout(8)->withHeaders([
+                'User-Agent' => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+                'Referer' => 'https://myanimelist.net/',
+            ])->get("https://myanimelist.net/manga/{$id}");
+
+            if ($response->successful()) {
+                $html = $response->body();
+
+                $title = $cached['title'] ?? '';
+                if (empty($title) && preg_match('/<meta property="og:title" content="(.*?)"/i', $html, $m)) {
+                    $title = html_entity_decode(trim($m[1]), ENT_QUOTES, 'UTF-8');
+                }
+
+                $synopsis = '';
+                if (preg_match('/<span itemprop="description">([\s\S]*?)<\/span>/i', $html, $m)) {
+                    $synopsis = html_entity_decode(trim(strip_tags($m[1])), ENT_QUOTES, 'UTF-8');
+                    $synopsis = preg_replace('/\[Written by MAL Rewrite\]/i', '', $synopsis);
+                }
+
+                $authors = [];
+                if (preg_match('/Authors?:<\/span>([\s\S]*?)<\/div>/i', $html, $m)) {
+                    if (preg_match_all('/<a[^>]*>([^<]+)<\/a>/i', $m[1], $ma)) {
+                        foreach ($ma[1] as $a) {
+                            $parts = explode(',', $a);
+                            $authors[] = count($parts) === 2 ? trim($parts[1]) . ' ' . trim($parts[0]) : trim($a);
+                        }
+                    }
+                }
+
+                $genres = [];
+                if (preg_match_all('/<span class="dark_text">(Genre|Genres|Theme|Themes):<\/span>([\s\S]*?)<\/div>/i', $html, $mg, PREG_SET_ORDER)) {
+                    foreach ($mg as $match) {
+                        if (preg_match_all('/<a[^>]*>([^<]+)<\/a>/i', $match[2], $g)) {
+                            foreach ($g[1] as $item) {
+                                $trimmed = trim($item);
+                                if (!empty($trimmed)) $genres[] = $trimmed;
+                            }
+                        }
+                    }
+                }
+
+                $coverUrl = $cached['cover_url'] ?? null;
+                if (empty($coverUrl) && preg_match('/<meta property="og:image" content="(.*?)"/i', $html, $m)) {
+                    $coverUrl = $m[1];
+                }
+
+                $type = $cached['type'] ?? 'manga';
+                if (preg_match('/Type:<\/span>[\s\n]*<a[^>]*>([^<]+)<\/a>/i', $html, $m)) {
+                    $type = match (strtolower(trim($m[1]))) {
+                        'manhwa' => 'manhwa',
+                        'manhua' => 'manhua',
+                        default => 'manga',
+                    };
+                }
+
+                $status = $cached['status'] ?? 'en_cours';
+                if (preg_match('/Status:<\/span>[\s\n]*([^<]+)/i', $html, $m)) {
+                    $status = match (strtolower(trim($m[1]))) {
+                        'finished' => 'termine',
+                        'on hiatus' => 'pause',
+                        'discontinued' => 'abandonne',
+                        default => 'en_cours',
+                    };
+                }
+
+                $year = $cached['release_year'] ?? null;
+                if (!$year && preg_match('/Published:<\/span>[\s\n]*([A-Za-z]+ \d{1,2}, )?(\d{4})/i', $html, $m)) {
+                    $year = (int) $m[2];
+                }
+
+                return [
+                    'source' => 'myanimelist',
+                    'id' => $id,
+                    'title' => $title ?: 'Sans titre',
+                    'alt_title' => $cached['alt_title'] ?? null,
+                    'type' => $type,
+                    'status' => $status,
+                    'synopsis' => trim($synopsis),
+                    'release_year' => $year,
+                    'authors' => array_values(array_unique($authors)),
+                    'artists' => [],
+                    'genres' => array_values(array_unique($genres)),
+                    'cover_url' => $coverUrl,
+                    'banner_url' => null,
+                ];
+            }
+        } catch (\Throwable $e) {
+            Log::warning('MAL details scraping failed: ' . $e->getMessage());
+        }
+
+        // Fallback Jikan par ID si MAL direct a échoué
+        try {
+            $response = Http::timeout(6)->get("https://api.jikan.moe/v4/manga/{$id}");
+            if ($response->successful()) {
+                $item = $response->json('data', []);
+                return [
+                    'source' => 'myanimelist',
+                    'id' => $id,
+                    'title' => $item['title'] ?? ($cached['title'] ?? 'Sans titre'),
+                    'alt_title' => $item['title_english'] ?? null,
+                    'type' => strtolower($item['type'] ?? 'manga') === 'manhwa' ? 'manhwa' : 'manga',
+                    'status' => strtolower($item['status'] ?? '') === 'finished' ? 'termine' : 'en_cours',
+                    'synopsis' => trim(strip_tags($item['synopsis'] ?? '')),
+                    'release_year' => $item['published']['prop']['from']['year'] ?? ($cached['release_year'] ?? null),
+                    'authors' => array_column($item['authors'] ?? [], 'name'),
+                    'artists' => [],
+                    'genres' => array_column($item['genres'] ?? [], 'name'),
+                    'cover_url' => $item['images']['webp']['large_image_url'] ?? ($cached['cover_url'] ?? null),
+                    'banner_url' => null,
+                ];
+            }
+        } catch (\Throwable $e) {}
+
+        return $cached;
+    }
+
+    /**
+     * Recherche via Kitsu.io (API REST JSON:API officielle)
+     */
+    protected function searchKitsu(string $query): array
+    {
+        try {
+            $response = Http::timeout(8)->withHeaders([
+                'Accept' => 'application/vnd.api+json',
+                'User-Agent' => 'HiddenScan/1.0',
+            ])->get('https://kitsu.io/api/edge/manga', [
+                'filter[text]' => $query,
+                'page[limit]' => 8,
+            ]);
+
+            if (!$response->successful()) {
+                return [];
+            }
+
+            $data = $response->json('data', []);
+            $results = [];
+
+            foreach ($data as $item) {
+                $attrs = $item['attributes'] ?? [];
+
+                $type = match (strtolower($attrs['subtype'] ?? 'manga')) {
+                    'manhwa' => 'manhwa',
+                    'manhua' => 'manhua',
+                    default => 'manga',
+                };
+
+                $status = match (strtolower($attrs['status'] ?? '')) {
+                    'finished' => 'termine',
+                    'current' => 'en_cours',
+                    'unreleased' => 'a_venir',
+                    default => 'en_cours',
+                };
+
+                $year = !empty($attrs['startDate']) ? (int) substr($attrs['startDate'], 0, 4) : null;
+                $coverUrl = $attrs['posterImage']['large'] ?? $attrs['posterImage']['original'] ?? null;
+
+                $results[] = [
+                    'source' => 'kitsu',
+                    'id' => (string) $item['id'],
+                    'title' => $attrs['canonicalTitle'] ?? $attrs['titles']['en'] ?? $attrs['titles']['en_jp'] ?? 'Sans titre',
+                    'alt_title' => $attrs['titles']['en_jp'] ?? $attrs['titles']['ja_jp'] ?? null,
+                    'type' => $type,
+                    'status' => $status,
+                    'synopsis' => trim($attrs['synopsis'] ?? ''),
+                    'release_year' => $year,
+                    'authors' => [],
+                    'artists' => [],
+                    'genres' => [],
+                    'cover_url' => $coverUrl,
+                    'banner_url' => $attrs['coverImage']['original'] ?? null,
+                ];
+            }
+
+            return $results;
+        } catch (\Throwable $e) {
+            Log::error('Kitsu API Exception: ' . $e->getMessage());
+            return [];
+        }
+    }
+
+    /**
+     * Récupère les détails Kitsu avec catégories et genres
+     */
+    protected function getKitsuDetails(string $id, ?array $cached = null): ?array
+    {
+        try {
+            $response = Http::timeout(8)->withHeaders([
+                'Accept' => 'application/vnd.api+json',
+                'User-Agent' => 'HiddenScan/1.0',
+            ])->get("https://kitsu.io/api/edge/manga/{$id}", [
+                'include' => 'categories,genres',
+            ]);
+
+            if ($response->successful()) {
+                $item = $response->json('data', []);
+                $attrs = $item['attributes'] ?? [];
+                $included = $response->json('included', []);
+
+                $genres = [];
+                foreach ($included as $inc) {
+                    if (isset($inc['attributes']['title'])) $genres[] = $inc['attributes']['title'];
+                    if (isset($inc['attributes']['name'])) $genres[] = $inc['attributes']['name'];
+                }
+
+                $type = match (strtolower($attrs['subtype'] ?? 'manga')) {
+                    'manhwa' => 'manhwa',
+                    'manhua' => 'manhua',
+                    default => 'manga',
+                };
+
+                $status = match (strtolower($attrs['status'] ?? '')) {
+                    'finished' => 'termine',
+                    'current' => 'en_cours',
+                    'unreleased' => 'a_venir',
+                    default => 'en_cours',
+                };
+
+                return [
+                    'source' => 'kitsu',
+                    'id' => $id,
+                    'title' => $attrs['canonicalTitle'] ?? $attrs['titles']['en'] ?? ($cached['title'] ?? 'Sans titre'),
+                    'alt_title' => $attrs['titles']['en_jp'] ?? null,
+                    'type' => $type,
+                    'status' => $status,
+                    'synopsis' => trim($attrs['synopsis'] ?? ($cached['synopsis'] ?? '')),
+                    'release_year' => !empty($attrs['startDate']) ? (int) substr($attrs['startDate'], 0, 4) : ($cached['release_year'] ?? null),
+                    'authors' => $cached['authors'] ?? [],
+                    'artists' => $cached['artists'] ?? [],
+                    'genres' => array_values(array_unique($genres)),
+                    'cover_url' => $attrs['posterImage']['original'] ?? $attrs['posterImage']['large'] ?? ($cached['cover_url'] ?? null),
+                    'banner_url' => $attrs['coverImage']['original'] ?? null,
+                ];
+            }
+        } catch (\Throwable $e) {
+            Log::error('Kitsu getDetails Exception: ' . $e->getMessage());
+        }
+
+        return $cached;
+    }
+
+    /**
+     * Recherche via MangaUpdates / Baka-Updates (API officielle v1)
+     */
+    protected function searchMangaUpdates(string $query): array
+    {
+        try {
+            $response = Http::timeout(8)->withHeaders([
+                'User-Agent' => 'HiddenScan/1.0',
+                'Accept' => 'application/json',
+            ])->post('https://api.mangaupdates.com/v1/series/search', [
+                'search' => $query,
+                'stype' => 'title',
+                'perpage' => 8,
+            ]);
+
+            if (!$response->successful()) {
+                return [];
+            }
+
+            $results = [];
+            $records = $response->json('results', []);
+
+            foreach ($records as $item) {
+                $rec = $item['record'] ?? [];
+                if (empty($rec['series_id'])) continue;
+
+                $type = match (strtolower($rec['type'] ?? 'manga')) {
+                    'manhwa' => 'manhwa',
+                    'manhua' => 'manhua',
+                    default => 'manga',
+                };
+
+                $genres = array_column($rec['genres'] ?? [], 'genre');
+                $coverUrl = $rec['image']['url']['original'] ?? $rec['image']['url']['thumb'] ?? null;
+                $synopsis = html_entity_decode(strip_tags($rec['description'] ?? ''), ENT_QUOTES, 'UTF-8');
+
+                $results[] = [
+                    'source' => 'mangaupdates',
+                    'id' => (string) $rec['series_id'],
+                    'title' => html_entity_decode($rec['title'], ENT_QUOTES, 'UTF-8'),
+                    'alt_title' => null,
+                    'type' => $type,
+                    'status' => 'en_cours',
+                    'synopsis' => trim($synopsis),
+                    'release_year' => !empty($rec['year']) ? (int) $rec['year'] : null,
+                    'authors' => [],
+                    'artists' => [],
+                    'genres' => array_values(array_unique($genres)),
+                    'cover_url' => $coverUrl,
+                    'banner_url' => null,
+                ];
+            }
+
+            return $results;
+        } catch (\Throwable $e) {
+            Log::error('MangaUpdates API Exception: ' . $e->getMessage());
+            return [];
+        }
+    }
+
+    /**
+     * Récupère les détails complets MangaUpdates (auteurs, statut, synopsis étendu)
+     */
+    protected function getMangaUpdatesDetails(string $id, ?array $cached = null): ?array
+    {
+        try {
+            $response = Http::timeout(8)->withHeaders([
+                'User-Agent' => 'HiddenScan/1.0',
+                'Accept' => 'application/json',
+            ])->get("https://api.mangaupdates.com/v1/series/{$id}");
+
+            if ($response->successful()) {
+                $data = $response->json();
+
+                $type = match (strtolower($data['type'] ?? 'manga')) {
+                    'manhwa' => 'manhwa',
+                    'manhua' => 'manhua',
+                    default => 'manga',
+                };
+
+                $statusStr = strtolower($data['status'] ?? '');
+                $status = str_contains($statusStr, 'complete') ? 'termine' : (str_contains($statusStr, 'hiatus') ? 'pause' : 'en_cours');
+
+                $authors = [];
+                $artists = [];
+                foreach ($data['authors'] ?? [] as $a) {
+                    $name = trim($a['name'] ?? '');
+                    if (empty($name)) continue;
+                    $role = strtolower($a['type'] ?? '');
+                    if (str_contains($role, 'art')) {
+                        $artists[] = $name;
+                    } else {
+                        $authors[] = $name;
+                    }
+                }
+
+                $genres = array_column($data['genres'] ?? [], 'genre');
+                $categories = array_column($data['categories'] ?? [], 'category');
+                $allGenres = array_merge($genres, array_slice($categories, 0, 5));
+
+                $synopsis = html_entity_decode(strip_tags($data['description'] ?? ($cached['synopsis'] ?? '')), ENT_QUOTES, 'UTF-8');
+                $coverUrl = $data['image']['url']['original'] ?? ($cached['cover_url'] ?? null);
+
+                return [
+                    'source' => 'mangaupdates',
+                    'id' => $id,
+                    'title' => html_entity_decode($data['title'] ?? ($cached['title'] ?? 'Sans titre'), ENT_QUOTES, 'UTF-8'),
+                    'alt_title' => null,
+                    'type' => $type,
+                    'status' => $status,
+                    'synopsis' => trim($synopsis),
+                    'release_year' => !empty($data['year']) ? (int) $data['year'] : ($cached['release_year'] ?? null),
+                    'authors' => array_values(array_unique($authors)),
+                    'artists' => array_values(array_unique($artists)),
+                    'genres' => array_values(array_unique($allGenres)),
+                    'cover_url' => $coverUrl,
+                    'banner_url' => null,
+                ];
+            }
+        } catch (\Throwable $e) {
+            Log::error('MangaUpdates getDetails Exception: ' . $e->getMessage());
+        }
+
+        return $cached;
+    }
+
+    /**
+     * Récupère les détails AniList par ID
+     */
+    protected function getAniListDetails(string $id, ?array $cached = null): ?array
+    {
+        if ($cached && !empty($cached['synopsis']) && !empty($cached['authors'])) {
+            return $cached;
+        }
+
+        $graphql = <<<'GRAPHQL'
+        query ($id: Int) {
+          Media(id: $id, type: MANGA) {
+            id
+            title { romaji english native }
+            description(asHtml: false)
+            countryOfOrigin
+            format
+            status
+            startDate { year }
+            genres
+            staff(perPage: 8) {
+              edges {
+                role
+                node { name { full } }
+              }
+            }
+            coverImage { extraLarge large }
+            bannerImage
+          }
+        }
+        GRAPHQL;
+
+        try {
+            $response = Http::timeout(8)->post('https://graphql.anilist.co', [
+                'query' => $graphql,
+                'variables' => ['id' => (int) $id],
+            ]);
+
+            if ($response->successful()) {
+                $item = $response->json('data.Media');
+                if ($item) {
+                    $title = $item['title']['english'] ?? $item['title']['romaji'] ?? $item['title']['native'] ?? 'Sans titre';
+                    $altTitle = $item['title']['romaji'] ?? null;
+                    $type = match ($item['countryOfOrigin'] ?? null) {
+                        'KR' => 'manhwa',
+                        'CN', 'TW' => 'manhua',
+                        default => ($item['format'] === 'MANHWA' ? 'manhwa' : ($item['format'] === 'MANHUA' ? 'manhua' : 'manga')),
+                    };
+                    $status = match ($item['status'] ?? null) {
+                        'FINISHED' => 'termine',
+                        'HIATUS' => 'pause',
+                        'CANCELLED' => 'abandonne',
+                        default => 'en_cours',
+                    };
+                    $authors = [];
+                    $artists = [];
+                    foreach ($item['staff']['edges'] ?? [] as $edge) {
+                        $role = strtolower($edge['role'] ?? '');
+                        $name = $edge['node']['name']['full'] ?? null;
+                        if (!$name) continue;
+                        if (str_contains($role, 'story') || str_contains($role, 'original') || str_contains($role, 'author')) {
+                            $authors[] = $name;
+                        } elseif (str_contains($role, 'art') || str_contains($role, 'illustrat')) {
+                            $artists[] = $name;
+                        }
+                    }
+                    return [
+                        'source' => 'anilist',
+                        'id' => (string) $item['id'],
+                        'title' => $title,
+                        'alt_title' => $altTitle,
+                        'type' => $type,
+                        'status' => $status,
+                        'synopsis' => trim(strip_tags($item['description'] ?? '')),
+                        'release_year' => $item['startDate']['year'] ?? null,
+                        'authors' => array_values(array_unique($authors)),
+                        'artists' => array_values(array_unique($artists)),
+                        'genres' => array_values(array_unique($item['genres'] ?? [])),
+                        'cover_url' => $item['coverImage']['extraLarge'] ?? $item['coverImage']['large'] ?? null,
+                        'banner_url' => $item['bannerImage'] ?? null,
+                    ];
+                }
+            }
+        } catch (\Throwable $e) {}
+
+        return $cached;
+    }
+
+    /**
+     * Récupère les détails MangaDex par ID
+     */
+    protected function getMangaDexDetails(string $id, ?array $cached = null): ?array
+    {
+        if ($cached && !empty($cached['synopsis']) && !empty($cached['authors'])) {
+            return $cached;
+        }
+
+        try {
+            $response = Http::timeout(8)->get("https://api.mangadex.org/manga/{$id}", [
+                'includes' => ['author', 'artist', 'cover_art'],
+            ]);
+
+            if ($response->successful()) {
+                $item = $response->json('data', []);
+                $attrs = $item['attributes'] ?? [];
+                $relationships = $item['relationships'] ?? [];
+
+                $titles = $attrs['title'] ?? [];
+                $title = $titles['fr'] ?? $titles['en'] ?? reset($titles) ?: 'Sans titre';
+                $descriptions = $attrs['description'] ?? [];
+                $synopsis = $descriptions['fr'] ?? $descriptions['en'] ?? reset($descriptions) ?: '';
+
+                $authors = [];
+                $artists = [];
+                $coverFileName = null;
+                foreach ($relationships as $rel) {
+                    if ($rel['type'] === 'author' && !empty($rel['attributes']['name'])) {
+                        $authors[] = $rel['attributes']['name'];
+                    } elseif ($rel['type'] === 'artist' && !empty($rel['attributes']['name'])) {
+                        $artists[] = $rel['attributes']['name'];
+                    } elseif ($rel['type'] === 'cover_art' && !empty($rel['attributes']['fileName'])) {
+                        $coverFileName = $rel['attributes']['fileName'];
+                    }
+                }
+
+                $coverUrl = $coverFileName ? "https://uploads.mangadex.org/covers/{$id}/{$coverFileName}.512.jpg" : ($cached['cover_url'] ?? null);
+                $genres = [];
+                foreach ($attrs['tags'] ?? [] as $tag) {
+                    if (!empty($tag['attributes']['name']['en'])) {
+                        $genres[] = $tag['attributes']['name']['en'];
+                    }
+                }
+
+                return [
+                    'source' => 'mangadex',
+                    'id' => $id,
+                    'title' => $title,
+                    'alt_title' => $titles['en'] ?? null,
+                    'type' => match ($attrs['originalLanguage'] ?? '') { 'ko' => 'manhwa', 'zh' => 'manhua', default => 'manga' },
+                    'status' => match ($attrs['status'] ?? '') { 'completed' => 'termine', 'hiatus' => 'pause', 'cancelled' => 'abandonne', default => 'en_cours' },
+                    'synopsis' => trim(strip_tags($synopsis)),
+                    'release_year' => !empty($attrs['year']) ? (int) $attrs['year'] : ($cached['release_year'] ?? null),
+                    'authors' => array_values(array_unique($authors)),
+                    'artists' => array_values(array_unique($artists)),
+                    'genres' => array_values(array_unique($genres)),
+                    'cover_url' => $coverUrl,
+                    'banner_url' => null,
+                ];
+            }
+        } catch (\Throwable $e) {}
+
+        return $cached;
+    }
+
+    /**
+     * Recherche via Jikan / MyAnimeList (REST v4 fallback)
      */
     protected function searchJikan(string $query): array
     {
         try {
-            $response = Http::timeout(8)->get('https://api.jikan.moe/v4/manga', [
+            $response = Http::timeout(6)->get('https://api.jikan.moe/v4/manga', [
                 'q' => $query,
                 'limit' => 8,
             ]);
@@ -299,7 +907,6 @@ class MangaMetadataService
                 $authors = [];
                 foreach ($item['authors'] ?? [] as $a) {
                     if (!empty($a['name'])) {
-                        // Inverse "Oda, Eiichiro" -> "Eiichiro Oda"
                         $parts = explode(',', $a['name']);
                         $authors[] = count($parts) === 2 ? trim($parts[1]) . ' ' . trim($parts[0]) : trim($a['name']);
                     }
@@ -318,11 +925,10 @@ class MangaMetadataService
                     ?? null;
 
                 $synopsis = strip_tags($item['synopsis'] ?? '');
-                // Retire la signature [Written by MAL Rewrite]
                 $synopsis = preg_replace('/\[Written by MAL Rewrite\]/i', '', $synopsis);
 
                 $results[] = [
-                    'source' => 'jikan',
+                    'source' => 'myanimelist',
                     'id' => (string) $item['mal_id'],
                     'title' => $item['title'],
                     'alt_title' => $item['title_english'] ?? $item['title_japanese'] ?? null,
@@ -340,7 +946,7 @@ class MangaMetadataService
 
             return $results;
         } catch (\Throwable $e) {
-            Log::error('Jikan API Exception: ' . $e->getMessage());
+            Log::warning('Jikan API Exception: ' . $e->getMessage());
             return [];
         }
     }

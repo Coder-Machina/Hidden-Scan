@@ -25,15 +25,17 @@ class ImportMetadataAction extends Action
             ->icon('heroicon-o-sparkles')
             ->color('warning')
             ->modalHeading('Import automatique des métadonnées')
-            ->modalDescription('Recherchez une œuvre sur AniList, MangaDex ou MyAnimeList pour pré-remplir les informations, genres et couverture en un clin d\'œil.')
+            ->modalDescription('Recherchez une œuvre sur AniList, MangaUpdates, Kitsu, MangaDex ou MyAnimeList pour pré-remplir les informations, genres et couverture en un clin d\'œil.')
             ->modalSubmitActionLabel('Importer dans la fiche')
             ->form([
                 Select::make('source')
                     ->label('Source de données')
                     ->options([
                         'anilist' => 'AniList (Recommandé - Rapide, complet & haute qualité)',
+                        'mangaupdates' => 'MangaUpdates / Baka-Updates (La plus vaste base Webtoons & Mangas)',
+                        'kitsu' => 'Kitsu (Excellente base Manhwas & Manhuas)',
                         'mangadex' => 'MangaDex (Idéal pour synopsis en Français)',
-                        'jikan' => 'MyAnimeList / Jikan (Base de données mondiale)',
+                        'myanimelist' => 'MyAnimeList (Base officielle MAL)',
                     ])
                     ->default('anilist')
                     ->required()
