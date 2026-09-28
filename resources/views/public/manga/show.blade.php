@@ -9,7 +9,7 @@
                 <div class="absolute inset-0 bg-gradient-to-t from-ink via-ink/80 to-transparent"></div>
             </div>
         @else
-            <div class="h-40 sm:h-56 bg-gradient-to-b from-panel to-ink relative">
+            <div class="h-48 sm:h-64 bg-gradient-to-b from-panel to-ink relative">
                 <div class="absolute inset-0 opacity-20" style="background-image: radial-gradient(circle, rgba(155,123,255,0.2) 1px, transparent 1px); background-size: 16px 16px;"></div>
                 <div class="absolute inset-0 bg-gradient-to-t from-ink to-transparent"></div>
             </div>
@@ -36,7 +36,7 @@
                         <span class="badge-type badge-{{ $manga->type->value }}">{{ $manga->type->getLabel() }}</span>
                         <span class="badge-status badge-{{ $manga->status->value }}">{{ $manga->status->getLabel() }}</span>
                     </div>
-                    <h1 class="font-display font-extrabold text-2xl sm:text-3xl lg:text-4xl tracking-tight text-chalk leading-tight truncate">{{ $manga->title }}</h1>
+                    <h1 class="font-display font-extrabold text-xl sm:text-3xl lg:text-4xl tracking-tight text-chalk leading-tight line-clamp-2 sm:line-clamp-none">{{ $manga->title }}</h1>
                     @if($manga->authors->count() || $manga->artists->count())
                         <p class="text-mist text-sm mt-1">
                             @if($manga->authors->count())
@@ -106,71 +106,6 @@
         </button>
     </div>
 
-    {{-- ═══ Réactions à l'œuvre (style Raijin) ═══ --}}
-    <div class="mb-8 animate-fade-in-up" style="animation-delay: 0.12s;" x-data="mangaReactions()" x-init="init()">
-        <div class="bg-panel border border-line/50 rounded-xl p-4">
-            <p class="text-mist text-sm mb-3 font-semibold text-center">Votre réaction</p>
-            <div class="flex items-center justify-center gap-2 sm:gap-3 flex-wrap">
-                <template x-for="r in reactions" :key="r.emoji">
-                    <button @click="react(r.emoji)"
-                            class="flex flex-col items-center gap-1 px-2.5 py-1.5 rounded-xl transition-all hover:scale-110"
-                            :class="userReaction === r.emoji ? 'bg-chalk/10 ring-2 ring-chalk scale-105' : 'hover:bg-panel-hi'">
-                        <span class="text-xl sm:text-2xl" x-text="r.emoji"></span>
-                        <span class="text-xs font-bold" :class="userReaction === r.emoji ? 'text-chalk' : 'text-mist'" x-text="r.count"></span>
-                        <span class="text-[10px] text-mist hidden sm:block" x-text="r.label"></span>
-                    </button>
-                </template>
-            </div>
-        </div>
-    </div>
-
-    <script>
-    function mangaReactions() {
-        return {
-            reactions: [
-                { emoji: '🔥', label: 'Incroyable', count: 0 },
-                { emoji: '😍', label: 'Adoré', count: 0 },
-                { emoji: '😢', label: 'Triste', count: 0 },
-                { emoji: '😡', label: 'Énervé', count: 0 },
-                { emoji: '🤯', label: 'Choqué', count: 0 },
-                { emoji: '😂', label: 'Drôle', count: 0 },
-                { emoji: '💤', label: 'Ennuyeux', count: 0 },
-            ],
-            userReaction: null,
-            storageKey: 'hs_reactions_manga_{{ $manga->id }}',
-            globalKey: 'hs_reactions_counts_manga_{{ $manga->id }}',
-
-            init() {
-                this.userReaction = localStorage.getItem(this.storageKey) || null;
-                try {
-                    const counts = JSON.parse(localStorage.getItem(this.globalKey) || '{}');
-                    this.reactions.forEach(r => { r.count = counts[r.emoji] || 0; });
-                } catch(e) {}
-            },
-
-            react(emoji) {
-                const counts = {};
-                this.reactions.forEach(r => { counts[r.emoji] = r.count; });
-
-                if (this.userReaction === emoji) {
-                    counts[emoji] = Math.max(0, (counts[emoji] || 1) - 1);
-                    this.userReaction = null;
-                    localStorage.removeItem(this.storageKey);
-                } else {
-                    if (this.userReaction) {
-                        counts[this.userReaction] = Math.max(0, (counts[this.userReaction] || 1) - 1);
-                    }
-                    counts[emoji] = (counts[emoji] || 0) + 1;
-                    this.userReaction = emoji;
-                    localStorage.setItem(this.storageKey, emoji);
-                }
-
-                this.reactions.forEach(r => { r.count = counts[r.emoji] || 0; });
-                localStorage.setItem(this.globalKey, JSON.stringify(counts));
-            }
-        };
-    }
-    </script>
     {{-- Halos d'arrière-plan fixes --}}
     <div class="manga-page-halo-red"></div>
     <div class="manga-page-halo-purple"></div>
@@ -364,43 +299,12 @@
             transform: translateY(-1px);
         }
 
-        /* ─── Section Tags ─── */
-        .section-title-tags {
-            font-size: 13px;
-            font-weight: 700;
-            color: #ffffff;
-            margin-bottom: 10px;
-        }
-        .tags-wrap-list {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 7px;
-        }
-        .tag-item-neutral {
-            background: #1c1c28;
-            border: 1px solid #1e1e2e;
-            color: #9090c0;
-            border-radius: 6px;
-            padding: 5px 12px;
-            font-size: 12px;
-            font-weight: 500;
-            text-decoration: none;
-            transition: all 0.2s ease;
-            display: inline-flex;
-            align-items: center;
-        }
-        .tag-item-neutral:hover {
-            background: #1e1e35;
-            border-color: #3a3a60;
-            color: #c0c0e0;
-            transform: translateY(-1px);
-        }
     </style>
 
     <div class="manga-page-content-wrap">
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {{-- ═══ Colonne gauche: Infos ═══ --}}
-        <div class="lg:col-span-1 space-y-4 animate-fade-in-up" style="animation-delay: 0.15s;">
+        {{-- ═══ Colonne latérale: Note, Informations, Genres (en bas sur mobile, à gauche sur desktop) ═══ --}}
+        <div class="lg:col-span-1 space-y-4 order-2 lg:order-1 animate-fade-in-up" style="animation-delay: 0.2s;">
 
             {{-- Section Note --}}
             <div class="manga-sidebar-card" x-data="ratingWidget()" x-init="init()">
@@ -513,24 +417,76 @@
             </div>
             @endif
 
-            {{-- Section Tags --}}
-            @if($manga->tags->count())
-            <div>
-                <h2 class="section-title-tags">Tags</h2>
-                <div class="tags-wrap-list">
-                    @foreach($manga->tags as $tag)
-                        <a href="{{ route('manga.index', ['tag' => $tag->slug]) }}"
-                           class="tag-item-neutral hover:!border-red-500/50 hover:!text-white hover:!bg-red-950/20 transition-all cursor-pointer">
-                            #{{ $tag->name }}
-                        </a>
-                    @endforeach
+            {{-- ═══ Réactions à l'œuvre (style Raijin) ═══ --}}
+            <div class="manga-sidebar-card" x-data="mangaReactions()" x-init="init()">
+                <p class="section-title-note !mb-3">
+                    <span class="text-base">✨</span>
+                    <span>Votre réaction</span>
+                </p>
+                <div class="flex items-center justify-between gap-1 sm:gap-2 flex-wrap">
+                    <template x-for="r in reactions" :key="r.emoji">
+                        <button @click="react(r.emoji)"
+                                class="flex flex-col items-center gap-0.5 px-2 py-1.5 rounded-xl transition-all hover:scale-110 cursor-pointer"
+                                :class="userReaction === r.emoji ? 'bg-chalk/10 ring-2 ring-chalk scale-105' : 'hover:bg-panel-hi'">
+                            <span class="text-xl" x-text="r.emoji"></span>
+                            <span class="text-[11px] font-bold" :class="userReaction === r.emoji ? 'text-chalk' : 'text-mist'" x-text="r.count"></span>
+                        </button>
+                    </template>
                 </div>
             </div>
-            @endif
+
+            <script>
+            function mangaReactions() {
+                return {
+                    reactions: [
+                        { emoji: '🔥', label: 'Incroyable', count: 0 },
+                        { emoji: '😍', label: 'Adoré', count: 0 },
+                        { emoji: '😢', label: 'Triste', count: 0 },
+                        { emoji: '😡', label: 'Énervé', count: 0 },
+                        { emoji: '🤯', label: 'Choqué', count: 0 },
+                        { emoji: '😂', label: 'Drôle', count: 0 },
+                        { emoji: '💤', label: 'Ennuyeux', count: 0 },
+                    ],
+                    userReaction: null,
+                    storageKey: 'hs_reactions_manga_{{ $manga->id }}',
+                    globalKey: 'hs_reactions_counts_manga_{{ $manga->id }}',
+
+                    init() {
+                        this.userReaction = localStorage.getItem(this.storageKey) || null;
+                        try {
+                            const counts = JSON.parse(localStorage.getItem(this.globalKey) || '{}');
+                            this.reactions.forEach(r => { r.count = counts[r.emoji] || 0; });
+                        } catch(e) {}
+                    },
+
+                    react(emoji) {
+                        const counts = {};
+                        this.reactions.forEach(r => { counts[r.emoji] = r.count; });
+
+                        if (this.userReaction === emoji) {
+                            counts[emoji] = Math.max(0, (counts[emoji] || 1) - 1);
+                            this.userReaction = null;
+                            localStorage.removeItem(this.storageKey);
+                        } else {
+                            if (this.userReaction) {
+                                counts[this.userReaction] = Math.max(0, (counts[this.userReaction] || 1) - 1);
+                            }
+                            counts[emoji] = (counts[emoji] || 0) + 1;
+                            this.userReaction = emoji;
+                            localStorage.setItem(this.storageKey, emoji);
+                        }
+
+                        this.reactions.forEach(r => { r.count = counts[r.emoji] || 0; });
+                        localStorage.setItem(this.globalKey, JSON.stringify(counts));
+                    }
+                };
+            }
+            </script>
+
         </div>
 
-        {{-- ═══ Colonne droite: Synopsis + Chapitres ═══ --}}
-        <div class="lg:col-span-2 space-y-6 animate-fade-in-up" style="animation-delay: 0.2s;">
+        {{-- ═══ Colonne principale: Synopsis + Chapitres (Prioritaire sur mobile, à droite sur desktop) ═══ --}}
+        <div class="lg:col-span-2 space-y-6 order-1 lg:order-2 animate-fade-in-up" style="animation-delay: 0.15s;">
 
             {{-- Synopsis --}}
             @if($manga->synopsis)

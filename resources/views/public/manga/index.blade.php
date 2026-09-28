@@ -122,27 +122,6 @@
                     </div>
                 </div>
 
-                {{-- Tags --}}
-                @if(isset($tags) && $tags->count())
-                <div class="mb-6" x-data="{ open: {{ request('tag') || request('include_tags') ? 'true' : 'false' }} }">
-                    <button type="button" @click="open = !open" class="flex items-center justify-between w-full text-xs font-semibold text-mist mb-2 uppercase tracking-wider focus:outline-none">
-                        <span>Tags <span class="text-[10px] text-mist/60 lowercase">({{ $tags->count() }})</span></span>
-                        <svg class="w-4 h-4 transition-transform" :class="open ? 'rotate-180' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
-                    </button>
-                    <div x-show="open" x-collapse class="space-y-1 max-h-48 overflow-y-auto custom-scrollbar pr-2">
-                        @foreach($tags as $t)
-                        <div class="flex items-center justify-between group">
-                            <label class="flex items-center gap-2 cursor-pointer flex-grow text-sm text-chalk group-hover:text-red-400 transition py-1">
-                                <input type="checkbox" name="include_tags[]" value="{{ $t->slug }}" class="rounded bg-ink-deep border-line text-red-500 focus:ring-red-500/50"
-                                    {{ in_array($t->slug, (array)request('include_tags', [])) || request('tag') === $t->slug ? 'checked' : '' }}>
-                                #{{ $t->name }}
-                            </label>
-                        </div>
-                        @endforeach
-                    </div>
-                </div>
-                @endif
-
                 <button type="submit" class="btn-primary w-full justify-center !py-3 shadow-lg shadow-violet/20 hover:shadow-violet/40">
                     Appliquer les filtres
                 </button>
@@ -152,15 +131,9 @@
         {{-- Contenu Principal --}}
         <div class="flex-grow w-full">
             {{-- Badges des filtres actifs --}}
-            @if(request()->hasAny(['q', 'include_genres', 'exclude_genres', 'type', 'status', 'tag', 'genre', 'include_tags']))
+            @if(request()->hasAny(['q', 'include_genres', 'exclude_genres', 'type', 'status', 'genre']))
             <div class="flex flex-wrap items-center gap-2 mb-6 p-3 rounded-xl bg-panel border border-line/40 animate-fade-in">
                 <span class="text-xs text-mist font-semibold">Filtres actifs :</span>
-                @if(request('tag'))
-                    <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-red-600/20 border border-red-500/30 text-xs text-red-300 font-semibold">
-                        Tag: #{{ request('tag') }}
-                        <a href="{{ route('manga.index', request()->except('tag')) }}" class="hover:text-white">✕</a>
-                    </span>
-                @endif
                 @if(request('genre'))
                     <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-violet/20 border border-violet/30 text-xs text-violet-glow font-semibold">
                         Genre: {{ request('genre') }}

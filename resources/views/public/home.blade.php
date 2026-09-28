@@ -46,28 +46,40 @@
                     <div class="absolute inset-0 flex items-center pointer-events-none">
                         <div class="max-w-7xl mx-auto px-4 sm:px-8 lg:px-10 w-full flex gap-8 items-center pointer-events-none">
                             <div class="flex-1 max-w-2xl pointer-events-auto">
-                                <div class="flex flex-wrap items-center gap-2 mb-2.5 sm:mb-3">
-                                    <span class="badge-type badge-{{ $manga->type->value }}">{{ $manga->type->getLabel() }}</span>
-                                    <span class="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-amber/20 text-amber text-xs font-bold backdrop-blur-md border border-amber/30">
-                                        ★ {{ $manga->average_rating > 0 ? $manga->average_rating : 'N/A' }}
-                                    </span>
+                                <div class="flex items-start gap-4 mb-3 sm:mb-4">
+                                    {{-- Cover Mobile (Permet de voir le manga et son illustration) --}}
+                                    @if($manga->cover_image)
+                                        <a href="{{ $mangaUrl }}" class="block md:hidden flex-shrink-0 relative group">
+                                            <img src="{{ Storage::url($manga->cover_image) }}" alt="{{ $manga->title }}" 
+                                                 class="w-20 sm:w-28 aspect-[2/3] object-cover rounded-xl border-2 border-line/70 shadow-2xl shadow-black/90">
+                                        </a>
+                                    @endif
+                                    <div class="flex-1 min-w-0">
+                                        <div class="flex flex-wrap items-center gap-2 mb-2 sm:mb-3">
+                                            <span class="badge-type badge-{{ $manga->type->value }}">{{ $manga->type->getLabel() }}</span>
+                                            <span class="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-amber/20 text-amber text-xs font-bold backdrop-blur-md border border-amber/30">
+                                                ★ {{ $manga->average_rating > 0 ? $manga->average_rating : 'N/A' }}
+                                            </span>
+                                        </div>
+                                        <h2 class="font-display font-extrabold text-2xl sm:text-4xl lg:text-6xl tracking-tight text-chalk leading-tight drop-shadow-lg line-clamp-2 sm:line-clamp-none">
+                                            <a href="{{ $mangaUrl }}" class="hover:text-violet transition-colors">
+                                                {{ $manga->title }}
+                                            </a>
+                                        </h2>
+                                    </div>
                                 </div>
-                                <h2 class="font-display font-extrabold text-2xl sm:text-4xl lg:text-6xl tracking-tight text-chalk leading-tight mb-3 sm:mb-4 drop-shadow-lg line-clamp-2 sm:line-clamp-none">
-                                    <a href="{{ $mangaUrl }}" class="hover:text-violet transition-colors">
-                                        {{ $manga->title }}
-                                    </a>
-                                </h2>
+
                                 @if($manga->synopsis)
-                                    <p class="text-mist text-xs sm:text-sm md:text-base mb-5 sm:mb-8 line-clamp-2 sm:line-clamp-3 leading-relaxed drop-shadow-md">
+                                    <p class="text-mist text-xs sm:text-sm md:text-base mb-4 sm:mb-8 line-clamp-2 sm:line-clamp-3 leading-relaxed drop-shadow-md">
                                         {{ $manga->synopsis }}
                                     </p>
                                 @endif
                                 <div class="flex flex-wrap gap-2.5 sm:gap-3">
-                                    <a href="{{ $mangaUrl }}" class="btn-primary !px-5 sm:!px-6 !py-2.5 sm:!py-3 !text-sm sm:!text-base shadow-[0_0_20px_rgba(155,123,255,0.4)]">
+                                    <a href="{{ $mangaUrl }}" class="btn-primary !px-5 sm:!px-6 !py-2.5 sm:!py-3 !text-xs sm:!text-base shadow-[0_0_20px_rgba(155,123,255,0.4)]">
                                         Voir l'œuvre
                                     </a>
                                     @if($firstChapter)
-                                    <a href="{{ route('chapter.show', [$manga->slug, $firstChapter->slug]) }}" class="btn-secondary !px-4 sm:!px-6 !py-2.5 sm:!py-3 !text-sm sm:!text-base bg-panel-hi/60 backdrop-blur-md">
+                                    <a href="{{ route('chapter.show', [$manga->slug, $firstChapter->slug]) }}" class="btn-secondary !px-4 sm:!px-6 !py-2.5 sm:!py-3 !text-xs sm:!text-base bg-panel-hi/60 backdrop-blur-md">
                                         <svg class="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/></svg>
                                         Ch. {{ $firstChapter->number }}
                                     </a>
@@ -102,7 +114,7 @@
             effect: 'fade',
             fadeEffect: { crossFade: true },
             autoplay: {
-                delay: 4500,
+                delay: 2000,
                 disableOnInteraction: false,
             },
             pagination: {
