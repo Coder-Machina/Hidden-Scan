@@ -83,4 +83,19 @@ class AnonymousPassAuthTest extends TestCase
         $response->assertRedirect(route('dashboard'));
         $this->assertAuthenticatedAs($user);
     }
+
+    public function test_login_and_register_pages_do_not_expose_staff_login(): void
+    {
+        $loginRes = $this->get(route('login'));
+        $loginRes->assertStatus(200);
+        $loginRes->assertDontSee('Email Staff');
+        $loginRes->assertDontSee('Connexion Staff');
+        $loginRes->assertDontSee('HS-7F2A-9K3M-P8X4');
+        $loginRes->assertSee('HS-••••-••••-••••');
+
+        $registerRes = $this->get(route('register'));
+        $registerRes->assertStatus(200);
+        $registerRes->assertDontSee('Créer un compte classique');
+        $registerRes->assertDontSee('admin@hidden-scan.com');
+    }
 }
