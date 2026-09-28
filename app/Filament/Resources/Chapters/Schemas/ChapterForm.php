@@ -17,18 +17,18 @@ class ChapterForm
         return $schema
             ->components([
                 Select::make('manga_id')
-                    ->label('Manga / Manhwa / Manhua')
+                    ->label('Œuvre')
                     ->options(Manga::all()->pluck('title', 'id'))
                     ->searchable()
                     ->required(),
-                TextInput::make('number')
+                TextInput::make('number')->label('Numéro')
                     ->label('Numéro')
                     ->numeric()
                     ->required(),
-                TextInput::make('title')
+                TextInput::make('title')->label('Titre')
                     ->label('Titre (optionnel)')
                     ->default(null),
-                Select::make('status')
+                Select::make('status')->label('Statut')
                     ->label('Statut')
                     ->options([
                         'brouillon'  => 'Brouillon',

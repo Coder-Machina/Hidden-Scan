@@ -18,6 +18,12 @@ class ArtistResource extends Resource
 {
     protected static ?string $model = Artist::class;
 
+    protected static ?string $modelLabel = 'artiste';
+
+    protected static ?string $pluralModelLabel = 'artistes';
+
+    protected static ?string $navigationLabel = 'Artistes';
+
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedRectangleStack;
 
     protected static ?string $recordTitleAttribute = 'name';

@@ -14,15 +14,15 @@ class ArtistsTable
     {
         return $table
             ->columns([
-                TextColumn::make('name')
+                TextColumn::make('name')->label('Nom')
                     ->searchable(),
-                TextColumn::make('slug')
+                TextColumn::make('slug')->label('Lien (Slug)')
                     ->searchable(),
-                TextColumn::make('created_at')
+                TextColumn::make('created_at')->label('Date de création')
                     ->dateTime()
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
-                TextColumn::make('updated_at')
+                TextColumn::make('updated_at')->label('Mis à jour le')
                     ->dateTime()
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),

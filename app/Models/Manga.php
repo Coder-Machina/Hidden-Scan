@@ -2,16 +2,17 @@
 
 namespace App\Models;
 
+use App\Traits\HasAuditLogging;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 class Manga extends Model
 {
-    use HasFactory;
+    use HasFactory, HasAuditLogging;
 
    protected $fillable = [
         'title', 'slug', 'synopsis', 'cover_image', 'banner_image',
-        'author_id', 'artist_id', 'type', 'status',
+        'type', 'status',
         'release_year', 'views_count', 'is_featured',
         'average_rating', 'ratings_count',
     ];
@@ -22,14 +23,14 @@ class Manga extends Model
         'is_featured' => 'boolean',
     ];
 
-    public function author()
+    public function authors()
     {
-        return $this->belongsTo(Author::class);
+        return $this->belongsToMany(Author::class, 'author_manga');
     }
 
-    public function artist()
+    public function artists()
     {
-        return $this->belongsTo(Artist::class);
+        return $this->belongsToMany(Artist::class, 'artist_manga');
     }
 
     public function genres()
@@ -45,5 +46,20 @@ class Manga extends Model
     public function chapters()
     {
         return $this->hasMany(Chapter::class)->orderBy('number');
+    }
+
+    public function readingProgress()
+    {
+        return $this->hasMany(ReadingProgress::class);
+    }
+
+    public function favorites()
+    {
+        return $this->hasMany(Favorite::class);
+    }
+
+    public function favoritedByUsers()
+    {
+        return $this->belongsToMany(User::class, 'favorites')->withTimestamps();
     }
 }

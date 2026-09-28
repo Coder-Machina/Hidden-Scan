@@ -18,6 +18,12 @@ class ChapterResource extends Resource
 {
     protected static ?string $model = Chapter::class;
 
+    protected static ?string $modelLabel = 'chapitre';
+
+    protected static ?string $pluralModelLabel = 'chapitres';
+
+    protected static ?string $navigationLabel = 'Chapitres';
+
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedRectangleStack;
 
     protected static ?string $recordTitleAttribute = 'title';

@@ -21,9 +21,9 @@ class CommentForm
                 TextInput::make('parent_id')
                     ->numeric()
                     ->default(null),
-                TextInput::make('pseudo')
+                TextInput::make('pseudo')->label('Pseudo')
                     ->required(),
-                Textarea::make('content')
+                Textarea::make('content')->label('Contenu')
                     ->required()
                     ->columnSpanFull(),
                 TextInput::make('ip_hash')

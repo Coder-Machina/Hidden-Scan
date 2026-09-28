@@ -1,0 +1,789 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Espace Commentaires - Hidden Scan</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background-color: #131318;
+            color: #b8b8d8;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            min-height: 100vh;
+            padding: 32px 16px;
+            display: flex;
+            justify-content: center;
+        }
+
+        .comments-app-wrapper {
+            width: 100%;
+            max-width: 720px;
+        }
+
+        /* ─── Header ─── */
+        .comments-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 20px;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .comments-title-wrap {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .comments-title {
+            font-size: 18px;
+            font-weight: 700;
+            color: #ffffff;
+            letter-spacing: -0.2px;
+        }
+
+        .comments-badge-count {
+            background: #3a3a8a;
+            color: #a0b0ff;
+            font-size: 12px;
+            font-weight: 700;
+            padding: 3px 10px;
+            border-radius: 9999px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .comments-sort-group {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            background: #1a1a22;
+            border: 1px solid #252535;
+            padding: 3px;
+            border-radius: 9999px;
+        }
+
+        .sort-btn {
+            font-size: 13px;
+            font-weight: 500;
+            color: #60608a;
+            background: transparent;
+            border: none;
+            padding: 5px 14px;
+            border-radius: 9999px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .sort-btn:hover {
+            color: #ffffff;
+        }
+
+        .sort-btn.active {
+            background: #ffffff;
+            color: #111111;
+            font-weight: 600;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
+        }
+
+        /* ─── Input Card ─── */
+        .comments-input-card {
+            background: #1a1a22;
+            border: 1px solid #252535;
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 24px;
+        }
+
+        .comments-input-row {
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+        }
+
+        .avatar-40 {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: #202030;
+            border: 1px solid #252535;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            color: #d0d0f0;
+            font-weight: 700;
+            font-size: 15px;
+            overflow: hidden;
+            user-select: none;
+        }
+
+        .avatar-40 img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .comments-input-content {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .comments-textarea {
+            width: 100%;
+            background: #202030;
+            border: 1px solid #252535;
+            border-radius: 8px;
+            padding: 12px 14px;
+            font-size: 14px;
+            color: #e8e8f0;
+            resize: vertical;
+            min-height: 80px;
+            font-family: inherit;
+            line-height: 1.6;
+            outline: none;
+            transition: border-color 0.2s ease;
+        }
+
+        .comments-textarea::placeholder {
+            color: #383858;
+        }
+
+        .comments-textarea:focus {
+            border-color: #5b6ef5;
+        }
+
+        .comments-input-footer {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-top: 10px;
+            padding-top: 4px;
+        }
+
+        .formatting-tools {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .format-btn {
+            width: 30px;
+            height: 30px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            background: transparent;
+            border: none;
+            border-radius: 6px;
+            color: #60608a;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.15s ease;
+            user-select: none;
+        }
+
+        .format-btn:hover {
+            color: #ffffff;
+            background: #202030;
+        }
+
+        .btn-publish {
+            background: linear-gradient(135deg, #5b6ef5, #7b8ef8);
+            color: #ffffff;
+            font-weight: 600;
+            font-size: 13px;
+            padding: 8px 22px;
+            border-radius: 9999px;
+            border: none;
+            cursor: pointer;
+            box-shadow: 0 4px 14px rgba(91, 110, 245, 0.35);
+            transition: all 0.2s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .btn-publish:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 6px 18px rgba(91, 110, 245, 0.45);
+            filter: brightness(1.05);
+        }
+
+        .btn-publish:active {
+            transform: translateY(0);
+        }
+
+        /* ─── Comment Card ─── */
+        .comments-list {
+            display: flex;
+            flex-direction: column;
+            gap: 18px;
+        }
+
+        .comment-card {
+            background: #1a1a22;
+            border: 1px solid #252535;
+            border-radius: 10px;
+            padding: 16px;
+            position: relative;
+            overflow: hidden;
+            transition: border-color 0.2s ease;
+        }
+
+        .comment-card:hover {
+            border-color: #2e2e42;
+        }
+
+        .comment-bg-illustration {
+            position: absolute;
+            inset: 0;
+            background-size: cover;
+            background-position: center right;
+            opacity: 0.15;
+            filter: saturate(1.3);
+            pointer-events: none;
+        }
+
+        .comment-bg-overlay {
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(to right, rgba(26, 26, 34, 0.97) 0%, rgba(26, 26, 34, 0.75) 50%, rgba(26, 26, 34, 0.45) 100%);
+            pointer-events: none;
+        }
+
+        .comment-inner-content {
+            position: relative;
+            z-index: 1;
+        }
+
+        /* ─── Comment Meta ─── */
+        .comment-meta {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 8px;
+        }
+
+        .avatar-34 {
+            width: 34px;
+            height: 34px;
+            border-radius: 50%;
+            background: #202030;
+            border: 1px solid #252535;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            color: #d0d0f0;
+            font-weight: 700;
+            font-size: 13px;
+            overflow: hidden;
+            user-select: none;
+        }
+
+        .avatar-34 img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .user-text-info {
+            display: flex;
+            align-items: baseline;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .user-pseudo {
+            font-size: 13px;
+            font-weight: 700;
+            color: #d0d0f0;
+            white-space: nowrap;
+        }
+
+        .user-time {
+            font-size: 11px;
+            color: #383858;
+            white-space: nowrap;
+        }
+
+        /* ─── Comment Body ─── */
+        .comment-text {
+            color: #b8b8d8;
+            font-size: 14px;
+            line-height: 1.65;
+            margin-left: 44px;
+            margin-bottom: 12px;
+            word-break: break-word;
+        }
+
+        /* ─── Comment Actions ─── */
+        .comment-actions {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            margin-left: 44px;
+            font-size: 12px;
+            color: #60608a;
+            flex-wrap: wrap;
+        }
+
+        .action-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            background: transparent;
+            border: none;
+            color: #60608a;
+            font-size: 12px;
+            font-weight: 500;
+            cursor: pointer;
+            padding: 0;
+            transition: color 0.15s ease;
+        }
+
+        .action-btn:hover {
+            color: #ffffff;
+        }
+
+        .action-btn.active-like {
+            color: #7b8ef8;
+            font-weight: 700;
+        }
+
+        .action-btn.active-dislike {
+            color: #93c5fd;
+            font-weight: 700;
+        }
+
+        .action-btn.btn-edit:hover {
+            color: #a0b0ff;
+        }
+
+        .action-btn.btn-delete:hover {
+            color: #f87171;
+        }
+
+        .action-btn svg {
+            width: 14px;
+            height: 14px;
+        }
+
+        .report-btn {
+            font-size: 11px;
+            color: #282840;
+            background: transparent;
+            border: none;
+            cursor: pointer;
+            margin-left: auto;
+            transition: color 0.15s ease;
+            padding: 0;
+        }
+
+        .report-btn:hover {
+            color: #60608a;
+        }
+
+        /* ─── Inline Reply Box ─── */
+        .inline-reply-box {
+            margin-left: 44px;
+            margin-top: 12px;
+            background: #15151c;
+            border: 1px solid #252535;
+            border-radius: 10px;
+            padding: 14px;
+        }
+
+        .inline-reply-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 8px;
+            font-size: 12px;
+            color: #707090;
+        }
+
+        .inline-reply-header strong {
+            color: #7b8ef8;
+        }
+
+        .inline-reply-cancel-btn {
+            background: transparent;
+            border: none;
+            color: #60608a;
+            font-size: 11px;
+            cursor: pointer;
+            transition: color 0.15s ease;
+        }
+
+        .inline-reply-cancel-btn:hover {
+            color: #f87171;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="comments-app-wrapper">
+        <!-- Header -->
+        <div class="comments-header">
+            <div class="comments-title-wrap">
+                <h2 class="comments-title">Commentaires</h2>
+                <span class="comments-badge-count" id="comments-total-badge">3</span>
+            </div>
+
+            <div class="comments-sort-group">
+                <button type="button" class="sort-btn active" data-sort="recent">Récents</button>
+                <button type="button" class="sort-btn" data-sort="oldest">Anciens</button>
+                <button type="button" class="sort-btn" data-sort="popular">Populaires</button>
+            </div>
+        </div>
+
+        <!-- Input Box Principal -->
+        <div class="comments-input-card">
+            <div class="comments-input-row">
+                <div class="avatar-40">
+                    <span>M</span>
+                </div>
+                <div class="comments-input-content">
+                    <textarea class="comments-textarea" id="comment-input-textarea" placeholder="Partagez votre avis sur ce chapitre..."></textarea>
+                    
+                    <div class="comments-input-footer">
+                        <div class="formatting-tools">
+                            <button type="button" class="format-btn" onclick="applyFormat('**', '**')" title="Gras">B</button>
+                            <button type="button" class="format-btn" style="font-style: italic; font-family: serif;" onclick="applyFormat('*', '*')" title="Italique">I</button>
+                            <button type="button" class="format-btn" style="text-decoration: line-through;" onclick="applyFormat('~~', '~~')" title="Barré">S</button>
+                            <button type="button" class="format-btn" style="font-family: serif;" onclick="applyFormat('> ', '')" title="Citation">❝</button>
+                            <button type="button" class="format-btn" onclick="insertImage()" title="Insérer une image">
+                                <svg width="15" height="15" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                            </button>
+                        </div>
+
+                        <button type="button" class="btn-publish" id="btn-publish-comment">Publier</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Liste des commentaires -->
+        <div class="comments-list" id="comments-list-container"></div>
+    </div>
+
+    <script>
+        const sampleComments = [
+            {
+                id: 1,
+                pseudo: "Moi (Auteur)",
+                avatar: null,
+                time: "il y a 20min",
+                text: "Mon propre commentaire pour tester les options Modifier et Supprimer.",
+                likes: 3,
+                dislikes: 0,
+                userLiked: false,
+                userDisliked: false,
+                isOwner: true,
+                hasIllustration: false,
+                bgUrl: null
+            },
+            {
+                id: 2,
+                pseudo: "Kenpachi94",
+                avatar: null,
+                time: "il y a 2h",
+                text: "Ce retournement de situation était juste magistral ! L'auteur monte d'un cran à chaque chapitre.",
+                likes: 18,
+                dislikes: 1,
+                userLiked: false,
+                userDisliked: false,
+                isOwner: false,
+                hasIllustration: true,
+                bgUrl: "https://images.unsplash.com/photo-1578632767115-351597cf2477?w=800&auto=format&fit=crop&q=80"
+            },
+            {
+                id: 3,
+                pseudo: "Yuki_Scan",
+                avatar: null,
+                time: "il y a 5h",
+                text: "La révélation sur le passé du héros explique enfin toutes ses motivations.",
+                likes: 8,
+                dislikes: 0,
+                userLiked: true,
+                userDisliked: false,
+                isOwner: false,
+                hasIllustration: false,
+                bgUrl: null
+            }
+        ];
+
+        let currentSort = 'recent';
+        let activeReplyId = null;
+        let editingId = null;
+
+        function renderComments() {
+            const container = document.getElementById('comments-list-container');
+            const totalBadge = document.getElementById('comments-total-badge');
+            totalBadge.textContent = sampleComments.length;
+
+            let sorted = [...sampleComments];
+            if (currentSort === 'popular') {
+                sorted.sort((a, b) => b.likes - a.likes);
+            } else if (currentSort === 'oldest') {
+                sorted.sort((a, b) => a.id - b.id);
+            } else {
+                sorted.sort((a, b) => b.id - a.id);
+            }
+
+            container.innerHTML = sorted.map(c => `
+                <div class="comment-card" data-id="${c.id}">
+                    ${c.hasIllustration && c.bgUrl ? `
+                        <div class="comment-bg-illustration" style="background-image: url('${c.bgUrl}');"></div>
+                        <div class="comment-bg-overlay"></div>
+                    ` : ''}
+
+                    <div class="comment-inner-content">
+                        <div class="comment-meta">
+                            <div class="avatar-34">
+                                <span>${c.pseudo.charAt(0).toUpperCase()}</span>
+                            </div>
+                            <div class="user-text-info">
+                                <span class="user-pseudo">${c.pseudo}</span>
+                                <span class="user-time">${c.time}</span>
+                            </div>
+                        </div>
+
+                        ${editingId === c.id ? `
+                            <div style="margin-left: 44px; margin-bottom: 12px;">
+                                <textarea id="edit-textarea-${c.id}" class="comments-textarea" rows="2">${escapeHtml(c.text)}</textarea>
+                                <div style="display: flex; gap: 8px; margin-top: 8px;">
+                                    <button type="button" onclick="saveEdit(${c.id})" class="btn-publish" style="padding: 6px 16px; font-size: 12px;">Enregistrer</button>
+                                    <button type="button" onclick="cancelEdit()" style="background: #202030; color: #a0a0c0; border: none; padding: 6px 14px; border-radius: 9999px; font-size: 12px; cursor: pointer;">Annuler</button>
+                                </div>
+                            </div>
+                        ` : `
+                            <div class="comment-text">${escapeHtml(c.text)}</div>
+                        `}
+
+                        <div class="comment-actions">
+                            <button type="button" class="action-btn ${c.userLiked ? 'active-like' : ''}" onclick="toggleLike(${c.id})">
+                                <svg viewBox="0 0 24 24" fill="${c.userLiked ? 'currentColor' : 'none'}" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"></path>
+                                </svg>
+                                <span>${c.likes || ''}</span>
+                            </button>
+
+                            <button type="button" class="action-btn ${c.userDisliked ? 'active-dislike' : ''}" onclick="toggleDislike(${c.id})">
+                                <svg viewBox="0 0 24 24" fill="${c.userDisliked ? 'currentColor' : 'none'}" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M10 15v4a3 3 0 0 0 3 3l4-9V2H5.72a2 2 0 0 0-2 1.7l-1.38 9a2 2 0 0 0 2 2.3zm7-13h3a2 2 0 0 1 2 2v7a2 2 0 0 1-2 2h-3"></path>
+                                </svg>
+                                <span>${c.dislikes || ''}</span>
+                            </button>
+
+                            <button type="button" class="action-btn" onclick="toggleReplyBox(${c.id}, '${c.pseudo}')">
+                                Répondre
+                            </button>
+
+                            ${c.isOwner ? `
+                                <button type="button" class="action-btn btn-edit" onclick="startEdit(${c.id})">Modifier</button>
+                                <button type="button" class="action-btn btn-delete" onclick="deleteComment(${c.id})">Supprimer</button>
+                            ` : `
+                                <button type="button" class="report-btn" onclick="reportComment(${c.id})">Signaler</button>
+                            `}
+                        </div>
+
+                        ${activeReplyId === c.id ? `
+                            <div class="inline-reply-box">
+                                <div class="inline-reply-header">
+                                    <span>Répondre à <strong>${c.pseudo}</strong></span>
+                                    <button type="button" class="inline-reply-cancel-btn" onclick="toggleReplyBox(null)">✕ Annuler</button>
+                                </div>
+                                <textarea id="inline-reply-textarea" class="comments-textarea" rows="2" placeholder="Écrivez votre réponse à ${c.pseudo}..."></textarea>
+                                <div class="comments-input-footer">
+                                    <div></div>
+                                    <div style="display:flex; gap: 8px; align-items:center;">
+                                        <button type="button" onclick="toggleReplyBox(null)" style="background:transparent; border:none; color:#60608a; font-size:12px; cursor:pointer;">Annuler</button>
+                                        <button type="button" class="btn-publish" style="padding: 6px 18px; font-size: 12px;" onclick="submitInlineReply('${c.pseudo}')">Répondre</button>
+                                    </div>
+                                </div>
+                            </div>
+                        ` : ''}
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function escapeHtml(str) {
+            return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+        }
+
+        function toggleReplyBox(id, pseudo) {
+            activeReplyId = activeReplyId === id ? null : id;
+            renderComments();
+            if (activeReplyId) {
+                setTimeout(() => {
+                    const el = document.getElementById('inline-reply-textarea');
+                    if (el) el.focus();
+                }, 50);
+            }
+        }
+
+        function submitInlineReply(parentPseudo) {
+            const el = document.getElementById('inline-reply-textarea');
+            if (!el || !el.value.trim()) return;
+
+            sampleComments.push({
+                id: Date.now(),
+                pseudo: "Moi",
+                avatar: null,
+                time: "à l'instant",
+                text: `@${parentPseudo} ` + el.value.trim(),
+                likes: 0,
+                dislikes: 0,
+                userLiked: false,
+                userDisliked: false,
+                isOwner: true,
+                hasIllustration: false,
+                bgUrl: null
+            });
+
+            activeReplyId = null;
+            renderComments();
+        }
+
+        function startEdit(id) {
+            editingId = id;
+            renderComments();
+        }
+
+        function cancelEdit() {
+            editingId = null;
+            renderComments();
+        }
+
+        function saveEdit(id) {
+            const el = document.getElementById(`edit-textarea-${id}`);
+            if (!el || !el.value.trim()) return;
+            const comment = sampleComments.find(c => c.id === id);
+            if (comment) {
+                comment.text = el.value.trim();
+            }
+            editingId = null;
+            renderComments();
+        }
+
+        function deleteComment(id) {
+            if (confirm("Voulez-vous vraiment supprimer ce commentaire ?")) {
+                const idx = sampleComments.findIndex(c => c.id === id);
+                if (idx !== -1) {
+                    sampleComments.splice(idx, 1);
+                    renderComments();
+                }
+            }
+        }
+
+        function toggleLike(id) {
+            const comment = sampleComments.find(c => c.id === id);
+            if (!comment) return;
+            if (comment.userLiked) {
+                comment.userLiked = false;
+                comment.likes--;
+            } else {
+                comment.userLiked = true;
+                comment.likes++;
+                if (comment.userDisliked) {
+                    comment.userDisliked = false;
+                    comment.dislikes--;
+                }
+            }
+            renderComments();
+        }
+
+        function toggleDislike(id) {
+            const comment = sampleComments.find(c => c.id === id);
+            if (!comment) return;
+            if (comment.userDisliked) {
+                comment.userDisliked = false;
+                comment.dislikes--;
+            } else {
+                comment.userDisliked = true;
+                comment.dislikes++;
+                if (comment.userLiked) {
+                    comment.userLiked = false;
+                    comment.likes--;
+                }
+            }
+            renderComments();
+        }
+
+        function reportComment(id) {
+            if (confirm("Signaler ce commentaire à la modération ?")) {
+                alert("Commentaire signalé avec succès.");
+            }
+        }
+
+        function applyFormat(start, end) {
+            const textarea = document.getElementById('comment-input-textarea');
+            const s = textarea.selectionStart;
+            const e = textarea.selectionEnd;
+            const val = textarea.value;
+            const selected = val.substring(s, e) || 'texte';
+            textarea.value = val.substring(0, s) + start + selected + end + val.substring(e);
+            textarea.focus();
+            textarea.setSelectionRange(s + start.length, s + start.length + selected.length);
+        }
+
+        function insertImage() {
+            const url = prompt("Entrez l'URL de l'image :");
+            if (url && url.startsWith('http')) {
+                const textarea = document.getElementById('comment-input-textarea');
+                textarea.value += `\n[img]${url}[/img]`;
+            }
+        }
+
+        // Publier nouveau commentaire principal
+        document.getElementById('btn-publish-comment').addEventListener('click', function() {
+            const textarea = document.getElementById('comment-input-textarea');
+            const val = textarea.value.trim();
+            if (!val) return;
+
+            sampleComments.unshift({
+                id: Date.now(),
+                pseudo: "Moi",
+                avatar: null,
+                time: "à l'instant",
+                text: val,
+                likes: 0,
+                dislikes: 0,
+                userLiked: false,
+                userDisliked: false,
+                isOwner: true,
+                hasIllustration: false,
+                bgUrl: null
+            });
+
+            textarea.value = '';
+            renderComments();
+        });
+
+        // Gestion du tri
+        document.querySelectorAll('.sort-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                document.querySelectorAll('.sort-btn').forEach(b => b.classList.remove('active'));
+                this.classList.add('active');
+                currentSort = this.getAttribute('data-sort');
+                renderComments();
+            });
+        });
+
+        renderComments();
+    </script>
+</body>
+</html>

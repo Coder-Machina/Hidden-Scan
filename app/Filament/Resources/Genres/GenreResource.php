@@ -18,6 +18,12 @@ class GenreResource extends Resource
 {
     protected static ?string $model = Genre::class;
 
+    protected static ?string $modelLabel = 'genre';
+
+    protected static ?string $pluralModelLabel = 'genres';
+
+    protected static ?string $navigationLabel = 'Genres';
+
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedRectangleStack;
 
     protected static ?string $recordTitleAttribute = 'name';

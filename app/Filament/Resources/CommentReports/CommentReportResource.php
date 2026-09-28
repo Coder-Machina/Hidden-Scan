@@ -18,6 +18,12 @@ class CommentReportResource extends Resource
 {
     protected static ?string $model = CommentReport::class;
 
+    protected static ?string $modelLabel = 'signalement';
+
+    protected static ?string $pluralModelLabel = 'signalements';
+
+    protected static ?string $navigationLabel = 'Signalements';
+
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedFlag;
     protected static string|\UnitEnum|null $navigationGroup = 'Modération';
 
@@ -33,17 +39,17 @@ class CommentReportResource extends Resource
     {
         return $table
             ->columns([
-                \Filament\Tables\Columns\TextColumn::make('comment.content')
+                \Filament\Tables\Columns\TextColumn::make('comment.content')->label('Commentaire')
                     ->label('Commentaire')
                     ->limit(50)
                     ->searchable(),
-                \Filament\Tables\Columns\TextColumn::make('reason')
+                \Filament\Tables\Columns\TextColumn::make('reason')->label('Raison')
                     ->label('Raison')
                     ->searchable(),
                 \Filament\Tables\Columns\IconColumn::make('is_resolved')
                     ->label('Résolu')
                     ->boolean(),
-                \Filament\Tables\Columns\TextColumn::make('created_at')
+                \Filament\Tables\Columns\TextColumn::make('created_at')->label('Date de création')
                     ->dateTime()
                     ->sortable(),
             ])
@@ -52,7 +58,7 @@ class CommentReportResource extends Resource
                     ->label('État de résolution')
             ])
             ->recordActions([
-                \Filament\Tables\Actions\Action::make('resolve')
+                \Filament\Actions\Action::make('resolve')
                     ->label('Marquer comme résolu')
                     ->icon('heroicon-m-check')
                     ->color('success')

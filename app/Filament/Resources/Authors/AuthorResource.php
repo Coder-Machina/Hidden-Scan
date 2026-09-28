@@ -18,6 +18,12 @@ class AuthorResource extends Resource
 {
     protected static ?string $model = Author::class;
 
+    protected static ?string $modelLabel = 'auteur';
+
+    protected static ?string $pluralModelLabel = 'auteurs';
+
+    protected static ?string $navigationLabel = 'Auteurs';
+
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedRectangleStack;
 
     protected static ?string $recordTitleAttribute = 'name';

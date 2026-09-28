@@ -1,84 +1,283 @@
 @use('Illuminate\Support\Facades\Storage')
 <x-layouts.public title="Hidden Scan — Lecture de mangas en ligne">
 
-    {{-- ═══ Hero ═══ --}}
-    <section class="relative mb-14 animate-fade-in">
-        <div class="relative overflow-hidden rounded-2xl bg-panel border border-line/50">
-            {{-- Background pattern --}}
-            <div class="absolute inset-0 opacity-30">
-                <div class="absolute inset-0" style="background-image: radial-gradient(circle, rgba(155,123,255,0.15) 1px, transparent 1px); background-size: 20px 20px;"></div>
-                <div class="absolute inset-0 bg-gradient-to-r from-ink via-transparent to-ink"></div>
-            </div>
-
-            <div class="relative px-6 sm:px-10 py-12 sm:py-16 flex flex-col items-center text-center">
-                <img src="{{ asset('images/logo.png') }}" alt="Hidden Scan" class="h-20 w-20 sm:h-24 sm:w-24 rounded-2xl mb-6 shadow-2xl shadow-violet/20" style="animation: float 3s ease-in-out infinite;">
-
-                <h1 class="font-display font-extrabold text-4xl sm:text-5xl lg:text-6xl tracking-tight mb-4">
-                    Hidden<span class="text-violet">Scan</span>
-                </h1>
-                <p class="text-mist text-lg sm:text-xl max-w-xl mb-8 leading-relaxed">
-                    Lis tes <strong class="text-chalk">mangas</strong>, <strong class="text-chalk">manhwas</strong> et <strong class="text-chalk">manhuas</strong> en ligne. Gratuit, sans inscription.
-                </p>
-                <div class="flex flex-wrap items-center justify-center gap-3">
-                    <a href="{{ route('manga.index') }}" class="btn-primary text-base px-8 py-3">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/></svg>
-                        Explorer le catalogue
+    {{-- ═══ Hero Slider ═══ --}}
+    @if($featured->count())
+    <section class="relative mb-14 animate-fade-in -mx-4 sm:-mx-6 mt-[-1.5rem] overflow-hidden">
+        <div class="swiper hero-swiper h-[55vh] min-h-[420px] max-h-[600px] w-full overflow-hidden">
+            <div class="swiper-wrapper">
+                @foreach($featured as $manga)
+                <div class="swiper-slide relative overflow-hidden">
+                    {{-- Background (Clickable direct navigation to manga) --}}
+                    <a href="{{ route('manga.show', $manga->slug) }}" class="absolute inset-0 z-0 cursor-pointer block" aria-label="{{ $manga->title }}">
+                        @if($manga->banner_image)
+                            <img src="{{ Storage::url($manga->banner_image) }}" alt="" class="absolute inset-0 w-full h-full object-cover opacity-40">
+                        @elseif($manga->cover_image)
+                            <img src="{{ Storage::url($manga->cover_image) }}" alt="" class="absolute inset-0 w-full h-full object-cover opacity-30 blur-sm scale-110">
+                        @else
+                            <div class="absolute inset-0 bg-gradient-to-r from-violet-deep/20 to-ink-deep/90"></div>
+                        @endif
+                        
+                        {{-- Overlays --}}
+                        <div class="absolute inset-0 bg-gradient-to-t from-ink via-ink/60 to-transparent"></div>
+                        <div class="absolute inset-0 bg-gradient-to-r from-ink/90 via-ink/50 to-transparent"></div>
                     </a>
-                    <a href="{{ route('library') }}" class="btn-secondary text-base px-8 py-3">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/></svg>
-                        Ma bibliothèque
-                    </a>
+                    
+                    {{-- Content --}}
+                    <div class="absolute inset-0 flex items-center pointer-events-none">
+                        <div class="max-w-7xl mx-auto px-4 sm:px-8 lg:px-10 w-full flex gap-8 items-center pointer-events-auto">
+                            <div class="flex-1 max-w-2xl">
+                                <div class="flex flex-wrap items-center gap-2 mb-2.5 sm:mb-3">
+                                    <span class="badge-type badge-{{ $manga->type->value }}">{{ $manga->type->getLabel() }}</span>
+                                    <span class="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-amber/20 text-amber text-xs font-bold backdrop-blur-md border border-amber/30">
+                                        ★ {{ $manga->average_rating > 0 ? $manga->average_rating : 'N/A' }}
+                                    </span>
+                                </div>
+                                <h2 class="font-display font-extrabold text-2xl sm:text-4xl lg:text-6xl tracking-tight text-chalk leading-tight mb-3 sm:mb-4 drop-shadow-lg line-clamp-2 sm:line-clamp-none">
+                                    <a href="{{ route('manga.show', $manga->slug) }}" class="hover:text-violet transition-colors">
+                                        {{ $manga->title }}
+                                    </a>
+                                </h2>
+                                @if($manga->synopsis)
+                                    <p class="text-mist text-xs sm:text-sm md:text-base mb-5 sm:mb-8 line-clamp-2 sm:line-clamp-3 leading-relaxed drop-shadow-md">
+                                        {{ $manga->synopsis }}
+                                    </p>
+                                @endif
+                                <div class="flex flex-wrap gap-2.5 sm:gap-3">
+                                    <a href="{{ route('manga.show', $manga->slug) }}" class="btn-primary !px-5 sm:!px-6 !py-2.5 sm:!py-3 !text-sm sm:!text-base shadow-[0_0_20px_rgba(155,123,255,0.4)]">
+                                        Voir l'œuvre
+                                    </a>
+                                    @if($manga->chapters->count())
+                                    <a href="{{ route('chapter.show', [$manga->slug, $manga->chapters->last()->slug]) }}" class="btn-secondary !px-4 sm:!px-6 !py-2.5 sm:!py-3 !text-sm sm:!text-base bg-panel-hi/60 backdrop-blur-md">
+                                        <svg class="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/></svg>
+                                        Ch. {{ $manga->chapters->last()->number }}
+                                    </a>
+                                    @endif
+                                </div>
+                            </div>
+                            
+                            {{-- Image Cover flottante (Desktop only, Clickable) --}}
+                            <div class="hidden md:block flex-shrink-0 relative group perspective-1000">
+                                <a href="{{ route('manga.show', $manga->slug) }}" class="block cursor-pointer">
+                                    @if($manga->cover_image)
+                                        <img src="{{ Storage::url($manga->cover_image) }}" alt="{{ $manga->title }}" 
+                                             class="w-48 lg:w-64 aspect-[2/3] object-cover rounded-xl border border-line shadow-2xl transition-transform duration-500 ease-out transform rotate-y-[-10deg] group-hover:rotate-y-0 group-hover:scale-105">
+                                    @endif
+                                </a>
+                            </div>
+                        </div>
+                    </div>
                 </div>
+                @endforeach
             </div>
+            
+            {{-- Pagination --}}
+            <div class="swiper-pagination !bottom-4 sm:!bottom-6"></div>
         </div>
     </section>
 
-    {{-- ═══ Dernières sorties ═══ --}}
-    @if($latest_chapters->count())
-    <section class="mb-14 animate-fade-in-up" style="animation-delay: 0.1s;">
+    <script>
+    document.addEventListener('DOMContentLoaded', function () {
+        new Swiper('.hero-swiper', {
+            loop: true,
+            effect: 'fade',
+            fadeEffect: { crossFade: true },
+            autoplay: {
+                delay: 4500,
+                disableOnInteraction: false,
+            },
+            pagination: {
+                el: '.swiper-pagination',
+                clickable: true,
+            },
+            touchStartPreventDefault: false,
+            preventClicks: true,
+            preventClicksPropagation: true,
+            resistanceRatio: 0,
+        });
+    });
+    </script>
+    @else
+    {{-- Fallback si aucun manga en featured --}}
+    <section class="relative mb-14 animate-fade-in">
+        <div class="relative overflow-hidden rounded-2xl bg-panel border border-line/50 px-6 sm:px-10 py-12 sm:py-16 flex flex-col items-center text-center">
+            <div class="absolute inset-0 opacity-30">
+                <div class="absolute inset-0 bg-gradient-to-r from-ink via-transparent to-ink"></div>
+            </div>
+            <h1 class="font-display font-extrabold text-4xl sm:text-5xl lg:text-6xl tracking-tight mb-4 relative z-10">
+                Hidden<span class="text-violet">Scan</span>
+            </h1>
+            <p class="text-mist text-lg sm:text-xl max-w-xl mb-8 relative z-10">
+                Lis tes mangas, manhwas et manhuas en ligne. Gratuit, sans inscription.
+            </p>
+        </div>
+    </section>
+    @endif
+
+    {{-- ═══ Surprise-moi Quick Discovery Banner ═══ --}}
+    <div class="mb-12 p-4 sm:p-5 rounded-2xl bg-gradient-to-r from-red-950/40 via-panel to-amber-950/30 border border-red-500/25 shadow-lg shadow-black/40 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 animate-fade-in-up">
+        <div class="flex items-center gap-3.5">
+            <div class="w-12 h-12 rounded-2xl bg-gradient-to-br from-red-600 to-amber-600 flex items-center justify-center text-2xl shadow-lg shadow-red-600/30 flex-shrink-0 animate-pulse">
+                🎲
+            </div>
+            <div>
+                <div class="flex items-center gap-2">
+                    <h3 class="font-display font-bold text-base sm:text-lg text-chalk">Envie d'une découverte ?</h3>
+                    <span class="text-[10px] px-2 py-0.5 rounded-full bg-red-600/20 border border-red-500/30 text-red-300 font-extrabold uppercase tracking-wide">Surprise-moi</span>
+                </div>
+                <p class="text-xs sm:text-sm text-mist mt-0.5">Laisse le hasard choisir un manga ciblé selon tes genres préférés et tes habitudes de lecture.</p>
+            </div>
+        </div>
+        <a href="{{ route('manga.random') }}"
+           onclick="if(window.HiddenScan && !{{ auth()->check() ? 'true' : 'false' }}){ const favs = window.HiddenScan.getFavorites().map(f => f.slug).join(','); if(favs) this.href = '{{ route('manga.random') }}?favs=' + encodeURIComponent(favs); }"
+           class="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-red-600 to-red-700 hover:from-red-500 hover:to-red-600 text-white font-bold text-sm shadow-lg shadow-red-600/30 hover:scale-105 active:scale-95 transition-all flex-shrink-0">
+            <span>Tenter ma chance 🎲</span>
+        </a>
+    </div>
+
+    {{-- ═══ Continuer la lecture (Historique JS) ═══ --}}
+    <div x-data="readingHistory()" x-init="init()" x-show="history.length > 0" x-cloak class="mb-14 animate-fade-in-up">
         <div class="flex items-center justify-between mb-6">
             <h2 class="section-title">
-                <svg class="w-5 h-5 text-mint flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
-                Dernières sorties
+                <svg class="w-5 h-5 text-amber flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/></svg>
+                Continuer la lecture
             </h2>
-            <a href="{{ route('manga.index', ['sort' => 'latest']) }}" class="text-sm text-violet hover:text-violet-glow transition flex items-center gap-1">
+        </div>
+        
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+            <template x-for="item in history" :key="item.mangaSlug">
+                <a :href="'/chapitre/' + item.mangaSlug + '/' + item.slug" class="group flex bg-panel border border-line/50 rounded-xl overflow-hidden hover:border-violet/50 hover:shadow-lg hover:shadow-violet/10 transition-all h-28">
+                    <div class="w-20 sm:w-24 flex-shrink-0 bg-ink relative">
+                        <img :src="item.mangaCover" :alt="item.mangaTitle" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" x-on:error="$el.style.display='none'">
+                        <div class="absolute inset-0 flex items-center justify-center bg-ink" x-show="!item.mangaCover">
+                            <span class="text-[10px] text-mist font-bold text-center px-1" x-text="item.mangaTitle.substring(0, 15)"></span>
+                        </div>
+                    </div>
+                    <div class="p-3 flex flex-col justify-between flex-grow min-w-0">
+                        <div>
+                            <h3 class="font-semibold text-chalk text-sm truncate group-hover:text-violet transition" x-text="item.mangaTitle"></h3>
+                            <p class="text-xs text-mist mt-1 truncate">Chapitre <span x-text="item.chapter"></span> (Page <span x-text="item.page"></span>)</p>
+                        </div>
+                        <div class="mt-2">
+                            <div class="flex justify-between text-[10px] text-mist/70 mb-1">
+                                <span>Progression</span>
+                                <span x-text="item.percent + '%'"></span>
+                            </div>
+                            <div class="h-1.5 w-full bg-ink-deep rounded-full overflow-hidden">
+                                <div class="h-full bg-violet rounded-full" :style="'width: ' + item.percent + '%'"></div>
+                            </div>
+                        </div>
+                    </div>
+                </a>
+            </template>
+        </div>
+    </div>
+
+    <script>
+    function readingHistory() {
+        return {
+            history: [],
+            init() {
+                try {
+                    const data = window.HiddenScan.getProgress();
+                    // Convert object to array and sort by updatedAt desc
+                    this.history = Object.values(data)
+                        .filter(item => item && item.mangaTitle && item.slug)
+                        .sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt))
+                        .slice(0, 4); // Show only top 4
+                } catch(e) {
+                    console.error("Error loading reading history", e);
+                }
+            }
+        }
+    }
+    </script>
+
+    {{-- ═══ Dernières sorties ═══ --}}
+    @if($latest_updates->count())
+    @php
+        $mangaDataJson = $latest_updates->map(fn($m) => ['slug' => $m->slug, 'type' => $m->type->value])->values()->toJson();
+    @endphp
+    <section class="mb-14 animate-fade-in-up" style="animation-delay: 0.1s;" 
+             x-data="{ 
+                 category: 'all',
+                 items: {{ $mangaDataJson }},
+                 favSlugs: [],
+                 init() {
+                     try {
+                         const favs = window.HiddenScan.getFavorites();
+                         this.favSlugs = favs.map(f => f.slug);
+                     } catch(e) {}
+                 },
+                 isVisible(type, slug) {
+                     if (this.category === 'all') return true;
+                     if (this.category === 'favorites') return this.favSlugs.includes(slug);
+                     return this.category === type;
+                 },
+                 get count() {
+                     if (this.category === 'all') return this.items.length;
+                     if (this.category === 'favorites') return this.items.filter(i => this.favSlugs.includes(i.slug)).length;
+                     return this.items.filter(i => i.type === this.category).length;
+                 },
+                 get emptyMessage() {
+                     if (this.category === 'manhwa') return 'Aucun manhwa trouvé';
+                     if (this.category === 'manhua') return 'Aucun manhua trouvé';
+                     if (this.category === 'manga') return 'Aucun manga trouvé';
+                     if (this.category === 'favorites') return 'Aucun favori trouvé';
+                     return 'Aucune œuvre trouvée';
+                 }
+             }">
+        <div class="flex items-center justify-between mb-5">
+            <h2 class="section-title">
+                <svg class="w-5 h-5 text-mint flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+                Sorties récentes
+            </h2>
+            <a href="{{ route('manga.index', ['sort' => 'latest']) }}" class="text-sm text-mist hover:text-white transition flex items-center gap-1">
                 Tout voir
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
             </a>
         </div>
+
+        {{-- Category Filter Bar (Seamless & Borderless) --}}
+        <div class="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-none mb-7">
+            <button type="button" @click="category = 'all'" 
+                    :class="category === 'all' ? 'bg-[#1e2029] text-white font-semibold' : 'text-[#7d849a] hover:text-white hover:bg-[#1e2029]/50'" 
+                    class="px-5 py-2 rounded-full text-sm transition-colors duration-200 cursor-pointer select-none">
+                Tout
+            </button>
+            <button type="button" @click="category = 'manhwa'" 
+                    :class="category === 'manhwa' ? 'bg-[#1e2029] text-white font-semibold' : 'text-[#7d849a] hover:text-white hover:bg-[#1e2029]/50'" 
+                    class="px-5 py-2 rounded-full text-sm transition-colors duration-200 cursor-pointer select-none">
+                Manhwa
+            </button>
+            <button type="button" @click="category = 'manhua'" 
+                    :class="category === 'manhua' ? 'bg-[#1e2029] text-white font-semibold' : 'text-[#7d849a] hover:text-white hover:bg-[#1e2029]/50'" 
+                    class="px-5 py-2 rounded-full text-sm transition-colors duration-200 cursor-pointer select-none">
+                Manhua
+            </button>
+            <button type="button" @click="category = 'manga'" 
+                    :class="category === 'manga' ? 'bg-[#1e2029] text-white font-semibold' : 'text-[#7d849a] hover:text-white hover:bg-[#1e2029]/50'" 
+                    class="px-5 py-2 rounded-full text-sm transition-colors duration-200 cursor-pointer select-none">
+                Manga
+            </button>
+            <button type="button" @click="category = 'favorites'" 
+                    :class="category === 'favorites' ? 'bg-[#1e2029] text-white font-semibold' : 'text-[#7d849a] hover:text-white hover:bg-[#1e2029]/50'" 
+                    class="px-5 py-2 rounded-full text-sm transition-colors duration-200 cursor-pointer select-none flex items-center gap-1.5">
+                <svg class="w-3.5 h-3.5 text-rose" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z" clip-rule="evenodd"/></svg>
+                Favoris
+            </button>
+        </div>
+
+        {{-- Manga Grid --}}
         <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
-            @foreach($latest_chapters as $index => $chapter)
-            <a href="{{ route('chapter.show', [$chapter->manga->slug, $chapter->slug]) }}" class="manga-card group animate-fade-in stagger-{{ min($index + 1, 6) }}">
-                <div class="relative overflow-hidden">
-                    @if($chapter->manga->cover_image)
-                        <img src="{{ Storage::url($chapter->manga->cover_image) }}" alt="{{ $chapter->manga->title }}" class="manga-cover" loading="lazy">
-                    @else
-                        <div class="cover-placeholder">
-                            <span>{{ $chapter->manga->title }}</span>
-                        </div>
-                    @endif
-                    <div class="manga-overlay"></div>
-
-                    {{-- Badge chapitre --}}
-                    <div class="absolute top-2 right-2">
-                        <span class="inline-flex items-center px-2 py-0.5 rounded-md bg-violet/90 text-white text-[10px] font-bold backdrop-blur-sm">
-                            Ch. {{ $chapter->number }}
-                        </span>
-                    </div>
-
-                    {{-- Badge type --}}
-                    <div class="absolute top-2 left-2">
-                        <span class="badge-type badge-{{ $chapter->manga->type }}">{{ ucfirst($chapter->manga->type) }}</span>
-                    </div>
+            @foreach($latest_updates as $index => $manga)
+                <div x-show="isVisible('{{ $manga->type->value }}', '{{ $manga->slug }}')"
+                     x-transition:enter="transition ease-out duration-200"
+                     x-transition:enter-start="opacity-0 scale-95"
+                     x-transition:enter-end="opacity-100 scale-100"
+                     class="animate-fade-in stagger-{{ min($index + 1, 6) }}">
+                    <x-manga-card :manga="$manga" :show-chapters="true" />
                 </div>
-                <div class="p-3">
-                    <p class="text-sm font-semibold text-chalk truncate group-hover:text-violet transition">{{ $chapter->manga->title }}</p>
-                    <p class="text-xs text-mist mt-0.5">Chapitre {{ $chapter->number }}</p>
-                    @if($chapter->published_at)
-                        <p class="text-[10px] text-mist/70 mt-1">{{ $chapter->published_at->diffForHumans() }}</p>
-                    @endif
-                </div>
-            </a>
             @endforeach
         </div>
     </section>
@@ -99,46 +298,9 @@
         </div>
         <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
             @foreach($popular as $index => $manga)
-            <a href="{{ route('manga.show', $manga->slug) }}" class="manga-card group animate-fade-in stagger-{{ min($index + 1, 6) }}">
-                <div class="relative overflow-hidden">
-                    @if($manga->cover_image)
-                        <img src="{{ Storage::url($manga->cover_image) }}" alt="{{ $manga->title }}" class="manga-cover" loading="lazy">
-                    @else
-                        <div class="cover-placeholder">
-                            <span>{{ $manga->title }}</span>
-                        </div>
-                    @endif
-                    <div class="manga-overlay"></div>
-
-                    {{-- Badge type --}}
-                    <div class="absolute top-2 left-2">
-                        <span class="badge-type badge-{{ $manga->type }}">{{ ucfirst($manga->type) }}</span>
-                    </div>
-
-                    {{-- Rang --}}
-                    @if($index < 3)
-                    <div class="absolute bottom-2 left-2">
-                        <span class="inline-flex items-center justify-center w-7 h-7 rounded-full {{ $index === 0 ? 'bg-amber text-ink' : ($index === 1 ? 'bg-mist/30 text-chalk' : 'bg-amber/30 text-amber') }} text-xs font-extrabold">
-                            {{ $index + 1 }}
-                        </span>
-                    </div>
-                    @endif
+                <div class="animate-fade-in stagger-{{ min($index + 1, 6) }}">
+                    <x-manga-card :manga="$manga" :show-rank="$index < 3 ? $index + 1 : null" />
                 </div>
-                <div class="p-3">
-                    <p class="text-sm font-semibold text-chalk truncate group-hover:text-violet transition">{{ $manga->title }}</p>
-                    <div class="flex items-center gap-2 mt-1">
-                        <span class="text-xs text-mist flex items-center gap-1">
-                            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
-                            {{ number_format($manga->views_count) }}
-                        </span>
-                        @if($manga->average_rating > 0)
-                        <span class="text-xs text-amber flex items-center gap-0.5">
-                            ★ {{ $manga->average_rating }}
-                        </span>
-                        @endif
-                    </div>
-                </div>
-            </a>
             @endforeach
         </div>
     </section>
@@ -153,25 +315,9 @@
         </h2>
         <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
             @foreach($featured as $index => $manga)
-            <a href="{{ route('manga.show', $manga->slug) }}" class="manga-card group animate-fade-in stagger-{{ min($index + 1, 6) }}">
-                <div class="relative overflow-hidden">
-                    @if($manga->cover_image)
-                        <img src="{{ Storage::url($manga->cover_image) }}" alt="{{ $manga->title }}" class="manga-cover" loading="lazy">
-                    @else
-                        <div class="cover-placeholder">
-                            <span>{{ $manga->title }}</span>
-                        </div>
-                    @endif
-                    <div class="manga-overlay"></div>
-                    <div class="absolute top-2 left-2">
-                        <span class="badge-type badge-{{ $manga->type }}">{{ ucfirst($manga->type) }}</span>
-                    </div>
+                <div class="animate-fade-in stagger-{{ min($index + 1, 6) }}">
+                    <x-manga-card :manga="$manga" />
                 </div>
-                <div class="p-3">
-                    <p class="text-sm font-semibold text-chalk truncate group-hover:text-violet transition">{{ $manga->title }}</p>
-                    <p class="text-xs text-mist mt-0.5">{{ $manga->chapters_count ?? $manga->chapters->count() }} chapitres</p>
-                </div>
-            </a>
             @endforeach
         </div>
     </section>

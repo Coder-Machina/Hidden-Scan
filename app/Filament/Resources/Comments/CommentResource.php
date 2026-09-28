@@ -18,6 +18,12 @@ class CommentResource extends Resource
 {
     protected static ?string $model = Comment::class;
 
+    protected static ?string $modelLabel = 'commentaire';
+
+    protected static ?string $pluralModelLabel = 'commentaires';
+
+    protected static ?string $navigationLabel = 'Commentaires';
+
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedRectangleStack;
 
     protected static ?string $recordTitleAttribute = 'pseudo';
@@ -39,11 +45,23 @@ class CommentResource extends Resource
         ];
     }
 
+    public static function canCreate(): bool
+    {
+        return false;
+    }
+
+    public static function getEloquentQuery(): \Illuminate\Database\Eloquent\Builder
+    {
+        return parent::getEloquentQuery()
+            ->withoutGlobalScopes([
+                \Illuminate\Database\Eloquent\SoftDeletingScope::class,
+            ]);
+    }
+
     public static function getPages(): array
     {
         return [
             'index' => ListComments::route('/'),
-            'create' => CreateComment::route('/create'),
             'edit' => EditComment::route('/{record}/edit'),
         ];
     }

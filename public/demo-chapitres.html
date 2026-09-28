@@ -1,0 +1,430 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Liste des Chapitres - Hidden Scan</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background-color: #0a0a0f;
+            color: #e8e8f0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 24px 16px;
+        }
+
+        /* ─── Conteneur principal ─── */
+        .chapters-container {
+            width: 100%;
+            max-width: 640px;
+            background: #111118;
+            border: 1px solid #1e1e2e;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+        }
+
+        /* ─── Header du bloc ─── */
+        .chapters-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 12px;
+        }
+
+        .chapters-title-left {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 15px;
+            font-weight: 700;
+            color: #ffffff;
+        }
+
+        .chapters-title-left .lock-icon {
+            width: 16px;
+            height: 16px;
+            color: #dc2626;
+            flex-shrink: 0;
+        }
+
+        .chapters-badge {
+            background: #16161f;
+            border: 1px solid #1e1e2e;
+            border-radius: 20px;
+            padding: 4px 12px;
+            font-size: 12px;
+            font-weight: 600;
+            color: #a0a0c0;
+            letter-spacing: 0.2px;
+        }
+
+        .chapters-badge .badge-read-count {
+            color: #dc2626;
+            font-weight: 700;
+        }
+
+        /* ─── Barre de progression ─── */
+        .chapters-progress-bar-wrap {
+            height: 2px;
+            background: #1a1a28;
+            border-radius: 9999px;
+            overflow: hidden;
+            margin-bottom: 16px;
+        }
+
+        .chapters-progress-bar-fill {
+            height: 100%;
+            background: #dc2626;
+            transition: width 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+            width: 0%;
+        }
+
+        /* ─── Bouton reprendre ─── */
+        .btn-resume-chapters {
+            width: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            background: #16161f;
+            border: 1px solid #1e1e2e;
+            border-radius: 8px;
+            padding: 10px 14px;
+            font-size: 13px;
+            font-weight: 600;
+            color: #a0a0c0;
+            cursor: pointer;
+            text-decoration: none;
+            transition: all 0.2s ease;
+            margin-bottom: 14px;
+        }
+
+        .btn-resume-chapters:hover {
+            background: #1c1c2c;
+            border-color: #2e2e48;
+            color: #ffffff;
+        }
+
+        .btn-resume-chapters .play-icon {
+            width: 14px;
+            height: 14px;
+            fill: #dc2626;
+            flex-shrink: 0;
+        }
+
+        /* ─── Liste des chapitres ─── */
+        .chapters-list {
+            display: flex;
+            flex-direction: column;
+            gap: 3px;
+            max-height: 480px;
+            overflow-y: auto;
+            padding-right: 4px;
+        }
+
+        .chapters-list::-webkit-scrollbar {
+            width: 4px;
+        }
+
+        .chapters-list::-webkit-scrollbar-track {
+            background: #111118;
+        }
+
+        .chapters-list::-webkit-scrollbar-thumb {
+            background: #1e1e2e;
+            border-radius: 4px;
+        }
+
+        /* ─── Chaque ligne de chapitre ─── */
+        .chapter-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 10px 12px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background-color 0.2s ease, opacity 0.2s ease;
+            gap: 12px;
+            user-select: none;
+            background: transparent;
+        }
+
+        .chapter-row:hover {
+            background: #16161f;
+        }
+
+        .chapter-row.is-read {
+            opacity: 0.5;
+        }
+
+        .chapter-left {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            min-width: 0;
+            flex: 1;
+        }
+
+        .chapter-circle-btn {
+            width: 22px;
+            height: 22px;
+            border-radius: 50%;
+            border: 1.5px solid #2e2e48;
+            background: transparent;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            padding: 0;
+        }
+
+        .chapter-circle-btn:hover {
+            border-color: #dc2626;
+            transform: scale(1.08);
+        }
+
+        .chapter-circle-btn.checked {
+            background: #dc2626;
+            border-color: #dc2626;
+        }
+
+        .chapter-circle-btn .check-svg {
+            width: 11px;
+            height: 11px;
+            stroke: #ffffff;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+            opacity: 0;
+            transform: scale(0.5);
+            transition: all 0.2s ease;
+        }
+
+        .chapter-circle-btn.checked .check-svg {
+            opacity: 1;
+            transform: scale(1);
+        }
+
+        .chapter-info {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+            min-width: 0;
+            flex: 1;
+        }
+
+        .chapter-name {
+            font-size: 13px;
+            font-weight: 600;
+            color: #e8e8f0;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            transition: color 0.2s ease;
+        }
+
+        .chapter-row:hover .chapter-name {
+            color: #ffffff;
+        }
+
+        .chapter-date {
+            font-size: 11px;
+            color: #40405a;
+        }
+
+        .chapter-arrow {
+            width: 14px;
+            height: 14px;
+            color: #40405a;
+            flex-shrink: 0;
+            transition: all 0.2s ease;
+        }
+
+        .chapter-row:hover .chapter-arrow {
+            color: #a0a0c0;
+            transform: translateX(2px);
+        }
+    </style>
+</head>
+<body>
+
+    <div class="chapters-container">
+        <!-- Header du bloc -->
+        <div class="chapters-header">
+            <div class="chapters-title-left">
+                <svg class="lock-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                    <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+                </svg>
+                <span>Chapitres</span>
+            </div>
+            <div class="chapters-badge">
+                <span class="badge-read-count" id="badge-read-count">0</span> / <span id="badge-total-count">0</span> lus (<span id="badge-read-pct">0%</span>)
+            </div>
+        </div>
+
+        <!-- Barre de progression -->
+        <div class="chapters-progress-bar-wrap">
+            <div class="chapters-progress-bar-fill" id="chapters-progress-fill"></div>
+        </div>
+
+        <!-- Bouton reprendre -->
+        <a href="#" class="btn-resume-chapters" id="btn-resume-chapters">
+            <svg class="play-icon" viewBox="0 0 24 24">
+                <path d="M8 5v14l11-7z"/>
+            </svg>
+            <span id="btn-resume-label">Commencer la lecture</span>
+        </a>
+
+        <!-- Liste des chapitres -->
+        <div class="chapters-list" id="chapters-list">
+            <!-- Rendu dynamique ou initialisé depuis le DOM -->
+        </div>
+    </div>
+
+    <!-- Logique JS Vanilla -->
+    <script>
+        // Données des chapitres
+        const chaptersData = [
+            { id: 1, number: 1, title: "L'Éveil du Pouvoir Caché", date: "Il y a 2 jours", url: "#chapitre-1" },
+            { id: 2, number: 2, title: "L'Ombre du Passé", date: "Il y a 5 jours", url: "#chapitre-2" },
+            { id: 3, number: 3, title: "L'Entraînement Secret", date: "Il y a 1 semaine", url: "#chapitre-3" },
+            { id: 4, number: 4, title: "Rencontre Inattendue", date: "Il y a 2 semaines", url: "#chapitre-4" },
+            { id: 5, number: 5, title: "Le Défi des Anciens", date: "Il y a 3 semaines", url: "#chapitre-5" },
+            { id: 6, number: 6, title: "La Première Victoire", date: "Il y a 1 mois", url: "#chapitre-6" },
+            { id: 7, number: 7, title: "Vers la Nouvelle Frontière", date: "Il y a 2 mois", url: "#chapitre-7" }
+        ];
+
+        // 1. Objet states qui stocke l'état lu/non-lu de chaque chapitre
+        const states = {
+            1: true,
+            2: true,
+            3: false,
+            4: false,
+            5: false,
+            6: false,
+            7: false
+        };
+
+        const chaptersListEl = document.getElementById('chapters-list');
+        const badgeReadCountEl = document.getElementById('badge-read-count');
+        const badgeTotalCountEl = document.getElementById('badge-total-count');
+        const badgeReadPctEl = document.getElementById('badge-read-pct');
+        const progressFillEl = document.getElementById('chapters-progress-fill');
+        const resumeBtnEl = document.getElementById('btn-resume-chapters');
+        const resumeLabelEl = document.getElementById('btn-resume-label');
+
+        // Génération du HTML des lignes de chapitres
+        function renderChapters() {
+            chaptersListEl.innerHTML = chaptersData.map(ch => {
+                const isRead = !!states[ch.id];
+                return `
+                    <div class="chapter-row ${isRead ? 'is-read' : ''}" data-id="${ch.id}" data-url="${ch.url}">
+                        <div class="chapter-left">
+                            <button type="button" class="chapter-circle-btn ${isRead ? 'checked' : ''}" aria-label="Marquer comme lu" title="${isRead ? 'Marquer comme non lu' : 'Marquer comme lu'}">
+                                <svg class="check-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5">
+                                    <polyline points="20 6 9 17 4 12"></polyline>
+                                </svg>
+                            </button>
+                            <div class="chapter-info">
+                                <span class="chapter-name">Chapitre ${ch.number} — ${ch.title}</span>
+                                <span class="chapter-date">${ch.date}</span>
+                            </div>
+                        </div>
+                        <svg class="chapter-arrow" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                        </svg>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // Mise à jour des états, compteurs, barre de progression et bouton reprendre
+        function updateUI() {
+            const total = chaptersData.length;
+            let readCount = 0;
+
+            for (const ch of chaptersData) {
+                if (states[ch.id]) {
+                    readCount++;
+                }
+            }
+
+            const pct = total > 0 ? Math.round((readCount / total) * 100) : 0;
+
+            // Mise à jour du header et de la barre
+            badgeReadCountEl.textContent = readCount;
+            badgeTotalCountEl.textContent = total;
+            badgeReadPctEl.textContent = `${pct}%`;
+            progressFillEl.style.width = `${pct}%`;
+
+            // Mise à jour des classes sur les lignes existantes
+            document.querySelectorAll('.chapter-row').forEach(row => {
+                const id = parseInt(row.getAttribute('data-id'), 10);
+                const isRead = !!states[id];
+                row.classList.toggle('is-read', isRead);
+                const circle = row.querySelector('.chapter-circle-btn');
+                if (circle) {
+                    circle.classList.toggle('checked', isRead);
+                    circle.title = isRead ? 'Marquer comme non lu' : 'Marquer comme lu';
+                }
+            });
+
+            // Bouton reprendre : redirige vers le premier chapitre dont l'état est "non lu"
+            const firstUnread = chaptersData.find(ch => !states[ch.id]);
+
+            if (firstUnread) {
+                resumeBtnEl.href = firstUnread.url;
+                resumeLabelEl.textContent = readCount > 0 ? `Reprendre la lecture (Ch. ${firstUnread.number})` : 'Commencer la lecture';
+            } else if (chaptersData.length > 0) {
+                // Tous les chapitres sont lus
+                resumeBtnEl.href = chaptersData[0].url;
+                resumeLabelEl.textContent = 'Relire depuis le début (Ch. 1)';
+            }
+        }
+
+        // Initialisation
+        renderChapters();
+        updateUI();
+
+        // Gestion des clics avec délégation d'événements
+        chaptersListEl.addEventListener('click', function(e) {
+            // 1. Clic sur le bouton cercle : bascule l'état lu / non-lu
+            const circle = e.target.closest('.chapter-circle-btn');
+            if (circle) {
+                e.preventDefault();
+                e.stopPropagation();
+
+                const row = circle.closest('.chapter-row');
+                if (!row) return;
+                const id = parseInt(row.getAttribute('data-id'), 10);
+
+                // Bascule l'état
+                states[id] = !states[id];
+                updateUI();
+                return;
+            }
+
+            // 2. Clic sur la ligne entière (hors cercle) : navigue vers le chapitre
+            const row = e.target.closest('.chapter-row');
+            if (row) {
+                const url = row.getAttribute('data-url');
+                if (url) {
+                    window.location.href = url;
+                }
+            }
+        });
+    </script>
+</body>
+</html>

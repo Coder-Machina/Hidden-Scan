@@ -2,6 +2,9 @@
 @import '@fontsource-variable/bricolage-grotesque';
 @import '@fontsource-variable/hanken-grotesk';
 
+@source '../views';
+@source '../../resources/views';
+@source '../../app';
 @source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
 @source '../../storage/framework/views/*.php';
 
@@ -12,17 +15,19 @@
 
 @theme {
     /* ── Palette principale ── */
-    --color-ink: #14111f;
-    --color-ink-deep: #0d0a16;
-    --color-panel: #1d1930;
-    --color-panel-hi: #2a2445;
-    --color-panel-hover: #332d52;
-    --color-line: #3d3660;
-    --color-chalk: #ece9f7;
-    --color-mist: #a39fc0;
-    --color-violet: #9b7bff;
-    --color-violet-glow: #b49dff;
-    --color-violet-deep: #7c5cff;
+    --color-ink: #111216;
+    --color-ink-deep: #0c0d10;
+    --color-panel: #161820;
+    --color-panel-hi: #1c1f2a;
+    --color-panel-hover: #252837;
+    --color-line: transparent;
+    --color-chalk: #ffffff;
+    --color-mist: #94a3b8;
+    
+    /* Accents */
+    --color-violet: #5865f2; 
+    --color-violet-glow: #6975f5;
+    --color-violet-deep: #4752c4;
     --color-mint: #5fd3a6;
     --color-amber: #f5b84b;
     --color-sky: #6fb3ff;
@@ -65,11 +70,17 @@
 html {
     scroll-behavior: smooth;
     scroll-padding-top: 80px;
+    overflow-x: hidden;
+    max-width: 100%;
+    width: 100%;
 }
 
 body {
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+    overflow-x: hidden;
+    max-width: 100%;
+    width: 100%;
 }
 
 /* ── Animations globales ── */
@@ -194,7 +205,7 @@ body {
     gap: 8px;
     padding: 10px 24px;
     background: var(--color-violet);
-    color: white;
+    color: var(--color-ink);
     font-weight: 700;
     font-size: 0.9rem;
     border-radius: var(--radius-md);
@@ -341,3 +352,95 @@ nav[role="navigation"] a:hover {
         font-size: 1.25rem;
     }
 }
+
+/* ── Widget Discord Flottant & Bouton Remonter ── */
+.discord-float-btn {
+    position: fixed !important;
+    bottom: calc(16px + env(safe-area-inset-bottom, 0px)) !important;
+    left: calc(16px + env(safe-area-inset-left, 0px)) !important;
+    z-index: 40 !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    background: linear-gradient(135deg, #5865F2, #4752C4) !important;
+    color: #ffffff !important;
+    box-shadow: 0 4px 20px rgba(88, 101, 242, 0.45), 0 2px 8px rgba(0, 0, 0, 0.4) !important;
+    border: 1px solid rgba(255, 255, 255, 0.22) !important;
+    border-radius: 9999px !important;
+    text-decoration: none !important;
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    cursor: pointer !important;
+}
+.discord-float-btn:hover {
+    background: linear-gradient(135deg, #4752C4, #3b43a0) !important;
+    box-shadow: 0 6px 26px rgba(88, 101, 242, 0.6), 0 4px 12px rgba(0, 0, 0, 0.45) !important;
+    transform: translateY(-2px) !important;
+}
+.discord-float-btn:active {
+    transform: scale(0.94) !important;
+}
+
+@media (max-width: 639px) {
+    .discord-float-btn {
+        width: 44px !important;
+        height: 44px !important;
+        min-width: 44px !important;
+        min-height: 44px !important;
+        padding: 0 !important;
+        bottom: calc(14px + env(safe-area-inset-bottom, 0px)) !important;
+        left: calc(14px + env(safe-area-inset-left, 0px)) !important;
+    }
+    .discord-float-btn .discord-label {
+        display: none !important;
+    }
+    .discord-float-btn svg {
+        width: 22px !important;
+        height: 22px !important;
+    }
+}
+
+@media (min-width: 640px) {
+    .discord-float-btn {
+        bottom: 24px !important;
+        left: 24px !important;
+        height: 44px !important;
+        padding: 0 16px 0 13px !important;
+        gap: 10px !important;
+    }
+    .discord-float-btn svg {
+        width: 22px !important;
+        height: 22px !important;
+        flex-shrink: 0 !important;
+    }
+    .discord-float-btn .discord-label {
+        display: inline-block !important;
+        font-size: 13px !important;
+        font-weight: 700 !important;
+        letter-spacing: -0.01em !important;
+        white-space: nowrap !important;
+        color: #ffffff !important;
+    }
+}
+
+.scroll-top-btn {
+    position: fixed !important;
+    bottom: calc(14px + env(safe-area-inset-bottom, 0px)) !important;
+    right: calc(14px + env(safe-area-inset-right, 0px)) !important;
+    z-index: 40 !important;
+    width: 44px !important;
+    height: 44px !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    border-radius: 9999px !important;
+    box-shadow: 0 4px 18px rgba(0, 0, 0, 0.45) !important;
+}
+@media (min-width: 640px) {
+    .scroll-top-btn {
+        bottom: 24px !important;
+        right: 24px !important;
+        width: 44px !important;
+        height: 44px !important;
+    }
+}
+

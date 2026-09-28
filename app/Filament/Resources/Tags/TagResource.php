@@ -18,6 +18,12 @@ class TagResource extends Resource
 {
     protected static ?string $model = Tag::class;
 
+    protected static ?string $modelLabel = 'tag';
+
+    protected static ?string $pluralModelLabel = 'tags';
+
+    protected static ?string $navigationLabel = 'Tags';
+
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedRectangleStack;
 
     protected static ?string $recordTitleAttribute = 'name';

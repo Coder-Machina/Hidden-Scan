@@ -11,9 +11,9 @@ class AuthorForm
     {
         return $schema
             ->components([
-                TextInput::make('name')
+                TextInput::make('name')->label('Nom')
                     ->required(),
-                TextInput::make('slug')
+                TextInput::make('slug')->label('Lien (Slug)')
                     ->required(),
             ]);
     }

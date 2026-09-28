@@ -8,6 +8,7 @@ use Filament\Actions\EditAction;
 use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\ImageColumn;
 use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
 
 class MangasTable
@@ -15,40 +16,77 @@ class MangasTable
     public static function configure(Table $table): Table
     {
         return $table
+            ->defaultSort('created_at', 'desc')
             ->columns([
-                TextColumn::make('title')
-                    ->searchable(),
-                TextColumn::make('slug')
-                    ->searchable(),
-                ImageColumn::make('cover_image'),
-                ImageColumn::make('banner_image'),
-                TextColumn::make('author_id')
-                    ->numeric()
-                    ->sortable(),
-                TextColumn::make('artist_id')
-                    ->numeric()
-                    ->sortable(),
-                TextColumn::make('type')
-                    ->badge(),
-                TextColumn::make('status')
-                    ->badge(),
-                TextColumn::make('release_year'),
-                TextColumn::make('views_count')
-                    ->numeric()
-                    ->sortable(),
-                IconColumn::make('is_featured')
-                    ->boolean(),
-                TextColumn::make('created_at')
-                    ->dateTime()
+                ImageColumn::make('cover_image')
+                    ->label('Cover')
+                    ->disk('public')
+                    ->circular()
+                    ->size(50),
+                TextColumn::make('title')->label('Titre')
+                    ->label('Titre')
+                    ->searchable()
                     ->sortable()
-                    ->toggleable(isToggledHiddenByDefault: true),
-                TextColumn::make('updated_at')
-                    ->dateTime()
+                    ->weight('bold')
+                    ->limit(40),
+                TextColumn::make('type')->label('Type')
+                    ->label('Type')
+                    ->badge()
+                    ->color(fn (\App\Enums\MangaType $state): string => match ($state->value) {
+                        'manga' => 'info',
+                        'manhwa' => 'success',
+                        'manhua' => 'warning',
+                        default => 'gray',
+                    }),
+                TextColumn::make('status')->label('Statut')
+                    ->label('Statut')
+                    ->badge(),
+                TextColumn::make('authors.name')->label('Auteur(s)')
+                    ->label('Auteur(s)')
+                    ->badge()
+                    ->placeholder('—')
+                    ->sortable()
+                    ->toggleable(),
+                TextColumn::make('chapters_count')->label('Chapitres')
+                    ->label('Chapitres')
+                    ->counts('chapters')
+                    ->sortable()
+                    ->badge()
+                    ->color('primary'),
+                TextColumn::make('views_count')->label('Vues')
+                    ->label('Vues')
+                    ->numeric()
+                    ->sortable()
+                    ->color('gray'),
+                IconColumn::make('is_featured')
+                    ->label('Vedette')
+                    ->boolean()
+                    ->trueIcon('heroicon-o-star')
+                    ->falseIcon('heroicon-o-x-mark')
+                    ->trueColor('warning')
+                    ->falseColor('gray'),
+                TextColumn::make('created_at')->label('Date de création')
+                    ->label('Créé le')
+                    ->dateTime('d/m/Y')
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([
-                //
+                SelectFilter::make('type')
+                    ->label('Type')
+                    ->options([
+                        'manga' => 'Manga',
+                        'manhwa' => 'Manhwa',
+                        'manhua' => 'Manhua',
+                    ]),
+                SelectFilter::make('status')
+                    ->label('Statut')
+                    ->options([
+                        'en_cours' => 'En cours',
+                        'termine' => 'Terminé',
+                        'pause' => 'En pause',
+                        'abandonne' => 'Abandonné',
+                    ]),
             ])
             ->recordActions([
                 EditAction::make(),

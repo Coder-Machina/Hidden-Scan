@@ -18,6 +18,12 @@ class MangaResource extends Resource
 {
     protected static ?string $model = Manga::class;
 
+    protected static ?string $modelLabel = 'œuvre';
+
+    protected static ?string $pluralModelLabel = 'œuvres';
+
+    protected static ?string $navigationLabel = 'Œuvres';
+
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedRectangleStack;
 
     protected static ?string $recordTitleAttribute = 'title';

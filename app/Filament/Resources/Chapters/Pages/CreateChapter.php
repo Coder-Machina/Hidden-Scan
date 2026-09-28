@@ -12,6 +12,7 @@ class CreateChapter extends CreateRecord
     protected static string $resource = ChapterResource::class;
 
     public ?string $zipFilePath = null;
+    public bool $publishWhenReady = false;
 
     protected function mutateFormDataBeforeCreate(array $data): array
     {
@@ -19,10 +20,16 @@ class CreateChapter extends CreateRecord
             $zip = $data['zip_file'];
             $this->zipFilePath = is_array($zip) ? array_values($zip)[0] : $zip;
             unset($data['zip_file']);
+
+            $statusVal = $data['status'] ?? null;
+            if ($statusVal === \App\Enums\ChapterStatus::PUBLIE->value || $statusVal === \App\Enums\ChapterStatus::PUBLIE) {
+                $this->publishWhenReady = true;
+                $data['status'] = \App\Enums\ChapterStatus::CONTROLE;
+            }
         }
 
         // Auto-génère le slug depuis le numéro de chapitre
-        $data['slug'] = 'chapitre-' . str_replace('.', '-', $data['number']);
+        $data['slug'] = 'chapitre-' . str_replace('.', '-', (string) $data['number']);
 
         return $data;
     }
@@ -32,7 +39,9 @@ class CreateChapter extends CreateRecord
         Log::info('afterCreate déclenché', ['zipFilePath' => $this->zipFilePath]);
 
         if ($this->zipFilePath) {
-            ProcessChapterZip::dispatch($this->record, $this->zipFilePath);
+            @ini_set('max_execution_time', '0');
+            @set_time_limit(0);
+            ProcessChapterZip::dispatch($this->record, $this->zipFilePath, publishWhenReady: $this->publishWhenReady);
         }
     }
 }

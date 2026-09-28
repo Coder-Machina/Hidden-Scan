@@ -1,11 +1,11 @@
 @use('Illuminate\Support\Facades\Storage')
-<x-layouts.public :title="$manga->title . ' — Ch. ' . $chapter->number . ' | Hidden Scan'">
+<x-layouts.public :title="$manga->title . ' — Ch. ' . $chapter->number . ' | Hidden Scan'" :hide-navbar="true">
 
-    <div x-data="chapterReader()" x-init="init()" class="animate-fade-in">
+    <div x-data="chapterReader()" x-init="init()" class="animate-fade-in pt-14">
 
         {{-- ═══ Barre de navigation ═══ --}}
-        <div class="sticky top-16 z-30 -mx-4 sm:-mx-6 px-4 sm:px-6 py-2 glass border-b border-line/30 transition-all duration-300"
-             :class="navHidden && !showSettings ? '-translate-y-full opacity-0' : 'translate-y-0 opacity-100'"
+        <div class="fixed top-0 left-0 right-0 z-50 px-4 sm:px-6 py-2 glass border-b border-line/30 transition-all duration-300"
+             :class="navHidden && !showSettings ? '-translate-y-full opacity-0 pointer-events-none' : 'translate-y-0 opacity-100'"
              @mouseenter="navHidden = false">
 
             <div class="max-w-4xl mx-auto flex items-center justify-between gap-3">
@@ -17,7 +17,7 @@
 
                 {{-- Sélecteur de chapitre --}}
                 <select @change="window.location.href=$event.target.value"
-                    class="input-field !w-auto !py-1.5 text-sm text-center !rounded-full max-w-[200px]">
+                    class="input-field !w-auto !py-1 px-2 text-xs sm:text-sm text-center !rounded-full max-w-[130px] sm:max-w-[200px]">
                     @foreach($manga->chapters as $c)
                         <option value="{{ route('chapter.show', [$manga->slug, $c->slug]) }}"
                             {{ $c->id === $chapter->id ? 'selected' : '' }}>
@@ -69,7 +69,7 @@
                     </div>
 
                     {{-- Largeur --}}
-                    <div>
+                    <div x-show="!isMobile">
                         <label class="block text-xs font-semibold text-mist mb-2 uppercase tracking-wider">
                             Largeur : <span x-text="readerWidth + '%'"></span>
                         </label>
@@ -98,10 +98,10 @@
         </div>
 
         {{-- ═══ Pages du chapitre ═══ --}}
-        <div class="py-6">
-            {{-- Mode vertical --}}
-            <div x-show="readMode === 'vertical'" class="flex flex-col items-center mx-auto transition-all"
-                 :style="'max-width:' + readerWidth + '%; gap:' + pageGap + 'px'"
+        <div class="py-2 sm:py-6">
+            {{-- Mode vertical (100% pleine largeur sur mobile) --}}
+            <div x-show="readMode === 'vertical'" class="flex flex-col items-center mx-auto transition-all w-full"
+                 :style="(isMobile ? 'width: 100% !important; max-width: 100% !important;' : 'max-width: ' + readerWidth + '%;') + ' gap:' + pageGap + 'px;'"
                  id="reader-vertical">
                 @forelse($chapter->pages as $pageIndex => $page)
                     <div class="w-full relative" data-page="{{ $page->page_number }}">
@@ -109,8 +109,8 @@
                             src="{{ Storage::url($page->image_path) }}"
                             alt="Page {{ $page->page_number }}"
                             loading="{{ $pageIndex < 3 ? 'eager' : 'lazy' }}"
-                            class="w-full"
-                            @error="handleImageError($event)"
+                            class="w-full block"
+                            x-on:error="handleImageError($event)"
                             @load="handleImageLoad({{ $page->page_number }})"
                         >
                     </div>
@@ -123,16 +123,16 @@
             </div>
 
             {{-- Mode page par page --}}
-            <div x-show="readMode === 'page'" x-cloak class="flex flex-col items-center mx-auto transition-all"
-                 :style="'max-width:' + readerWidth + '%'">
+            <div x-show="readMode === 'page'" x-cloak class="flex flex-col items-center mx-auto transition-all w-full"
+                 :style="isMobile ? 'width: 100% !important; max-width: 100% !important;' : 'max-width: ' + readerWidth + '%;'">
                 @if($chapter->pages->count())
                     <div class="w-full relative">
                         <img
                             :src="pages[currentPage - 1]?.src || ''"
                             :alt="'Page ' + currentPage"
-                            class="w-full cursor-pointer"
+                            class="w-full block cursor-pointer"
                             @click="nextPage()"
-                            @error="handleImageError($event)"
+                            x-on:error="handleImageError($event)"
                         >
                     </div>
 
@@ -174,8 +174,82 @@
             @endif
         </div>
 
+        {{-- ═══ Réactions au chapitre (style Raijin) ═══ --}}
+        <div class="max-w-3xl mx-auto mt-6 mb-4" x-data="chapterReactions()" x-init="init()">
+            <div class="bg-[#14151e] rounded-2xl p-5 sm:p-6 text-center">
+                <p class="text-[#9da3b4] text-sm mb-4 font-semibold">Qu'avez-vous pensé de ce chapitre ?</p>
+                <div class="flex items-center justify-center gap-3 flex-wrap">
+                    <template x-for="r in reactions" :key="r.emoji">
+                        <button @click="react(r.emoji)"
+                                class="flex flex-col items-center gap-1 px-3.5 py-2 rounded-xl transition-all hover:scale-110 cursor-pointer"
+                                :class="userReaction === r.emoji ? 'bg-white/10 scale-105' : 'hover:bg-[#1e2029]'">
+                            <span class="text-2xl" x-text="r.emoji"></span>
+                            <span class="text-xs font-bold" :class="userReaction === r.emoji ? 'text-white' : 'text-[#7d8498]'" x-text="r.count"></span>
+                            <span class="text-[10px] text-[#7d8498]" x-text="r.label"></span>
+                        </button>
+                    </template>
+                </div>
+            </div>
+        </div>
+
+        <script>
+        function chapterReactions() {
+            return {
+                reactions: [
+                    { emoji: '🔥', label: 'Incroyable', count: 0 },
+                    { emoji: '😍', label: 'Adoré', count: 0 },
+                    { emoji: '😢', label: 'Triste', count: 0 },
+                    { emoji: '😡', label: 'Énervé', count: 0 },
+                    { emoji: '🤯', label: 'Choqué', count: 0 },
+                    { emoji: '😂', label: 'Drôle', count: 0 },
+                    { emoji: '💤', label: 'Ennuyeux', count: 0 },
+                ],
+                userReaction: null,
+                storageKey: 'hs_reactions_chapter_{{ $chapter->id }}',
+                globalKey: 'hs_reactions_counts_chapter_{{ $chapter->id }}',
+
+                init() {
+                    // Load user's reaction
+                    this.userReaction = localStorage.getItem(this.storageKey) || null;
+                    // Load global counts
+                    try {
+                        const counts = JSON.parse(localStorage.getItem(this.globalKey) || '{}');
+                        this.reactions.forEach(r => {
+                            r.count = counts[r.emoji] || 0;
+                        });
+                    } catch(e) {}
+                },
+
+                react(emoji) {
+                    const counts = {};
+                    this.reactions.forEach(r => { counts[r.emoji] = r.count; });
+
+                    // If already reacted with same emoji, toggle off
+                    if (this.userReaction === emoji) {
+                        counts[emoji] = Math.max(0, (counts[emoji] || 1) - 1);
+                        this.userReaction = null;
+                        localStorage.removeItem(this.storageKey);
+                    } else {
+                        // Remove previous reaction
+                        if (this.userReaction) {
+                            counts[this.userReaction] = Math.max(0, (counts[this.userReaction] || 1) - 1);
+                        }
+                        // Add new reaction
+                        counts[emoji] = (counts[emoji] || 0) + 1;
+                        this.userReaction = emoji;
+                        localStorage.setItem(this.storageKey, emoji);
+                    }
+
+                    // Update counts
+                    this.reactions.forEach(r => { r.count = counts[r.emoji] || 0; });
+                    localStorage.setItem(this.globalKey, JSON.stringify(counts));
+                }
+            };
+        }
+        </script>
+
         {{-- ═══ Commentaires ═══ --}}
-        <div class="max-w-3xl mx-auto mt-4 bg-panel border border-line/50 rounded-xl p-5">
+        <div class="max-w-3xl mx-auto mt-6 bg-[#131318] rounded-xl sm:rounded-2xl p-3.5 sm:p-7" style="border: 1px solid #252535;">
             <livewire:public.comment-section
                 type="App\Models\Chapter"
                 :id="$chapter->id"
@@ -189,7 +263,8 @@
             // State
             readMode: 'vertical',
             readerWidth: 85,
-            pageGap: 2,
+            pageGap: 0,
+            isMobile: window.innerWidth < 768,
             showSettings: false,
             navHidden: false,
             lastScrollY: 0,
@@ -203,6 +278,11 @@
             ],
 
             init() {
+                this.isMobile = window.innerWidth < 768;
+                window.addEventListener('resize', () => {
+                    this.isMobile = window.innerWidth < 768;
+                });
+
                 // Charger les réglages
                 try {
                     const settings = JSON.parse(localStorage.getItem('hiddenscan_reader') || '{}');
@@ -256,13 +336,25 @@
                     data.progress["{{ $manga->slug }}"] = {
                         chapter: {{ $chapter->number }},
                         slug: "{{ $chapter->slug }}",
+                        title: "{{ addslashes($manga->title) }}",
+                        cover: "{{ $manga->cover_image ? Storage::url($manga->cover_image) : '' }}",
+                        chapterTitle: "{{ addslashes($chapter->title ?? 'Chapitre ' . $chapter->number) }}",
                         page: this.currentPage,
                         percent: Math.round(this.progressPercent),
                         updatedAt: new Date().toISOString()
                     };
                     if (!data.history) data.history = [];
-                    data.history = data.history.filter(h => !(h.manga === "{{ $manga->slug }}" && h.chapter === {{ $chapter->number }}));
-                    data.history.unshift({ manga: "{{ $manga->slug }}", chapter: {{ $chapter->number }}, readAt: new Date().toISOString() });
+                    data.history = data.history.filter(h => !(h.manga === "{{ $manga->slug }}" && (h.chapter === {{ $chapter->number }} || h.chapterSlug === "{{ $chapter->slug }}")));
+                    data.history.unshift({
+                        manga: "{{ $manga->slug }}",
+                        mangaSlug: "{{ $manga->slug }}",
+                        mangaTitle: "{{ addslashes($manga->title) }}",
+                        chapter: {{ $chapter->number }},
+                        chapterSlug: "{{ $chapter->slug }}",
+                        chapterTitle: "{{ addslashes($chapter->title ?? 'Chapitre ' . $chapter->number) }}",
+                        cover: "{{ $manga->cover_image ? Storage::url($manga->cover_image) : '' }}",
+                        readAt: new Date().toISOString()
+                    });
                     data.history = data.history.slice(0, 50);
                     localStorage.setItem('hiddenscan', JSON.stringify(data));
                 } catch(e) {}
