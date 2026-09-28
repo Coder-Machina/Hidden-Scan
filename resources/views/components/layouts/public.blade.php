@@ -419,7 +419,7 @@
                        title="Lancer un manga aléatoire selon vos genres préférés"
                        class="px-3 py-1.5 rounded-lg text-xs font-semibold transition-all flex items-center gap-1.5 bg-gradient-to-r from-red-600/15 via-red-500/10 to-amber-500/15 hover:from-red-600/25 hover:to-amber-500/25 text-red-400 hover:text-red-300 border border-red-500/25 hover:border-red-500/40 shadow-sm hover:scale-105 active:scale-95">
                         <span class="text-sm leading-none">🎲</span>
-                        <span>Surprise-moi</span>
+                        <span>Surprends-moi</span>
                     </a>
                     <a href="{{ route('library') }}"
                        class="px-4 py-2 rounded-lg text-sm font-medium transition-colors {{ request()->routeIs('library') ? 'text-violet bg-violet/10' : 'text-mist hover:text-chalk hover:bg-panel-hi/50' }}">
@@ -732,7 +732,7 @@
                                     <a href="{{ route('manga.random') }}" class="flex items-center justify-between px-3 py-2 rounded-lg text-xs font-semibold text-amber-400 hover:text-white hover:bg-amber-950/30 border border-amber-500/20 transition group">
                                         <span class="flex items-center gap-3">
                                             <span class="text-sm group-hover:rotate-12 transition-transform">🎲</span>
-                                            <span>Surprise-moi</span>
+                                            <span>Surprends-moi</span>
                                         </span>
                                         <span class="text-[10px] px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-300 font-extrabold border border-amber-500/30">CIBLÉ</span>
                                     </a>
@@ -911,7 +911,7 @@
                        class="flex items-center justify-between px-3.5 py-2.5 rounded-xl text-sm font-bold text-amber-400 bg-amber-950/20 border border-amber-500/30 hover:bg-amber-900/30 transition">
                         <span class="flex items-center gap-3">
                             <span class="text-base">🎲</span>
-                            <span>Surprise-moi</span>
+                            <span>Surprends-moi</span>
                         </span>
                         <span class="text-[10px] px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 font-extrabold uppercase border border-amber-500/30">Ciblé</span>
                     </a>

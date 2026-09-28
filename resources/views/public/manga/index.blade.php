@@ -12,7 +12,7 @@
                onclick="if(window.HiddenScan && !{{ auth()->check() ? 'true' : 'false' }}){ const favs = window.HiddenScan.getFavorites().map(f => f.slug).join(','); if(favs) this.href = '{{ route('manga.random') }}?favs=' + encodeURIComponent(favs); }"
                class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-red-600/20 via-red-600/10 to-amber-600/20 hover:from-red-600/30 hover:to-amber-600/30 text-chalk text-sm font-semibold border border-red-500/30 hover:border-red-500/50 shadow-lg shadow-red-950/20 hover:scale-105 active:scale-95 transition-all">
                 <span class="text-base">🎲</span>
-                <span>Surprise-moi</span>
+                <span>Surprends-moi</span>
                 <span class="text-[10px] px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-300 font-extrabold uppercase tracking-wider border border-amber-500/30">Ciblé</span>
             </a>
         </div>

@@ -142,7 +142,7 @@
             <div>
                 <div class="flex items-center gap-2">
                     <h3 class="font-display font-bold text-base sm:text-lg text-chalk">Envie d'une découverte ?</h3>
-                    <span class="text-[10px] px-2 py-0.5 rounded-full bg-red-600/20 border border-red-500/30 text-red-300 font-extrabold uppercase tracking-wide">Surprise-moi</span>
+                    <span class="text-[10px] px-2 py-0.5 rounded-full bg-red-600/20 border border-red-500/30 text-red-300 font-extrabold uppercase tracking-wide">Surprends-moi</span>
                 </div>
                 <p class="text-xs sm:text-sm text-mist mt-0.5">Laisse le hasard choisir un manga ciblé selon tes genres préférés et tes habitudes de lecture.</p>
             </div>

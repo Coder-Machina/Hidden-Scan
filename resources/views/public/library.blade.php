@@ -572,7 +572,7 @@
                 <div class="flex items-center gap-2 flex-shrink-0">
                     <a href="{{ route('manga.random') }}" class="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl bg-[#dc2626]/10 hover:bg-[#dc2626]/20 border border-[#dc2626]/30 text-white text-xs font-semibold transition group">
                         <span class="group-hover:rotate-12 transition-transform">🎲</span>
-                        <span>Surprise-moi</span>
+                        <span>Surprends-moi</span>
                     </a>
                 </div>
             </div>
@@ -707,7 +707,7 @@
                             Explorer le catalogue
                         </a>
                         <a href="{{ route('manga.random') }}" class="px-4 py-2 rounded-xl bg-white/10 hover:bg-white/15 text-white text-xs font-semibold transition flex items-center gap-2">
-                            <span>🎲</span> Surprise-moi
+                            <span>🎲</span> Surprends-moi
                         </a>
                     </div>
                 </div>
