@@ -79,6 +79,8 @@ class UsersTable
                     ->copyable()
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
+            ->emptyStateHeading('Aucun membre trouvé')
+            ->emptyStateDescription('La liste des utilisateurs enregistrés s\'affichera ici.')
             ->filters([
                 //
             ])

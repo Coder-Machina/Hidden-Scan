@@ -27,6 +27,8 @@ class TagsTable
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
+            ->emptyStateHeading('Aucun tag')
+            ->emptyStateDescription('Les tags apparaîtront ici.')
             ->filters([
                 //
             ])

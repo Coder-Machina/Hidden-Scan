@@ -118,6 +118,8 @@ class CommentsTable
                     ->sortable(),
             ])
             ->defaultSort('created_at', 'desc')
+            ->emptyStateHeading('Aucun commentaire')
+            ->emptyStateDescription('Les commentaires des lecteurs apparaîtront ici.')
             ->filters([
                 TernaryFilter::make('is_hidden')->label('Masqué'),
                 TrashedFilter::make()->label('État de suppression'),
@@ -248,6 +250,7 @@ class CommentsTable
                             'model_type' => Comment::class,
                             'model_id' => $record->id,
                             'new_values' => [
+                                'target_user' => $record->pseudo,
                                 'target' => $record->pseudo,
                                 'ban_type' => $banType,
                                 'reason' => $reason,
@@ -289,6 +292,7 @@ class CommentsTable
                             'model_type' => Comment::class,
                             'model_id' => $record->id,
                             'new_values' => [
+                                'target_user' => $record->pseudo,
                                 'target' => $record->pseudo,
                             ],
                             'ip_address' => request()->ip(),

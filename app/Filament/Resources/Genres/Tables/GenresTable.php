@@ -27,6 +27,8 @@ class GenresTable
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
+            ->emptyStateHeading('Aucun genre')
+            ->emptyStateDescription('Les genres apparaîtront ici.')
             ->filters([
                 //
             ])

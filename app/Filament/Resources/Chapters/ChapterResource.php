@@ -24,6 +24,8 @@ class ChapterResource extends Resource
 
     protected static ?string $navigationLabel = 'Chapitres';
 
+    protected static bool $shouldRegisterNavigation = false;
+
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedBookOpen;
 
     protected static ?string $recordTitleAttribute = 'title';

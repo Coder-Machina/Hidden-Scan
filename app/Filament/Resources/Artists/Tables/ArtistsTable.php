@@ -27,6 +27,8 @@ class ArtistsTable
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
+            ->emptyStateHeading('Aucun artiste')
+            ->emptyStateDescription('Les artistes associés aux œuvres apparaîtront ici.')
             ->filters([
                 //
             ])

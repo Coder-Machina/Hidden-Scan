@@ -111,6 +111,8 @@ class ChaptersRelationManager extends RelationManager
                         'publie' => 'Publié',
                     ]),
             ])
+            ->emptyStateHeading('Aucun chapitre')
+            ->emptyStateDescription('Commencez par ajouter le premier chapitre de cette œuvre.')
             ->headerActions([
                 Action::make('bulk_upload')
                     ->label('Upload en masse')

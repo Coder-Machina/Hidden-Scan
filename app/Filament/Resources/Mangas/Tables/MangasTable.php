@@ -19,17 +19,17 @@ class MangasTable
             ->defaultSort('created_at', 'desc')
             ->columns([
                 ImageColumn::make('cover_image')
-                    ->label('Cover')
+                    ->label('Couverture')
                     ->disk('public')
                     ->circular()
                     ->size(50),
-                TextColumn::make('title')->label('Titre')
+                TextColumn::make('title')
                     ->label('Titre')
                     ->searchable()
                     ->sortable()
                     ->weight('bold')
                     ->limit(40),
-                TextColumn::make('type')->label('Type')
+                TextColumn::make('type')
                     ->label('Type')
                     ->badge()
                     ->color(fn (\App\Enums\MangaType $state): string => match ($state->value) {
@@ -38,10 +38,10 @@ class MangasTable
                         'manhua' => 'warning',
                         default => 'gray',
                     }),
-                TextColumn::make('status')->label('Statut')
+                TextColumn::make('status')
                     ->label('Statut')
                     ->badge(),
-                TextColumn::make('authors.name')->label('Auteur(s)')
+                TextColumn::make('authors.name')
                     ->label('Auteur(s)')
                     ->badge()
                     ->placeholder('—')
@@ -58,7 +58,7 @@ class MangasTable
                         'record' => $record,
                         'activeRelationManager' => 0,
                     ])),
-                TextColumn::make('views_count')->label('Vues')
+                TextColumn::make('views_count')
                     ->label('Vues')
                     ->numeric()
                     ->sortable()
@@ -70,12 +70,14 @@ class MangasTable
                     ->falseIcon('heroicon-o-x-mark')
                     ->trueColor('warning')
                     ->falseColor('gray'),
-                TextColumn::make('created_at')->label('Date de création')
+                TextColumn::make('created_at')
                     ->label('Créé le')
                     ->dateTime('d/m/Y')
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
+            ->emptyStateHeading('Aucune œuvre trouvée')
+            ->emptyStateDescription('Commencez par ajouter votre premier manga ou manhwa.')
             ->filters([
                 SelectFilter::make('type')
                     ->label('Type')

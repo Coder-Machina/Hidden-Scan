@@ -27,6 +27,8 @@ class AuthorsTable
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
+            ->emptyStateHeading('Aucun auteur')
+            ->emptyStateDescription('Les auteurs associés aux œuvres apparaîtront ici.')
             ->filters([
                 //
             ])

@@ -671,10 +671,13 @@
                                         @endif
                                     </div>
                                     <div class="text-xs text-[#7070a0] truncate mt-1">
-                                        @if(Auth::user()->pass_code)
-                                            <span class="font-mono text-[#a0a0c0]">{{ Auth::user()->pass_code }}</span>
-                                        @else
+                                        @if(Auth::user()->email && !str_contains(Auth::user()->email, '@anon.'))
                                             {{ Auth::user()->email }}
+                                        @else
+                                            <span class="inline-flex items-center gap-1.5 text-[#8080a8]">
+                                                <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                                                Compte Anonyme
+                                            </span>
                                         @endif
                                     </div>
                                 </div>
@@ -828,10 +831,13 @@
                                         @endif
                                     </div>
                                     <div class="text-xs text-[#7070a0] truncate mt-1">
-                                        @if(Auth::user()->pass_code)
-                                            <span class="font-mono text-[#a0a0c0]">{{ Auth::user()->pass_code }}</span>
-                                        @else
+                                        @if(Auth::user()->email && !str_contains(Auth::user()->email, '@anon.'))
                                             {{ Auth::user()->email }}
+                                        @else
+                                            <span class="inline-flex items-center gap-1.5 text-[#8080a8]">
+                                                <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                                                Compte Anonyme
+                                            </span>
                                         @endif
                                     </div>
                                 </div>

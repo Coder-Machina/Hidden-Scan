@@ -26,6 +26,8 @@ class AuditLogResource extends Resource
 
     protected static ?string $navigationLabel = "Journaux d'audit";
 
+    protected static ?int $navigationSort = 999;
+
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedClipboardDocumentList;
     public static function canViewAny(): bool
     {
@@ -148,12 +150,16 @@ class AuditLogResource extends Resource
                 TextColumn::make('target_title')
                     ->label('Élément / Contexte')
                     ->placeholder('—')
-                    ->limit(35),
+                    ->limit(65)
+                    ->tooltip(fn (AuditLog $record): ?string => $record->target_title)
+                    ->wrap(),
                 TextColumn::make('ip_address')
                     ->label('IP')
                     ->placeholder('—')
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
+            ->emptyStateHeading('Aucun journal d\'audit')
+            ->emptyStateDescription('Toutes les actions d\'administration et de modération apparaîtront ici.')
             ->filters([
                 SelectFilter::make('action')
                     ->label('Type d\'action')

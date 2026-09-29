@@ -31,6 +31,10 @@ class AuditLog extends Model
      */
     public function getModelNameAttribute(): string
     {
+        if (in_array($this->action, ['ban_account', 'ban_comments', 'unban'], true)) {
+            return 'Sanction';
+        }
+
         if (!$this->model_type) {
             return '—';
         }
@@ -136,6 +140,33 @@ class AuditLog extends Model
      */
     public function getTargetTitleAttribute(): ?string
     {
+        // Sanctions de modération (Bannissement compte, ban commentaires, débannissement)
+        if (in_array($this->action, ['ban_account', 'ban_comments', 'unban'], true)) {
+            $targetUser = $this->new_values['target_user']
+                ?? $this->new_values['target']
+                ?? $this->new_values['user_name']
+                ?? null;
+
+            if (!$targetUser && $this->model_type && class_basename($this->model_type) === 'User') {
+                $targetUser = $this->subject?->name ?? ($this->model_id ? User::find($this->model_id)?->name : null);
+            }
+
+            if (!$targetUser && $this->model_type && class_basename($this->model_type) === 'Comment') {
+                $comment = $this->subject ?? ($this->model_id ? Comment::withTrashed()->find($this->model_id) : null);
+                $targetUser = $comment?->pseudo ?? $comment?->user?->name;
+            }
+
+            $targetName = $targetUser ?: ('Utilisateur #' . ($this->model_id ?? '?'));
+            $reason = $this->new_values['reason'] ?? null;
+
+            return match ($this->action) {
+                'ban_account' => "Sanction : Bannissement de {$targetName}" . ($reason ? " (Motif : {$reason})" : ''),
+                'ban_comments' => "Sanction : Ban commentaires de {$targetName}" . ($reason ? " (Motif : {$reason})" : ''),
+                'unban' => "Sanction : Débannissement de {$targetName}",
+                default => "Sanction : {$targetName}",
+            };
+        }
+
         $base = class_basename($this->model_type ?? '');
 
         if ($base === 'Chapter') {
@@ -268,6 +299,10 @@ class AuditLog extends Model
             'chapters' => 'Chapitres concernés',
             'ip_address' => 'Adresse IP',
             'ip_hash' => 'Empreinte IP',
+            'target_user' => 'Utilisateur ciblé',
+            'target' => 'Utilisateur ciblé',
+            'ban_type' => 'Type de sanction',
+            'comments_hidden' => 'Commentaires masqués',
             'commentable_type' => 'Type d\'élément commenté',
             'commentable_id' => 'ID de l\'élément commenté',
             'parent_id' => 'ID commentaire parent',
@@ -317,6 +352,8 @@ class AuditLog extends Model
             'owner' => 'Propriétaire',
             'admin' => 'Administrateur',
             'moderator' => 'Modérateur',
+            'comment_only' => 'Commentaires uniquement',
+            'full_account' => 'Bannissement total du compte',
         ];
 
         if (isset($valueTranslations[strtolower($stringVal)])) {
