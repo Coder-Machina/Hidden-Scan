@@ -62,9 +62,14 @@ class Login extends BaseLogin
         $password = $data['password'] ?? '';
         $remember = (bool) ($data['remember'] ?? false);
 
+        $cleanInput = strtoupper(str_replace(' ', '', $input));
+        $rawCode = str_replace('-', '', $cleanInput);
+
         // 1. Authentification directe par Pass Secret
-        if (str_starts_with(strtoupper($input), 'HS-') || empty($password)) {
-            $user = User::where('pass_code', strtoupper($input))->first();
+        if (str_starts_with($cleanInput, 'HS') || empty($password)) {
+            $user = User::where('pass_code', $cleanInput)
+                ->orWhereRaw("REPLACE(pass_code, '-', '') = ?", [$rawCode])
+                ->first();
 
             if ($user) {
                 if ($user->isBanned()) {

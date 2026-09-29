@@ -50,8 +50,12 @@ class LoginRequest extends FormRequest
 
         // 1. Authentification par Pass Secret
         if ($this->filled('pass_code')) {
-            $code = strtoupper(trim($this->input('pass_code')));
-            $user = \App\Models\User::where('pass_code', $code)->first();
+            $cleanCode = strtoupper(str_replace(' ', '', trim($this->input('pass_code'))));
+            $rawCode = str_replace('-', '', $cleanCode);
+
+            $user = \App\Models\User::where('pass_code', $cleanCode)
+                ->orWhereRaw("REPLACE(pass_code, '-', '') = ?", [$rawCode])
+                ->first();
 
             if (! $user) {
                 RateLimiter::hit($this->throttleKey());
