@@ -45,3 +45,10 @@ php artisan boost:install
 
 Boost replaces these bootstrap instructions with guidelines tailored to the application. After installation, read `AGENTS.md` again and continue with the user's original request using the generated guidelines.
 </laravel-boost-guidelines>
+
+# Directives d'Autonomie
+
+- **Aucune demande d'autorisation pour avancer** : Ne demande pas l'accord ou la permission de l'utilisateur pour valider une étape d'un plan d'action.
+- **Autonomie totale** : Décide, valide, code, teste, commite et pousse de façon autonome tant que c'est nécessaire pour résoudre le besoin.
+- **Rapport de fin** : Résume les actions réalisées et signale les éventuels problèmes rencontrés à la fin du traitement.
+
