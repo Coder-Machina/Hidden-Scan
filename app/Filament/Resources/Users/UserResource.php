@@ -30,7 +30,10 @@ class UserResource extends Resource
 
     protected static ?int $navigationSort = 50;
 
-    protected static ?string $recordTitleAttribute = 'name';
+    public static function canViewAny(): bool
+    {
+        return auth()->user()?->hasAnyRole(['admin', 'Admin', 'owner', 'Owner']) ?? false;
+    }
 
     public static function form(Schema $schema): Schema
     {

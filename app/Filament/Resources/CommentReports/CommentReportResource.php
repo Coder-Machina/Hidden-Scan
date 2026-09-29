@@ -27,6 +27,11 @@ class CommentReportResource extends Resource
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedFlag;
     protected static string|\UnitEnum|null $navigationGroup = 'Modération';
 
+    public static function canViewAny(): bool
+    {
+        return auth()->user()?->hasAnyRole(['admin', 'Admin', 'owner', 'Owner', 'modo', 'Modo', 'moderateur', 'Modérateur']) ?? false;
+    }
+
     public static function form(Schema $schema): Schema
     {
         return $schema

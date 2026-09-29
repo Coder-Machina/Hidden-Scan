@@ -28,6 +28,11 @@ class GenreResource extends Resource
 
     protected static ?string $recordTitleAttribute = 'name';
 
+    public static function canViewAny(): bool
+    {
+        return auth()->user()?->hasAnyRole(['admin', 'Admin', 'owner', 'Owner', 'uploader', 'Uploader']) ?? false;
+    }
+
     public static function form(Schema $schema): Schema
     {
         return GenreForm::configure($schema);

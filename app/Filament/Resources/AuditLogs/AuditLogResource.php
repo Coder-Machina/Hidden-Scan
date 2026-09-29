@@ -27,7 +27,10 @@ class AuditLogResource extends Resource
     protected static ?string $navigationLabel = "Journaux d'audit";
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedClipboardDocumentList;
-    protected static string|\UnitEnum|null $navigationGroup = 'Système';
+    public static function canViewAny(): bool
+    {
+        return auth()->user()?->hasAnyRole(['admin', 'Admin', 'owner', 'Owner']) ?? false;
+    }
 
     public static function canCreate(): bool
     {

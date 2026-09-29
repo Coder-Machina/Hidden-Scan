@@ -28,6 +28,11 @@ class CommentResource extends Resource
 
     protected static ?string $recordTitleAttribute = 'pseudo';
 
+    public static function canViewAny(): bool
+    {
+        return auth()->user()?->hasAnyRole(['admin', 'Admin', 'owner', 'Owner', 'modo', 'Modo', 'moderateur', 'Modérateur']) ?? false;
+    }
+
     public static function form(Schema $schema): Schema
     {
         return CommentForm::configure($schema);

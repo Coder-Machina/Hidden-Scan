@@ -28,6 +28,11 @@ class MangaResource extends Resource
 
     protected static ?string $recordTitleAttribute = 'title';
 
+    public static function canViewAny(): bool
+    {
+        return auth()->user()?->hasAnyRole(['admin', 'Admin', 'owner', 'Owner', 'uploader', 'Uploader']) ?? false;
+    }
+
     public static function form(Schema $schema): Schema
     {
         return MangaForm::configure($schema);

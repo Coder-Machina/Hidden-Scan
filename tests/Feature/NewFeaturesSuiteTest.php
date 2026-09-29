@@ -281,7 +281,9 @@ class NewFeaturesSuiteTest extends TestCase
 
     public function test_edit_manga_fill_form_method_exists_and_can_be_called(): void
     {
+        $role = \Spatie\Permission\Models\Role::firstOrCreate(['name' => 'admin']);
         $admin = User::factory()->create();
+        $admin->assignRole($role);
 
         $component = \Livewire\Livewire::actingAs($admin)
             ->test(\App\Filament\Resources\Mangas\Pages\EditManga::class, [

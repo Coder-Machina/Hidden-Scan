@@ -20,161 +20,40 @@ class ProductionDataSeeder extends Seeder
             RolesAndPermissionsSeeder::class,
         ]);
 
-        $users = array (
-  0 => 
-  array (
-    'name' => 'Meliodas',
-    'email' => 'meliodasdsama006@gmail.com',
-    'password' => '$2y$12$gp.qpgcG2PgTX8ETHv412OVRDOUbqj54Alv2upWdMKX1PTe0R1QiW',
-    'email_verified_at' => NULL,
-    'roles' => 
-    array (
-      0 => 'owner',
-    ),
-  ),
-  1 => 
-  array (
-    'name' => 'Admin HiddenScan',
-    'email' => 'admin@hiddenscan.com',
-    'password' => '$2y$12$/rJ7p9sYPAFb6DpaceDgx.aHlVFiNERPly1nHNksjmePBm4wB5uSG',
-    'email_verified_at' => NULL,
-    'roles' => 
-    array (
-      0 => 'owner',
-    ),
-  ),
-  2 => 
-  array (
-    'name' => 'Meliodas',
-    'email' => 'meliodasdsala006@gmail.com',
-    'password' => '$2y$12$lTFzaZeHY.EZvHHV6.tn7eUXI/oePO5g5tO4py8CfIGlyElsaqqcW',
-    'email_verified_at' => NULL,
-    'roles' => 
-    array (
-      0 => 'admin',
-    ),
-  ),
-  3 => 
-  array (
-    'name' => 'King Grey, Arthur Leywin',
-    'email' => 'agentshadowonyx@gmail.com',
-    'password' => '$2y$12$CBgUO5zW9YSkKcu/ZCqxmur5pNHbMrxevsaySYS02YK7VLvQjhOcq',
-    'email_verified_at' => NULL,
-    'roles' => 
-    array (
-    ),
-  ),
-  4 => 
-  array (
-    'name' => 'K',
-    'email' => 'marcelmeliodas@gmail.com',
-    'password' => '$2y$12$S3iTXEaMOUxQS3o3F9RHKe6hyPGq1Afw8tbNoK9u00raYYH.TNtUy',
-    'email_verified_at' => NULL,
-    'roles' => 
-    array (
-    ),
-  ),
-  5 => 
-  array (
-    'name' => 'Chnwww',
-    'email' => 'chnwwwed@gmail.com',
-    'password' => '$2y$12$Qs/4jfOSq4FfnlK.NvdtIeneB2uu/bZDIYOcoOokA65SeoAOXuUoq',
-    'email_verified_at' => NULL,
-    'roles' => 
-    array (
-    ),
-  ),
-  6 => 
-  array (
-    'name' => 'Zoro',
-    'email' => 'shadowmeliodas205@gmail.com',
-    'password' => '$2y$12$eIOEtjt7UfYVQWCvzaq7MOxnohqvoEz2uuwkUhEIiUoN5ycDMwvgq',
-    'email_verified_at' => NULL,
-    'roles' => 
-    array (
-    ),
-  ),
-  7 => 
-  array (
-    'name' => 'Fana56',
-    'email' => 's20869769@gmail.com',
-    'password' => '$2y$12$c4A53zKC1S1FDunViEUJ1udHgP0IU0erKCknH9n..m.QJ5gRi5Oxq',
-    'email_verified_at' => NULL,
-    'roles' => 
-    array (
-    ),
-  ),
-  8 => 
-  array (
-    'name' => 'La peace ✌️',
-    'email' => 'isaacmusul5@gmail.com',
-    'password' => '$2y$12$z8ZnMn8CsSaJTVpgytcAIuSSTGpzoxnD2g8MY3nx1k8BO6EhaAOk.',
-    'email_verified_at' => NULL,
-    'roles' => 
-    array (
-    ),
-  ),
-  9 => 
-  array (
-    'name' => '3DX2Y',
-    'email' => 'hansayah7@gmail.com',
-    'password' => '$2y$12$wTYAAoQHZzaA8Zf6D6H4QeE2c.ZkxOo4D.oeWZOnsNseuKJYtwcIK',
-    'email_verified_at' => NULL,
-    'roles' => 
-    array (
-    ),
-  ),
-  10 => 
-  array (
-    'name' => 'Jordy',
-    'email' => 'kfljordan@gmail.com',
-    'password' => '$2y$12$emlCh0IB7Eeh9HvOzYuQ7.2CYRyZcqbuydiRPvZi3aSVAPGbPm2.S',
-    'email_verified_at' => NULL,
-    'roles' => 
-    array (
-    ),
-  ),
-  11 => 
-  array (
-    'name' => 'Frimeur bio',
-    'email' => 'frimeurbio89@gmail.com',
-    'password' => '$2y$12$krrJOJkUeqaAVTglgz9VxueQm/cqgDzHxmIqRt2DulrvzCFxL8HqG',
-    'email_verified_at' => NULL,
-    'roles' => 
-    array (
-    ),
-  ),
-  12 => 
-  array (
-    'name' => 'E.N.D',
-    'email' => 'vince.fr92@gmail.com',
-    'password' => '$2y$12$WOCagwf0Z1hO/9g/CT7goeh.AqQls6qWBoJwoiW00x1Pt8UxEc7nW',
-    'email_verified_at' => NULL,
-    'roles' => 
-    array (
-    ),
-  ),
-  13 => 
-  array (
-    'name' => 'white',
-    'email' => 'difaha4458@kingdais.com',
-    'password' => '$2y$12$PwNrB.qjY9pLFWj94wcvQOKVELt6WbarCT963UUXU8QL1mxrVKbC6',
-    'email_verified_at' => NULL,
-    'roles' => 
-    array (
-    ),
-  ),
-  14 => 
-  array (
-    'name' => 'traumahahahahahah',
-    'email' => 'monmariioda@gmail.com',
-    'password' => '$2y$12$brzZr8S8pK/dN2.27ZjhsutjqbIX7OPwq6WIlYlaB7RcOtv5RWjl2',
-    'email_verified_at' => NULL,
-    'roles' => 
-    array (
-    ),
-  ),
-);
+        $users = [
+            [
+                'name' => 'Meliodas',
+                'email' => 'meliodasdsama006@gmail.com',
+                'pass_code' => 'HS-MELI-ODAS-0001',
+                'password' => \Illuminate\Support\Facades\Hash::make('password'),
+                'email_verified_at' => now(),
+                'roles' => ['owner', 'admin'],
+            ],
+            [
+                'name' => 'Co-Admin',
+                'email' => 'admin@hiddenscan.com',
+                'pass_code' => 'HS-ADMI-SCAN-0002',
+                'password' => \Illuminate\Support\Facades\Hash::make('password'),
+                'email_verified_at' => now(),
+                'roles' => ['owner', 'admin'],
+            ],
+            [
+                'name' => 'Modérateur Principal',
+                'email' => 'modo@hiddenscan.com',
+                'pass_code' => 'HS-MODO-SCAN-0003',
+                'password' => \Illuminate\Support\Facades\Hash::make('password'),
+                'email_verified_at' => now(),
+                'roles' => ['modo'],
+            ],
+            [
+                'name' => 'Uploader Principal',
+                'email' => 'uploader@hiddenscan.com',
+                'pass_code' => 'HS-UPLO-ADER-0004',
+                'password' => \Illuminate\Support\Facades\Hash::make('password'),
+                'email_verified_at' => now(),
+                'roles' => ['uploader'],
+            ],
+        ];
         foreach ($users as $uData) {
             $roles = $uData['roles'] ?? [];
             unset($uData['roles']);
