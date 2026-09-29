@@ -31,4 +31,7 @@ Route::middleware(['web'])->group(function () {
 
     // Recommendations ("Si t'as aimé X, lis Y")
     Route::get('/recommendations', [ReadingProgressController::class, 'getRecommendations'])->name('api.recommendations');
+
+    // Profile Synchronization
+    Route::post('/profile/sync', [\App\Http\Controllers\ProfileController::class, 'sync'])->name('api.profile.sync');
 });

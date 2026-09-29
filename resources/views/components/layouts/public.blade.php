@@ -1,4 +1,18 @@
 @props(['title' => 'Hidden Scan', 'description' => null, 'hideNavbar' => false])
+@php
+    $authPayload = auth()->check() ? [
+        'id' => auth()->id(),
+        'name' => auth()->user()->name,
+        'email' => auth()->user()->email,
+        'avatar' => auth()->user()->avatar,
+        'avatar_url' => auth()->user()->avatar_url,
+        'banner' => auth()->user()->banner,
+        'banner_url' => auth()->user()->banner_url,
+        'bio' => auth()->user()->bio,
+        'favorite_genre' => auth()->user()->favorite_genre,
+        'reader_mode' => auth()->user()->reader_mode,
+    ] : null;
+@endphp
 
 <!DOCTYPE html>
 <html lang="fr" class="scroll-smooth">
@@ -108,10 +122,87 @@
                 reader.readAsText(file);
             });
         },
+        getProfile() {
+            try { return JSON.parse(localStorage.getItem('hiddenscan_profile') || '{}'); } catch(e) { return {}; }
+        },
+        saveProfile(profile) {
+            try {
+                const current = this.getProfile();
+                const updated = { ...current, ...profile, updatedAt: new Date().toISOString() };
+                localStorage.setItem('hiddenscan_profile', JSON.stringify(updated));
+                return updated;
+            } catch(e) { return {}; }
+        },
+        syncProfile() {
+            const local = this.getProfile();
+            const token = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+            const currentUser = @json($authPayload);
+
+            if (currentUser) {
+                // Maintien à jour du localStorage avec les données serveur
+                let updatedLocal = false;
+                if (currentUser.avatar) {
+                    local.avatar = currentUser.avatar;
+                    local.avatar_url = currentUser.avatar_url;
+                    updatedLocal = true;
+                }
+                if (currentUser.banner) {
+                    local.banner = currentUser.banner;
+                    local.banner_url = currentUser.banner_url;
+                    updatedLocal = true;
+                }
+                if (currentUser.bio) {
+                    local.bio = currentUser.bio;
+                    updatedLocal = true;
+                }
+                if (currentUser.name && (!local.name || local.name.startsWith('Lecteur-'))) {
+                    local.name = currentUser.name;
+                    updatedLocal = true;
+                }
+                if (updatedLocal) {
+                    this.saveProfile(local);
+                }
+
+                // Si le serveur a perdu l'avatar ou la bannière mais que le client en a une version enregistrée :
+                const needsPush = (!currentUser.avatar && (local.avatar || local.avatar_url)) || 
+                                  (!currentUser.banner && (local.banner || local.banner_url)) || 
+                                  (!currentUser.bio && local.bio);
+
+                if (needsPush) {
+                    fetch('/api/profile/sync', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Accept': 'application/json',
+                            'X-CSRF-TOKEN': token || ''
+                        },
+                        body: JSON.stringify({
+                            avatar: local.avatar || local.avatar_url || '',
+                            banner: local.banner || local.banner_url || '',
+                            bio: local.bio || '',
+                            name: local.name || '',
+                            favorite_genre: local.favorite_genre || '',
+                            reader_mode: local.reader_mode || '',
+                        })
+                    })
+                    .then(r => r.json())
+                    .then(res => {
+                        if (res && res.success && res.user) {
+                            this.saveProfile(res.user);
+                            document.querySelectorAll('.navbar-avatar-img').forEach(img => {
+                                if (res.user.avatar_url) img.src = res.user.avatar_url;
+                            });
+                        }
+                    })
+                    .catch(() => {});
+                }
+            }
+        },
     };
 
     document.addEventListener('DOMContentLoaded', () => {
         window.HiddenScan.syncFavorites();
+        window.HiddenScan.syncProfile();
     });
 
     // ═══ Alpine Store : Notifications des chapitres favoris ═══
@@ -644,7 +735,7 @@
                                 class="w-10 h-10 rounded-full overflow-hidden ring-2 ring-[#dc2626]/70 hover:ring-[#dc2626] transition-all cursor-pointer flex items-center justify-center bg-[#111118] shadow-lg shadow-black/40 focus:outline-none"
                                 title="{{ Auth::user()->name }}"
                             >
-                                <img src="{{ Auth::user()->avatar_url }}" alt="{{ Auth::user()->name }}" class="w-full h-full object-cover">
+                                <img src="{{ Auth::user()->avatar_url }}" alt="{{ Auth::user()->name }}" class="w-full h-full object-cover navbar-avatar-img">
                             </button>
 
                             {{-- Menu déroulant du profil (Solide 100% Opaque & Uniforme) --}}
@@ -803,7 +894,7 @@
                                 title="{{ Auth::user()->name }}"
                                 aria-label="Menu profil utilisateur"
                             >
-                                <img src="{{ Auth::user()->avatar_url }}" alt="{{ Auth::user()->name }}" class="w-full h-full object-cover pointer-events-none">
+                                <img src="{{ Auth::user()->avatar_url }}" alt="{{ Auth::user()->name }}" class="w-full h-full object-cover pointer-events-none navbar-avatar-img">
                             </button>
 
                             {{-- Menu Déroulant Profil & Navigation Mobile --}}

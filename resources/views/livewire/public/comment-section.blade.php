@@ -784,7 +784,7 @@
                             {{-- Avatar circulaire 40px --}}
                             <div class="comments-avatar-40">
                                 @if(Auth::user()->avatar)
-                                    <img src="{{ Storage::url(Auth::user()->avatar) }}" alt="{{ Auth::user()->name }}">
+                                    <img src="{{ Auth::user()->avatar_url }}" alt="{{ Auth::user()->name }}">
                                 @else
                                     <span>{{ strtoupper(substr(Auth::user()->name, 0, 1)) }}</span>
                                 @endif
@@ -875,7 +875,7 @@
                             <div class="comment-user-info">
                                 <div class="comment-avatar-34">
                                     @if($comment->user && $comment->user->avatar)
-                                        <img src="{{ Storage::url($comment->user->avatar) }}" alt="{{ $comment->pseudo }}">
+                                        <img src="{{ $comment->user->avatar_url }}" alt="{{ $comment->pseudo }}">
                                     @else
                                         <span>{{ strtoupper(substr($comment->pseudo ?: 'A', 0, 1)) }}</span>
                                     @endif
@@ -1026,7 +1026,7 @@
                                                 <div class="comment-user-info">
                                                     <div class="comment-avatar-34" style="width: 28px; height: 28px; font-size: 11px;">
                                                         @if($reply->user && $reply->user->avatar)
-                                                             <img src="{{ Storage::url($reply->user->avatar) }}" alt="{{ $reply->pseudo }}">
+                                                             <img src="{{ $reply->user->avatar_url }}" alt="{{ $reply->pseudo }}">
                                                         @else
                                                             <span>{{ strtoupper(substr($reply->pseudo ?: 'A', 0, 1)) }}</span>
                                                         @endif

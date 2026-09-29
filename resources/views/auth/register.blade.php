@@ -32,6 +32,36 @@
             </div>
             @endauth
 
+            @guest
+            <div x-data="{
+                hasSaved: false,
+                savedName: '',
+                savedPass: '',
+                init() {
+                    if (window.HiddenScan) {
+                        const p = window.HiddenScan.getProfile();
+                        if (p && p.pass_code) {
+                            this.hasSaved = true;
+                            this.savedName = p.name || 'Mon Profil';
+                            this.savedPass = p.pass_code;
+                        }
+                    }
+                }
+            }" x-show="hasSaved" x-cloak class="p-4 rounded-2xl bg-blue-500/10 border border-blue-500/30 text-blue-200 text-xs space-y-2 animate-fade-in">
+                <div class="flex items-center gap-2 font-bold text-blue-300">
+                    <span>💡 Profil existant détecté sur cet appareil : <strong x-text="savedName"></strong></span>
+                </div>
+                <p class="text-blue-200/80 leading-relaxed">
+                    Vous possédez déjà le pass <span class="font-mono font-bold text-white bg-black/40 px-1.5 py-0.5 rounded" x-text="savedPass"></span>. Si vous souhaitez retrouver vos lectures et vos personnalisations :
+                </p>
+                <div>
+                    <a href="{{ route('login') }}" class="inline-flex items-center gap-1.5 text-blue-400 hover:text-white font-bold underline transition">
+                        Se reconnecter avec ce pass →
+                    </a>
+                </div>
+            </div>
+            @endguest
+
             {{-- Avantages --}}
             <div class="p-4 rounded-2xl bg-[#0f1016] border border-[#222332] space-y-2.5">
                 <div class="flex items-center gap-3 text-xs text-gray-300">

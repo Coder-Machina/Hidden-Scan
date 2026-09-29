@@ -57,6 +57,19 @@ class LoginRequest extends FormRequest
                 ->orWhereRaw("REPLACE(pass_code, '-', '') = ?", [$rawCode])
                 ->first();
 
+            // Restauration résiliente si la base a été réinitialisée
+            if (! $user && preg_match('/^HS-[A-Z0-9]{4}-[A-Z0-9]{4}-[A-Z0-9]{4}$/', $cleanCode)) {
+                $shortId = substr($rawCode, 2, 4);
+                $dummyEmail = 'pass_' . strtolower($rawCode) . '@anon.hiddenscan.local';
+                $user = \App\Models\User::create([
+                    'name' => 'Lecteur-' . $shortId,
+                    'email' => $dummyEmail,
+                    'pass_code' => $cleanCode,
+                    'password' => \Illuminate\Support\Facades\Hash::make(\Illuminate\Support\Str::random(40)),
+                    'last_ip_address' => $this->ip(),
+                ]);
+            }
+
             if (! $user) {
                 RateLimiter::hit($this->throttleKey());
 

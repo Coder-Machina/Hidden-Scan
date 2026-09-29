@@ -195,7 +195,7 @@ class User extends Authenticatable implements FilamentUser
     public function getAvatarUrlAttribute(): string
     {
         if ($this->avatar) {
-            if (str_starts_with($this->avatar, 'http://') || str_starts_with($this->avatar, 'https://')) {
+            if (str_starts_with($this->avatar, 'http://') || str_starts_with($this->avatar, 'https://') || str_starts_with($this->avatar, 'data:image/')) {
                 return $this->avatar;
             }
             if (str_starts_with($this->avatar, 'preset:')) {
@@ -214,7 +214,7 @@ class User extends Authenticatable implements FilamentUser
     public function getBannerUrlAttribute(): string
     {
         if ($this->banner) {
-            if (str_starts_with($this->banner, 'http://') || str_starts_with($this->banner, 'https://')) {
+            if (str_starts_with($this->banner, 'http://') || str_starts_with($this->banner, 'https://') || str_starts_with($this->banner, 'data:image/')) {
                 return $this->banner;
             }
             return \Illuminate\Support\Facades\Storage::url($this->banner);

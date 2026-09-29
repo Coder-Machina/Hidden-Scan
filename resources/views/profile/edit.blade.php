@@ -723,6 +723,8 @@
                 currentTab: '{{ in_array(request('tab'), ['overview', 'library', 'edit', 'settings']) ? request('tab') : ((session('status') === 'password-updated' || $errors->updatePassword->isNotEmpty()) ? 'settings' : 'overview') }}',
                 avatarPreview: '{{ $user->avatar ? $user->avatar_url : '' }}',
                 bannerPreview: '{{ $user->banner ? $user->banner_url : '' }}',
+                avatarData: '',
+                bannerData: '',
                 favorites: [],
                 history: [],
                 serverProgress: {},
@@ -731,6 +733,20 @@
                 init() {
                     this.loadData();
                     this.fetchProgress();
+
+                    // Restauration résiliente si le serveur n'a pas encore l'image
+                    if (window.HiddenScan) {
+                        const local = window.HiddenScan.getProfile();
+                        if (!this.avatarPreview && (local.avatar_url || local.avatar)) {
+                            this.avatarPreview = local.avatar_url || local.avatar;
+                            this.avatarData = local.avatar || local.avatar_url || '';
+                        }
+                        if (!this.bannerPreview && (local.banner_url || local.banner)) {
+                            this.bannerPreview = local.banner_url || local.banner;
+                            this.bannerData = local.banner || local.banner_url || '';
+                        }
+                        window.HiddenScan.syncProfile();
+                    }
                 },
                 fetchProgress() {
                     fetch('/api/progress')
@@ -792,13 +808,58 @@
                     const file = event.target.files[0];
                     if (file) {
                         this.avatarPreview = URL.createObjectURL(file);
+                        this.compressAndConvert(file, 300, 300, 0.85).then(dataUrl => {
+                            if (dataUrl) {
+                                this.avatarData = dataUrl;
+                                this.avatarPreview = dataUrl;
+                                if (window.HiddenScan) {
+                                    window.HiddenScan.saveProfile({ avatar: dataUrl, avatar_url: dataUrl });
+                                }
+                            }
+                        });
                     }
                 },
                 handleBanner(event) {
                     const file = event.target.files[0];
                     if (file) {
                         this.bannerPreview = URL.createObjectURL(file);
+                        this.compressAndConvert(file, 1200, 400, 0.85).then(dataUrl => {
+                            if (dataUrl) {
+                                this.bannerData = dataUrl;
+                                this.bannerPreview = dataUrl;
+                                if (window.HiddenScan) {
+                                    window.HiddenScan.saveProfile({ banner: dataUrl, banner_url: dataUrl });
+                                }
+                            }
+                        });
                     }
+                },
+                compressAndConvert(file, maxWidth, maxHeight, quality) {
+                    return new Promise((resolve) => {
+                        const reader = new FileReader();
+                        reader.onload = (e) => {
+                            const img = new Image();
+                            img.onload = () => {
+                                const canvas = document.createElement('canvas');
+                                let width = img.width;
+                                let height = img.height;
+                                if (width > maxWidth || height > maxHeight) {
+                                    const ratio = Math.min(maxWidth / width, maxHeight / height);
+                                    width = Math.round(width * ratio);
+                                    height = Math.round(height * ratio);
+                                }
+                                canvas.width = width;
+                                canvas.height = height;
+                                const ctx = canvas.getContext('2d');
+                                ctx.drawImage(img, 0, 0, width, height);
+                                resolve(canvas.toDataURL('image/jpeg', quality));
+                            };
+                            img.onerror = () => resolve(e.target.result);
+                            img.src = e.target.result;
+                        };
+                        reader.onerror = () => resolve(null);
+                        reader.readAsDataURL(file);
+                    });
                 }
             };
         }
@@ -1166,6 +1227,8 @@
                     <form method="POST" action="{{ route('profile.update') }}" enctype="multipart/form-data">
                         @csrf
                         @method('patch')
+                        <input type="hidden" name="avatar_data" :value="avatarData">
+                        <input type="hidden" name="banner_data" :value="bannerData">
 
                         {{-- Section PHOTO DE PROFIL --}}
                         <div style="margin-bottom: 24px;">

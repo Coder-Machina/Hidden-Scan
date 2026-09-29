@@ -32,11 +32,13 @@ class ProfileUpdateRequest extends FormRequest
             'bio' => ['nullable', 'string', 'max:1000'],
             'favorite_genre' => ['nullable', 'string', 'max:100'],
             'reader_mode' => ['nullable', 'string', 'in:vertical,single'],
-            'avatar_file' => ['nullable', 'image', 'max:4096'],
+            'avatar_file' => ['nullable', 'image', 'max:8192'],
             'avatar_preset' => ['nullable', 'string', 'max:255'],
-            'avatar_url' => ['nullable', 'url', 'max:500'],
-            'banner_file' => ['nullable', 'image', 'max:6144'],
-            'banner_url' => ['nullable', 'url', 'max:500'],
+            'avatar_url' => ['nullable', 'string', 'max:2048'],
+            'avatar_data' => ['nullable', 'string'],
+            'banner_file' => ['nullable', 'image', 'max:10240'],
+            'banner_url' => ['nullable', 'string', 'max:2048'],
+            'banner_data' => ['nullable', 'string'],
         ];
     }
 }

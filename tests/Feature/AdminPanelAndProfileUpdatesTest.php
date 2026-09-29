@@ -198,5 +198,77 @@ class AdminPanelAndProfileUpdatesTest extends TestCase
         $this->assertGreaterThan($synopsisPos, $commentsPos);
         $this->assertGreaterThan($infoPos, $commentsPos);
     }
+
+    public function test_user_can_update_profile_with_data_uri_avatar_and_banner(): void
+    {
+        $user = User::factory()->create([
+            'pass_code' => 'HS-TEST-AVAT-0001',
+        ]);
+
+        $dataAvatar = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==';
+        $dataBanner = 'data:image/jpeg;base64,/9j/4AAQSkZJRgABAQEASABIAAD/2wBDAP//////////////////////////////////////////////////////////////////////////////////////wgALCAABAAEBAREA/8QAFBABAAAAAAAAAAAAAAAAAAAAAP/aAAgBAQABPxA=';
+
+        $response = $this->actingAs($user)->patch(route('profile.update'), [
+            'name' => 'CustomMeliodas',
+            'avatar_data' => $dataAvatar,
+            'banner_data' => $dataBanner,
+            'bio' => 'Nouvelle bio test',
+        ]);
+
+        $response->assertRedirect(route('profile.edit'));
+        $user->refresh();
+
+        $this->assertEquals('CustomMeliodas', $user->name);
+        $this->assertEquals($dataAvatar, $user->avatar);
+        $this->assertEquals($dataBanner, $user->banner);
+        $this->assertEquals($dataAvatar, $user->avatar_url);
+        $this->assertEquals($dataBanner, $user->banner_url);
+        $this->assertEquals('Nouvelle bio test', $user->bio);
+    }
+
+    public function test_profile_sync_endpoint_restores_missing_avatar_and_banner(): void
+    {
+        $user = User::factory()->create([
+            'name' => 'Lecteur-1234',
+            'avatar' => null,
+            'banner' => null,
+            'pass_code' => 'HS-SYNC-TEST-0002',
+        ]);
+
+        $dataAvatar = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==';
+        $dataBanner = 'data:image/jpeg;base64,/9j/4AAQSkZJRgABAQEASABIAAD/2wBDAP//////////////////////////////////////////////////////////////////////////////////////wgALCAABAAEBAREA/8QAFBABAAAAAAAAAAAAAAAAAAAAAP/aAAgBAQABPxA=';
+
+        $response = $this->actingAs($user)->postJson(route('api.profile.sync'), [
+            'name' => 'MeliodasLeVrai',
+            'avatar' => $dataAvatar,
+            'banner' => $dataBanner,
+            'bio' => 'Bio synchronisée',
+        ]);
+
+        $response->assertStatus(200);
+        $response->assertJsonPath('success', true);
+        $response->assertJsonPath('user.name', 'MeliodasLeVrai');
+        $response->assertJsonPath('user.avatar', $dataAvatar);
+
+        $user->refresh();
+        $this->assertEquals('MeliodasLeVrai', $user->name);
+        $this->assertEquals($dataAvatar, $user->avatar);
+        $this->assertEquals($dataBanner, $user->banner);
+        $this->assertEquals('Bio synchronisée', $user->bio);
+    }
+
+    public function test_valid_pass_code_auto_restores_user_on_login(): void
+    {
+        $passCode = 'HS-RECO-7777-8888';
+        $this->assertDatabaseMissing('users', ['pass_code' => $passCode]);
+
+        $response = $this->post(route('login'), [
+            'pass_code' => $passCode,
+        ]);
+
+        $response->assertRedirect(route('dashboard'));
+        $this->assertAuthenticated();
+        $this->assertDatabaseHas('users', ['pass_code' => $passCode]);
+    }
 }
 
