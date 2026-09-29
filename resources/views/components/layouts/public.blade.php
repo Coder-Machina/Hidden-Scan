@@ -1250,6 +1250,22 @@
         if (window.Alpine && typeof setupNotificationsStore === 'function') {
             setupNotificationsStore();
         }
+        // Secours résilient : si Livewire tarde ou échoue à charger Alpine, on charge Alpine automatiquement
+        document.addEventListener('DOMContentLoaded', function() {
+            setTimeout(function() {
+                if (!window.Alpine) {
+                    var s = document.createElement('script');
+                    s.src = 'https://cdn.jsdelivr.net/npm/alpinejs@3.14.8/dist/cdn.min.js';
+                    s.defer = true;
+                    s.onload = function() {
+                        if (typeof setupNotificationsStore === 'function') {
+                            try { setupNotificationsStore(); } catch(e) {}
+                        }
+                    };
+                    document.head.appendChild(s);
+                }
+            }, 300);
+        });
     </script>
 </body>
 </html>
