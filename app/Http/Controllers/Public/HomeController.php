@@ -19,10 +19,7 @@ class HomeController extends Controller
             ->take(6)
             ->get();
 
-        $latest_updates = Manga::whereHas('chapters', function($q) {
-                $q->where('status', \App\Enums\ChapterStatus::PUBLIE);
-            })
-            ->with(['chapters' => function($q) {
+        $latest_updates = Manga::with(['chapters' => function($q) {
                 $q->where('status', \App\Enums\ChapterStatus::PUBLIE)
                   ->orderBy('number', 'desc')
                   ->orderBy('published_at', 'desc');
@@ -30,7 +27,7 @@ class HomeController extends Controller
             ->withMax(['chapters' => function($q) {
                 $q->where('status', \App\Enums\ChapterStatus::PUBLIE);
             }], 'published_at')
-            ->orderByDesc('chapters_max_published_at')
+            ->orderByRaw('COALESCE(chapters_max_published_at, mangas.created_at) DESC')
             ->take(24)
             ->get();
 

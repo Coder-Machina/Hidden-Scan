@@ -137,4 +137,66 @@ class AdminPanelAndProfileUpdatesTest extends TestCase
         $this->assertEquals('fr', config('app.locale'));
         $this->assertEquals('fr', config('app.fallback_locale'));
     }
+
+    public function test_home_page_includes_mangas_even_without_published_chapters(): void
+    {
+        // 1 Manga with 0 chapters
+        $manga = Manga::create([
+            'title' => 'One Piece',
+            'type' => \App\Enums\MangaType::MANGA,
+            'status' => \App\Enums\MangaStatus::EN_COURS,
+            'slug' => 'one-piece-test',
+        ]);
+
+        // 1 Manhwa with 0 chapters
+        $manhwa = Manga::create([
+            'title' => 'Solo Leveling',
+            'type' => \App\Enums\MangaType::MANHWA,
+            'status' => \App\Enums\MangaStatus::EN_COURS,
+            'slug' => 'solo-leveling-test',
+        ]);
+
+        $response = $this->get(route('home'));
+        $response->assertStatus(200);
+
+        // Both are present in the response
+        $response->assertSee('One Piece');
+        $response->assertSee('Solo Leveling');
+
+        // Both types are counted in the filter bar
+        $latestUpdates = $response->viewData('latest_updates');
+        $this->assertTrue($latestUpdates->contains('slug', 'one-piece-test'));
+        $this->assertTrue($latestUpdates->contains('slug', 'solo-leveling-test'));
+        $this->assertEquals(1, $latestUpdates->where('type.value', 'manga')->count());
+        $this->assertEquals(1, $latestUpdates->where('type.value', 'manhwa')->count());
+    }
+
+    public function test_manga_show_places_comments_section_at_the_end(): void
+    {
+        $manga = Manga::create([
+            'title' => 'One Piece',
+            'type' => \App\Enums\MangaType::MANGA,
+            'status' => \App\Enums\MangaStatus::EN_COURS,
+            'slug' => 'one-piece-comments-pos-test',
+            'synopsis' => 'Un équipage de pirates recherche le trésor ultime.',
+        ]);
+
+        $response = $this->get(route('manga.show', $manga->slug));
+        $response->assertStatus(200);
+
+        $content = $response->getContent();
+
+        $synopsisPos = strpos($content, 'Un équipage de pirates recherche le trésor ultime.');
+        $infoPos = strpos($content, 'section-title-info');
+        $commentsPos = strpos($content, 'id="manga-comments-section"');
+
+        $this->assertNotFalse($synopsisPos);
+        $this->assertNotFalse($infoPos);
+        $this->assertNotFalse($commentsPos);
+
+        // Comments must come strictly AFTER both the synopsis and the informations section!
+        $this->assertGreaterThan($synopsisPos, $commentsPos);
+        $this->assertGreaterThan($infoPos, $commentsPos);
+    }
 }
+

@@ -96,6 +96,13 @@
                     </div>
                 @endforeach
             </div>
+        @elseif($showChapters)
+            <div class="mt-auto pt-1">
+                <span class="inline-flex items-center gap-1.5 text-[11px] font-medium text-[#7d8498] bg-[#1e2029] px-2.5 py-1 rounded-full border border-white/5">
+                    <span class="w-1.5 h-1.5 rounded-full bg-amber-400/80"></span>
+                    Bientôt disponible
+                </span>
+            </div>
         @endif
     </div>
 </div>

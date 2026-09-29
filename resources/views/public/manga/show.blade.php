@@ -1061,14 +1061,15 @@
             })();
             </script>
 
-            {{-- Commentaires --}}
-            <div class="bg-[#131318] rounded-xl sm:rounded-2xl p-3.5 sm:p-6 lg:p-8" style="border: 1px solid #252535; max-width: 640px; margin: 24px auto 0 auto;">
-                <livewire:public.comment-section
-                    type="App\Models\Manga"
-                    :id="$manga->id"
-                />
-            </div>
         </div>
+    </div>
+
+    {{-- ═══ Section Commentaires (Strictement tout en bas à la fin) ═══ --}}
+    <div id="manga-comments-section" class="mt-10 sm:mt-14 bg-[#131318] rounded-xl sm:rounded-2xl p-4 sm:p-6 lg:p-8 border border-[#252535] shadow-xl">
+        <livewire:public.comment-section
+            type="App\Models\Manga"
+            :id="$manga->id"
+        />
     </div>
     </div>
 

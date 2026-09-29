@@ -275,32 +275,32 @@
                     :class="category === 'all' ? 'bg-[#1e2029] text-white font-semibold' : 'text-[#7d849a] hover:text-white hover:bg-[#1e2029]/50'" 
                     class="px-4 py-2 rounded-full text-sm transition-colors duration-200 cursor-pointer select-none whitespace-nowrap flex-shrink-0 flex items-center gap-1.5">
                 <span>Tout</span>
-                <span class="text-[11px] px-1.5 py-0.2 rounded-full bg-white/10 text-mist" x-text="items.length"></span>
+                <span class="text-[11px] px-1.5 py-0.2 rounded-full bg-white/10 text-mist" x-text="items.length">{{ $latest_updates->count() }}</span>
             </button>
             <button type="button" @click="category = 'manhwa'" 
                     :class="category === 'manhwa' ? 'bg-[#1e2029] text-white font-semibold' : 'text-[#7d849a] hover:text-white hover:bg-[#1e2029]/50'" 
                     class="px-4 py-2 rounded-full text-sm transition-colors duration-200 cursor-pointer select-none whitespace-nowrap flex-shrink-0 flex items-center gap-1.5">
                 <span>Manhwa</span>
-                <span class="text-[11px] px-1.5 py-0.2 rounded-full bg-white/10 text-mist" x-text="items.filter(i => i.type === 'manhwa').length"></span>
+                <span class="text-[11px] px-1.5 py-0.2 rounded-full bg-white/10 text-mist" x-text="items.filter(i => i.type === 'manhwa').length">{{ $latest_updates->filter(fn($m) => $m->type?->value === 'manhwa')->count() }}</span>
             </button>
             <button type="button" @click="category = 'manhua'" 
                     :class="category === 'manhua' ? 'bg-[#1e2029] text-white font-semibold' : 'text-[#7d849a] hover:text-white hover:bg-[#1e2029]/50'" 
                     class="px-4 py-2 rounded-full text-sm transition-colors duration-200 cursor-pointer select-none whitespace-nowrap flex-shrink-0 flex items-center gap-1.5">
                 <span>Manhua</span>
-                <span class="text-[11px] px-1.5 py-0.2 rounded-full bg-white/10 text-mist" x-text="items.filter(i => i.type === 'manhua').length"></span>
+                <span class="text-[11px] px-1.5 py-0.2 rounded-full bg-white/10 text-mist" x-text="items.filter(i => i.type === 'manhua').length">{{ $latest_updates->filter(fn($m) => $m->type?->value === 'manhua')->count() }}</span>
             </button>
             <button type="button" @click="category = 'manga'" 
                     :class="category === 'manga' ? 'bg-[#1e2029] text-white font-semibold' : 'text-[#7d849a] hover:text-white hover:bg-[#1e2029]/50'" 
                     class="px-4 py-2 rounded-full text-sm transition-colors duration-200 cursor-pointer select-none whitespace-nowrap flex-shrink-0 flex items-center gap-1.5">
                 <span>Manga</span>
-                <span class="text-[11px] px-1.5 py-0.2 rounded-full bg-white/10 text-mist" x-text="items.filter(i => i.type === 'manga').length"></span>
+                <span class="text-[11px] px-1.5 py-0.2 rounded-full bg-white/10 text-mist" x-text="items.filter(i => i.type === 'manga').length">{{ $latest_updates->filter(fn($m) => $m->type?->value === 'manga')->count() }}</span>
             </button>
             <button type="button" @click="category = 'favorites'" 
                     :class="category === 'favorites' ? 'bg-[#1e2029] text-white font-semibold' : 'text-[#7d849a] hover:text-white hover:bg-[#1e2029]/50'" 
                     class="px-4 py-2 rounded-full text-sm transition-colors duration-200 cursor-pointer select-none whitespace-nowrap flex-shrink-0 flex items-center gap-1.5">
                 <svg class="w-3.5 h-3.5 text-rose" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z" clip-rule="evenodd"/></svg>
                 <span>Favoris</span>
-                <span class="text-[11px] px-1.5 py-0.2 rounded-full bg-rose-500/20 text-rose-300" x-text="items.filter(i => favSlugs.includes(i.slug)).length"></span>
+                <span class="text-[11px] px-1.5 py-0.2 rounded-full bg-rose-500/20 text-rose-300" x-text="items.filter(i => favSlugs.includes(i.slug)).length">0</span>
             </button>
         </div>
 
