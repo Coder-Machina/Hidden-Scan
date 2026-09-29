@@ -547,7 +547,11 @@
                                     <a href="{{ route('library') }}" class="text-xs text-[#7070a0] hover:text-white transition">
                                         Bibliothèque
                                     </a>
-                                                    {{-- Menu déroulant du profil utilisateur --}}
+                                </div>
+                            </div>
+                        </div>
+
+                        {{-- Menu déroulant du profil utilisateur --}}
                         <div class="relative" x-data="{ userMenuOpen: false }" @click.outside="userMenuOpen = false">
                             <button 
                                 @click="userMenuOpen = !userMenuOpen" 
