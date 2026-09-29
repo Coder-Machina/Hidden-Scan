@@ -44,13 +44,5 @@
             </form>
         </div>
 
-        {{-- Lien direct vers le panneau d'administration --}}
-        <div class="mt-4 text-center">
-            <a href="/admin/login" class="text-xs text-gray-500 hover:text-red-400 transition inline-flex items-center gap-1.5">
-                <span>Accès Administrateur</span>
-                <span>→</span>
-            </a>
-        </div>
-
     </div>
 </x-layouts.public>
