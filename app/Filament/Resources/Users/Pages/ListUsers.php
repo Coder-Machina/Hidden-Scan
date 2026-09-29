@@ -28,9 +28,9 @@ class ListUsers extends ListRecords
         return [
             'staff' => Tab::make('Équipe Staff')
                 ->icon('heroicon-o-shield-check')
-                ->badge(fn () => User::role($staffRoles)->count())
+                ->badge(fn () => User::whereHas('roles', fn ($q) => $q->whereIn('name', $staffRoles))->count())
                 ->badgeColor('primary')
-                ->modifyQueryUsing(fn (Builder $query) => $query->role($staffRoles)),
+                ->modifyQueryUsing(fn (Builder $query) => $query->whereHas('roles', fn ($q) => $q->whereIn('name', $staffRoles))),
 
             'banned' => Tab::make('Modération & Bannis')
                 ->icon('heroicon-o-no-symbol')
