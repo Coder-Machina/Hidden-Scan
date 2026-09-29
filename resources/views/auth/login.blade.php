@@ -6,12 +6,11 @@
                 🔑
             </div>
             <h1 class="font-display text-2xl font-bold text-white">Connexion</h1>
-            <p class="text-gray-400 text-xs sm:text-sm mt-1.5">Entrez votre Pass secret pour retrouver vos mangas</p>
+            <p class="text-gray-400 text-xs sm:text-sm mt-1.5">Entrez votre Pass secret pour retrouver votre compte et vos favoris</p>
         </div>
 
         <x-auth-session-status class="mb-4" :status="session('status')" />
 
-        {{-- ═══ SECTION PRINCIPALE : PASS SECRET ═══ --}}
         <form method="POST" action="{{ route('login') }}" class="space-y-4">
             @csrf
 
@@ -20,7 +19,7 @@
                     Votre Pass Secret
                 </label>
                 <div class="relative">
-                    <input id="pass_code" name="pass_code" type="text" value="{{ old('pass_code') }}" required autofocus
+                    <input id="pass_code" name="pass_code" type="text" value="{{ old('pass_code') }}" autofocus
                            placeholder="HS-••••-••••-••••"
                            style="text-transform: uppercase; letter-spacing: 1.5px;"
                            class="w-full bg-[#11121a] border border-[#26283b] text-white font-mono placeholder-gray-600 focus:ring-2 focus:ring-red-500 focus:border-transparent rounded-xl px-4 py-3 text-sm transition outline-none shadow-inner">
@@ -43,6 +42,14 @@
                     Créer en 1 clic →
                 </button>
             </form>
+        </div>
+
+        {{-- Lien direct vers le panneau d'administration --}}
+        <div class="mt-4 text-center">
+            <a href="/admin/login" class="text-xs text-gray-500 hover:text-red-400 transition inline-flex items-center gap-1.5">
+                <span>Accès Administrateur</span>
+                <span>→</span>
+            </a>
         </div>
 
     </div>
