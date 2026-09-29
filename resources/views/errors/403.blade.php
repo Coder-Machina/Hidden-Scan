@@ -38,11 +38,11 @@
 
         <div class="flex flex-col gap-3">
             @if(auth()->check())
-                <form method="POST" action="{{ route('logout') }}">
+                <form method="POST" action="{{ route('logout', ['redirect' => '/admin/login']) }}">
                     @csrf
-                    <button type="submit" class="w-full py-3 px-4 rounded-xl bg-[#dc2626] hover:bg-[#b91c1c] text-white font-bold text-sm transition shadow-lg shadow-red-950/50 flex items-center justify-center gap-2">
+                    <button type="submit" class="w-full py-3 px-4 rounded-xl bg-[#dc2626] hover:bg-[#b91c1c] text-white font-bold text-sm transition shadow-lg shadow-red-950/50 flex items-center justify-center gap-2 cursor-pointer">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
-                        <span>Se déconnecter / Changer de compte</span>
+                        <span>Se déconnecter et aller à la connexion Admin</span>
                     </button>
                 </form>
             @else
