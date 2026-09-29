@@ -292,23 +292,10 @@
             transform: scale(0.94) !important;
         }
 
-        /* Mobile layout: bouton circulaire compact et ergonomique */
+        /* Mobile layout: Masqué sur mobile pour ne jamais obstruer la lecture (accessible dans le menu et le footer) */
         @media (max-width: 639px) {
             .discord-float-btn {
-                width: 44px !important;
-                height: 44px !important;
-                min-width: 44px !important;
-                min-height: 44px !important;
-                padding: 0 !important;
-                bottom: calc(14px + env(safe-area-inset-bottom, 0px)) !important;
-                left: calc(14px + env(safe-area-inset-left, 0px)) !important;
-            }
-            .discord-float-btn .discord-label {
                 display: none !important;
-            }
-            .discord-float-btn svg {
-                width: 22px !important;
-                height: 22px !important;
             }
         }
 
@@ -560,12 +547,8 @@
                                     <a href="{{ route('library') }}" class="text-xs text-[#7070a0] hover:text-white transition">
                                         Bibliothèque
                                     </a>
-                                </div>
-                            </div>
-                        </div>
-
-                        {{-- Menu déroulant du profil utilisateur --}}
-                        <div class="relative" x-data="{ userMenuOpen: false }">
+                                                    {{-- Menu déroulant du profil utilisateur --}}
+                        <div class="relative" x-data="{ userMenuOpen: false }" @click.outside="userMenuOpen = false">
                             <button 
                                 @click="userMenuOpen = !userMenuOpen" 
                                 class="w-10 h-10 rounded-full overflow-hidden ring-2 ring-[#dc2626]/70 hover:ring-[#dc2626] transition-all cursor-pointer flex items-center justify-center bg-[#111118] shadow-lg shadow-black/40 focus:outline-none"
@@ -577,7 +560,6 @@
                             {{-- Menu déroulant du profil (Solide 100% Opaque & Uniforme) --}}
                             <div 
                                 x-show="userMenuOpen" 
-                                @click.outside="userMenuOpen = false"
                                 x-cloak
                                 x-transition:enter="transition ease-out duration-150"
                                 x-transition:enter-start="opacity-0 scale-95 -translate-y-1"
@@ -718,9 +700,9 @@
                         </button>
 
                         {{-- Avatar Utilisateur Mobile avec Menu Déroulant --}}
-                        <div class="relative" x-data="{ userMobileMenuOpen: false }">
+                        <div class="relative" x-data="{ userMobileMenuOpen: false }" @click.outside="userMobileMenuOpen = false">
                             <button 
-                                @click="userMobileMenuOpen = !userMobileMenuOpen; if(userMobileMenuOpen) { mobileOpen = false; searchOpen = false; if($store.notifications) $store.notifications.open = false; }" 
+                                @click="userMobileMenuOpen = !userMobileMenuOpen; if(userMobileMenuOpen) { mobileOpen = false; searchOpen = false; if(window.Alpine && Alpine.store('notifications')) Alpine.store('notifications').open = false; }" 
                                 class="w-8 h-8 rounded-full overflow-hidden ring-2 ring-[#dc2626]/80 hover:ring-[#dc2626] transition-all cursor-pointer flex items-center justify-center bg-[#111118] shadow-md shadow-black/40 focus:outline-none"
                                 title="{{ Auth::user()->name }}"
                                 aria-label="Menu profil utilisateur"
@@ -731,7 +713,6 @@
                             {{-- Menu Déroulant Profil & Navigation Mobile --}}
                             <div 
                                 x-show="userMobileMenuOpen" 
-                                @click.outside="userMobileMenuOpen = false"
                                 x-cloak
                                 x-transition:enter="transition ease-out duration-150"
                                 x-transition:enter-start="opacity-0 scale-95 -translate-y-1"
@@ -1120,12 +1101,12 @@
         </div>
     </footer>
 
-    {{-- Widget Discord Flottant --}}
+    {{-- Widget Discord Flottant (Grand écran uniquement) --}}
     @unless($hideNavbar)
     <a href="https://discord.gg/sMUeFSks4"
        target="_blank"
        rel="noopener noreferrer"
-       class="discord-float-btn group"
+       class="discord-float-btn hidden sm:inline-flex group"
        title="Rejoindre notre Discord"
        aria-label="Rejoindre notre communauté Discord">
         <span class="relative flex items-center justify-center">

@@ -14,6 +14,24 @@
 
         {{-- ═══ SECTION PRINCIPALE : PASS SECRET (1 CLIC) ═══ --}}
         <div class="space-y-4">
+            @auth
+            <div class="p-4 rounded-2xl bg-amber-500/10 border border-amber-500/30 text-amber-200 text-xs space-y-2">
+                <div class="flex items-center gap-2 font-bold text-amber-300">
+                    <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                    <span>Vous êtes actuellement connecté : <strong>{{ Auth::user()->name }}</strong></span>
+                </div>
+                <p class="text-amber-200/80 leading-relaxed">
+                    Si vous cliquez sur « Générer mon Pass Secret », vous serez déconnecté de ce compte pour créer un <strong>nouveau profil vierge</strong>. Pensez à conserver votre pass actuel si vous souhaitez y revenir :
+                    <span class="inline-block mt-1 font-mono font-bold text-white bg-black/50 px-2 py-0.5 rounded border border-amber-500/30">{{ Auth::user()->pass_code ?? Auth::user()->email }}</span>
+                </p>
+                <div class="pt-1">
+                    <a href="{{ route('profile.edit', ['tab' => 'settings']) }}" class="text-amber-400 hover:text-white underline font-semibold transition">
+                        Gérer mon pass actuel dans mes Paramètres →
+                    </a>
+                </div>
+            </div>
+            @endauth
+
             {{-- Avantages --}}
             <div class="p-4 rounded-2xl bg-[#0f1016] border border-[#222332] space-y-2.5">
                 <div class="flex items-center gap-3 text-xs text-gray-300">

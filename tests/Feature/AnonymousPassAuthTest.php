@@ -141,4 +141,38 @@ class AnonymousPassAuthTest extends TestCase
         $this->assertGuest();
         $this->assertDatabaseMissing('users', ['id' => $user->id]);
     }
+
+    public function test_authenticated_user_can_visit_register_and_see_current_account_notice(): void
+    {
+        $user = User::factory()->create([
+            'name' => 'LecteurActuel',
+            'pass_code' => 'HS-CURR-PASS-0001',
+        ]);
+
+        $response = $this->actingAs($user)->get(route('register'));
+        $response->assertStatus(200);
+        $response->assertSee('Vous êtes actuellement connecté :');
+        $response->assertSee('LecteurActuel');
+        $response->assertSee('HS-CURR-PASS-0001');
+    }
+
+    public function test_authenticated_user_can_generate_a_new_pass_and_switch_accounts(): void
+    {
+        $oldUser = User::factory()->create([
+            'name' => 'OldUser',
+            'pass_code' => 'HS-OLDD-PASS-0001',
+        ]);
+
+        $response = $this->actingAs($oldUser)->post(route('register.pass'), [
+            'name' => 'BrandNewUser',
+        ]);
+
+        $response->assertRedirect(route('home'));
+        $this->assertAuthenticated();
+
+        $newUser = auth()->user();
+        $this->assertNotEquals($oldUser->id, $newUser->id);
+        $this->assertEquals('BrandNewUser', $newUser->name);
+        $this->assertStringStartsWith('HS-', $newUser->pass_code);
+    }
 }

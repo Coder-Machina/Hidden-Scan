@@ -61,6 +61,13 @@ class RegisteredUserController extends Controller
      */
     public function storePass(Request $request): RedirectResponse
     {
+        // Si l'utilisateur est déjà connecté, on le déconnecte pour créer son nouveau compte
+        if (Auth::check()) {
+            Auth::logout();
+            $request->session()->invalidate();
+            $request->session()->regenerateToken();
+        }
+
         $passCode = User::generateUniquePassCode();
         $shortId = substr(str_replace('-', '', $passCode), 2, 4);
         $name = $request->filled('name')

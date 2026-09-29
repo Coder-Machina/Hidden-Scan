@@ -86,23 +86,28 @@
     {{-- ═══ Actions ═══ --}}
     <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 mb-8 animate-fade-in-up" style="animation-delay: 0.1s;"
          x-data="{
-            isFav: false,
-            init() { this.isFav = window.HiddenScan.isFavorite('{{ $manga->slug }}'); }
+            isFav: {{ (auth()->check() && auth()->user()->favoriteMangas->contains($manga->id)) ? 'true' : 'false' }},
+            init() { 
+                if (window.HiddenScan && typeof window.HiddenScan.isFavorite === 'function') {
+                    this.isFav = window.HiddenScan.isFavorite('{{ $manga->slug }}'); 
+                }
+            }
          }">
         @if($manga->chapters->count())
-            <a id="top-read-btn" href="{{ route('chapter.show', [$manga->slug, $resumeChapter?->slug ?? $manga->chapters->last()->slug]) }}" class="btn-primary justify-center">
+            <a id="top-read-btn" href="{{ route('chapter.show', [$manga->slug, $resumeChapter?->slug ?? $manga->chapters->last()->slug]) }}" 
+               class="inline-flex items-center justify-center gap-2.5 px-6 py-3.5 rounded-xl bg-[#dc2626] hover:bg-[#b91c1c] text-white font-bold text-sm sm:text-base shadow-lg shadow-red-950/50 hover:shadow-red-900/60 transition-all hover:-translate-y-0.5 active:scale-[0.98]">
                 <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
                 <span id="top-read-btn-text">{{ count($readChapterIds) > 0 && $resumeChapter ? 'Reprendre (Ch. ' . $resumeChapter->number . ')' : 'Commencer à lire' }}</span>
             </a>
         @endif
 
         <button
-            @click="isFav = window.HiddenScan.toggleFavorite('{{ $manga->slug }}', '{{ addslashes($manga->title) }}', '{{ $manga->cover_image ? Storage::url($manga->cover_image) : '' }}');"
-            class="btn-secondary transition-all justify-center"
-            :class="isFav ? '!bg-chalk !border-chalk !text-ink shadow-lg shadow-chalk/20' : ''"
+            @click="if (window.HiddenScan) { isFav = window.HiddenScan.toggleFavorite('{{ $manga->slug }}', '{{ addslashes($manga->title) }}', '{{ $manga->cover_image ? Storage::url($manga->cover_image) : '' }}'); }"
+            class="inline-flex items-center justify-center gap-2.5 px-6 py-3.5 rounded-xl bg-[#161622] hover:bg-[#1f2030] text-[#e0e0f0] hover:text-white border border-[#262638] hover:border-[#dc2626]/40 font-semibold text-sm sm:text-base transition-all hover:-translate-y-0.5 active:scale-[0.98] shadow-md"
+            :class="isFav ? '!bg-white !border-white !text-[#0e0e14] shadow-lg shadow-white/10' : ''"
         >
             <svg class="w-5 h-5 flex-shrink-0" fill="none" :fill="isFav ? 'currentColor' : 'none'" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/></svg>
-            <span x-text="isFav ? 'Dans vos favoris' : 'Ajouter aux favoris'"></span>
+            <span x-text="isFav ? 'Dans vos favoris' : 'Ajouter aux favoris'">{{ (auth()->check() && auth()->user()->favoriteMangas->contains($manga->id)) ? 'Dans vos favoris' : 'Ajouter aux favoris' }}</span>
         </button>
     </div>
 

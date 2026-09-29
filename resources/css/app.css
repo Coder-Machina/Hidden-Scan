@@ -380,22 +380,10 @@ nav[role="navigation"] a:hover {
     transform: scale(0.94) !important;
 }
 
+/* Mobile layout: Masqué sur mobile pour ne jamais masquer la lecture (accessible dans le menu et le footer) */
 @media (max-width: 639px) {
     .discord-float-btn {
-        width: 44px !important;
-        height: 44px !important;
-        min-width: 44px !important;
-        min-height: 44px !important;
-        padding: 0 !important;
-        bottom: calc(14px + env(safe-area-inset-bottom, 0px)) !important;
-        left: calc(14px + env(safe-area-inset-left, 0px)) !important;
-    }
-    .discord-float-btn .discord-label {
         display: none !important;
-    }
-    .discord-float-btn svg {
-        width: 22px !important;
-        height: 22px !important;
     }
 }
 
