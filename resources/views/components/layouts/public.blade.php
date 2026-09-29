@@ -115,84 +115,106 @@
     });
 
     // ═══ Alpine Store : Notifications des chapitres favoris ═══
-    document.addEventListener('alpine:init', () => {
-        Alpine.store('notifications', {
-            open: false,
-            unreadCount: 0,
-            notifications: [],
+    function setupNotificationsStore() {
+        if (!window.Alpine) return;
+        try {
+            if (window.Alpine.stores && window.Alpine.stores.notifications) return;
+        } catch(e) {}
 
-            async init() {
-                @auth
-                await this.fetchNotifications();
-                setInterval(() => this.fetchNotifications(), 45000);
-                @endauth
-            },
+        try {
+            Alpine.store('notifications', {
+                open: false,
+                unreadCount: 0,
+                notifications: [],
 
-            toggle() {
-                this.open = !this.open;
-                if (this.open) {
-                    this.fetchNotifications();
-                }
-            },
+                async init() {
+                    @auth
+                    try {
+                        await this.fetchNotifications();
+                    } catch(e) {}
+                    setInterval(() => {
+                        try { this.fetchNotifications(); } catch(e) {}
+                    }, 45000);
+                    @endauth
+                },
 
-            async fetchNotifications() {
-                try {
-                    const res = await fetch('/api/notifications');
-                    const data = await res.json();
-                    if (data.success) {
-                        const oldCount = this.unreadCount;
-                        this.unreadCount = data.unread_count || 0;
-                        this.notifications = data.notifications || [];
+                toggle() {
+                    this.open = !this.open;
+                    if (this.open) {
+                        try { this.fetchNotifications(); } catch(e) {}
+                    }
+                },
 
-                        // Alerte navigateur si nouveau chapitre détecté
-                        if (oldCount !== null && data.unread_count > oldCount && oldCount > 0 && Notification.permission === 'granted') {
-                            const latest = this.notifications.find(n => !n.is_read);
-                            if (latest) {
-                                new Notification(latest.title, {
-                                    body: latest.message,
-                                    icon: latest.manga_cover || '/images/logo.png',
-                                });
+                async fetchNotifications() {
+                    try {
+                        const res = await fetch('/api/notifications');
+                        if (!res.ok) return;
+                        const data = await res.json();
+                        if (data && data.success) {
+                            const oldCount = this.unreadCount;
+                            this.unreadCount = data.unread_count || 0;
+                            this.notifications = data.notifications || [];
+
+                            // Alerte navigateur si nouveau chapitre détecté (vérification sécurisée de Notification)
+                            if (oldCount !== null && data.unread_count > oldCount && oldCount > 0) {
+                                try {
+                                    if (typeof window !== 'undefined' && 'Notification' in window && typeof Notification.permission !== 'undefined' && Notification.permission === 'granted') {
+                                        const latest = this.notifications.find(n => !n.is_read);
+                                        if (latest) {
+                                            new Notification(latest.title, {
+                                                body: latest.message,
+                                                icon: latest.manga_cover || '/images/logo.png',
+                                            });
+                                        }
+                                    }
+                                } catch(e) {}
                             }
                         }
+                    } catch (e) {}
+                },
+
+                async markAsRead(id) {
+                    try {
+                        const token = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+                        await fetch(`/api/notifications/${id}/read`, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': token || '' }
+                        });
+                        const notif = this.notifications.find(n => n.id === id);
+                        if (notif && !notif.is_read) {
+                            notif.is_read = true;
+                            this.unreadCount = Math.max(0, this.unreadCount - 1);
+                        }
+                    } catch (e) {}
+                },
+
+                async markAllAsRead() {
+                    try {
+                        const token = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+                        await fetch('/api/notifications/mark-all-read', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': token || '' }
+                        });
+                        this.unreadCount = 0;
+                        this.notifications.forEach(n => n.is_read = true);
+                    } catch (e) {}
+                },
+
+                handleClick(item) {
+                    try { this.markAsRead(item.id); } catch(e) {}
+                    if (item.url) {
+                        window.location.href = item.url;
                     }
-                } catch (e) {}
-            },
-
-            async markAsRead(id) {
-                try {
-                    const token = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
-                    await fetch(`/api/notifications/${id}/read`, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': token || '' }
-                    });
-                    const notif = this.notifications.find(n => n.id === id);
-                    if (notif && !notif.is_read) {
-                        notif.is_read = true;
-                        this.unreadCount = Math.max(0, this.unreadCount - 1);
-                    }
-                } catch (e) {}
-            },
-
-            async markAllAsRead() {
-                try {
-                    const token = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
-                    await fetch('/api/notifications/mark-all-read', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': token || '' }
-                    });
-                    this.unreadCount = 0;
-                    this.notifications.forEach(n => n.is_read = true);
-                } catch (e) {}
-            },
-
-            handleClick(item) {
-                this.markAsRead(item.id);
-                if (item.url) {
-                    window.location.href = item.url;
                 }
-            }
-        });
-    });
+            });
+        } catch(e) {
+            console.warn('Could not register notifications store:', e);
+        }
+    }
+
+    document.addEventListener('alpine:init', setupNotificationsStore);
+    document.addEventListener('livewire:init', setupNotificationsStore);
+    document.addEventListener('DOMContentLoaded', setupNotificationsStore);
     </script>
 
     {{-- Swiper --}}
@@ -366,7 +388,14 @@
              navHidden: false, 
              lastScrollY: 0,
              handleScroll() {
-                 if (this.mobileOpen || this.searchOpen || (window.Alpine && Alpine.store('notifications') && Alpine.store('notifications').open)) {
+                 let isNotifOpen = false;
+                 try {
+                     if (window.Alpine && Alpine.store && Alpine.store('notifications')) {
+                         isNotifOpen = !!Alpine.store('notifications').open;
+                     }
+                 } catch(e) {}
+
+                 if (this.mobileOpen || this.searchOpen || isNotifOpen) {
                      this.navHidden = false;
                      return;
                  }
@@ -676,28 +705,30 @@
                 <div class="flex md:hidden items-center gap-1.5 sm:gap-2">
                     {{-- Bouton Recherche Mobile --}}
                     <button 
-                        @click="searchOpen = !searchOpen; if(searchOpen) { mobileOpen = false; if(window.Alpine && Alpine.store('notifications')) Alpine.store('notifications').open = false; }" 
-                        class="p-2 rounded-lg text-mist hover:text-chalk hover:bg-panel-hi transition"
+                        type="button"
+                        @click.stop="searchOpen = !searchOpen; if(searchOpen) { mobileOpen = false; try { if(window.Alpine && Alpine.store) Alpine.store('notifications').open = false; } catch(e){} }" 
+                        class="p-2 rounded-lg text-mist hover:text-chalk hover:bg-panel-hi transition cursor-pointer"
                         title="Recherche"
                         aria-label="Ouvrir la recherche"
                     >
-                        <svg x-show="!searchOpen" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
-                        <svg x-show="searchOpen" x-cloak class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                        <svg x-show="!searchOpen" class="w-5 h-5 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+                        <svg x-show="searchOpen" x-cloak class="w-5 h-5 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
                     </button>
 
                     @auth
                         {{-- Bouton Cloche Notifications Mobile --}}
                         <button 
-                            @click="$store.notifications.toggle(); if($store.notifications.open) { mobileOpen = false; searchOpen = false; }" 
-                            class="relative p-2 rounded-lg text-[#a0a0c0] hover:text-white hover:bg-panel-hi transition"
+                            type="button"
+                            @click.stop="try { $store.notifications.toggle(); if($store.notifications.open) { mobileOpen = false; searchOpen = false; } } catch(e){}" 
+                            class="relative p-2 rounded-lg text-[#a0a0c0] hover:text-white hover:bg-panel-hi transition cursor-pointer"
                             title="Notifications"
                             aria-label="Notifications"
                         >
-                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <svg class="w-5 h-5 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/>
                             </svg>
-                            <template x-if="$store.notifications.unreadCount > 0">
-                                <span class="absolute top-1 right-1 flex h-4 min-w-[16px] px-1 items-center justify-center rounded-full bg-[#dc2626] text-[9px] font-extrabold text-white ring-2 ring-[#0e0e15]"
+                            <template x-if="window.Alpine && $store?.notifications?.unreadCount > 0">
+                                <span class="absolute top-1 right-1 flex h-4 min-w-[16px] px-1 items-center justify-center rounded-full bg-[#dc2626] text-[9px] font-extrabold text-white ring-2 ring-[#0e0e15] pointer-events-none"
                                       x-text="$store.notifications.unreadCount > 99 ? '99+' : $store.notifications.unreadCount">
                                 </span>
                             </template>
@@ -706,12 +737,13 @@
                         {{-- Avatar Utilisateur Mobile avec Menu Déroulant --}}
                         <div class="relative" x-data="{ userMobileMenuOpen: false }" @click.outside="userMobileMenuOpen = false">
                             <button 
-                                @click="userMobileMenuOpen = !userMobileMenuOpen; if(userMobileMenuOpen) { mobileOpen = false; searchOpen = false; if(window.Alpine && Alpine.store('notifications')) Alpine.store('notifications').open = false; }" 
+                                type="button"
+                                @click.stop="userMobileMenuOpen = !userMobileMenuOpen; if(userMobileMenuOpen) { mobileOpen = false; searchOpen = false; try { if(window.Alpine && Alpine.store) Alpine.store('notifications').open = false; } catch(e){} }" 
                                 class="w-8 h-8 rounded-full overflow-hidden ring-2 ring-[#dc2626]/80 hover:ring-[#dc2626] transition-all cursor-pointer flex items-center justify-center bg-[#111118] shadow-md shadow-black/40 focus:outline-none"
                                 title="{{ Auth::user()->name }}"
                                 aria-label="Menu profil utilisateur"
                             >
-                                <img src="{{ Auth::user()->avatar_url }}" alt="{{ Auth::user()->name }}" class="w-full h-full object-cover">
+                                <img src="{{ Auth::user()->avatar_url }}" alt="{{ Auth::user()->name }}" class="w-full h-full object-cover pointer-events-none">
                             </button>
 
                             {{-- Menu Déroulant Profil & Navigation Mobile --}}
@@ -860,23 +892,32 @@
 
                         {{-- Bouton Menu Hamburger Mobile (Visiteur uniquement) --}}
                         <button 
-                            @click="mobileOpen = !mobileOpen; if(mobileOpen) { searchOpen = false; }" 
-                            class="p-2 rounded-lg text-mist hover:text-chalk hover:bg-panel-hi transition"
+                            type="button"
+                            @click.stop="mobileOpen = !mobileOpen; if(mobileOpen) { searchOpen = false; }" 
+                            class="p-2 rounded-lg text-mist hover:text-chalk hover:bg-panel-hi transition cursor-pointer"
                             title="Menu principal"
                             aria-label="Ouvrir le menu"
                         >
-                            <svg x-show="!mobileOpen" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
-                            <svg x-show="mobileOpen" x-cloak class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                            <svg x-show="!mobileOpen" class="w-5 h-5 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
+                            <svg x-show="mobileOpen" x-cloak class="w-5 h-5 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
                         </button>
                     @endauth
                 </div>
             </div>
 
             {{-- Recherche mobile --}}
-            <div x-show="searchOpen" x-cloak x-transition class="md:hidden pb-3">
-                <form action="{{ route('manga.index') }}" method="GET">
+            <div x-show="searchOpen" x-cloak x-transition:enter="transition ease-out duration-150"
+                 x-transition:enter-start="opacity-0 -translate-y-1" x-transition:enter-end="opacity-100 translate-y-0"
+                 x-transition:leave="transition ease-in duration-100"
+                 x-transition:leave-start="opacity-100 translate-y-0" x-transition:leave-end="opacity-0 -translate-y-1"
+                 class="md:hidden pt-1 pb-3 px-1">
+                <form action="{{ route('manga.index') }}" method="GET" class="relative flex items-center">
+                    <svg class="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-mist pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
                     <input type="text" name="q" placeholder="Rechercher une série..."
-                        class="input-field w-full text-sm !rounded-full" autofocus>
+                        class="input-field w-full text-sm !pl-10 !pr-10 !py-2.5 !rounded-xl !bg-[#12121c] !border-[#262638] focus:!border-[#dc2626] shadow-inner text-white placeholder-[#7070a0]" autofocus>
+                    <button type="submit" class="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 text-mist hover:text-white" aria-label="Rechercher">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
+                    </button>
                 </form>
             </div>
 
@@ -1147,5 +1188,10 @@
     </button>
 
     @livewireScripts
+    <script>
+        if (window.Alpine && typeof setupNotificationsStore === 'function') {
+            setupNotificationsStore();
+        }
+    </script>
 </body>
 </html>

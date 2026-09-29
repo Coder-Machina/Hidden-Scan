@@ -86,13 +86,19 @@ class MangaForm
                             ->preload()
                             ->searchable()
                             ->required()
-                            ->label('Genres'),
+                            ->label('Genres')
+                            ->createOptionForm([
+                                TextInput::make('name')->label('Nom du genre')->required(),
+                            ]),
                         Select::make('tags')
                             ->relationship('tags', 'name')
                             ->multiple()
                             ->preload()
                             ->searchable()
-                            ->label('Tags'),
+                            ->label('Tags')
+                            ->createOptionForm([
+                                TextInput::make('name')->label('Nom du tag')->required(),
+                            ]),
                         TextInput::make('release_year')
                             ->label('Année de sortie')
                             ->numeric()

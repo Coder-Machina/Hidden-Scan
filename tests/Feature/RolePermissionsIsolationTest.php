@@ -2,10 +2,15 @@
 
 namespace Tests\Feature;
 
+use App\Filament\Resources\Artists\ArtistResource;
 use App\Filament\Resources\AuditLogs\AuditLogResource;
+use App\Filament\Resources\Authors\AuthorResource;
+use App\Filament\Resources\Chapters\ChapterResource;
 use App\Filament\Resources\CommentReports\CommentReportResource;
 use App\Filament\Resources\Comments\CommentResource;
+use App\Filament\Resources\Genres\GenreResource;
 use App\Filament\Resources\Mangas\MangaResource;
+use App\Filament\Resources\Tags\TagResource;
 use App\Filament\Resources\Users\UserResource;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -26,7 +31,7 @@ class RolePermissionsIsolationTest extends TestCase
         Role::firstOrCreate(['name' => 'uploader', 'guard_name' => 'web']);
     }
 
-    public function test_uploader_only_accesses_manga_and_chapters(): void
+    public function test_uploader_only_accesses_manga_and_chapters_and_metadata(): void
     {
         $uploader = User::factory()->create();
         $uploader->assignRole('uploader');
@@ -34,6 +39,12 @@ class RolePermissionsIsolationTest extends TestCase
         $this->actingAs($uploader);
 
         $this->assertTrue(MangaResource::canViewAny());
+        $this->assertTrue(ChapterResource::canViewAny());
+        $this->assertTrue(AuthorResource::canViewAny());
+        $this->assertTrue(ArtistResource::canViewAny());
+        $this->assertTrue(GenreResource::canViewAny());
+        $this->assertTrue(TagResource::canViewAny());
+
         $this->assertFalse(UserResource::canViewAny());
         $this->assertFalse(CommentResource::canViewAny());
         $this->assertFalse(CommentReportResource::canViewAny());
@@ -49,7 +60,13 @@ class RolePermissionsIsolationTest extends TestCase
 
         $this->assertTrue(CommentResource::canViewAny());
         $this->assertTrue(CommentReportResource::canViewAny());
+
         $this->assertFalse(MangaResource::canViewAny());
+        $this->assertFalse(ChapterResource::canViewAny());
+        $this->assertFalse(AuthorResource::canViewAny());
+        $this->assertFalse(ArtistResource::canViewAny());
+        $this->assertFalse(GenreResource::canViewAny());
+        $this->assertFalse(TagResource::canViewAny());
         $this->assertFalse(UserResource::canViewAny());
         $this->assertFalse(AuditLogResource::canViewAny());
     }
