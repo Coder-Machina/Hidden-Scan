@@ -118,7 +118,7 @@
     function setupNotificationsStore() {
         if (!window.Alpine) return;
         try {
-            if (window.Alpine.stores && window.Alpine.stores.notifications) return;
+            if (typeof Alpine.store === 'function' && Alpine.store('notifications')) return;
         } catch(e) {}
 
         try {
@@ -215,6 +215,9 @@
     document.addEventListener('alpine:init', setupNotificationsStore);
     document.addEventListener('livewire:init', setupNotificationsStore);
     document.addEventListener('DOMContentLoaded', setupNotificationsStore);
+    if (window.Alpine) {
+        setupNotificationsStore();
+    }
     </script>
 
     {{-- Swiper --}}
@@ -385,17 +388,70 @@
          x-data="{ 
              mobileOpen: false, 
              searchOpen: false, 
+             userMobileMenuOpen: false,
+             notifMobileOpen: false,
              navHidden: false, 
              lastScrollY: 0,
-             handleScroll() {
-                 let isNotifOpen = false;
+
+             toggleSearch() {
+                 this.searchOpen = !this.searchOpen;
+                 if (this.searchOpen) {
+                     this.mobileOpen = false;
+                     this.notifMobileOpen = false;
+                     this.userMobileMenuOpen = false;
+                 }
+             },
+
+             toggleMobileMenu() {
+                 this.mobileOpen = !this.mobileOpen;
+                 if (this.mobileOpen) {
+                     this.searchOpen = false;
+                     this.notifMobileOpen = false;
+                     this.userMobileMenuOpen = false;
+                 }
+             },
+
+             toggleUserMobileMenu() {
+                 this.userMobileMenuOpen = !this.userMobileMenuOpen;
+                 if (this.userMobileMenuOpen) {
+                     this.mobileOpen = false;
+                     this.searchOpen = false;
+                     this.notifMobileOpen = false;
+                 }
+             },
+
+             toggleNotifMobile() {
+                 this.notifMobileOpen = !this.notifMobileOpen;
+                 if (this.notifMobileOpen) {
+                     this.mobileOpen = false;
+                     this.searchOpen = false;
+                     this.userMobileMenuOpen = false;
+                     try {
+                         if (window.Alpine && Alpine.store && Alpine.store('notifications')) {
+                             Alpine.store('notifications').fetchNotifications();
+                         }
+                     } catch(e) {}
+                 }
+             },
+
+             closeAll() {
+                 this.mobileOpen = false;
+                 this.searchOpen = false;
+                 this.notifMobileOpen = false;
+                 this.userMobileMenuOpen = false;
+             },
+
+             handleNotifClick(item) {
                  try {
                      if (window.Alpine && Alpine.store && Alpine.store('notifications')) {
-                         isNotifOpen = !!Alpine.store('notifications').open;
+                         Alpine.store('notifications').handleClick(item);
                      }
                  } catch(e) {}
+                 this.notifMobileOpen = false;
+             },
 
-                 if (this.mobileOpen || this.searchOpen || isNotifOpen) {
+             handleScroll() {
+                 if (this.mobileOpen || this.searchOpen || this.notifMobileOpen || this.userMobileMenuOpen) {
                      this.navHidden = false;
                      return;
                  }
@@ -408,6 +464,7 @@
              }
          }"
          @scroll.window="handleScroll()"
+         @click.outside="closeAll()"
          :class="navHidden ? '-translate-y-full' : 'translate-y-0'">
         <div class="max-w-7xl mx-auto px-4 sm:px-6">
             <div class="flex items-center justify-between h-16">
@@ -464,7 +521,7 @@
                         {{-- Centre de notifications (Desktop) --}}
                         <div class="relative" x-data="{ notifOpen: false }" @click.outside="notifOpen = false">
                             <button 
-                                @click="notifOpen = !notifOpen; if(notifOpen) $store.notifications.fetchNotifications()" 
+                                @click="notifOpen = !notifOpen; if(notifOpen && $store?.notifications) $store.notifications.fetchNotifications()" 
                                 class="relative p-2.5 rounded-xl bg-[#141420] border border-[#222234] text-[#a0a0c0] hover:text-white hover:border-[#dc2626]/50 hover:bg-[#1a1a28] transition-all cursor-pointer flex items-center justify-center shadow-md focus:outline-none"
                                 title="Notifications de vos séries favorites"
                                 aria-label="Notifications"
@@ -474,7 +531,7 @@
                                 </svg>
 
                                 {{-- Badge non lu --}}
-                                <template x-if="$store.notifications.unreadCount > 0">
+                                <template x-if="$store?.notifications && $store.notifications.unreadCount > 0">
                                     <span class="absolute -top-1 -right-1 flex h-4 min-w-[16px] px-1 items-center justify-center rounded-full bg-[#dc2626] text-[10px] font-extrabold text-white ring-2 ring-[#0e0e15] shadow-lg animate-pulse"
                                           x-text="$store.notifications.unreadCount > 99 ? '99+' : $store.notifications.unreadCount">
                                     </span>
@@ -498,12 +555,12 @@
                                 <div class="p-3.5 border-b border-[#222234] flex items-center justify-between gap-2 bg-[#161624]">
                                     <div class="flex items-center gap-2">
                                         <span class="font-bold text-sm text-white">Notifications</span>
-                                        <template x-if="$store.notifications.unreadCount > 0">
+                                        <template x-if="$store?.notifications && $store.notifications.unreadCount > 0">
                                             <span class="text-[10px] font-extrabold px-1.5 py-0.5 rounded-full bg-red-600/30 text-red-400 border border-red-500/40"
                                                   x-text="$store.notifications.unreadCount + ' non lue(s)'"></span>
                                         </template>
                                     </div>
-                                    <template x-if="$store.notifications.unreadCount > 0">
+                                    <template x-if="$store?.notifications && $store.notifications.unreadCount > 0">
                                         <button 
                                             type="button" 
                                             @click="$store.notifications.markAllAsRead()"
@@ -516,7 +573,7 @@
 
                                 {{-- Liste des notifications --}}
                                 <div class="max-h-80 overflow-y-auto divide-y divide-[#1e1e2c]">
-                                    <template x-if="$store.notifications.notifications.length === 0">
+                                    <template x-if="!$store?.notifications || !$store.notifications.notifications || $store.notifications.notifications.length === 0">
                                         <div class="p-8 text-center">
                                             <div class="w-12 h-12 rounded-full bg-[#181826] border border-[#262638] flex items-center justify-center mx-auto mb-3 text-[#60608a]">
                                                 <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/></svg>
@@ -528,7 +585,7 @@
                                         </div>
                                     </template>
 
-                                    <template x-for="item in $store.notifications.notifications" :key="item.id">
+                                    <template x-for="item in ($store?.notifications?.notifications || [])" :key="item.id">
                                         <div 
                                             @click="$store.notifications.handleClick(item)"
                                             :class="item.is_read ? 'bg-[#12121c] opacity-80' : 'bg-[#181828] border-l-2 border-[#dc2626]'"
@@ -702,12 +759,12 @@
                 </div>
 
                 {{-- Boutons mobile --}}
-                <div class="flex md:hidden items-center gap-1.5 sm:gap-2">
+                <div class="flex md:hidden items-center gap-1 sm:gap-2">
                     {{-- Bouton Recherche Mobile --}}
                     <button 
                         type="button"
-                        @click.stop="searchOpen = !searchOpen; if(searchOpen) { mobileOpen = false; try { if(window.Alpine && Alpine.store) Alpine.store('notifications').open = false; } catch(e){} }" 
-                        class="p-2 rounded-lg text-mist hover:text-chalk hover:bg-panel-hi transition cursor-pointer"
+                        @click.stop="toggleSearch()" 
+                        class="p-2 sm:p-2.5 rounded-xl text-mist hover:text-chalk hover:bg-panel-hi active:scale-95 transition cursor-pointer flex items-center justify-center"
                         title="Recherche"
                         aria-label="Ouvrir la recherche"
                     >
@@ -719,15 +776,15 @@
                         {{-- Bouton Cloche Notifications Mobile --}}
                         <button 
                             type="button"
-                            @click.stop="try { $store.notifications.toggle(); if($store.notifications.open) { mobileOpen = false; searchOpen = false; } } catch(e){}" 
-                            class="relative p-2 rounded-lg text-[#a0a0c0] hover:text-white hover:bg-panel-hi transition cursor-pointer"
+                            @click.stop="toggleNotifMobile()" 
+                            class="relative p-2 sm:p-2.5 rounded-xl text-[#a0a0c0] hover:text-white hover:bg-panel-hi active:scale-95 transition cursor-pointer flex items-center justify-center"
                             title="Notifications"
                             aria-label="Notifications"
                         >
                             <svg class="w-5 h-5 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/>
                             </svg>
-                            <template x-if="window.Alpine && $store?.notifications?.unreadCount > 0">
+                            <template x-if="$store?.notifications && $store.notifications.unreadCount > 0">
                                 <span class="absolute top-1 right-1 flex h-4 min-w-[16px] px-1 items-center justify-center rounded-full bg-[#dc2626] text-[9px] font-extrabold text-white ring-2 ring-[#0e0e15] pointer-events-none"
                                       x-text="$store.notifications.unreadCount > 99 ? '99+' : $store.notifications.unreadCount">
                                 </span>
@@ -735,11 +792,11 @@
                         </button>
 
                         {{-- Avatar Utilisateur Mobile avec Menu Déroulant --}}
-                        <div class="relative" x-data="{ userMobileMenuOpen: false }" @click.outside="userMobileMenuOpen = false">
+                        <div class="relative">
                             <button 
                                 type="button"
-                                @click.stop="userMobileMenuOpen = !userMobileMenuOpen; if(userMobileMenuOpen) { mobileOpen = false; searchOpen = false; try { if(window.Alpine && Alpine.store) Alpine.store('notifications').open = false; } catch(e){} }" 
-                                class="w-8 h-8 rounded-full overflow-hidden ring-2 ring-[#dc2626]/80 hover:ring-[#dc2626] transition-all cursor-pointer flex items-center justify-center bg-[#111118] shadow-md shadow-black/40 focus:outline-none"
+                                @click.stop="toggleUserMobileMenu()" 
+                                class="w-9 h-9 rounded-full overflow-hidden ring-2 ring-[#dc2626]/80 hover:ring-[#dc2626] active:scale-95 transition-all cursor-pointer flex items-center justify-center bg-[#111118] shadow-md shadow-black/40 focus:outline-none"
                                 title="{{ Auth::user()->name }}"
                                 aria-label="Menu profil utilisateur"
                             >
@@ -750,6 +807,7 @@
                             <div 
                                 x-show="userMobileMenuOpen" 
                                 x-cloak
+                                @click.stop
                                 x-transition:enter="transition ease-out duration-150"
                                 x-transition:enter-start="opacity-0 scale-95 -translate-y-1"
                                 x-transition:enter-end="opacity-100 scale-100 translate-y-0"
@@ -893,7 +951,7 @@
                         {{-- Bouton Menu Hamburger Mobile (Visiteur uniquement) --}}
                         <button 
                             type="button"
-                            @click.stop="mobileOpen = !mobileOpen; if(mobileOpen) { searchOpen = false; }" 
+                            @click.stop="toggleMobileMenu()" 
                             class="p-2 rounded-lg text-mist hover:text-chalk hover:bg-panel-hi transition cursor-pointer"
                             title="Menu principal"
                             aria-label="Ouvrir le menu"
@@ -906,7 +964,7 @@
             </div>
 
             {{-- Recherche mobile --}}
-            <div x-show="searchOpen" x-cloak x-transition:enter="transition ease-out duration-150"
+            <div x-show="searchOpen" x-cloak @click.stop x-transition:enter="transition ease-out duration-150"
                  x-transition:enter-start="opacity-0 -translate-y-1" x-transition:enter-end="opacity-100 translate-y-0"
                  x-transition:leave="transition ease-in duration-100"
                  x-transition:leave-start="opacity-100 translate-y-0" x-transition:leave-end="opacity-0 -translate-y-1"
@@ -923,30 +981,30 @@
 
             {{-- Panneau Notifications Mobile --}}
             @auth
-            <div x-show="$store.notifications && $store.notifications.open" x-cloak x-transition class="md:hidden pb-3">
+            <div x-show="notifMobileOpen" x-cloak @click.stop x-transition class="md:hidden pb-3">
                 <div style="background-color: #12121c; border: 1px solid #262638; border-radius: 14px; overflow: hidden; box-shadow: 0 16px 40px rgba(0,0,0,0.85);">
                     <div class="p-3 border-b border-[#222234] flex items-center justify-between bg-[#161624]">
                         <div class="flex items-center gap-2">
                             <span class="font-bold text-xs text-white">Notifications des chapitres</span>
-                            <template x-if="$store.notifications.unreadCount > 0">
+                            <template x-if="$store?.notifications && $store.notifications.unreadCount > 0">
                                 <span class="text-[9px] font-extrabold px-1.5 py-0.5 rounded-full bg-red-600/30 text-red-400 border border-red-500/40"
                                       x-text="$store.notifications.unreadCount"></span>
                             </template>
                         </div>
-                        <template x-if="$store.notifications.unreadCount > 0">
+                        <template x-if="$store?.notifications && $store.notifications.unreadCount > 0">
                             <button @click="$store.notifications.markAllAsRead()" class="text-[10px] text-[#8ea1ff] font-medium">Tout lire</button>
                         </template>
                     </div>
 
                     <div class="max-h-72 overflow-y-auto divide-y divide-[#1e1e2c]">
-                        <template x-if="$store.notifications.notifications.length === 0">
+                        <template x-if="!$store?.notifications || !$store.notifications.notifications || $store.notifications.notifications.length === 0">
                             <div class="p-6 text-center text-xs text-[#7070a0]">
                                 Aucune notification pour le moment.
                             </div>
                         </template>
 
-                        <template x-for="item in $store.notifications.notifications" :key="item.id">
-                            <div @click="$store.notifications.handleClick(item); $store.notifications.open = false;"
+                        <template x-for="item in ($store?.notifications?.notifications || [])" :key="item.id">
+                            <div @click="handleNotifClick(item)"
                                  :class="item.is_read ? 'bg-[#12121c] opacity-80' : 'bg-[#181828] border-l-2 border-[#dc2626]'"
                                  class="p-2.5 flex items-start gap-2.5 hover:bg-[#1e1e30] transition cursor-pointer">
                                 <div class="w-9 h-12 rounded bg-[#1f1f2e] overflow-hidden flex-shrink-0">
@@ -980,7 +1038,7 @@
 
         {{-- Menu mobile (Visiteurs uniquement) --}}
         @guest
-        <div x-show="mobileOpen" x-cloak x-transition:enter="transition ease-out duration-200"
+        <div x-show="mobileOpen" x-cloak @click.stop x-transition:enter="transition ease-out duration-200"
              x-transition:enter-start="opacity-0 -translate-y-2" x-transition:enter-end="opacity-100 translate-y-0"
              x-transition:leave="transition ease-in duration-150"
              x-transition:leave-start="opacity-100 translate-y-0" x-transition:leave-end="opacity-0 -translate-y-2"
