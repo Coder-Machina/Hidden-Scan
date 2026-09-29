@@ -51,6 +51,7 @@ class ProductionDataSeeder extends Seeder
     'email_verified_at' => NULL,
     'roles' => 
     array (
+      0 => 'admin',
     ),
   ),
   3 => 

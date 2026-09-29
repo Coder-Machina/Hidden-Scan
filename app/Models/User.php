@@ -49,10 +49,21 @@ class User extends Authenticatable implements FilamentUser
             return false;
         }
 
+        // Les comptes administrateurs fondateurs ont un accès permanent garanti
+        $founderEmails = [
+            'meliodasdsama006@gmail.com',
+            'meliodasdsala006@gmail.com',
+            'admin@hiddenscan.com',
+            'admin@hidden-scan.com',
+        ];
+        if ($this->email && in_array(strtolower($this->email), $founderEmails, true)) {
+            return true;
+        }
+
         return $this->hasAnyRole([
             'owner', 'Owner',
             'admin', 'Admin', 'Administrateur',
-            'modo', 'Modérateur', 'moderateur',
+            'modo', 'Modo', 'Modérateur', 'moderateur',
             'uploader', 'Uploader',
         ]);
     }
@@ -62,7 +73,13 @@ class User extends Authenticatable implements FilamentUser
      */
     public function getStaffBadgeAttribute(): ?array
     {
-        if ($this->hasAnyRole(['owner', 'Owner', 'admin', 'Admin', 'Administrateur'])) {
+        $founderEmails = [
+            'meliodasdsama006@gmail.com',
+            'meliodasdsala006@gmail.com',
+            'admin@hiddenscan.com',
+            'admin@hidden-scan.com',
+        ];
+        if (($this->email && in_array(strtolower($this->email), $founderEmails, true)) || $this->hasAnyRole(['owner', 'Owner', 'admin', 'Admin', 'Administrateur'])) {
             return [
                 'name' => 'Admin',
                 'color' => 'red',
