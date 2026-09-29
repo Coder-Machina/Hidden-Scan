@@ -27,24 +27,21 @@ class UsersTable
                     ->searchable()
                     ->sortable()
                     ->weight('bold'),
+                TextColumn::make('roles.name')
+                    ->label('Rôles')
+                    ->badge()
+                    ->color(fn (string $state): string => match (strtolower($state)) {
+                        'owner', 'admin', 'administrateur' => 'danger', // Rouge
+                        'modo', 'modérateur', 'moderateur' => 'purple', // Violet
+                        'uploader' => 'info', // Bleu ciel
+                        default => 'gray',
+                    })
+                    ->placeholder('Lecteur'),
                 TextColumn::make('email')
                     ->label('Adresse email')
                     ->searchable()
                     ->copyable()
                     ->sortable(),
-                TextColumn::make('pass_code')
-                    ->label('Pass Secret')
-                    ->searchable()
-                    ->copyable()
-                    ->fontFamily(\Filament\Support\Enums\FontFamily::Mono)
-                    ->color('danger')
-                    ->placeholder('Compte classique')
-                    ->toggleable(),
-                TextColumn::make('last_ip_address')
-                    ->label('IP')
-                    ->searchable()
-                    ->copyable()
-                    ->toggleable(isToggledHiddenByDefault: true),
                 TextColumn::make('status')
                     ->label('Statut')
                     ->getStateUsing(function (User $record) {
@@ -58,16 +55,6 @@ class UsersTable
                         'Banni des comm.' => 'warning',
                         default => 'success',
                     }),
-                TextColumn::make('roles.name')
-                    ->label('Rôles')
-                    ->badge()
-                    ->color(fn (string $state): string => match (strtolower($state)) {
-                        'owner', 'admin', 'administrateur' => 'danger', // Rouge
-                        'modo', 'modérateur', 'moderateur' => 'purple', // Violet
-                        'uploader' => 'info', // Bleu ciel
-                        default => 'gray',
-                    })
-                    ->placeholder('Lecteur'),
                 TextColumn::make('comments_count')
                     ->label('Commentaires')
                     ->counts('comments')
@@ -78,6 +65,19 @@ class UsersTable
                     ->label('Inscrit le')
                     ->dateTime('d/m/Y H:i')
                     ->sortable(),
+                TextColumn::make('pass_code')
+                    ->label('Pass Secret')
+                    ->searchable()
+                    ->copyable()
+                    ->fontFamily(\Filament\Support\Enums\FontFamily::Mono)
+                    ->color('danger')
+                    ->placeholder('Compte classique')
+                    ->toggleable(isToggledHiddenByDefault: true),
+                TextColumn::make('last_ip_address')
+                    ->label('IP')
+                    ->searchable()
+                    ->copyable()
+                    ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([
                 //
