@@ -17,6 +17,11 @@ chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache
 # Créer le lien symbolique public vers storage
 php artisan storage:link || true
 
+# Publier et copier les assets Livewire pour une disponibilité statique directe
+php artisan livewire:publish --assets || true
+mkdir -p /var/www/html/public/livewire
+cp -f /var/www/html/public/vendor/livewire/* /var/www/html/public/livewire/ 2>/dev/null || true
+
 # Support SQLite automatique si aucun hôte MySQL n'est fourni
 if [ "$DB_CONNECTION" = "sqlite" ] || [ -z "$DB_HOST" ]; then
     echo "🗄️ Initializing SQLite database fallback..."
