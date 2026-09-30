@@ -72,4 +72,53 @@ class StaffRolesAndAccessTest extends TestCase
         $this->assertNull($reader->staff_badge);
         $this->assertFalse($reader->canAccessPanel(filament()->getPanel('admin')));
     }
+
+    public function test_staff_role_modification_persists_across_production_seeder(): void
+    {
+        // 1. Initialiser un utilisateur membre du staff avec un role modo
+        $roleModo = Role::firstOrCreate(['name' => 'modo', 'guard_name' => 'web']);
+        $roleAdmin = Role::firstOrCreate(['name' => 'admin', 'guard_name' => 'web']);
+
+        $staffUser = User::where('email', 'modo@hiddenscan.com')->first();
+        if (! $staffUser) {
+            $staffUser = User::create([
+                'name' => 'Modérateur Principal',
+                'email' => 'modo@hiddenscan.com',
+                'pass_code' => 'HS-MODO-SCAN-0003',
+                'password' => bcrypt('secret-password-123'),
+            ]);
+        }
+        $staffUser->syncRoles([$roleModo]);
+
+        // 2. L'admin promeut ce membre en "Admin" et change son nom dans le panel "Equipe Staff"
+        $staffUser->update(['name' => 'Promu Admin General']);
+        $staffUser->syncRoles([$roleAdmin]);
+
+        // 3. Executer le seeder de production (simulant un redeploiement de conteneur)
+        $this->seed(\Database\Seeders\ProductionDataSeeder::class);
+
+        // 4. Verifier que la modification reste : il est toujours Admin et son nom est preserve
+        $staffUser->refresh();
+        $this->assertEquals('Promu Admin General', $staffUser->name);
+        $this->assertTrue($staffUser->hasRole('admin'));
+        $this->assertFalse($staffUser->hasRole('modo'));
+    }
+
+    public function test_newly_created_staff_member_persists_across_production_seeder(): void
+    {
+        $roleUploader = Role::firstOrCreate(['name' => 'uploader', 'guard_name' => 'web']);
+        $newStaff = User::create([
+            'name' => 'Nouveau Recrue Uploader',
+            'email' => 'nouvelle_recrue@hiddenscan.com',
+            'pass_code' => 'HS-NEW-UPLO-9999',
+            'password' => bcrypt('recrue_pass'),
+        ]);
+        $newStaff->syncRoles([$roleUploader]);
+
+        $this->seed(\Database\Seeders\ProductionDataSeeder::class);
+
+        $newStaff->refresh();
+        $this->assertEquals('Nouveau Recrue Uploader', $newStaff->name);
+        $this->assertTrue($newStaff->hasRole('uploader'));
+    }
 }
