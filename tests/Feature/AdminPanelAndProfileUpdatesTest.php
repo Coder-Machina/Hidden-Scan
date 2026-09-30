@@ -270,5 +270,57 @@ class AdminPanelAndProfileUpdatesTest extends TestCase
         $this->assertAuthenticated();
         $this->assertDatabaseHas('users', ['pass_code' => $passCode]);
     }
+
+    public function test_production_data_seeder_does_not_overwrite_manga_modifications(): void
+    {
+        // 1. Initialiser une oeuvre comme si elle avait ete modifiee par un admin via le panel
+        $manga = Manga::create([
+            'title' => 'Titre Modifie Par Admin',
+            'slug' => 'genius-grandson-of-the-loan-shark-king',
+            'synopsis' => 'Ce synopsis a ete personnalise depuis le panel admin.',
+            'type' => 'manga',
+            'status' => 'termine',
+            'release_year' => '2025',
+        ]);
+
+        // 2. Executer le seeder de production (simulant un redemarrage / redeploiement conteneur)
+        $this->seed(\Database\Seeders\ProductionDataSeeder::class);
+
+        // 3. Verifier que les modifications de l'admin restent et n'ont PAS ete ecrasees
+        $manga->refresh();
+        $this->assertEquals('Titre Modifie Par Admin', $manga->title);
+        $this->assertEquals('Ce synopsis a ete personnalise depuis le panel admin.', $manga->synopsis);
+        $this->assertEquals('manga', $manga->type?->value ?? (string) $manga->type);
+        $this->assertEquals('termine', $manga->status?->value ?? (string) $manga->status);
+        $this->assertEquals('2025', $manga->release_year);
+    }
+
+    public function test_production_data_seeder_does_not_reset_existing_user_password_or_name(): void
+    {
+        // 1. Un utilisateur admin existe (issu des migrations) et personnalise son nom et mot de passe
+        $customPassword = \Illuminate\Support\Facades\Hash::make('SuperSecretAdminPassword123!');
+        $user = User::where('email', 'meliodasdsama006@gmail.com')->first();
+        if (! $user) {
+            $user = User::create([
+                'name' => 'Meliodas Initial',
+                'email' => 'meliodasdsama006@gmail.com',
+                'pass_code' => 'HS-MELI-ODAS-0001',
+                'password' => \Illuminate\Support\Facades\Hash::make('password'),
+            ]);
+        }
+
+        $user->update([
+            'name' => 'Meliodas Custom Name',
+            'password' => $customPassword,
+        ]);
+
+        // 2. Executer le seeder (simulant un redemarrage / redeploiement de conteneur)
+        $this->seed(\Database\Seeders\ProductionDataSeeder::class);
+
+        // 3. Verifier que son nom et son mot de passe n'ont pas ete reinitialises
+        $user->refresh();
+        $this->assertEquals('Meliodas Custom Name', $user->name);
+        $this->assertTrue(\Illuminate\Support\Facades\Hash::check('SuperSecretAdminPassword123!', $user->password));
+    }
 }
 

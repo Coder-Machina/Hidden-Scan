@@ -22,11 +22,13 @@ php artisan livewire:publish --assets || true
 mkdir -p /var/www/html/public/livewire
 cp -f /var/www/html/public/vendor/livewire/* /var/www/html/public/livewire/ 2>/dev/null || true
 
-# Support SQLite automatique si aucun hôte MySQL n'est fourni
-if [ "$DB_CONNECTION" = "sqlite" ] || [ -z "$DB_HOST" ]; then
+# Support SQLite automatique si aucun hôte externe ou URL de connexion n'est fourni
+if [ "$DB_CONNECTION" = "sqlite" ] || ([ -z "$DB_HOST" ] && [ -z "$DB_URL" ] && [ -z "$DATABASE_URL" ]); then
     echo "🗄️ Initializing SQLite database fallback..."
     mkdir -p /var/www/html/database
-    touch /var/www/html/database/database.sqlite
+    if [ ! -f /var/www/html/database/database.sqlite ]; then
+        touch /var/www/html/database/database.sqlite
+    fi
     chown www-data:www-data /var/www/html/database/database.sqlite
 fi
 
@@ -34,8 +36,8 @@ fi
 echo "📦 Running database migrations..."
 php artisan migrate --force || true
 
-# Remplir automatiquement la base de données avec les mangas, genres et comptes admin
-echo "🌱 Seeding initial production data..."
+# Initialiser les données de démarrage sans jamais écraser les modifications du panel
+echo "🌱 Checking and ensuring initial data (preserves all existing admin modifications)..."
 php artisan db:seed --class=ProductionDataSeeder --force || true
 
 # Mettre en cache la configuration, les routes et les vues

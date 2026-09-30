@@ -58,20 +58,18 @@ class ProductionDataSeeder extends Seeder
             $roles = $uData['roles'] ?? [];
             unset($uData['roles']);
 
-            \Illuminate\Support\Facades\DB::table('users')->updateOrInsert(
-                ['email' => $uData['email']],
-                array_merge($uData, ['updated_at' => now(), 'created_at' => now()])
-            );
-
             $user = User::where('email', $uData['email'])->first();
-            if ($user && !empty($roles)) {
-                try {
-                    foreach ($roles as $roleName) {
-                        \Spatie\Permission\Models\Role::firstOrCreate(['name' => $roleName, 'guard_name' => 'web']);
+            if (! $user) {
+                $user = User::create($uData);
+                if (! empty($roles)) {
+                    try {
+                        foreach ($roles as $roleName) {
+                            \Spatie\Permission\Models\Role::firstOrCreate(['name' => $roleName, 'guard_name' => 'web']);
+                        }
+                        $user->assignRole($roles);
+                    } catch (\Throwable $e) {
+                        \Illuminate\Support\Facades\Log::warning("Could not assign roles for user {$user->email}: " . $e->getMessage());
                     }
-                    $user->syncRoles($roles);
-                } catch (\Throwable $e) {
-                    \Illuminate\Support\Facades\Log::warning("Could not sync roles for user {$user->email}: " . $e->getMessage());
                 }
             }
         }
@@ -448,6 +446,11 @@ class ProductionDataSeeder extends Seeder
 );
         foreach ($tags as $tData) {
             Tag::firstOrCreate(['slug' => $tData['slug']], $tData);
+        }
+
+        if (Manga::exists()) {
+            $this->command?->info("Des mangas existent déjà dans la base de données. Le catalogue initial est préservé sans écraser les modifications du panel.");
+            return;
         }
 
         $mangas = array (
@@ -2947,36 +2950,36 @@ class ProductionDataSeeder extends Seeder
 
             unset($mData['genres'], $mData['tags'], $mData['authors'], $mData['artists'], $mData['chapters']);
 
-            $manga = Manga::updateOrCreate(
+            $manga = Manga::firstOrCreate(
                 ['slug' => $mData['slug']],
                 $mData
             );
 
             if (!empty($genreSlugs)) {
                 $genreIds = Genre::whereIn('slug', $genreSlugs)->pluck('id');
-                $manga->genres()->sync($genreIds);
+                $manga->genres()->syncWithoutDetaching($genreIds);
             }
 
             if (!empty($tagSlugs)) {
                 $tagIds = Tag::whereIn('slug', $tagSlugs)->pluck('id');
-                $manga->tags()->sync($tagIds);
+                $manga->tags()->syncWithoutDetaching($tagIds);
             }
 
             if (!empty($authorSlugs)) {
                 $authorIds = Author::whereIn('slug', $authorSlugs)->pluck('id');
-                $manga->authors()->sync($authorIds);
+                $manga->authors()->syncWithoutDetaching($authorIds);
             }
 
             if (!empty($artistSlugs)) {
                 $artistIds = Artist::whereIn('slug', $artistSlugs)->pluck('id');
-                $manga->artists()->sync($artistIds);
+                $manga->artists()->syncWithoutDetaching($artistIds);
             }
 
             foreach ($chapters as $cData) {
                 $pages = $cData['pages'] ?? [];
                 unset($cData['pages']);
 
-                $chapter = Chapter::updateOrCreate(
+                $chapter = Chapter::firstOrCreate(
                     [
                         'manga_id' => $manga->id,
                         'number' => $cData['number'],
@@ -2985,7 +2988,7 @@ class ProductionDataSeeder extends Seeder
                 );
 
                 foreach ($pages as $pData) {
-                    \App\Models\ChapterPage::updateOrCreate(
+                    \App\Models\ChapterPage::firstOrCreate(
                         [
                             'chapter_id' => $chapter->id,
                             'page_number' => $pData['page_number'],
