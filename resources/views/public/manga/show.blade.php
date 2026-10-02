@@ -307,9 +307,21 @@
     </style>
 
     <div class="manga-page-content-wrap">
+
+    {{-- ═══ Synopsis (Présentation de l'œuvre) ═══ --}}
+    @if($manga->synopsis)
+    <div class="bg-[#14151e] border border-[#1e1e2e] rounded-2xl p-5 sm:p-6 mb-8 animate-fade-in-up" style="animation-delay: 0.15s;">
+        <h2 class="font-display font-bold text-white mb-3 text-base sm:text-lg flex items-center gap-2">
+            <svg class="w-5 h-5 text-red-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/></svg>
+            <span>Synopsis</span>
+        </h2>
+        <p class="text-[#9da3b4] text-sm sm:text-base leading-relaxed">{{ $manga->synopsis }}</p>
+    </div>
+    @endif
+
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {{-- ═══ Colonne latérale: Note, Informations, Genres (en bas sur mobile, à gauche sur desktop) ═══ --}}
-        <div class="lg:col-span-1 space-y-4 order-2 lg:order-1 animate-fade-in-up" style="animation-delay: 0.2s;">
+        {{-- ═══ Colonne latérale: Note, Informations, Genres (à gauche sur desktop, avant les chapitres sur mobile) ═══ --}}
+        <div class="lg:col-span-1 space-y-4 animate-fade-in-up" style="animation-delay: 0.2s;">
 
             {{-- Section Note --}}
             <div class="manga-sidebar-card" x-data="ratingWidget()" x-init="init()">
@@ -490,16 +502,8 @@
 
         </div>
 
-        {{-- ═══ Colonne principale: Synopsis + Chapitres (Prioritaire sur mobile, à droite sur desktop) ═══ --}}
-        <div class="lg:col-span-2 space-y-6 order-1 lg:order-2 animate-fade-in-up" style="animation-delay: 0.15s;">
-
-            {{-- Synopsis --}}
-            @if($manga->synopsis)
-            <div class="bg-[#14151e] rounded-2xl p-5 sm:p-6">
-                <h2 class="font-display font-bold text-white mb-3">Synopsis</h2>
-                <p class="text-[#9da3b4] text-sm leading-relaxed">{{ $manga->synopsis }}</p>
-            </div>
-            @endif
+        {{-- ═══ Colonne principale: Chapitres ═══ --}}
+        <div class="lg:col-span-2 space-y-6 animate-fade-in-up" style="animation-delay: 0.25s;">
 
             {{-- ═══ Composant Liste de Chapitres Thème Sombre ═══ --}}
             <style>

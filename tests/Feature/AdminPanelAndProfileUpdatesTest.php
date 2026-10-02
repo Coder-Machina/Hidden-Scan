@@ -187,16 +187,19 @@ class AdminPanelAndProfileUpdatesTest extends TestCase
         $content = $response->getContent();
 
         $synopsisPos = strpos($content, 'Un équipage de pirates recherche le trésor ultime.');
-        $infoPos = strpos($content, 'section-title-info');
+        $infoPos = strpos($content, '<h2 class="section-title-info">');
+        $chaptersPos = strpos($content, '<div class="chapters-container-card">');
         $commentsPos = strpos($content, 'id="manga-comments-section"');
 
         $this->assertNotFalse($synopsisPos);
         $this->assertNotFalse($infoPos);
+        $this->assertNotFalse($chaptersPos);
         $this->assertNotFalse($commentsPos);
 
-        // Comments must come strictly AFTER both the synopsis and the informations section!
-        $this->assertGreaterThan($synopsisPos, $commentsPos);
-        $this->assertGreaterThan($infoPos, $commentsPos);
+        // Ordre logique garanti : Synopsis -> Informations & Genres -> Chapitres -> Commentaires à la fin
+        $this->assertLessThan($infoPos, $synopsisPos);
+        $this->assertLessThan($chaptersPos, $infoPos);
+        $this->assertLessThan($commentsPos, $chaptersPos);
     }
 
     public function test_user_can_update_profile_with_data_uri_avatar_and_banner(): void
