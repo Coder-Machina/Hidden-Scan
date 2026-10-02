@@ -235,4 +235,28 @@ class SequentialChapterPublishingTest extends TestCase
         @unlink($zip3Path);
         @rmdir($tempDir);
     }
+
+    public function test_scheduling_chapter_with_custom_past_or_immediate_date(): void
+    {
+        // Un uploader programme un chapitre avec une date personallisee (meme anterieure a l'heure exacte du serveur)
+        $customTime = now()->subMinutes(5);
+
+        $chapter = Chapter::create([
+            'manga_id' => $this->manga->id,
+            'number' => 99,
+            'slug' => 'chapitre-99',
+            'status' => ChapterStatus::PROGRAMME,
+            'scheduled_at' => $customTime,
+        ]);
+
+        $this->assertEquals(ChapterStatus::PROGRAMME, $chapter->status);
+        $this->assertEquals($customTime->toDateTimeString(), $chapter->scheduled_at->toDateTimeString());
+
+        // La commande de publication programmée publie directement le chapitre
+        $this->artisan('chapters:publish-scheduled')
+            ->assertExitCode(0);
+
+        $chapter->refresh();
+        $this->assertEquals(ChapterStatus::PUBLIE, $chapter->status);
+    }
 }

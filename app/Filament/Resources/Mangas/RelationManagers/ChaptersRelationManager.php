@@ -140,7 +140,6 @@ class ChaptersRelationManager extends RelationManager
                             ->required(),
                         \Filament\Forms\Components\DateTimePicker::make('scheduled_start')
                             ->label('Date & heure du premier chapitre')
-                            ->minDate(now())
                             ->default(now()->addDay()->setHour(18)->setMinute(0))
                             ->required(fn ($get) => $get('status') === 'programme')
                             ->visible(fn ($get) => $get('status') === 'programme'),
@@ -373,7 +372,6 @@ class ChaptersRelationManager extends RelationManager
                     ->form([
                         \Filament\Forms\Components\DateTimePicker::make('scheduled_at')
                             ->label('Date et heure de publication')
-                            ->minDate(now())
                             ->default(fn (Chapter $record) => $record->scheduled_at ?? now()->addDay()->setHour(18)->setMinute(0))
                             ->required(),
                     ])
