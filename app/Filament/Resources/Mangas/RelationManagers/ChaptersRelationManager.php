@@ -422,6 +422,29 @@ class ChaptersRelationManager extends RelationManager
                             ProcessChapterZip::dispatch($record, $zipPath, publishWhenReady: $shouldPublish);
                         }
                     }),
+                Action::make('notify_discord')
+                    ->label('Annoncer Discord')
+                    ->icon('heroicon-m-megaphone')
+                    ->color('primary')
+                    ->requiresConfirmation()
+                    ->modalHeading('Annoncer sur Discord')
+                    ->modalDescription('Envoyer immédiatement la fiche d\'annonce de ce chapitre sur Discord.')
+                    ->modalSubmitActionLabel('Envoyer maintenant')
+                    ->action(function (Chapter $record) {
+                        $sent = app(\App\Services\DiscordWebhookService::class)->sendChapterNotification($record);
+                        if ($sent) {
+                            Notification::make()
+                                ->title('Annonce Discord envoyée')
+                                ->body("Le chapitre #{$record->number} a été annoncé sur Discord.")
+                                ->success()
+                                ->send();
+                        } else {
+                            Notification::make()
+                                ->title('Échec de l\'envoi Discord')
+                                ->danger()
+                                ->send();
+                        }
+                    }),
                 DeleteAction::make(),
             ])
             ->toolbarActions([
@@ -436,12 +459,17 @@ class ChaptersRelationManager extends RelationManager
                             /** @var Manga $manga */
                             $manga = $this->getOwnerRecord();
 
-                            $records->each(function (Chapter $record) {
-                                $record->update([
-                                    'status' => \App\Enums\ChapterStatus::PUBLIE,
-                                    'published_at' => now(),
-                                ]);
-                            });
+                            Chapter::$skipDiscordNotification = true;
+                            try {
+                                $records->each(function (Chapter $record) {
+                                    $record->update([
+                                        'status' => \App\Enums\ChapterStatus::PUBLIE,
+                                        'published_at' => now(),
+                                    ]);
+                                });
+                            } finally {
+                                Chapter::$skipDiscordNotification = false;
+                            }
 
                             app(\App\Services\DiscordWebhookService::class)->sendBatchChaptersNotification($manga, $records);
 
@@ -456,6 +484,28 @@ class ChaptersRelationManager extends RelationManager
                                 ],
                                 'ip_address' => request()->ip(),
                             ]);
+                        }),
+                    BulkAction::make('bulk_notify_discord')
+                        ->label('Annoncer la sélection sur Discord')
+                        ->icon('heroicon-m-megaphone')
+                        ->color('primary')
+                        ->requiresConfirmation()
+                        ->action(function (Collection $records) {
+                            /** @var Manga $manga */
+                            $manga = $this->getOwnerRecord();
+                            $sent = app(\App\Services\DiscordWebhookService::class)->sendBatchChaptersNotification($manga, $records);
+                            if ($sent) {
+                                Notification::make()
+                                    ->title('Annonce de lot envoyée')
+                                    ->body("{$records->count()} chapitre(s) annoncés sur Discord.")
+                                    ->success()
+                                    ->send();
+                            } else {
+                                Notification::make()
+                                    ->title('Échec de l\'annonce Discord')
+                                    ->danger()
+                                    ->send();
+                            }
                         }),
                     DeleteBulkAction::make(),
                 ]),

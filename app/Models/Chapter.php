@@ -99,10 +99,13 @@ class Chapter extends Model
             });
     }
 
+    public static bool $skipDiscordNotification = false;
+
     protected static function booted(): void
     {
         static::saved(function (Chapter $chapter) {
-            if ($chapter->status === \App\Enums\ChapterStatus::PUBLIE) {
+            $isPublished = ($chapter->status === \App\Enums\ChapterStatus::PUBLIE || $chapter->status?->value === 'publie');
+            if ($isPublished && !static::$skipDiscordNotification) {
                 if ($chapter->wasRecentlyCreated || $chapter->wasChanged('status') || $chapter->wasChanged('published_at')) {
                     $chapter->notifyFavoriteUsers();
                     $chapter->notifyDiscord();

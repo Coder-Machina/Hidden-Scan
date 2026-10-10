@@ -2982,6 +2982,42 @@ class ProductionDataSeeder extends Seeder
     ),
     'chapters' => 
     array (
+      0 => 
+      array (
+        'number' => 1,
+        'title' => NULL,
+        'slug' => 'chapitre-1',
+        'status' => 'publie',
+        'views_count' => 0,
+        'published_at' => '2026-10-10 22:08:00',
+        'pages' => 
+        array (
+        ),
+      ),
+      1 => 
+      array (
+        'number' => 2,
+        'title' => NULL,
+        'slug' => 'chapitre-2',
+        'status' => 'publie',
+        'views_count' => 0,
+        'published_at' => '2026-10-10 22:08:01',
+        'pages' => 
+        array (
+        ),
+      ),
+      2 => 
+      array (
+        'number' => 3,
+        'title' => NULL,
+        'slug' => 'chapitre-3',
+        'status' => 'publie',
+        'views_count' => 0,
+        'published_at' => '2026-10-10 22:08:02',
+        'pages' => 
+        array (
+        ),
+      ),
     ),
   ),
 );

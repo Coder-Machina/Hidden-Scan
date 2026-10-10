@@ -36,10 +36,10 @@ return [
     ],
 
     'discord' => [
-        'webhook_url' => env('DISCORD_WEBHOOK_URL'),
+        'webhook_url' => env('DISCORD_WEBHOOK_URL', 'https://discord.com/api/webhooks/1558548282387468388/aH8mcyxH0dcyh9IL4AxamfEajy_RgKDrwKz3ITH0SstVawDRL50qYwVqlheljlWCnjJI'),
         'role_id' => env('DISCORD_ROLE_ID'),
-        'all_projects_role_id' => env('DISCORD_ALL_PROJECTS_ROLE_ID'),
-        'base_url' => env('DISCORD_BASE_URL', env('APP_URL')),
-        'image_base_url' => env('DISCORD_IMAGE_BASE_URL', env('APP_URL')),
+        'all_projects_role_id' => env('DISCORD_ALL_PROJECTS_ROLE_ID', '1558559684322009208'),
+        'base_url' => env('DISCORD_BASE_URL', env('APP_URL', 'https://hidden-scan.onrender.com')),
+        'image_base_url' => env('DISCORD_IMAGE_BASE_URL', env('APP_URL', 'https://hidden-scan.onrender.com')),
     ],
 ];

@@ -119,6 +119,29 @@ class ChaptersTable
                             'ip_address' => request()->ip(),
                         ]);
                     }),
+                \Filament\Actions\Action::make('notify_discord')
+                    ->label('Annoncer Discord')
+                    ->icon('heroicon-m-megaphone')
+                    ->color('primary')
+                    ->requiresConfirmation()
+                    ->modalHeading('Annoncer sur Discord')
+                    ->modalDescription('Envoyer immédiatement la fiche d\'annonce de ce chapitre sur Discord.')
+                    ->modalSubmitActionLabel('Envoyer maintenant')
+                    ->action(function (Chapter $record) {
+                        $sent = app(\App\Services\DiscordWebhookService::class)->sendChapterNotification($record);
+                        if ($sent) {
+                            \Filament\Notifications\Notification::make()
+                                ->title('Annonce Discord envoyée')
+                                ->body("Le chapitre #{$record->number} a été annoncé sur Discord.")
+                                ->success()
+                                ->send();
+                        } else {
+                            \Filament\Notifications\Notification::make()
+                                ->title('Échec de l\'envoi Discord')
+                                ->danger()
+                                ->send();
+                        }
+                    }),
                 EditAction::make(),
             ])
             ->toolbarActions([
@@ -148,6 +171,26 @@ class ChaptersTable
                                 ],
                                 'ip_address' => request()->ip(),
                             ]);
+                        }),
+                    \Filament\Actions\BulkAction::make('bulk_notify_discord')
+                        ->label('Annoncer la sélection sur Discord')
+                        ->icon('heroicon-m-megaphone')
+                        ->color('primary')
+                        ->requiresConfirmation()
+                        ->action(function (Collection $records) {
+                            $grouped = $records->groupBy('manga_id');
+                            $service = app(\App\Services\DiscordWebhookService::class);
+                            foreach ($grouped as $mangaId => $chapters) {
+                                $manga = $chapters->first()->manga;
+                                if ($manga) {
+                                    $service->sendBatchChaptersNotification($manga, $chapters);
+                                }
+                            }
+                            \Filament\Notifications\Notification::make()
+                                ->title('Annonce Discord envoyée')
+                                ->body("{$records->count()} chapitre(s) annoncés sur Discord.")
+                                ->success()
+                                ->send();
                         }),
                     DeleteBulkAction::make(),
                 ]),
