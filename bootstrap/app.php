@@ -19,6 +19,11 @@ return Application::configure(basePath: dirname(__DIR__))
             'api/*',
         ]);
 
+        // Cookie de fuseau horaire posé en JS par le navigateur (non chiffré)
+        $middleware->encryptCookies(except: [
+            'hs_tz',
+        ]);
+
         $middleware->web(append: [
             \App\Http\Middleware\CheckScheduledChaptersMiddleware::class,
         ]);

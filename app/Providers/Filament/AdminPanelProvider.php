@@ -29,6 +29,26 @@ class AdminPanelProvider extends PanelProvider
             ->path('admin')
             ->brandName('Admin')
             ->homeUrl('/')
+            ->renderHook(
+                \Filament\View\PanelsRenderHook::HEAD_START,
+                fn (): string => <<<'HTML'
+                    <script>
+                    (function () {
+                        try {
+                            var tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+                            if (!tz) return;
+                            var m = document.cookie.match(/(?:^|; )hs_tz=([^;]*)/);
+                            var current = m ? decodeURIComponent(m[1]) : null;
+                            document.cookie = 'hs_tz=' + encodeURIComponent(tz) + '; path=/; max-age=31536000; SameSite=Lax';
+                            if (current !== tz && !sessionStorage.getItem('hs_tz_synced')) {
+                                sessionStorage.setItem('hs_tz_synced', '1');
+                                location.reload();
+                            }
+                        } catch (e) {}
+                    })();
+                    </script>
+                HTML
+            )
             ->login(\App\Filament\Pages\Auth\Login::class)
             ->colors([
                 'primary' => Color::Amber,

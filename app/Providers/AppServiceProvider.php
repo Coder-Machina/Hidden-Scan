@@ -19,6 +19,7 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        //
+        // Les dates du panel (sélecteurs + affichage) utilisent le fuseau horaire réel de l'appareil
+        \Filament\Support\Facades\FilamentTimezone::set(fn () => \App\Support\UserTimezone::get());
     }
 }
