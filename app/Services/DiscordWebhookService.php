@@ -54,7 +54,6 @@ class DiscordWebhookService
         $embed = [
             'title' => $embedTitle,
             'description' => $description,
-            'url' => $chapterUrl,
             'color' => 0x2563EB, // Bleu royal Poseidon / Rimu
             'footer' => [
                 'text' => 'Hidden Scan • ' . now()->locale('fr')->isoFormat('D MMMM [à] HH:mm'),
@@ -158,7 +157,6 @@ class DiscordWebhookService
         $embed = [
             'title' => $embedTitle,
             'description' => $description,
-            'url' => $mangaUrl,
             'color' => 0x2563EB, // Bleu royal
             'footer' => [
                 'text' => 'Hidden Scan • ' . now()->locale('fr')->isoFormat('D MMMM [à] HH:mm'),
