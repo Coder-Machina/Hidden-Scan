@@ -20,40 +20,54 @@ class ProductionDataSeeder extends Seeder
             RolesAndPermissionsSeeder::class,
         ]);
 
-        $users = [
-            [
-                'name' => 'Meliodas',
-                'email' => 'meliodasdsama006@gmail.com',
-                'pass_code' => 'HS-MELI-ODAS-0001',
-                'password' => \Illuminate\Support\Facades\Hash::make('password'),
-                'email_verified_at' => now(),
-                'roles' => ['owner', 'admin'],
-            ],
-            [
-                'name' => 'Co-Admin',
-                'email' => 'admin@hiddenscan.com',
-                'pass_code' => 'HS-ADMI-SCAN-0002',
-                'password' => \Illuminate\Support\Facades\Hash::make('password'),
-                'email_verified_at' => now(),
-                'roles' => ['owner', 'admin'],
-            ],
-            [
-                'name' => 'Modérateur Principal',
-                'email' => 'modo@hiddenscan.com',
-                'pass_code' => 'HS-MODO-SCAN-0003',
-                'password' => \Illuminate\Support\Facades\Hash::make('password'),
-                'email_verified_at' => now(),
-                'roles' => ['modo'],
-            ],
-            [
-                'name' => 'Uploader Principal',
-                'email' => 'uploader@hiddenscan.com',
-                'pass_code' => 'HS-UPLO-ADER-0004',
-                'password' => \Illuminate\Support\Facades\Hash::make('password'),
-                'email_verified_at' => now(),
-                'roles' => ['uploader'],
-            ],
-        ];
+        $users = array (
+  0 => 
+  array (
+    'name' => 'Meliodas',
+    'email' => 'meliodasdsama006@gmail.com',
+    'password' => '$2y$12$4m6bzCK9U5zSdufuvlwcHuMNP2exkcLzTSVg1PUMW76yM9URTQ/4a',
+    'email_verified_at' => NULL,
+    'roles' => 
+    array (
+      0 => 'owner',
+      1 => 'admin',
+    ),
+  ),
+  1 => 
+  array (
+    'name' => 'Co-Admin',
+    'email' => 'admin@hiddenscan.com',
+    'password' => '$2y$12$The85DvpVAHVkB7JY0gDyObYLJZV3MEqVasRhMtw1zjG8NdTLK.sq',
+    'email_verified_at' => NULL,
+    'roles' => 
+    array (
+      0 => 'owner',
+      1 => 'admin',
+    ),
+  ),
+  2 => 
+  array (
+    'name' => 'Modérateur Principal',
+    'email' => 'modo@hiddenscan.com',
+    'password' => '$2y$12$xbF2grgGFvLCUjiyAMxvB.UQjI8Q/N8atOeKlaanZ/5sw7NX3Q5RS',
+    'email_verified_at' => NULL,
+    'roles' => 
+    array (
+      0 => 'modo',
+    ),
+  ),
+  3 => 
+  array (
+    'name' => 'Uploader Principal',
+    'email' => 'uploader@hiddenscan.com',
+    'password' => '$2y$12$Mb/hWR29p0yGwl/7Yzy8k.IHHqxFd8Yb2cnfdKKBiscV6WPOueFty',
+    'email_verified_at' => NULL,
+    'roles' => 
+    array (
+      0 => 'uploader',
+    ),
+  ),
+);
         foreach ($users as $uData) {
             $roles = $uData['roles'] ?? [];
             unset($uData['roles']);
@@ -2938,6 +2952,36 @@ class ProductionDataSeeder extends Seeder
           ),
         ),
       ),
+    ),
+  ),
+  9 => 
+  array (
+    'title' => 'Academy’s Genius Swordmaster',
+    'slug' => 'academys-genius-swordmaster',
+    'synopsis' => NULL,
+    'type' => 'manhwa',
+    'status' => 'en_cours',
+    'release_year' => NULL,
+    'cover_image' => 'mangas/covers/ig2OEEoUA8RPXA6irn3COB7HAaamIPL2.jpg',
+    'banner_image' => NULL,
+    'is_featured' => false,
+    'views_count' => 0,
+    'average_rating' => 0.0,
+    'ratings_count' => 0,
+    'genres' => 
+    array (
+    ),
+    'tags' => 
+    array (
+    ),
+    'authors' => 
+    array (
+    ),
+    'artists' => 
+    array (
+    ),
+    'chapters' => 
+    array (
     ),
   ),
 );

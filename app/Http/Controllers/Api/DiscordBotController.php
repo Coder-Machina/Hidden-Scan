@@ -32,7 +32,11 @@ class DiscordBotController extends Controller
             ->orderBy('title')
             ->get();
 
-        return response()->json(['success' => true, 'mangas' => $mangas]);
+        return response()->json([
+            'success' => true,
+            'db' => config('database.default'),
+            'mangas' => $mangas,
+        ]);
     }
 
     /**
