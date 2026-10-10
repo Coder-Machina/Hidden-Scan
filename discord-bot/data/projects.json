@@ -1,28 +1,4 @@
 {
-  "the-returner-s-road-to-retirement": {
-    "slug": "the-returner-s-road-to-retirement",
-    "title": "The Returner's Road to Retirement",
-    "drive_url": "https://drive.google.com/drive/u/3/folders/1QBANnAjGJ3y9TGPAqDrbHcKfDCO7ySO6?hl=fr",
-    "va_url": "https://www.webtoons.com/en/fantasy/the-returners-road-to-retirement/list?title_no=6738",
-    "va_chapter": 100,
-    "cover_url": "https://cdn.discordapp.com/attachments/1535737073280229416/1535737073586282566/Regressors_Life_After_Retirement_-_Chapter_43.jpg?ex=6acb3fda&is=6ac9ee5a&hm=c7573f1c04a27753ce363cce56fead7c91cbf222dbd3d9e499356dde1c0eb796",
-    "is_rush": false,
-    "staff": {
-      "trad": "<@1163161538652291074>",
-      "check": "<@979449727047323668>",
-      "clean": "<@1086279413278179480>",
-      "edit": "<@1086279413278179480>",
-      "qc": null
-    },
-    "steps": {
-      "trad": 0,
-      "check": 1,
-      "clean": 0,
-      "edit": 0,
-      "qc": 0
-    },
-    "discord_role_id": "1558581259821650020"
-  },
   "genius-grandson-of-the-loan-shark-king": {
     "slug": "genius-grandson-of-the-loan-shark-king",
     "title": "Genius Grandson of the Loan Shark King",
@@ -46,7 +22,8 @@
       "edit": 0,
       "qc": 0
     },
-    "discord_role_id": "1535265318828511234"
+    "discord_role_id": "1535265318828511234",
+    "is_external": false
   },
   "hoegwi-suseonjeon": {
     "slug": "hoegwi-suseonjeon",
@@ -71,7 +48,8 @@
       "edit": 0,
       "qc": 0
     },
-    "discord_role_id": "1558585102550835352"
+    "discord_role_id": null,
+    "is_external": true
   },
   "nano-machine": {
     "slug": "nano-machine",
@@ -96,7 +74,8 @@
       "edit": 0,
       "qc": 0
     },
-    "discord_role_id": "1558585105289711648"
+    "discord_role_id": null,
+    "is_external": true
   },
   "omniscient-reader": {
     "slug": "omniscient-reader",
@@ -121,7 +100,8 @@
       "edit": 0,
       "qc": 0
     },
-    "discord_role_id": "1558585107625807872"
+    "discord_role_id": null,
+    "is_external": true
   },
   "one-piece": {
     "slug": "one-piece",
@@ -146,7 +126,8 @@
       "edit": 0,
       "qc": 0
     },
-    "discord_role_id": "1558585109702115501"
+    "discord_role_id": null,
+    "is_external": true
   },
   "solo-leveling": {
     "slug": "solo-leveling",
@@ -171,7 +152,8 @@
       "edit": 0,
       "qc": 0
     },
-    "discord_role_id": "1558585112130748437"
+    "discord_role_id": null,
+    "is_external": true
   },
   "the-reborn-young-lord-is-an-assassin": {
     "slug": "the-reborn-young-lord-is-an-assassin",
@@ -196,7 +178,8 @@
       "edit": 0,
       "qc": 0
     },
-    "discord_role_id": "1558585114777362583"
+    "discord_role_id": null,
+    "is_external": true
   },
   "the-returners-road-to-retirement": {
     "slug": "the-returners-road-to-retirement",
@@ -221,7 +204,8 @@
       "edit": 0,
       "qc": 0
     },
-    "discord_role_id": "1558581259821650020"
+    "discord_role_id": "1535265320133066753",
+    "is_external": false
   },
   "why-i-quit-being-the-demon-king": {
     "slug": "why-i-quit-being-the-demon-king",
@@ -246,7 +230,8 @@
       "edit": 0,
       "qc": 0
     },
-    "discord_role_id": "1558585117205725206"
+    "discord_role_id": null,
+    "is_external": true
   },
   "academys-genius-swordmaster": {
     "slug": "academys-genius-swordmaster",
@@ -257,7 +242,48 @@
     "cover_url": "http://127.0.0.1:8000/storage/mangas/covers/ig2OEEoUA8RPXA6irn3COB7HAaamIPL2.jpg",
     "cover_image": "mangas/covers/ig2OEEoUA8RPXA6irn3COB7HAaamIPL2.jpg",
     "is_rush": false,
-    "discord_role_id": "1558585119495684097",
+    "discord_role_id": null,
+    "staff": {
+      "trad": null,
+      "check": null,
+      "clean": null,
+      "edit": null,
+      "qc": null
+    },
+    "steps": {
+      "trad": 0,
+      "check": 0,
+      "clean": 0,
+      "edit": 0,
+      "qc": 0
+    },
+    "is_external": true
+  },
+  "my-passive-skills-are-invincible": {
+    "slug": "my-passive-skills-are-invincible",
+    "title": "My Passive Skills Are Invincible",
+    "discord_role_id": "1535265321328447550",
+    "is_external": false,
+    "staff": {
+      "trad": null,
+      "check": null,
+      "clean": null,
+      "edit": null,
+      "qc": null
+    },
+    "steps": {
+      "trad": 0,
+      "check": 0,
+      "clean": 0,
+      "edit": 0,
+      "qc": 0
+    }
+  },
+  "all-football-talents-are-mine": {
+    "slug": "all-football-talents-are-mine",
+    "title": "All Football Talents Are Mine",
+    "discord_role_id": "1535265322485944360",
+    "is_external": false,
     "staff": {
       "trad": null,
       "check": null,

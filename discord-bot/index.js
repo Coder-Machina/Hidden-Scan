@@ -233,8 +233,16 @@ async function syncProjectsWithSite() {
         const currentProjects = loadProjects();
         let changed = false;
 
+        // Nettoyage de l'ancienne clé en doublon
+        if (currentProjects['the-returner-s-road-to-retirement']) {
+            delete currentProjects['the-returner-s-road-to-retirement'];
+            changed = true;
+        }
+
         for (const manga of data.mangas) {
             const slug = manga.slug;
+            const isExternal = Boolean(manga.is_external);
+
             if (!currentProjects[slug]) {
                 try {
                     const ficheRes = await fetch(`${apiUrl}/api/bot/fiche/${slug}`, {
@@ -247,6 +255,9 @@ async function syncProjectsWithSite() {
                             currentProjects[slug] = {
                                 slug: m.slug,
                                 title: m.title.trim(),
+                                is_external: isExternal,
+                                team_name: manga.team_name || null,
+                                discord_role_id: isExternal ? null : (manga.discord_role_id || null),
                                 drive_url: m.drive_url || null,
                                 va_url: m.va_url || null,
                                 va_chapter: m.va_chapter || 0,
@@ -275,6 +286,17 @@ async function syncProjectsWithSite() {
                     console.error(`Erreur sync manga ${slug}:`, e.message);
                 }
             } else {
+                if (currentProjects[slug].is_external !== isExternal) {
+                    currentProjects[slug].is_external = isExternal;
+                    changed = true;
+                }
+                if (isExternal && currentProjects[slug].discord_role_id) {
+                    currentProjects[slug].discord_role_id = null;
+                    changed = true;
+                } else if (!isExternal && manga.discord_role_id && currentProjects[slug].discord_role_id !== manga.discord_role_id) {
+                    currentProjects[slug].discord_role_id = manga.discord_role_id;
+                    changed = true;
+                }
                 if (!currentProjects[slug].cover_image && manga.cover_image) {
                     currentProjects[slug].cover_image = manga.cover_image;
                     changed = true;
@@ -346,9 +368,11 @@ async function ensureProjectRoles() {
                 } catch (e) {}
             }
 
-            // 2. Rôles de chaque projet avec couleur attribuée
+            // 2. Rôles de chaque projet avec couleur attribuée (uniquement les projets traduits par l'équipe !)
             let colorIndex = 0;
             for (const [slug, project] of Object.entries(projects)) {
+                // Ignore les projets externes traduits par d'autres teams
+                if (project.is_external) continue;
                 let role = null;
                 const assignedColor = PROJECT_COLORS[colorIndex % PROJECT_COLORS.length];
                 colorIndex++;
@@ -445,6 +469,14 @@ function buildRolesPanelEmbed(guild, rolesCount) {
         .setTimestamp();
 }
 
+const PROJECT_EMOJIS = {
+    'genius-grandson-of-the-loan-shark-king': '💰',
+    'the-returners-road-to-retirement': '⌛',
+    'the-returner-s-road-to-retirement': '⌛',
+    'my-passive-skills-are-invincible': '🗡️',
+    'all-football-talents-are-mine': '⚽',
+};
+
 /**
  * Construit les composants (Menu déroulant + Boutons rapides) du panneau de rôles
  */
@@ -455,19 +487,19 @@ function buildRolesPanelComponents(guild, projects, allProjectsRoleId) {
     if (allProjectsRoleId && guild.roles.cache.has(allProjectsRoleId)) {
         options.push(
             new StringSelectMenuOptionBuilder()
-                .setLabel('📚 Tous les projets')
+                .setLabel('Tous les projets')
                 .setValue(allProjectsRoleId)
                 .setDescription('Notification globale pour chaque sortie de chapitre')
                 .setEmoji('📚')
         );
     }
 
-    // Options par manga (dédoublonnées par rôle)
+    // Options par manga traduits par l'équipe (dédoublonnées par rôle)
     const seenRoles = new Set();
     if (allProjectsRoleId) seenRoles.add(allProjectsRoleId);
 
     const sortedProjects = Object.values(projects)
-        .filter(p => p.discord_role_id && guild.roles.cache.has(p.discord_role_id))
+        .filter(p => !p.is_external && p.discord_role_id && guild.roles.cache.has(p.discord_role_id))
         .sort((a, b) => a.title.localeCompare(b.title));
 
     for (const p of sortedProjects) {
@@ -476,12 +508,14 @@ function buildRolesPanelComponents(guild, projects, allProjectsRoleId) {
 
         if (options.length >= 25) break;
 
+        const emoji = PROJECT_EMOJIS[p.slug] || '📖';
+
         options.push(
             new StringSelectMenuOptionBuilder()
                 .setLabel(p.title.length > 100 ? p.title.substring(0, 97) + '...' : p.title)
                 .setValue(p.discord_role_id)
                 .setDescription(`Notifications pour ${p.title}`.substring(0, 100))
-                .setEmoji('📖')
+                .setEmoji(emoji)
         );
     }
 
@@ -524,7 +558,7 @@ function getPanelRoleIds(guild, projects, allProjectsRoleId) {
         roleIds.add(allProjectsRoleId);
     }
     for (const p of Object.values(projects)) {
-        if (p.discord_role_id && guild.roles.cache.has(p.discord_role_id)) {
+        if (!p.is_external && p.discord_role_id && guild.roles.cache.has(p.discord_role_id)) {
             roleIds.add(p.discord_role_id);
         }
     }
@@ -769,15 +803,42 @@ async function registerCommands() {
     }
 }
 
+/**
+ * Assure le pseudo approprié pour chaque serveur :
+ * - "Hidden Scan" sur le serveur public (HIDDEN SCANTRAD)
+ * - "Hidden Staff" sur le serveur interne du staff (HIDDEN STAFF)
+ */
+async function ensureBotNicknames() {
+    try {
+        const publicGuildId = process.env.DISCORD_GUILD_ID || '1535251657326075906';
+        for (const [guildId, guild] of client.guilds.cache) {
+            const me = await guild.members.fetch(client.user.id).catch(() => null);
+            if (!me) continue;
+
+            const desiredNick = (guildId === publicGuildId) ? 'Hidden Scan' : 'Hidden Staff';
+            if (me.nickname !== desiredNick) {
+                await me.setNickname(desiredNick).catch(err => {
+                    console.warn(`Impossible d'ajuster le pseudo sur ${guild.name}:`, err.message);
+                });
+                console.log(`🏷️ Pseudo du bot ajusté sur "${guild.name}": "${desiredNick}"`);
+            }
+        }
+    } catch (e) {
+        console.error('Erreur ensureBotNicknames:', e.message);
+    }
+}
+
 // ═══ Événements Bot ═══
 
 client.once('ready', async () => {
     console.log(`🤖 Bot Hidden Scan connecté en tant que ${client.user.tag}`);
+    await ensureBotNicknames();
     await registerCommands();
     await syncProjectsWithSite();
     await ensureProjectRoles();
     // Synchro toutes les 10 minutes
     setInterval(async () => {
+        await ensureBotNicknames();
         await syncProjectsWithSite();
         await ensureProjectRoles();
     }, 10 * 60 * 1000);
@@ -785,6 +846,7 @@ client.once('ready', async () => {
 
 client.on('guildCreate', async guild => {
     console.log(`🎉 Le bot a rejoint le serveur : "${guild.name}" (${guild.id}) !`);
+    await ensureBotNicknames();
     await registerCommands();
     await syncProjectsWithSite();
     await ensureProjectRoles();
