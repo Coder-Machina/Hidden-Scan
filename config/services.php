@@ -37,7 +37,7 @@ return [
 
     'discord' => [
         'webhook_url' => env('DISCORD_WEBHOOK_URL', 'https://discord.com/api/webhooks/1558548282387468388/aH8mcyxH0dcyh9IL4AxamfEajy_RgKDrwKz3ITH0SstVawDRL50qYwVqlheljlWCnjJI'),
-        'site_webhook_url' => env('DISCORD_SITE_WEBHOOK_URL'),
+        'site_webhook_url' => env('DISCORD_SITE_WEBHOOK_URL', 'https://discord.com/api/webhooks/1558602522741051545/QvfJRHh6Cdxxm775CiD3b4sG6aDP2fWDqppad9z6pQ6unValcRYYAeq3eIk6rRYHZjbt'),
         'role_id' => env('DISCORD_ROLE_ID'),
         'all_projects_role_id' => env('DISCORD_ALL_PROJECTS_ROLE_ID', '1558559684322009208'),
         'site_role_id' => env('DISCORD_SITE_ROLE_ID'),
