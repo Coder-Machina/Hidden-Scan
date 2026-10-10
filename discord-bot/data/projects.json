@@ -237,5 +237,29 @@
       "edit": 0,
       "qc": 0
     }
+  },
+  "academys-genius-swordmaster": {
+    "slug": "academys-genius-swordmaster",
+    "title": "Academy’s Genius Swordmaster",
+    "drive_url": null,
+    "va_url": null,
+    "va_chapter": 0,
+    "cover_url": "http://127.0.0.1:8000/storage/mangas/covers/ig2OEEoUA8RPXA6irn3COB7HAaamIPL2.jpg",
+    "cover_image": "mangas/covers/ig2OEEoUA8RPXA6irn3COB7HAaamIPL2.jpg",
+    "is_rush": false,
+    "staff": {
+      "trad": null,
+      "check": null,
+      "clean": null,
+      "edit": null,
+      "qc": null
+    },
+    "steps": {
+      "trad": 0,
+      "check": 0,
+      "clean": 0,
+      "edit": 0,
+      "qc": 0
+    }
   }
 }
