@@ -278,67 +278,122 @@ async function syncProjectsWithSite() {
     }
 }
 
+const PROJECT_COLORS = [
+    0x3498db, // Bleu azur (Style Rimu)
+    0xe74c3c, // Rouge rubis (Style Poseidon)
+    0x9b59b6, // Violet améthyste
+    0x2ecc71, // Vert émeraude
+    0xf39c12, // Or / Ambre
+    0xe67e22, // Orange vif
+    0x1abc9c, // Cyan néon
+    0xe91e63, // Rose fuchsia
+    0x5865f2, // Bleu Discord Blurple
+    0x00cec9, // Turquoise
+];
+
 /**
- * Vérifie et crée automatiquement les rôles Discord manquants pour tous les mangas
+ * Vérifie et crée automatiquement les rôles Discord stylisés avec couleur pour tous les mangas
  */
 async function ensureProjectRoles() {
     try {
-        const guildId = process.env.DISCORD_GUILD_ID || '1535994324855300146';
-        const guild = await client.guilds.fetch(guildId).catch(() => null);
-        if (!guild) return;
-
-        const roles = await guild.roles.fetch();
-        const projects = loadProjects();
-        let changed = false;
+        const targetGuildId = process.env.DISCORD_GUILD_ID || '1535251657326075906';
         const apiUrl = process.env.API_BASE_URL || 'http://127.0.0.1:8000';
         const secret = process.env.DISCORD_BOT_SECRET || 'hiddenscan-secret-bot-key';
+        const projects = loadProjects();
 
-        for (const [slug, project] of Object.entries(projects)) {
-            let role = null;
-            if (project.discord_role_id && !isNaN(project.discord_role_id)) {
-                role = roles.get(project.discord_role_id);
-            }
+        for (const [guildId, guild] of client.guilds.cache) {
+            console.log(`🔍 Vérification des rôles sur "${guild.name}" (${guildId})...`);
+            const roles = await guild.roles.fetch();
+            let changed = false;
 
-            if (!role) {
-                role = roles.find(r => r.name.toLowerCase() === project.title.toLowerCase());
-            }
-
-            if (!role) {
+            // 1. Rôle global "Tous les projets"
+            let allProjectsRole = roles.find(r => r.name.toLowerCase() === 'tous les projets');
+            if (!allProjectsRole) {
                 try {
-                    role = await guild.roles.create({
-                        name: project.title,
-                        color: 0x3b82f6,
+                    allProjectsRole = await guild.roles.create({
+                        name: 'Tous les projets',
+                        color: 0x5865f2,
                         mentionable: true,
-                        reason: `Rôle automatique de projet pour ${project.title}`
+                        reason: 'Rôle global de notification pour toutes les sorties',
                     });
-                    console.log(`✨ Rôle Discord créé automatiquement pour "${project.title}": ${role.id}`);
-                } catch (err) {
-                    console.error(`Impossible de créer le rôle pour "${project.title}":`, err.message);
-                }
-            }
-
-            if (role && project.discord_role_id !== role.id) {
-                project.discord_role_id = role.id;
-                changed = true;
-
-                try {
-                    await fetch(`${apiUrl}/api/bot/link-role`, {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'X-Bot-Token': secret,
-                        },
-                        body: JSON.stringify({ slug, role_id: role.id }),
-                    });
+                    console.log(`✨ Rôle global "Tous les projets" créé sur "${guild.name}": ${allProjectsRole.id}`);
                 } catch (e) {
-                    console.error('Erreur sync link-role API:', e.message);
+                    console.warn(`Impossible de créer "Tous les projets" sur "${guild.name}":`, e.message);
+                }
+            } else if (!allProjectsRole.mentionable || allProjectsRole.color === 0) {
+                try {
+                    await allProjectsRole.edit({
+                        color: allProjectsRole.color === 0 ? 0x5865f2 : allProjectsRole.color,
+                        mentionable: true,
+                    });
+                } catch (e) {}
+            }
+
+            // 2. Rôles de chaque projet avec couleur attribuée
+            let colorIndex = 0;
+            for (const [slug, project] of Object.entries(projects)) {
+                let role = null;
+                const assignedColor = PROJECT_COLORS[colorIndex % PROJECT_COLORS.length];
+                colorIndex++;
+
+                if (project.discord_role_id && !isNaN(project.discord_role_id)) {
+                    role = roles.get(project.discord_role_id);
+                }
+
+                if (!role) {
+                    role = roles.find(r => r.name.toLowerCase() === project.title.toLowerCase());
+                }
+
+                if (!role) {
+                    try {
+                        role = await guild.roles.create({
+                            name: project.title,
+                            color: assignedColor,
+                            mentionable: true,
+                            reason: `Rôle officiel de projet pour ${project.title}`,
+                        });
+                        console.log(`✨ Rôle créé avec couleur #${assignedColor.toString(16)} pour "${project.title}": ${role.id}`);
+                    } catch (err) {
+                        console.error(`Impossible de créer le rôle pour "${project.title}":`, err.message);
+                    }
+                } else {
+                    if (!role.mentionable || role.color === 0) {
+                        try {
+                            await role.edit({
+                                color: role.color === 0 ? assignedColor : role.color,
+                                mentionable: true,
+                            });
+                            console.log(`🎨 Couleur #${assignedColor.toString(16)} et mention appliquées à "${project.title}"`);
+                        } catch (e) {}
+                    }
+                }
+
+                // Associe le rôle si on est sur la guild cible des annonces ou si guild unique
+                if (role && (guildId === targetGuildId || client.guilds.cache.size === 1)) {
+                    if (project.discord_role_id !== role.id) {
+                        project.discord_role_id = role.id;
+                        changed = true;
+
+                        try {
+                            await fetch(`${apiUrl}/api/bot/link-role`, {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                    'X-Bot-Token': secret,
+                                },
+                                body: JSON.stringify({ slug, role_id: role.id }),
+                            });
+                        } catch (e) {
+                            console.error('Erreur sync link-role API:', e.message);
+                        }
+                    }
                 }
             }
-        }
 
-        if (changed) {
-            saveProjects(projects);
-            console.log('✅ Tous les rôles Discord des projets sont synchronisés !');
+            if (changed) {
+                saveProjects(projects);
+                console.log(`✅ Rôles synchronisés et sauvegardés pour "${guild.name}" !`);
+            }
         }
     } catch (e) {
         console.error('Erreur ensureProjectRoles:', e.message);
@@ -513,6 +568,13 @@ client.once('ready', async () => {
         await syncProjectsWithSite();
         await ensureProjectRoles();
     }, 10 * 60 * 1000);
+});
+
+client.on('guildCreate', async guild => {
+    console.log(`🎉 Le bot a rejoint le serveur : "${guild.name}" (${guild.id}) !`);
+    await registerCommands();
+    await syncProjectsWithSite();
+    await ensureProjectRoles();
 });
 
 // Autocomplétion dynamique des projets (avec tous les mangas du site)
