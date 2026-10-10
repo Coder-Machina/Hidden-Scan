@@ -37,87 +37,75 @@ class DiscordWebhookService
         }
 
         $webhookUrl = config('services.discord.webhook_url');
+        $webhookUrl = config('services.discord.webhook_url');
+        $baseUrl = config('services.discord.base_url', config('app.url'));
         $roleId = config('services.discord.role_id');
+        $allProjectsRoleId = config('services.discord.all_projects_role_id');
 
-        $chapterUrl = route('chapter.show', [$manga->slug, $chapter->slug]);
-        $coverUrl = null;
+        // URL du chapitre sur le site
+        $chapterUrl = rtrim($baseUrl, '/') . '/manga/' . $manga->slug . '/' . $chapter->slug;
 
-        if ($manga->cover_image) {
-            $coverUrl = str_starts_with($manga->cover_image, 'http')
-                ? $manga->cover_image
-                : url(Storage::url($manga->cover_image));
-        }
+        $titleSuffix = $chapter->title ? " : {$chapter->title}" : '';
+        $embedTitle = "{$manga->title} - Chapitre {$chapter->number}{$titleSuffix}";
 
-        $titleSuffix = $chapter->title ? " : *{$chapter->title}*" : '';
-        $description = "Chapitre {$chapter->number}{$titleSuffix}\n[**Lisez ici.**]({$chapterUrl})\n\n*N'oubliez pas de prendre vos rôles de notification !*";
+        // Format 100% fidèle à Poseidon Scans & Rimu Scans
+        $description = "➡️ [**Cliquer ici pour lire**]({$chapterUrl})";
 
         $embed = [
-            'title' => $manga->title,
+            'title' => $embedTitle,
             'description' => $description,
             'url' => $chapterUrl,
-            'color' => 0xDC2626, // Rouge #dc2626 Hidden Scan
-            'fields' => [
-                [
-                    'name' => 'Type',
-                    'value' => ucfirst($manga->type?->value ?? 'Manga'),
-                    'inline' => true,
-                ],
-                [
-                    'name' => 'Statut',
-                    'value' => $manga->status?->getLabel() ?? 'En cours',
-                    'inline' => true,
-                ],
-                [
-                    'name' => 'Pages',
-                    'value' => ($chapter->pages()->count() ?: 'En ligne') . ' pages',
-                    'inline' => true,
-                ],
-            ],
+            'color' => 0x2563EB, // Bleu royal Poseidon / Rimu
             'footer' => [
-                'text' => 'Hidden Scan • Sorties Officielles',
+                'text' => 'Hidden Scan • ' . now()->locale('fr')->isoFormat('D MMMM [à] HH:mm'),
             ],
             'timestamp' => now()->toIso8601String(),
         ];
 
-        // Grande affiche de couverture pleine largeur (style Raijin Sorties)
-        if ($coverUrl) {
-            $embed['image'] = [
-                'url' => $coverUrl,
-            ];
+        // Mentions de rôles : Rôle du manga + Rôle global de notification
+        $pings = [];
+        if (!empty($manga->discord_role_id)) {
+            $pings[] = is_numeric($manga->discord_role_id) ? "<@&{$manga->discord_role_id}>" : "@{$manga->discord_role_id}";
+        } else {
+            $pings[] = "@{$manga->title}";
+        }
+
+        if (!empty($allProjectsRoleId)) {
+            $pings[] = is_numeric($allProjectsRoleId) ? "<@&{$allProjectsRoleId}>" : "@{$allProjectsRoleId}";
+        } elseif (!empty($roleId) && $roleId !== $manga->discord_role_id) {
+            $pings[] = is_numeric($roleId) ? "<@&{$roleId}>" : "<@&{$roleId}>";
+        } else {
+            $pings[] = "@Tous les projets";
         }
 
         $payload = [
             'embeds' => [$embed],
-            'components' => [
-                [
-                    'type' => 1, // ActionRow
-                    'components' => [
-                        [
-                            'type' => 2, // Button
-                            'style' => 5, // Link
-                            'label' => "📖 Lire le Chapitre {$chapter->number}",
-                            'url' => $chapterUrl,
-                        ],
-                    ],
-                ],
-            ],
         ];
 
-        // Construction des mentions de rôles (Rôle du manga + Rôle global de notification)
-        $pings = [];
-        if (!empty($manga->discord_role_id)) {
-            $pings[] = "<@&{$manga->discord_role_id}>";
-        }
-        if (!empty($roleId) && $roleId !== $manga->discord_role_id) {
-            $pings[] = "<@&{$roleId}>";
+        if (!empty($pings)) {
+            $payload['content'] = implode(' ', $pings);
         }
 
-        if (!empty($pings)) {
-            $payload['content'] = "📌 • " . implode(' ', $pings);
-        }
+        // Détection de l'image de couverture pour affichage pleine largeur garanti
+        $localFilePath = $this->resolveLocalCoverPath($manga->cover_image);
 
         try {
-            $response = Http::timeout(6)->post($webhookUrl, $payload);
+            if ($localFilePath && file_exists($localFilePath)) {
+                $ext = pathinfo($localFilePath, PATHINFO_EXTENSION) ?: 'png';
+                $filename = 'cover.' . $ext;
+                $payload['embeds'][0]['image'] = ['url' => 'attachment://' . $filename];
+
+                $response = Http::timeout(10)
+                    ->attach('files[0]', file_get_contents($localFilePath), $filename)
+                    ->post($webhookUrl, [
+                        'payload_json' => json_encode($payload),
+                    ]);
+            } else {
+                if ($manga->cover_image && str_starts_with($manga->cover_image, 'http')) {
+                    $payload['embeds'][0]['image'] = ['url' => $manga->cover_image];
+                }
+                $response = Http::timeout(10)->post($webhookUrl, $payload);
+            }
 
             if ($response->successful()) {
                 Log::info("Webhook Discord envoyé avec succès pour le chapitre {$chapter->id} de {$manga->title}");
@@ -155,72 +143,99 @@ class DiscordWebhookService
         }
 
         $webhookUrl = config('services.discord.webhook_url');
+        $baseUrl = config('services.discord.base_url', config('app.url'));
         $roleId = config('services.discord.role_id');
+        $allProjectsRoleId = config('services.discord.all_projects_role_id');
 
         $numbers = collect($chapters)->pluck('number')->sort()->values();
         $min = $numbers->first();
         $max = $numbers->last();
 
-        $mangaUrl = route('manga.show', $manga->slug);
-        $coverUrl = null;
-
-        if ($manga->cover_image) {
-            $coverUrl = str_starts_with($manga->cover_image, 'http')
-                ? $manga->cover_image
-                : url(Storage::url($manga->cover_image));
-        }
-
-        $description = "🎉 **{$chaptersCount} nouveaux chapitres disponibles !**\n\nLes chapitres **#{$min}** à **#{$max}** de **{$manga->title}** viennent d'être mis en ligne sur **Hidden Scan** !\n\n👉 [**Accéder à la liste des chapitres**]({$mangaUrl})";
+        $mangaUrl = rtrim($baseUrl, '/') . '/manga/' . $manga->slug;
+        $embedTitle = "{$manga->title} - Chapitres {$min} à {$max}";
+        $description = "➡️ [**Cliquer ici pour lire**]({$mangaUrl})";
 
         $embed = [
-            'title' => "📚 Sortie en masse : {$manga->title}",
+            'title' => $embedTitle,
             'description' => $description,
             'url' => $mangaUrl,
-            'color' => 0xDC2626,
-            'fields' => [
-                [
-                    'name' => 'Type',
-                    'value' => ucfirst($manga->type?->value ?? 'Manga'),
-                    'inline' => true,
-                ],
-                [
-                    'name' => 'Statut',
-                    'value' => $manga->status?->getLabel() ?? 'En cours',
-                    'inline' => true,
-                ],
-                [
-                    'name' => 'Lot',
-                    'value' => "Chapitres #{$min} à #{$max}",
-                    'inline' => true,
-                ],
-            ],
+            'color' => 0x2563EB, // Bleu royal
             'footer' => [
-                'text' => 'Hidden Scan • Le sanctuaire des scans',
+                'text' => 'Hidden Scan • ' . now()->locale('fr')->isoFormat('D MMMM [à] HH:mm'),
             ],
             'timestamp' => now()->toIso8601String(),
         ];
 
-        if ($coverUrl) {
-            $embed['thumbnail'] = [
-                'url' => $coverUrl,
-            ];
+        $pings = [];
+        if (!empty($manga->discord_role_id)) {
+            $pings[] = is_numeric($manga->discord_role_id) ? "<@&{$manga->discord_role_id}>" : "@{$manga->discord_role_id}";
+        } else {
+            $pings[] = "@{$manga->title}";
+        }
+
+        if (!empty($allProjectsRoleId)) {
+            $pings[] = is_numeric($allProjectsRoleId) ? "<@&{$allProjectsRoleId}>" : "@{$allProjectsRoleId}";
+        } elseif (!empty($roleId) && $roleId !== $manga->discord_role_id) {
+            $pings[] = is_numeric($roleId) ? "<@&{$roleId}>" : "<@&{$roleId}>";
+        } else {
+            $pings[] = "@Tous les projets";
         }
 
         $payload = [
             'embeds' => [$embed],
         ];
 
-        if ($roleId) {
-            $payload['content'] = "<@&{$roleId}>";
+        if (!empty($pings)) {
+            $payload['content'] = implode(' ', $pings);
         }
 
+        $localFilePath = $this->resolveLocalCoverPath($manga->cover_image);
+
         try {
-            $response = Http::timeout(6)->post($webhookUrl, $payload);
+            if ($localFilePath && file_exists($localFilePath)) {
+                $ext = pathinfo($localFilePath, PATHINFO_EXTENSION) ?: 'png';
+                $filename = 'cover.' . $ext;
+                $payload['embeds'][0]['image'] = ['url' => 'attachment://' . $filename];
+
+                $response = Http::timeout(10)
+                    ->attach('files[0]', file_get_contents($localFilePath), $filename)
+                    ->post($webhookUrl, [
+                        'payload_json' => json_encode($payload),
+                    ]);
+            } else {
+                if ($manga->cover_image && str_starts_with($manga->cover_image, 'http')) {
+                    $payload['embeds'][0]['image'] = ['url' => $manga->cover_image];
+                }
+                $response = Http::timeout(10)->post($webhookUrl, $payload);
+            }
+
             return $response->successful();
         } catch (\Throwable $e) {
             Log::error("Erreur envoi notification Discord en masse : " . $e->getMessage());
             return false;
         }
+    }
+
+    /**
+     * Résout le chemin absolu sur le disque local pour la couverture du manga.
+     */
+    protected function resolveLocalCoverPath(?string $coverImage): ?string
+    {
+        if (!$coverImage || str_starts_with($coverImage, 'http')) {
+            return null;
+        }
+
+        $disk = config('filesystems.default', 'public');
+        if (Storage::disk($disk)->exists($coverImage)) {
+            return Storage::disk($disk)->path($coverImage);
+        }
+
+        $publicPath = storage_path('app/public/' . ltrim($coverImage, '/'));
+        if (file_exists($publicPath)) {
+            return $publicPath;
+        }
+
+        return null;
     }
 
     /**
@@ -271,5 +286,46 @@ class DiscordWebhookService
                 'message' => "Erreur de connexion : " . $e->getMessage(),
             ];
         }
+    }
+
+    /**
+     * Envoie un exemple réel de sortie de chapitre pour prévisualiser le format Poseidon / Rimu Scans.
+     */
+    public function sendSampleReleaseNotification(): array
+    {
+        if (!$this->isConfigured()) {
+            return [
+                'success' => false,
+                'message' => "L'URL du Webhook Discord n'est pas définie dans .env.",
+            ];
+        }
+
+        $manga = \App\Models\Manga::whereNotNull('cover_image')->first() ?: \App\Models\Manga::first();
+        if (!$manga) {
+            return [
+                'success' => false,
+                'message' => "Aucun manga trouvé en base de données pour générer un exemple.",
+            ];
+        }
+
+        $latestChapter = $manga->chapters()->latest('number')->first();
+        $chapterNumber = $latestChapter ? $latestChapter->number : 1;
+
+        $mockChapter = new \App\Models\Chapter([
+            'number' => $chapterNumber,
+            'slug' => 'chapitre-' . $chapterNumber,
+            'title' => null,
+            'is_published' => true,
+        ]);
+        $mockChapter->setRelation('manga', $manga);
+
+        $sent = $this->sendChapterNotification($mockChapter);
+
+        return [
+            'success' => $sent,
+            'message' => $sent
+                ? "Notification exemple style Poseidon/Rimu pour « {$manga->title} » envoyée avec succès sur Discord !"
+                : "Échec de l'envoi de la notification exemple.",
+        ];
     }
 }

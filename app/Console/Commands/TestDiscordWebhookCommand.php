@@ -7,7 +7,7 @@ use Illuminate\Console\Command;
 
 class TestDiscordWebhookCommand extends Command
 {
-    protected $signature = 'discord:test';
+    protected $signature = 'discord:test {--sample : Envoie un exemple réel de sortie de chapitre (Style Poseidon / Rimu)}';
     protected $description = 'Envoie un message de test sur le webhook Discord configuré';
 
     public function handle(DiscordWebhookService $service): int
@@ -20,7 +20,11 @@ class TestDiscordWebhookCommand extends Command
             return Command::FAILURE;
         }
 
-        $result = $service->testWebhook();
+        if ($this->option('sample')) {
+            $result = $service->sendSampleReleaseNotification();
+        } else {
+            $result = $service->testWebhook();
+        }
 
         if ($result['success']) {
             $this->info("✓ " . $result['message']);

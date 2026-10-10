@@ -139,9 +139,11 @@ class NewFeaturesSuiteTest extends TestCase
         $this->assertTrue($result);
 
         Http::assertSent(function ($request) {
-            $embed = $request->data()['embeds'][0] ?? [];
+            $data = $request->data();
+            $payload = isset($data['payload_json']) ? json_decode($data['payload_json'], true) : $data;
+            $embed = $payload['embeds'][0] ?? [];
             return str_contains($embed['title'], 'Test Manga Scheduler')
-                && str_contains($embed['description'], 'Chapitre 5');
+                && str_contains($embed['title'], 'Chapitre 5');
         });
     }
 

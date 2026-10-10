@@ -70,6 +70,7 @@ class DiscordBotController extends Controller
                 'id' => $manga->id,
                 'title' => $manga->title,
                 'slug' => $manga->slug,
+                'cover_image' => $manga->cover_image,
                 'cover_url' => $coverUrl,
                 'drive_url' => $manga->drive_url,
                 'va_url' => $manga->va_url,
