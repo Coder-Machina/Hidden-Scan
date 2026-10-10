@@ -20,7 +20,8 @@
       "clean": 0,
       "edit": 0,
       "qc": 0
-    }
+    },
+    "discord_role_id": "1558559822259953754"
   },
   "genius-grandson-of-the-loan-shark-king": {
     "slug": "genius-grandson-of-the-loan-shark-king",
@@ -44,7 +45,8 @@
       "clean": 0,
       "edit": 0,
       "qc": 0
-    }
+    },
+    "discord_role_id": "1536515152814538832"
   },
   "hoegwi-suseonjeon": {
     "slug": "hoegwi-suseonjeon",
@@ -68,7 +70,8 @@
       "clean": 0,
       "edit": 0,
       "qc": 0
-    }
+    },
+    "discord_role_id": "1558559801967910996"
   },
   "nano-machine": {
     "slug": "nano-machine",
@@ -92,7 +95,8 @@
       "clean": 0,
       "edit": 0,
       "qc": 0
-    }
+    },
+    "discord_role_id": "1558559806061805678"
   },
   "omniscient-reader": {
     "slug": "omniscient-reader",
@@ -116,7 +120,8 @@
       "clean": 0,
       "edit": 0,
       "qc": 0
-    }
+    },
+    "discord_role_id": "1558559808280469565"
   },
   "one-piece": {
     "slug": "one-piece",
@@ -140,7 +145,8 @@
       "clean": 0,
       "edit": 0,
       "qc": 0
-    }
+    },
+    "discord_role_id": "1558559810285338716"
   },
   "solo-leveling": {
     "slug": "solo-leveling",
@@ -164,7 +170,8 @@
       "clean": 0,
       "edit": 0,
       "qc": 0
-    }
+    },
+    "discord_role_id": "1558559812630093837"
   },
   "the-reborn-young-lord-is-an-assassin": {
     "slug": "the-reborn-young-lord-is-an-assassin",
@@ -188,7 +195,8 @@
       "clean": 0,
       "edit": 0,
       "qc": 0
-    }
+    },
+    "discord_role_id": "1558559815343673435"
   },
   "the-returners-road-to-retirement": {
     "slug": "the-returners-road-to-retirement",
@@ -212,7 +220,8 @@
       "clean": 0,
       "edit": 0,
       "qc": 0
-    }
+    },
+    "discord_role_id": "1558559822259953754"
   },
   "why-i-quit-being-the-demon-king": {
     "slug": "why-i-quit-being-the-demon-king",
@@ -236,7 +245,8 @@
       "clean": 0,
       "edit": 0,
       "qc": 0
-    }
+    },
+    "discord_role_id": "1558559824399171677"
   },
   "academys-genius-swordmaster": {
     "slug": "academys-genius-swordmaster",
@@ -247,6 +257,7 @@
     "cover_url": "http://127.0.0.1:8000/storage/mangas/covers/ig2OEEoUA8RPXA6irn3COB7HAaamIPL2.jpg",
     "cover_image": "mangas/covers/ig2OEEoUA8RPXA6irn3COB7HAaamIPL2.jpg",
     "is_rush": false,
+    "discord_role_id": "1558575127636217986",
     "staff": {
       "trad": null,
       "check": null,

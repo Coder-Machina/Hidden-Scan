@@ -279,6 +279,73 @@ async function syncProjectsWithSite() {
 }
 
 /**
+ * Vérifie et crée automatiquement les rôles Discord manquants pour tous les mangas
+ */
+async function ensureProjectRoles() {
+    try {
+        const guildId = process.env.DISCORD_GUILD_ID || '1535994324855300146';
+        const guild = await client.guilds.fetch(guildId).catch(() => null);
+        if (!guild) return;
+
+        const roles = await guild.roles.fetch();
+        const projects = loadProjects();
+        let changed = false;
+        const apiUrl = process.env.API_BASE_URL || 'http://127.0.0.1:8000';
+        const secret = process.env.DISCORD_BOT_SECRET || 'hiddenscan-secret-bot-key';
+
+        for (const [slug, project] of Object.entries(projects)) {
+            let role = null;
+            if (project.discord_role_id && !isNaN(project.discord_role_id)) {
+                role = roles.get(project.discord_role_id);
+            }
+
+            if (!role) {
+                role = roles.find(r => r.name.toLowerCase() === project.title.toLowerCase());
+            }
+
+            if (!role) {
+                try {
+                    role = await guild.roles.create({
+                        name: project.title,
+                        color: 0x3b82f6,
+                        mentionable: true,
+                        reason: `Rôle automatique de projet pour ${project.title}`
+                    });
+                    console.log(`✨ Rôle Discord créé automatiquement pour "${project.title}": ${role.id}`);
+                } catch (err) {
+                    console.error(`Impossible de créer le rôle pour "${project.title}":`, err.message);
+                }
+            }
+
+            if (role && project.discord_role_id !== role.id) {
+                project.discord_role_id = role.id;
+                changed = true;
+
+                try {
+                    await fetch(`${apiUrl}/api/bot/link-role`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-Bot-Token': secret,
+                        },
+                        body: JSON.stringify({ slug, role_id: role.id }),
+                    });
+                } catch (e) {
+                    console.error('Erreur sync link-role API:', e.message);
+                }
+            }
+        }
+
+        if (changed) {
+            saveProjects(projects);
+            console.log('✅ Tous les rôles Discord des projets sont synchronisés !');
+        }
+    } catch (e) {
+        console.error('Erreur ensureProjectRoles:', e.message);
+    }
+}
+
+/**
  * Enregistrement des Commandes Slash 100% sur Discord (sans doublons)
  */
 async function registerCommands() {
@@ -402,6 +469,9 @@ async function registerCommands() {
         new SlashCommandBuilder()
             .setName('agenda')
             .setDescription('Affiche la liste des projets en retard ou en mode rush'),
+        new SlashCommandBuilder()
+            .setName('sync-roles')
+            .setDescription('Vérifie et crée automatiquement les rôles Discord manquants pour tous les mangas'),
     ];
 
     const rest = new REST({ version: '10' }).setToken(process.env.DISCORD_BOT_TOKEN);
@@ -437,8 +507,12 @@ client.once('ready', async () => {
     console.log(`🤖 Bot Hidden Scan connecté en tant que ${client.user.tag}`);
     await registerCommands();
     await syncProjectsWithSite();
+    await ensureProjectRoles();
     // Synchro toutes les 10 minutes
-    setInterval(syncProjectsWithSite, 10 * 60 * 1000);
+    setInterval(async () => {
+        await syncProjectsWithSite();
+        await ensureProjectRoles();
+    }, 10 * 60 * 1000);
 });
 
 // Autocomplétion dynamique des projets (avec tous les mangas du site)
@@ -589,6 +663,16 @@ client.on('interactionCreate', async interaction => {
 
             await interaction.reply({
                 content: `✅ Le rôle <@&${role.id}> est désormais associé aux annonces de **${projects[slug].title}** ! Les sorties de chapitres mentionneront ce rôle avec un badge cliquable.`,
+            });
+        }
+
+        // /sync-roles
+        else if (commandName === 'sync-roles') {
+            await interaction.deferReply({ ephemeral: true });
+            await syncProjectsWithSite();
+            await ensureProjectRoles();
+            await interaction.editReply({
+                content: '✅ Tous les rôles Discord des projets ont été vérifiés et synchronisés avec succès avec le site !',
             });
         }
 

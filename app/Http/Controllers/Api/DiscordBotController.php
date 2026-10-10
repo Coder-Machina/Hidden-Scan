@@ -28,7 +28,7 @@ class DiscordBotController extends Controller
         }
 
         $mangas = Manga::query()
-            ->select(['id', 'title', 'slug'])
+            ->select(['id', 'title', 'slug', 'discord_role_id', 'cover_image'])
             ->orderBy('title')
             ->get();
 
