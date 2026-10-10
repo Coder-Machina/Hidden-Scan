@@ -12,11 +12,27 @@ use Illuminate\Support\Facades\Storage;
 class DiscordWebhookService
 {
     /**
+     * Résout l'URL du webhook selon la source de l'œuvre (interne Hidden Scan ou externe / autre team).
+     */
+    public function resolveWebhookUrl(?Manga $manga = null): ?string
+    {
+        if ($manga && !empty($manga->discord_webhook_url)) {
+            return $manga->discord_webhook_url;
+        }
+
+        if ($manga && $manga->is_external) {
+            return config('services.discord.site_webhook_url') ?: config('services.discord.webhook_url');
+        }
+
+        return config('services.discord.webhook_url');
+    }
+
+    /**
      * Vérifie si l'URL du webhook Discord est configurée.
      */
-    public function isConfigured(): bool
+    public function isConfigured(?Manga $manga = null): bool
     {
-        return !empty(config('services.discord.webhook_url'));
+        return !empty($this->resolveWebhookUrl($manga));
     }
 
     /**
@@ -24,11 +40,6 @@ class DiscordWebhookService
      */
     public function sendChapterNotification(Chapter $chapter): bool
     {
-        if (!$this->isConfigured()) {
-            Log::info('Discord Webhook non configuré, notification ignorée pour le chapitre ' . $chapter->id);
-            return false;
-        }
-
         $chapter->loadMissing('manga');
         $manga = $chapter->manga;
 
@@ -36,11 +47,18 @@ class DiscordWebhookService
             return false;
         }
 
-        $webhookUrl = config('services.discord.webhook_url');
-        $webhookUrl = config('services.discord.webhook_url');
+        $webhookUrl = $this->resolveWebhookUrl($manga);
+        if (empty($webhookUrl)) {
+            Log::info('Discord Webhook non configuré, notification ignorée pour le chapitre ' . $chapter->id);
+            return false;
+        }
+
+        $isExternal = (bool) ($manga->is_external ?? false);
         $baseUrl = config('services.discord.base_url', config('app.url'));
         $roleId = config('services.discord.role_id');
-        $allProjectsRoleId = config('services.discord.all_projects_role_id');
+        $allProjectsRoleId = $isExternal
+            ? (config('services.discord.site_role_id') ?: config('services.discord.all_projects_role_id'))
+            : config('services.discord.all_projects_role_id');
 
         // URL du chapitre sur le site
         $chapterUrl = rtrim($baseUrl, '/') . '/manga/' . $manga->slug . '/' . $chapter->slug;
@@ -51,12 +69,21 @@ class DiscordWebhookService
         // Format 100% fidèle à Poseidon Scans & Rimu Scans
         $description = "➡️ [**Cliquer ici pour lire**]({$chapterUrl})";
 
+        // Footer selon la source
+        $footerPrefix = 'Hidden Scan';
+        if ($isExternal) {
+            $footerPrefix = !empty($manga->team_name) ? "{$manga->team_name} • Sortie Site" : 'Sortie Site';
+        }
+
+        // Couleur : Bleu royal pour Hidden Scan (0x2563EB), Ambre pour Sortie Site (0xF59E0B)
+        $embedColor = $isExternal ? 0xF59E0B : 0x2563EB;
+
         $embed = [
             'title' => $embedTitle,
             'description' => $description,
-            'color' => 0x2563EB, // Bleu royal Poseidon / Rimu
+            'color' => $embedColor,
             'footer' => [
-                'text' => 'Hidden Scan • ' . now()->locale('fr')->isoFormat('D MMMM [à] HH:mm'),
+                'text' => $footerPrefix . ' • ' . now()->locale('fr')->isoFormat('D MMMM [à] HH:mm'),
             ],
             'timestamp' => now()->toIso8601String(),
         ];
@@ -74,7 +101,7 @@ class DiscordWebhookService
         } elseif (!empty($roleId) && $roleId !== $manga->discord_role_id) {
             $pings[] = is_numeric($roleId) ? "<@&{$roleId}>" : "<@&{$roleId}>";
         } else {
-            $pings[] = "@Tous les projets";
+            $pings[] = $isExternal ? "@Sorties Site" : "@Tous les projets";
         }
 
         $payload = [
@@ -141,10 +168,17 @@ class DiscordWebhookService
             return $this->sendChapterNotification($first);
         }
 
-        $webhookUrl = config('services.discord.webhook_url');
+        $webhookUrl = $this->resolveWebhookUrl($manga);
+        if (empty($webhookUrl)) {
+            return false;
+        }
+
+        $isExternal = (bool) ($manga->is_external ?? false);
         $baseUrl = config('services.discord.base_url', config('app.url'));
         $roleId = config('services.discord.role_id');
-        $allProjectsRoleId = config('services.discord.all_projects_role_id');
+        $allProjectsRoleId = $isExternal
+            ? (config('services.discord.site_role_id') ?: config('services.discord.all_projects_role_id'))
+            : config('services.discord.all_projects_role_id');
 
         $numbers = collect($chapters)->pluck('number')->sort()->values();
         $min = $numbers->first();
@@ -154,12 +188,18 @@ class DiscordWebhookService
         $embedTitle = "{$manga->title} - Chapitres {$min} à {$max}";
         $description = "➡️ [**Cliquer ici pour lire**]({$mangaUrl})";
 
+        $footerPrefix = 'Hidden Scan';
+        if ($isExternal) {
+            $footerPrefix = !empty($manga->team_name) ? "{$manga->team_name} • Sortie Site" : 'Sortie Site';
+        }
+        $embedColor = $isExternal ? 0xF59E0B : 0x2563EB;
+
         $embed = [
             'title' => $embedTitle,
             'description' => $description,
-            'color' => 0x2563EB, // Bleu royal
+            'color' => $embedColor,
             'footer' => [
-                'text' => 'Hidden Scan • ' . now()->locale('fr')->isoFormat('D MMMM [à] HH:mm'),
+                'text' => $footerPrefix . ' • ' . now()->locale('fr')->isoFormat('D MMMM [à] HH:mm'),
             ],
             'timestamp' => now()->toIso8601String(),
         ];

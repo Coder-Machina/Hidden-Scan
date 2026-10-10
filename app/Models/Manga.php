@@ -15,7 +15,8 @@ class Manga extends Model
         'type', 'status',
         'release_year', 'views_count', 'is_featured',
         'average_rating', 'ratings_count',
-        'discord_role_id', 'drive_url', 'va_url', 'va_chapter_number', 'is_rush',
+        'discord_role_id', 'discord_webhook_url', 'drive_url', 'va_url', 'va_chapter_number', 'is_rush',
+        'is_external', 'team_name',
         'trad_user', 'check_user', 'clean_user', 'edit_user', 'qc_user',
         'step_trad_chapter', 'step_check_chapter', 'step_clean_chapter', 'step_edit_chapter', 'step_qc_chapter',
     ];
@@ -25,6 +26,7 @@ class Manga extends Model
         'status' => \App\Enums\MangaStatus::class,
         'is_featured' => 'boolean',
         'is_rush' => 'boolean',
+        'is_external' => 'boolean',
     ];
 
     protected $attributes = [

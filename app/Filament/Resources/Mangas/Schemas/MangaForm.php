@@ -131,18 +131,39 @@ class MangaForm
                             ->imageResizeTargetHeight('400'),
                     ]),
 
+                Section::make('Origine & Annonces Discord')
+                    ->description('Distinguez les projets officiels de Hidden Scan des sorties partenaires/autres teams.')
+                    ->icon('heroicon-o-megaphone')
+                    ->columns(2)
+                    ->schema([
+                        Toggle::make('is_external')
+                            ->label('Sortie Site (Autre team / Partenaire)')
+                            ->helperText('Activez si l\'œuvre provient d\'une autre team. Les sorties seront annoncées dans le salon Discord des sorties site.')
+                            ->default(false)
+                            ->live(),
+                        TextInput::make('team_name')
+                            ->label('Nom de la team partenaire')
+                            ->placeholder('Ex: Asura, Flame, etc.')
+                            ->visible(fn ($get) => (bool) $get('is_external'))
+                            ->helperText('Nom de la team affiché sur la fiche Discord.'),
+                        TextInput::make('discord_role_id')
+                            ->label('ID du Rôle Discord (Optionnel)')
+                            ->placeholder('Ex: 1558575127636217986')
+                            ->helperText('Rôle spécifique à mentionner pour ce projet.'),
+                        TextInput::make('discord_webhook_url')
+                            ->label('Webhook Discord dédié (Optionnel)')
+                            ->placeholder('https://discord.com/api/webhooks/...')
+                            ->helperText('Laissez vide pour utiliser le salon automatique (officiel ou sorties site).'),
+                    ]),
+
                 Section::make('Options')
-                    ->description('Paramètres avancés & notifications.')
+                    ->description('Paramètres généraux de l\'œuvre.')
                     ->icon('heroicon-o-cog-6-tooth')
                     ->columns(2)
                     ->schema([
                         Toggle::make('is_featured')
                             ->label('Mise en avant')
                             ->helperText('Afficher dans la section "Recommandés".'),
-                        TextInput::make('discord_role_id')
-                            ->label('ID du Rôle Discord (Optionnel)')
-                            ->placeholder('Ex: 1191006668000071680')
-                            ->helperText('Rôle à mentionner lors de la publication d\'un nouveau chapitre sur Discord.'),
                         TextInput::make('views_count')
                             ->label('Compteur de vues')
                             ->numeric()

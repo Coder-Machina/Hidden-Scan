@@ -70,6 +70,12 @@ class MangasTable
                     ->falseIcon('heroicon-o-x-mark')
                     ->trueColor('warning')
                     ->falseColor('gray'),
+                TextColumn::make('is_external')
+                    ->label('Origine')
+                    ->formatStateUsing(fn ($record) => $record->is_external ? ($record->team_name ? 'Sortie Site (' . $record->team_name . ')' : 'Sortie Site') : 'Hidden Scan')
+                    ->badge()
+                    ->color(fn ($record) => $record->is_external ? 'warning' : 'success')
+                    ->sortable(),
                 TextColumn::make('created_at')
                     ->label('Créé le')
                     ->dateTime('d/m/Y')
@@ -79,6 +85,12 @@ class MangasTable
             ->emptyStateHeading('Aucune œuvre trouvée')
             ->emptyStateDescription('Commencez par ajouter votre premier manga ou manhwa.')
             ->filters([
+                SelectFilter::make('is_external')
+                    ->label('Origine du projet')
+                    ->options([
+                        '0' => 'Hidden Scan (Officiel)',
+                        '1' => 'Sortie Site (Partenaire)',
+                    ]),
                 SelectFilter::make('type')
                     ->label('Type')
                     ->options([
