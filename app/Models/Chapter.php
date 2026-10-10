@@ -109,6 +109,14 @@ class Chapter extends Model
                 }
             }
         });
+
+        static::deleted(function (Chapter $chapter) {
+            try {
+                \Illuminate\Support\Facades\Storage::disk('public')->deleteDirectory('chapters/' . $chapter->id);
+            } catch (\Throwable $e) {
+                \Illuminate\Support\Facades\Log::warning("Impossible de supprimer le dossier de pages pour le chapitre {$chapter->id}: " . $e->getMessage());
+            }
+        });
     }
 
     /**

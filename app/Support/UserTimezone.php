@@ -33,7 +33,9 @@ class UserTimezone
             return null;
         }
 
-        return Carbon::parse($date, config('app.timezone'))->setTimezone(self::get())->format($format);
+        $carbon = $date instanceof CarbonInterface ? $date->copy() : Carbon::parse($date, config('app.timezone'));
+
+        return $carbon->setTimezone(self::get())->format($format);
     }
 
     /**

@@ -58,87 +58,90 @@ class ProcessChapterZip implements ShouldQueue
 
         $extractPath = storage_path('app/temp/chapter_' . $this->chapter->id);
 
-        if ($fullPath && $zip->open($fullPath) === true) {
-            if (!is_dir($extractPath)) {
-                mkdir($extractPath, 0755, true);
-            }
-            $zip->extractTo($extractPath);
-            $zip->close();
-        } elseif (!is_dir($extractPath)) {
-            Log::error('Impossible d\'ouvrir le ZIP et aucun dossier temporaire trouvé', ['path' => $fullPath ?? $this->zipPath]);
-            return;
-        }
-
-        $files = [];
-        $iterator = new \RecursiveIteratorIterator(
-            new \RecursiveDirectoryIterator($extractPath)
-        );
-        foreach ($iterator as $file) {
-            if ($file->isFile() && preg_match('/\.(jpg|jpeg|png|webp)$/i', $file->getFilename())) {
-                $files[] = $file->getPathname();
-            }
-        }
-
-        if (empty($files)) {
-            Log::error('Aucun fichier image trouvé dans le ZIP', ['path' => $fullPath]);
-            \Illuminate\Support\Facades\File::deleteDirectory($extractPath);
-            return;
-        }
-
-        natsort($files);
-        $files = array_values($files);
-
-        $manager = new ImageManager(new Driver());
-        $destFolder = 'chapters/' . $this->chapter->id;
-        Storage::disk('public')->makeDirectory($destFolder);
-
-        // Delete existing pages in DB to prevent duplicates
-        $this->chapter->pages()->delete();
-
-        foreach ($files as $index => $file) {
-            @set_time_limit(120); // Reset timer for each page being processed
-            $pageNumber = $index + 1;
-            $ext = strtolower(pathinfo($file, PATHINFO_EXTENSION));
-
-            if ($ext === 'webp') {
-                $destPath = $destFolder . '/' . $pageNumber . '.webp';
-                Storage::disk('public')->put($destPath, file_get_contents($file));
-            } else {
-                $saved = false;
-                try {
-                    $image = $manager->decode($file);
-                    // WebP ne supporte pas les dimensions supérieures à 16383px (fréquent sur les strips webtoons très hauts)
-                    if ($image->width() <= 16380 && $image->height() <= 16380) {
-                        $destPath = $destFolder . '/' . $pageNumber . '.webp';
-                        $encoded = $image->encode(new WebpEncoder(quality: 82));
-                        Storage::disk('public')->put($destPath, (string) $encoded);
-                        $saved = true;
-                    }
-                } catch (\Throwable $e) {
-                    Log::warning("Échec conversion WebP pour la page {$pageNumber} du chapitre {$this->chapter->id}: " . $e->getMessage());
+        try {
+            if ($fullPath && $zip->open($fullPath) === true) {
+                if (!is_dir($extractPath)) {
+                    mkdir($extractPath, 0755, true);
                 }
+                $zip->extractTo($extractPath);
+                $zip->close();
+            } elseif (!is_dir($extractPath)) {
+                Log::error('Impossible d\'ouvrir le ZIP et aucun dossier temporaire trouvé', ['path' => $fullPath ?? $this->zipPath]);
+                return;
+            }
 
-                // Fallback : conserve l'image originale si l'encodage WebP échoue ou dépasse 16383px
-                if (!$saved) {
-                    $fallbackExt = in_array($ext, ['jpg', 'jpeg', 'png', 'gif', 'avif']) ? $ext : 'jpg';
-                    $destPath = $destFolder . '/' . $pageNumber . '.' . $fallbackExt;
+            $files = [];
+            $iterator = new \RecursiveIteratorIterator(
+                new \RecursiveDirectoryIterator($extractPath)
+            );
+            foreach ($iterator as $file) {
+                if ($file->isFile() && preg_match('/\.(jpg|jpeg|png|webp)$/i', $file->getFilename())) {
+                    $files[] = $file->getPathname();
+                }
+            }
+
+            if (empty($files)) {
+                Log::error('Aucun fichier image trouvé dans le ZIP', ['path' => $fullPath]);
+                return;
+            }
+
+            natsort($files);
+            $files = array_values($files);
+
+            $manager = new ImageManager(new Driver());
+            $destFolder = 'chapters/' . $this->chapter->id;
+            Storage::disk('public')->makeDirectory($destFolder);
+
+            // Delete existing pages in DB to prevent duplicates
+            $this->chapter->pages()->delete();
+
+            foreach ($files as $index => $file) {
+                @set_time_limit(120); // Reset timer for each page being processed
+                $pageNumber = $index + 1;
+                $ext = strtolower(pathinfo($file, PATHINFO_EXTENSION));
+
+                if ($ext === 'webp') {
+                    $destPath = $destFolder . '/' . $pageNumber . '.webp';
                     Storage::disk('public')->put($destPath, file_get_contents($file));
+                } else {
+                    $saved = false;
+                    try {
+                        $image = $manager->decode($file);
+                        // WebP ne supporte pas les dimensions supérieures à 16383px (fréquent sur les strips webtoons très hauts)
+                        if ($image->width() <= 16380 && $image->height() <= 16380) {
+                            $destPath = $destFolder . '/' . $pageNumber . '.webp';
+                            $encoded = $image->encode(new WebpEncoder(quality: 82));
+                            Storage::disk('public')->put($destPath, (string) $encoded);
+                            $saved = true;
+                        }
+                    } catch (\Throwable $e) {
+                        Log::warning("Échec conversion WebP pour la page {$pageNumber} du chapitre {$this->chapter->id}: " . $e->getMessage());
+                    }
+
+                    // Fallback : conserve l'image originale si l'encodage WebP échoue ou dépasse 16383px
+                    if (!$saved) {
+                        $fallbackExt = in_array($ext, ['jpg', 'jpeg', 'png', 'gif', 'avif']) ? $ext : 'jpg';
+                        $destPath = $destFolder . '/' . $pageNumber . '.' . $fallbackExt;
+                        Storage::disk('public')->put($destPath, file_get_contents($file));
+                    }
                 }
+
+                ChapterPage::create([
+                    'chapter_id'  => $this->chapter->id,
+                    'image_path'  => $destPath,
+                    'page_number' => $pageNumber,
+                ]);
+            }
+        } finally {
+            if (is_dir($extractPath)) {
+                \Illuminate\Support\Facades\File::deleteDirectory($extractPath);
             }
 
-            ChapterPage::create([
-                'chapter_id'  => $this->chapter->id,
-                'image_path'  => $destPath,
-                'page_number' => $pageNumber,
-            ]);
-        }
-
-        \Illuminate\Support\Facades\File::deleteDirectory($extractPath);
-
-        if ($disk) {
-            Storage::disk($disk)->delete($this->zipPath);
-        } elseif ($fullPath && file_exists($fullPath)) {
-            @unlink($fullPath);
+            if ($disk) {
+                Storage::disk($disk)->delete($this->zipPath);
+            } elseif ($fullPath && file_exists($fullPath)) {
+                @unlink($fullPath);
+            }
         }
 
         Log::info('Job ZIP terminé avec succès', [

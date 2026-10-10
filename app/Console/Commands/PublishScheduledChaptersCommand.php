@@ -36,11 +36,8 @@ class PublishScheduledChaptersCommand extends Command
                 'published_at' => $chapter->scheduled_at ?? $now,
             ]);
 
-            // Notifie les utilisateurs ayant mis l'œuvre en favoris
-            $chapter->notifyFavoriteUsers();
-
-            // Notifie le webhook Discord
-            $discord->sendChapterNotification($chapter);
+            // Note: les notifications favoris et le webhook Discord sont automatiquement
+            // déclenchés par l'événement model Chapter::saved lors du passage en statut PUBLIE.
 
             Log::info("Chapitre programmé publié avec succès", [
                 'chapter_id' => $chapter->id,

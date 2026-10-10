@@ -23,7 +23,9 @@ Route::prefix('manga')->name('manga.')->group(function () {
 
 Route::prefix('chapitre')->name('chapter.')->group(function () {
     Route::get('/{manga}/{slug}', [ChapterController::class, 'show'])->name('show');
-    Route::post('/{chapter}/vue', [ChapterController::class, 'trackView'])->name('track_view');
+    Route::post('/{chapter}/vue', [ChapterController::class, 'trackView'])
+        ->middleware('throttle:60,1')
+        ->name('track_view');
     Route::post('/{chapter}/signaler', [\App\Http\Controllers\Public\ChapterReportController::class, 'store'])
         ->middleware('throttle:6,1')
         ->name('report');

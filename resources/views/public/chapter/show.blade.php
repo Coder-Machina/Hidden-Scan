@@ -473,6 +473,20 @@
                 // Écouter le scroll
                 window.addEventListener('scroll', () => this.onScroll(), { passive: true });
 
+                // Navigation au clavier pour confort desktop
+                window.addEventListener('keydown', (e) => {
+                    const tag = document.activeElement ? document.activeElement.tagName.toLowerCase() : '';
+                    if (tag === 'input' || tag === 'textarea' || tag === 'select' || this.showReportModal) return;
+
+                    if (this.readMode === 'page') {
+                        if (e.key === 'ArrowRight' || e.key === 'PageDown') {
+                            this.nextPage();
+                        } else if (e.key === 'ArrowLeft' || e.key === 'PageUp') {
+                            this.prevPage();
+                        }
+                    }
+                });
+
                 // Sauvegarder la progression
                 this.saveProgress();
 
