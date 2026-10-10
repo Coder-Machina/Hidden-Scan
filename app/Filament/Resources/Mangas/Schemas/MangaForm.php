@@ -132,87 +132,23 @@ class MangaForm
                     ]),
 
                 Section::make('Options')
-                    ->description('Paramètres avancés.')
+                    ->description('Paramètres avancés & notifications.')
                     ->icon('heroicon-o-cog-6-tooth')
                     ->columns(2)
                     ->schema([
                         Toggle::make('is_featured')
                             ->label('Mise en avant')
                             ->helperText('Afficher dans la section "Recommandés".'),
+                        TextInput::make('discord_role_id')
+                            ->label('ID du Rôle Discord (Optionnel)')
+                            ->placeholder('Ex: 1191006668000071680')
+                            ->helperText('Rôle à mentionner lors de la publication d\'un nouveau chapitre sur Discord.'),
                         TextInput::make('views_count')
                             ->label('Compteur de vues')
                             ->numeric()
                             ->default(0)
                             ->disabled()
                             ->dehydrateStateUsing(fn ($state) => (int) ($state ?? 0)),
-                    ]),
-
-                Section::make('Discord & Production Staff')
-                    ->description('Fiche de production et synchronisation avec le bot Discord.')
-                    ->icon('heroicon-o-chat-bubble-left-right')
-                    ->columns(2)
-                    ->schema([
-                        TextInput::make('discord_role_id')
-                            ->label('ID du Rôle Discord')
-                            ->placeholder('Ex: 1191006668000071680')
-                            ->helperText('Permet de mentionner le rôle spécifique à ce projet lors des annonces de sortie.'),
-                        Toggle::make('is_rush')
-                            ->label('🚨 Mode Rush')
-                            ->helperText('Active le statut d\'urgence sur la fiche Discord du staff.'),
-                        TextInput::make('drive_url')
-                            ->label('Lien Google Drive')
-                            ->url()
-                            ->placeholder('https://drive.google.com/drive/folders/...')
-                            ->helperText('Dossier partagé pour les PSD, RAWs et traductions.'),
-                        TextInput::make('va_url')
-                            ->label('Lien VA / RAW (Source)')
-                            ->url()
-                            ->placeholder('https://asurascans.com/comics/...'),
-                        TextInput::make('va_chapter_number')
-                            ->label('Dernier Chapitre VA')
-                            ->numeric()
-                            ->default(0),
-
-                        Grid::make(3)->schema([
-                            TextInput::make('trad_user')
-                                ->label('Traducteur (Trad)')
-                                ->placeholder('Ex: @Neksyos'),
-                            TextInput::make('check_user')
-                                ->label('Correcteur (Check)')
-                                ->placeholder('Ex: @Klate'),
-                            TextInput::make('clean_user')
-                                ->label('Cleaneur (Clean)')
-                                ->placeholder('Ex: @focah'),
-                            TextInput::make('edit_user')
-                                ->label('Éditeur / Lettrage (Edit)')
-                                ->placeholder('Ex: @focah'),
-                            TextInput::make('qc_user')
-                                ->label('Contrôle Qualité (QC)')
-                                ->placeholder('Ex: @pas de paix'),
-                        ])->columnSpanFull(),
-
-                        Grid::make(5)->schema([
-                            TextInput::make('step_trad_chapter')
-                                ->label('Trad fini (N°)')
-                                ->numeric()
-                                ->default(0),
-                            TextInput::make('step_check_chapter')
-                                ->label('Check fini (N°)')
-                                ->numeric()
-                                ->default(0),
-                            TextInput::make('step_clean_chapter')
-                                ->label('Clean fini (N°)')
-                                ->numeric()
-                                ->default(0),
-                            TextInput::make('step_edit_chapter')
-                                ->label('Edit fini (N°)')
-                                ->numeric()
-                                ->default(0),
-                            TextInput::make('step_qc_chapter')
-                                ->label('QC fini (N°)')
-                                ->numeric()
-                                ->default(0),
-                        ])->columnSpanFull(),
                     ]),
             ]);
     }
