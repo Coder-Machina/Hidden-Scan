@@ -383,6 +383,20 @@ async function registerCommands() {
                     .setAutocomplete(true)
             ),
         new SlashCommandBuilder()
+            .setName('role-projet')
+            .setDescription('Associe un rôle Discord de notification à une œuvre')
+            .addStringOption(option =>
+                option.setName('manga')
+                    .setDescription('Nom de l\'œuvre')
+                    .setRequired(true)
+                    .setAutocomplete(true)
+            )
+            .addRoleOption(option =>
+                option.setName('role')
+                    .setDescription('Rôle Discord à notifier lors des sorties')
+                    .setRequired(true)
+            ),
+        new SlashCommandBuilder()
             .setName('stats-staff')
             .setDescription('Affiche le classement des chapitres faits par chaque membre'),
         new SlashCommandBuilder()
@@ -537,6 +551,44 @@ client.on('interactionCreate', async interaction => {
                 embeds: [embed],
                 components,
                 files,
+            });
+        }
+
+        // /role-projet
+        else if (commandName === 'role-projet') {
+            const slug = interaction.options.getString('manga');
+            const role = interaction.options.getRole('role');
+
+            if (!projects[slug]) {
+                await syncProjectsWithSite();
+                projects = loadProjects();
+            }
+
+            if (!projects[slug]) {
+                return await interaction.reply({ content: '❌ Projet introuvable.', ephemeral: true });
+            }
+
+            projects[slug].discord_role_id = role.id;
+            saveProjects(projects);
+
+            // Sync avec l'API Laravel
+            try {
+                const apiUrl = process.env.API_BASE_URL || 'http://127.0.0.1:8000';
+                const secret = process.env.DISCORD_BOT_SECRET || 'hiddenscan-secret-bot-key';
+                await fetch(`${apiUrl}/api/bot/link-role`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-Bot-Token': secret,
+                    },
+                    body: JSON.stringify({ slug, role_id: role.id }),
+                });
+            } catch (e) {
+                console.error('Erreur link-role API:', e.message);
+            }
+
+            await interaction.reply({
+                content: `✅ Le rôle <@&${role.id}> est désormais associé aux annonces de **${projects[slug].title}** ! Les sorties de chapitres mentionneront ce rôle avec un badge cliquable.`,
             });
         }
 

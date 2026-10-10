@@ -97,6 +97,35 @@ class DiscordBotController extends Controller
     }
 
     /**
+     * Associe un rôle Discord à un manga pour les notifications de sorties.
+     */
+    public function linkRole(Request $request): JsonResponse
+    {
+        if (!$this->authorizeBot($request)) {
+            return response()->json(['error' => 'Non autorisé'], 401);
+        }
+
+        $slug = $request->input('slug');
+        $roleId = $request->input('role_id');
+
+        $manga = Manga::where('slug', $slug)
+            ->orWhere('id', is_numeric($slug) ? (int)$slug : null)
+            ->first();
+
+        if (!$manga) {
+            return response()->json(['error' => 'Manga introuvable'], 404);
+        }
+
+        $manga->discord_role_id = $roleId;
+        $manga->save();
+
+        return response()->json([
+            'success' => true,
+            'message' => "Rôle Discord {$roleId} associé avec succès à {$manga->title}",
+        ]);
+    }
+
+    /**
      * Enregistre l'avancement d'une étape (bouton Trad, Check, Clean, Edit ou QC).
      */
     public function recordStepDone(Request $request): JsonResponse
