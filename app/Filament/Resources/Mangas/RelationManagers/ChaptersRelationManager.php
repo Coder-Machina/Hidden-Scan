@@ -141,7 +141,6 @@ class ChaptersRelationManager extends RelationManager
                         \Filament\Forms\Components\DateTimePicker::make('scheduled_start')
                             ->label('Date & heure du premier chapitre')
                             ->default(fn () => \App\Support\UserTimezone::defaultSchedule())
-                            ->helperText(fn () => \App\Support\UserTimezone::helperText() . ' Une date déjà passée publie les chapitres immédiatement.')
                             ->required(fn ($get) => $get('status') === 'programme')
                             ->visible(fn ($get) => $get('status') === 'programme'),
                         Select::make('interval_hours')
@@ -304,17 +303,14 @@ class ChaptersRelationManager extends RelationManager
                             'ordered_files' => collect($inspectedFiles)->pluck('name'),
                         ]);
 
-                        $isPast = $isScheduled && $scheduledStart && $scheduledStart->lte(now());
-
                         $message = $isScheduled
                             ? "{$createdCount} chapitre(s) créé(s) pour « {$manga->title} » et programmés à partir du " . \App\Support\UserTimezone::format($scheduledStart, 'd/m/Y H:i') . "."
-                                . ($isPast ? " ⚠️ Cette date est déjà passée : les chapitres seront publiés dès la fin du traitement." : '')
                             : "{$createdCount} chapitre(s) créé(s) pour « {$manga->title} ». Traitement et publication en cours dans l'ordre strict.";
 
                         Notification::make()
-                            ->title($isPast ? 'Date déjà passée : publication immédiate' : ($isScheduled ? 'Upload et programmation réussis' : 'Upload en masse lancé'))
+                            ->title($isScheduled ? 'Upload et programmation réussis' : 'Upload en masse lancé')
                             ->body($message)
-                            ->{$isPast ? 'warning' : 'success'}()
+                            ->success()
                             ->send();
                     }),
 
@@ -377,7 +373,6 @@ class ChaptersRelationManager extends RelationManager
                         \Filament\Forms\Components\DateTimePicker::make('scheduled_at')
                             ->label('Date et heure de publication')
                             ->default(fn (Chapter $record) => $record->scheduled_at ?? \App\Support\UserTimezone::defaultSchedule())
-                            ->helperText(fn () => \App\Support\UserTimezone::helperText() . ' Une date déjà passée publie le chapitre immédiatement.')
                             ->required(),
                     ])
                     ->action(function (Chapter $record, array $data) {
@@ -386,12 +381,10 @@ class ChaptersRelationManager extends RelationManager
                             'scheduled_at' => $data['scheduled_at'],
                         ]);
 
-                        $isPast = \Carbon\Carbon::parse($data['scheduled_at'])->lte(now());
-
                         Notification::make()
-                            ->title($isPast ? 'Date déjà passée : publication immédiate' : 'Publication programmée')
+                            ->title('Publication programmée')
                             ->body("Le chapitre #{$record->number} est programmé pour le " . \App\Support\UserTimezone::format($data['scheduled_at'], 'd/m/Y à H:i'))
-                            ->{$isPast ? 'warning' : 'info'}()
+                            ->info()
                             ->send();
                     }),
                 Action::make('control')
