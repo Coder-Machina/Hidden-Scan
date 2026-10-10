@@ -12,15 +12,32 @@ const {
     ButtonBuilder,
     ButtonStyle,
     AttachmentBuilder,
+    StringSelectMenuBuilder,
+    StringSelectMenuOptionBuilder,
+    ChannelType,
 } = require('discord.js');
 
 const DATA_DIR = path.join(__dirname, 'data');
 const PROJECTS_FILE = path.join(DATA_DIR, 'projects.json');
 const STATS_FILE = path.join(DATA_DIR, 'stats.json');
+const PANEL_FILE = path.join(DATA_DIR, 'panel.json');
 
 // Assure la création du dossier data
 if (!fs.existsSync(DATA_DIR)) {
     fs.mkdirSync(DATA_DIR, { recursive: true });
+}
+
+function loadPanelConfig() {
+    try {
+        if (!fs.existsSync(PANEL_FILE)) return {};
+        return JSON.parse(fs.readFileSync(PANEL_FILE, 'utf8') || '{}');
+    } catch (e) {
+        return {};
+    }
+}
+
+function savePanelConfig(data) {
+    fs.writeFileSync(PANEL_FILE, JSON.stringify(data, null, 2), 'utf8');
 }
 
 // Chargement & sauvegarde des projets locaux
@@ -394,9 +411,191 @@ async function ensureProjectRoles() {
                 saveProjects(projects);
                 console.log(`✅ Rôles synchronisés et sauvegardés pour "${guild.name}" !`);
             }
+
+            // Met à jour le panneau interactif des rôles si configuré ou sur le serveur principal
+            await updateOrCreateRolesPanel(guild);
         }
     } catch (e) {
         console.error('Erreur ensureProjectRoles:', e.message);
+    }
+}
+
+/**
+ * Construit l'Embed du panneau de rôles des séries (Style Hidden Scan)
+ */
+function buildRolesPanelEmbed(guild, rolesCount) {
+    const icon = guild.iconURL({ dynamic: true }) || 'https://hidden-scan.onrender.com/logo.png';
+    return new EmbedBuilder()
+        .setTitle('📕 • Choisissez vos Rôles de Notification !')
+        .setDescription(
+            `Bienvenue sur **${guild.name}** !\n\n` +
+            `Pour être notifié des sorties de vos séries préférées ou de l'ensemble de nos projets, sélectionnez vos rôles ci-dessous :\n\n` +
+            `📚 **Tous les projets** : Recevoir une notification pour **chaque nouveau chapitre** publié sur le site.\n` +
+            `📖 **Par série** : Choisir uniquement les séries que vous suivez.\n\n` +
+            `*(Sélectionnez dans le menu déroulant ci-dessous ou utilisez les boutons rapides)*`
+        )
+        .setColor(0x2563EB)
+        .setThumbnail(icon)
+        .addFields({
+            name: '✨ Site officiel',
+            value: `[Accéder à Hidden Scan](https://hidden-scan.onrender.com/) • **${rolesCount}** rôle(s) de séries configuré(s)`,
+            inline: false,
+        })
+        .setFooter({ text: 'Hidden Scan • Système automatique de notification', iconURL: icon })
+        .setTimestamp();
+}
+
+/**
+ * Construit les composants (Menu déroulant + Boutons rapides) du panneau de rôles
+ */
+function buildRolesPanelComponents(guild, projects, allProjectsRoleId) {
+    const options = [];
+
+    // Option: Tous les projets
+    if (allProjectsRoleId && guild.roles.cache.has(allProjectsRoleId)) {
+        options.push(
+            new StringSelectMenuOptionBuilder()
+                .setLabel('📚 Tous les projets')
+                .setValue(allProjectsRoleId)
+                .setDescription('Notification globale pour chaque sortie de chapitre')
+                .setEmoji('📚')
+        );
+    }
+
+    // Options par manga (dédoublonnées par rôle)
+    const seenRoles = new Set();
+    if (allProjectsRoleId) seenRoles.add(allProjectsRoleId);
+
+    const sortedProjects = Object.values(projects)
+        .filter(p => p.discord_role_id && guild.roles.cache.has(p.discord_role_id))
+        .sort((a, b) => a.title.localeCompare(b.title));
+
+    for (const p of sortedProjects) {
+        if (seenRoles.has(p.discord_role_id)) continue;
+        seenRoles.add(p.discord_role_id);
+
+        if (options.length >= 25) break;
+
+        options.push(
+            new StringSelectMenuOptionBuilder()
+                .setLabel(p.title.length > 100 ? p.title.substring(0, 97) + '...' : p.title)
+                .setValue(p.discord_role_id)
+                .setDescription(`Notifications pour ${p.title}`.substring(0, 100))
+                .setEmoji('📖')
+        );
+    }
+
+    if (options.length === 0) {
+        return [];
+    }
+
+    const selectMenu = new StringSelectMenuBuilder()
+        .setCustomId('select_series_roles')
+        .setPlaceholder('👉 Cliquez ici pour choisir vos séries...')
+        .setMinValues(0)
+        .setMaxValues(options.length)
+        .addOptions(options);
+
+    const row1 = new ActionRowBuilder().addComponents(selectMenu);
+
+    const btnAll = new ButtonBuilder()
+        .setCustomId('btn_roles_select_all')
+        .setLabel('Tout activer (Toutes les séries)')
+        .setStyle(ButtonStyle.Success)
+        .setEmoji('📚');
+
+    const btnClear = new ButtonBuilder()
+        .setCustomId('btn_roles_clear_all')
+        .setLabel('Tout retirer')
+        .setStyle(ButtonStyle.Secondary)
+        .setEmoji('❌');
+
+    const row2 = new ActionRowBuilder().addComponents(btnAll, btnClear);
+
+    return [row1, row2];
+}
+
+/**
+ * Récupère tous les IDs de rôles gérés par le panneau
+ */
+function getPanelRoleIds(guild, projects, allProjectsRoleId) {
+    const roleIds = new Set();
+    if (allProjectsRoleId && guild.roles.cache.has(allProjectsRoleId)) {
+        roleIds.add(allProjectsRoleId);
+    }
+    for (const p of Object.values(projects)) {
+        if (p.discord_role_id && guild.roles.cache.has(p.discord_role_id)) {
+            roleIds.add(p.discord_role_id);
+        }
+    }
+    return Array.from(roleIds);
+}
+
+/**
+ * Déploie ou met à jour le panneau interactif de sélection des rôles
+ */
+async function updateOrCreateRolesPanel(guild, customChannelId = null, cleanOld = false) {
+    try {
+        const panelConfig = loadPanelConfig();
+        const defaultChannelId = process.env.DISCORD_ROLES_CHANNEL_ID || '1535265358963806248';
+        const channelId = customChannelId || panelConfig[guild.id]?.channel_id || defaultChannelId;
+
+        const channel = await guild.channels.fetch(channelId).catch(() => null);
+        if (!channel) {
+            return null;
+        }
+
+        const projects = loadProjects();
+        const allProjectsRoleId = process.env.DISCORD_ALL_PROJECTS_ROLE_ID || '1535294276618158180';
+        const panelRoleIds = getPanelRoleIds(guild, projects, allProjectsRoleId);
+
+        const embed = buildRolesPanelEmbed(guild, panelRoleIds.length);
+        const components = buildRolesPanelComponents(guild, projects, allProjectsRoleId);
+
+        if (cleanOld) {
+            try {
+                const msgs = await channel.messages.fetch({ limit: 50 });
+                for (const [, msg] of msgs) {
+                    if (msg.deletable) {
+                        await msg.delete().catch(() => {});
+                    }
+                }
+            } catch (e) {
+                console.warn('[Panel] Nettoyage anciens messages:', e.message);
+            }
+        }
+
+        let message = null;
+        const savedMessageId = panelConfig[guild.id]?.message_id;
+
+        if (savedMessageId && !cleanOld) {
+            try {
+                message = await channel.messages.fetch(savedMessageId);
+            } catch (e) {
+                message = null;
+            }
+        }
+
+        if (message) {
+            await message.edit({ embeds: [embed], components });
+            console.log(`✅ Panneau des rôles mis à jour sur "${guild.name}" (#${channel.name})`);
+        } else {
+            message = await channel.send({ embeds: [embed], components });
+            console.log(`✨ Nouveau panneau des rôles déployé sur "${guild.name}" (#${channel.name}): ${message.id}`);
+        }
+
+        panelConfig[guild.id] = {
+            guild_id: guild.id,
+            channel_id: channel.id,
+            message_id: message.id,
+            updated_at: new Date().toISOString(),
+        };
+        savePanelConfig(panelConfig);
+
+        return message;
+    } catch (err) {
+        console.error(`❌ Erreur updateOrCreateRolesPanel sur "${guild.name}":`, err);
+        return null;
     }
 }
 
@@ -527,6 +726,20 @@ async function registerCommands() {
         new SlashCommandBuilder()
             .setName('sync-roles')
             .setDescription('Vérifie et crée automatiquement les rôles Discord manquants pour tous les mangas'),
+        new SlashCommandBuilder()
+            .setName('panneau-roles')
+            .setDescription('Déploie ou met à jour le panneau interactif de sélection des rôles de séries')
+            .addChannelOption(option =>
+                option.setName('salon')
+                    .setDescription('Salon où envoyer le panneau (défaut: rôles-séries)')
+                    .addChannelTypes(ChannelType.GuildText)
+                    .setRequired(false)
+            )
+            .addBooleanOption(option =>
+                option.setName('nettoyer')
+                    .setDescription('Supprimer les anciens messages du salon avant d\'envoyer le panneau')
+                    .setRequired(false)
+            ),
     ];
 
     const rest = new REST({ version: '10' }).setToken(process.env.DISCORD_BOT_TOKEN);
@@ -736,6 +949,26 @@ client.on('interactionCreate', async interaction => {
             await interaction.editReply({
                 content: '✅ Tous les rôles Discord des projets ont été vérifiés et synchronisés avec succès avec le site !',
             });
+        }
+
+        // /panneau-roles
+        else if (commandName === 'panneau-roles') {
+            await interaction.deferReply({ ephemeral: true });
+            const targetChannel = interaction.options.getChannel('salon');
+            const cleanOld = interaction.options.getBoolean('nettoyer') || false;
+
+            const channelId = targetChannel ? targetChannel.id : null;
+            const msg = await updateOrCreateRolesPanel(interaction.guild, channelId, cleanOld);
+
+            if (msg) {
+                await interaction.editReply({
+                    content: `✅ Panneau interactif des rôles déployé avec succès dans <#${msg.channelId}> !`,
+                });
+            } else {
+                await interaction.editReply({
+                    content: `❌ Impossible de déployer le panneau. Vérifiez les permissions du bot dans le salon ciblé.`,
+                });
+            }
         }
 
         // /set-chapitre
@@ -1001,8 +1234,169 @@ client.on('interactionCreate', async interaction => {
 
             await interaction.followUp({ content: alert });
         }
+
+        // Bouton Activer Tout (Toutes les séries)
+        else if (customId === 'btn_roles_select_all') {
+            await interaction.deferReply({ ephemeral: true });
+            const member = interaction.member;
+            const projects = loadProjects();
+            const allProjectsRoleId = process.env.DISCORD_ALL_PROJECTS_ROLE_ID || '1535294276618158180';
+            const panelRoleIds = getPanelRoleIds(interaction.guild, projects, allProjectsRoleId);
+
+            const added = [];
+            const alreadyHave = [];
+            const failed = [];
+
+            for (const roleId of panelRoleIds) {
+                const role = interaction.guild.roles.cache.get(roleId);
+                if (!role) continue;
+                if (member.roles.cache.has(roleId)) {
+                    alreadyHave.push(role);
+                    continue;
+                }
+                if (!role.editable) {
+                    failed.push({ role, reason: 'Hiérarchie Discord (rôle placé au-dessus du bot)' });
+                    continue;
+                }
+                try {
+                    await member.roles.add(roleId);
+                    added.push(role);
+                } catch (e) {
+                    failed.push({ role, reason: e.message });
+                }
+            }
+
+            let msg = `### 📚 Activation de toutes les séries\n\n`;
+            if (added.length > 0) {
+                msg += `✅ **${added.length} rôle(s) ajouté(s) :**\n` + added.map(r => `• <@&${r.id}>`).join('\n') + '\n\n';
+            }
+            if (alreadyHave.length > 0) {
+                msg += `ℹ️ Vous aviez déjà **${alreadyHave.length}** rôle(s).\n\n`;
+            }
+            if (failed.length > 0) {
+                msg += `⚠️ **${failed.length} rôle(s) non modifiables :**\n` +
+                    failed.map(f => `• <@&${f.role.id}> (${f.reason})`).join('\n') +
+                    `\n*Demandez à un administrateur de monter le rôle **Hidden Staff** dans les paramètres du serveur.*`;
+            }
+            await interaction.editReply({ content: msg });
+        }
+
+        // Bouton Tout Retirer
+        else if (customId === 'btn_roles_clear_all') {
+            await interaction.deferReply({ ephemeral: true });
+            const member = interaction.member;
+            const projects = loadProjects();
+            const allProjectsRoleId = process.env.DISCORD_ALL_PROJECTS_ROLE_ID || '1535294276618158180';
+            const panelRoleIds = getPanelRoleIds(interaction.guild, projects, allProjectsRoleId);
+
+            const removed = [];
+            const failed = [];
+
+            for (const roleId of panelRoleIds) {
+                const role = interaction.guild.roles.cache.get(roleId);
+                if (!role || !member.roles.cache.has(roleId)) continue;
+                if (!role.editable) {
+                    failed.push({ role, reason: 'Hiérarchie Discord (rôle placé au-dessus du bot)' });
+                    continue;
+                }
+                try {
+                    await member.roles.remove(roleId);
+                    removed.push(role);
+                } catch (e) {
+                    failed.push({ role, reason: e.message });
+                }
+            }
+
+            let msg = `### ❌ Désactivation des notifications\n\n`;
+            if (removed.length > 0) {
+                msg += `🗑️ **${removed.length} rôle(s) retiré(s) :**\n` + removed.map(r => `• <@&${r.id}>`).join('\n') + '\n\n';
+            } else {
+                msg += `ℹ️ Vous n'aviez aucun rôle de série actif.\n\n`;
+            }
+            if (failed.length > 0) {
+                msg += `⚠️ **${failed.length} rôle(s) non modifiables :**\n` +
+                    failed.map(f => `• <@&${f.role.id}> (${f.reason})`).join('\n') +
+                    `\n*Demandez à un administrateur de monter le rôle **Hidden Staff** dans les paramètres du serveur.*`;
+            }
+            await interaction.editReply({ content: msg });
+        }
     } catch (err) {
         console.error('Erreur clic bouton:', err);
+    }
+});
+
+// Menu déroulant de sélection des rôles de séries
+client.on('interactionCreate', async interaction => {
+    if (!interaction.isStringSelectMenu()) return;
+    if (interaction.customId !== 'select_series_roles') return;
+
+    try {
+        await interaction.deferReply({ ephemeral: true });
+
+        const member = interaction.member;
+        const selectedRoleIds = interaction.values;
+        const projects = loadProjects();
+        const allProjectsRoleId = process.env.DISCORD_ALL_PROJECTS_ROLE_ID || '1535294276618158180';
+        const panelRoleIds = getPanelRoleIds(interaction.guild, projects, allProjectsRoleId);
+
+        const added = [];
+        const removed = [];
+        const failed = [];
+
+        for (const roleId of panelRoleIds) {
+            const isSelected = selectedRoleIds.includes(roleId);
+            const hasRole = member.roles.cache.has(roleId);
+            const role = interaction.guild.roles.cache.get(roleId);
+
+            if (!role) continue;
+
+            if (isSelected && !hasRole) {
+                if (!role.editable) {
+                    failed.push({ role, action: 'ajout', reason: 'Hiérarchie Discord (rôle placé au-dessus du bot)' });
+                } else {
+                    try {
+                        await member.roles.add(roleId);
+                        added.push(role);
+                    } catch (e) {
+                        failed.push({ role, action: 'ajout', reason: e.message });
+                    }
+                }
+            } else if (!isSelected && hasRole) {
+                if (!role.editable) {
+                    failed.push({ role, action: 'retrait', reason: 'Hiérarchie Discord (rôle placé au-dessus du bot)' });
+                } else {
+                    try {
+                        await member.roles.remove(roleId);
+                        removed.push(role);
+                    } catch (e) {
+                        failed.push({ role, action: 'retrait', reason: e.message });
+                    }
+                }
+            }
+        }
+
+        let replyText = '### 📕 Vos rôles de notification ont été mis à jour !\n\n';
+        if (added.length > 0) {
+            replyText += `✅ **Rôles ajoutés (${added.length}) :**\n` + added.map(r => `• <@&${r.id}>`).join('\n') + '\n\n';
+        }
+        if (removed.length > 0) {
+            replyText += `🗑️ **Rôles retirés (${removed.length}) :**\n` + removed.map(r => `• <@&${r.id}>`).join('\n') + '\n\n';
+        }
+        if (added.length === 0 && removed.length === 0 && failed.length === 0) {
+            replyText += 'ℹ️ Vos rôles correspondent déjà exactement à votre sélection.\n';
+        }
+        if (failed.length > 0) {
+            replyText += `⚠️ **Certains rôles n'ont pas pu être modifiés (${failed.length}) :**\n` +
+                failed.map(f => `• <@&${f.role.id}> (${f.reason})`).join('\n') +
+                `\n*Demandez à un administrateur de monter le rôle **Hidden Staff** dans les paramètres du serveur.*`;
+        }
+
+        await interaction.editReply({ content: replyText });
+    } catch (err) {
+        console.error('Erreur select_series_roles:', err);
+        if (interaction.deferred && !interaction.replied) {
+            await interaction.editReply({ content: '⚠️ Une erreur est survenue lors de la mise à jour de vos rôles.' }).catch(() => {});
+        }
     }
 });
 
