@@ -49,13 +49,13 @@ class DiscordWebhookService
         }
 
         $titleSuffix = $chapter->title ? " : *{$chapter->title}*" : '';
-        $description = "🔥 **Chapitre {$chapter->number}**{$titleSuffix}\n\nLe nouveau chapitre de **{$manga->title}** est désormais disponible en lecture libre et haute qualité sur **Hidden Scan** !\n\n👉 [**Cliquez ici pour lire le chapitre**]({$chapterUrl})";
+        $description = "Chapitre {$chapter->number}{$titleSuffix}\n[**Lisez ici.**]({$chapterUrl})\n\n*N'oubliez pas de prendre vos rôles de notification !*";
 
         $embed = [
-            'title' => "📖 Nouveau Chapitre : {$manga->title}",
+            'title' => $manga->title,
             'description' => $description,
             'url' => $chapterUrl,
-            'color' => 0xDC2626, // Rouge #dc2626 (Charte Hidden Scan)
+            'color' => 0xDC2626, // Rouge #dc2626 Hidden Scan
             'fields' => [
                 [
                     'name' => 'Type',
@@ -74,23 +74,46 @@ class DiscordWebhookService
                 ],
             ],
             'footer' => [
-                'text' => 'Hidden Scan • Le sanctuaire des scans',
+                'text' => 'Hidden Scan • Sorties Officielles',
             ],
             'timestamp' => now()->toIso8601String(),
         ];
 
+        // Grande affiche de couverture pleine largeur (style Raijin Sorties)
         if ($coverUrl) {
-            $embed['thumbnail'] = [
+            $embed['image'] = [
                 'url' => $coverUrl,
             ];
         }
 
         $payload = [
             'embeds' => [$embed],
+            'components' => [
+                [
+                    'type' => 1, // ActionRow
+                    'components' => [
+                        [
+                            'type' => 2, // Button
+                            'style' => 5, // Link
+                            'label' => "📖 Lire le Chapitre {$chapter->number}",
+                            'url' => $chapterUrl,
+                        ],
+                    ],
+                ],
+            ],
         ];
 
-        if ($roleId) {
-            $payload['content'] = "<@&{$roleId}>";
+        // Construction des mentions de rôles (Rôle du manga + Rôle global de notification)
+        $pings = [];
+        if (!empty($manga->discord_role_id)) {
+            $pings[] = "<@&{$manga->discord_role_id}>";
+        }
+        if (!empty($roleId) && $roleId !== $manga->discord_role_id) {
+            $pings[] = "<@&{$roleId}>";
+        }
+
+        if (!empty($pings)) {
+            $payload['content'] = "📌 • " . implode(' ', $pings);
         }
 
         try {

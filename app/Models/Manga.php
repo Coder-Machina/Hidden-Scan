@@ -15,12 +15,16 @@ class Manga extends Model
         'type', 'status',
         'release_year', 'views_count', 'is_featured',
         'average_rating', 'ratings_count',
+        'discord_role_id', 'drive_url', 'va_url', 'va_chapter_number', 'is_rush',
+        'trad_user', 'check_user', 'clean_user', 'edit_user', 'qc_user',
+        'step_trad_chapter', 'step_check_chapter', 'step_clean_chapter', 'step_edit_chapter', 'step_qc_chapter',
     ];
 
     protected $casts = [
         'type' => \App\Enums\MangaType::class,
         'status' => \App\Enums\MangaStatus::class,
         'is_featured' => 'boolean',
+        'is_rush' => 'boolean',
     ];
 
     protected $attributes = [
@@ -77,5 +81,10 @@ class Manga extends Model
     public function reports()
     {
         return $this->hasMany(ChapterReport::class);
+    }
+
+    public function staffContributions()
+    {
+        return $this->hasMany(StaffContribution::class);
     }
 }

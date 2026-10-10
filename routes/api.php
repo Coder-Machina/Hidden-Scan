@@ -35,3 +35,13 @@ Route::middleware(['web'])->group(function () {
     // Profile Synchronization
     Route::post('/profile/sync', [\App\Http\Controllers\ProfileController::class, 'sync'])->name('api.profile.sync');
 });
+
+// ═══ DISCORD BOT STAFF & RELEASES API ═══
+Route::prefix('bot')->group(function () {
+    Route::get('/mangas', [\App\Http\Controllers\Api\DiscordBotController::class, 'listMangas'])->name('api.bot.mangas');
+    Route::get('/fiche/{slug}', [\App\Http\Controllers\Api\DiscordBotController::class, 'getFiche'])->name('api.bot.fiche');
+    Route::post('/step-done', [\App\Http\Controllers\Api\DiscordBotController::class, 'recordStepDone'])->name('api.bot.step-done');
+    Route::post('/toggle-rush', [\App\Http\Controllers\Api\DiscordBotController::class, 'toggleRush'])->name('api.bot.toggle-rush');
+    Route::get('/staff-stats', [\App\Http\Controllers\Api\DiscordBotController::class, 'getStaffStats'])->name('api.bot.staff-stats');
+    Route::get('/agenda-reminders', [\App\Http\Controllers\Api\DiscordBotController::class, 'getAgendaReminders'])->name('api.bot.agenda-reminders');
+});
