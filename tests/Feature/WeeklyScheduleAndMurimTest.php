@@ -91,4 +91,59 @@ class WeeklyScheduleAndMurimTest extends TestCase
         $response->assertSee('Rejoins la communauté');
         $response->assertSee('https://discord.gg/sMUeFSks4');
     }
+
+    public function test_authenticated_user_can_choose_spiritual_beast(): void
+    {
+        $user = User::factory()->create();
+
+        $response = $this->actingAs($user)->postJson(route('profile.spiritual_beast'), [
+            'spiritual_beast' => 'lunar_wolf',
+        ]);
+
+        $response->assertStatus(200);
+        $response->assertJson([
+            'success' => true,
+            'beast_status' => [
+                'beast' => [
+                    'key' => 'lunar_wolf',
+                    'name' => "Loup Lunaire d'Argent",
+                ],
+            ],
+        ]);
+
+        $this->assertEquals('lunar_wolf', $user->fresh()->spiritual_beast);
+    }
+
+    public function test_authenticated_user_can_equip_unlocked_avatar_frame(): void
+    {
+        $user = User::factory()->create();
+
+        // Should succeed for novice frame
+        $response = $this->actingAs($user)->postJson(route('profile.avatar_frame'), [
+            'avatar_frame' => 'novice',
+        ]);
+
+        $response->assertStatus(200);
+        $response->assertJson([
+            'success' => true,
+            'frame' => [
+                'key' => 'novice',
+            ],
+        ]);
+
+        $this->assertEquals('novice', $user->fresh()->avatar_frame);
+    }
+
+    public function test_user_cannot_equip_locked_frame_without_enough_chapters(): void
+    {
+        $user = User::factory()->create();
+
+        // divine_sovereign requires 500 chapters
+        $response = $this->actingAs($user)->postJson(route('profile.avatar_frame'), [
+            'avatar_frame' => 'divine_sovereign',
+        ]);
+
+        $response->assertStatus(422);
+        $this->assertNotEquals('divine_sovereign', $user->fresh()->avatar_frame);
+    }
 }

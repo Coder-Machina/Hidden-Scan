@@ -68,7 +68,12 @@ class ProfileController extends Controller
             'type' => is_object($m->type) ? ($m->type->value ?? 'manga') : ($m->type ?? 'manga'),
         ])->values()->all();
 
-        $validTabs = ['overview', 'activity', 'tierlist', 'leaderboard', 'library', 'edit', 'settings'];
+        // Hydratation Bête Spirituelle & Cadres d'Avatar
+        $spiritualBeasts = \App\Services\MurimRankService::getSpiritualBeasts();
+        $userBeastStatus = \App\Services\MurimRankService::getBeastStatus($user->spiritual_beast ?? 'shadow_crow', $readCount);
+        $avatarFrames = \App\Services\MurimRankService::getAvatarFrames($readCount);
+
+        $validTabs = ['overview', 'activity', 'beast', 'tierlist', 'leaderboard', 'library', 'edit', 'settings'];
         $reqTab = $request->query('tab');
         $defaultTab = in_array($reqTab, $validTabs) ? $reqTab : 'overview';
 
@@ -90,6 +95,11 @@ class ProfileController extends Controller
             'topMangasIds' => $topMangasIds,
             'topMangasMap' => $topMangasMap,
             'tierListConfig' => $tierListConfig,
+            'spiritualBeasts' => $spiritualBeasts,
+            'userBeastStatus' => $userBeastStatus,
+            'avatarFrames' => $avatarFrames,
+            'currentFrame' => $user->avatar_frame ?? 'novice',
+            'qiShields' => (int) ($user->qi_shields ?? 0),
         ]);
     }
 
@@ -298,6 +308,69 @@ class ProfileController extends Controller
         return response()->json([
             'success' => true,
             'message' => 'Votre Top 5 a été mis à jour !',
+        ]);
+    }
+
+    /**
+     * Choisit la Bête Spirituelle de l'Ombre liée à l'âme du lecteur
+     */
+    public function saveSpiritualBeast(Request $request): \Illuminate\Http\JsonResponse
+    {
+        $user = $request->user();
+        if (!$user) {
+            return response()->json(['success' => false, 'message' => 'Non authentifié'], 401);
+        }
+
+        $validKeys = array_keys(\App\Services\MurimRankService::getSpiritualBeasts());
+        $validated = $request->validate([
+            'spiritual_beast' => ['required', 'string', 'in:' . implode(',', $validKeys)],
+        ]);
+
+        $user->spiritual_beast = $validated['spiritual_beast'];
+        $user->save();
+
+        $readCount = $user->readingProgress()->where('is_read', true)->count();
+        $beastStatus = \App\Services\MurimRankService::getBeastStatus($user->spiritual_beast, $readCount);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Votre pacte avec le ' . $beastStatus['beast']['name'] . ' a été scellé !',
+            'beast_status' => $beastStatus,
+        ]);
+    }
+
+    /**
+     * Équipe un Cadre d'Avatar / Aura de Qi débloqué
+     */
+    public function saveAvatarFrame(Request $request): \Illuminate\Http\JsonResponse
+    {
+        $user = $request->user();
+        if (!$user) {
+            return response()->json(['success' => false, 'message' => 'Non authentifié'], 401);
+        }
+
+        $readCount = $user->readingProgress()->where('is_read', true)->count();
+        $frames = \App\Services\MurimRankService::getAvatarFrames($readCount);
+
+        $validated = $request->validate([
+            'avatar_frame' => ['required', 'string'],
+        ]);
+
+        $frameKey = $validated['avatar_frame'];
+        if (!isset($frames[$frameKey]) || !$frames[$frameKey]['unlocked']) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Cette aura de Qi est encore scellée. Lisez davantage de chapitres pour la débloquer !',
+            ], 422);
+        }
+
+        $user->avatar_frame = $frameKey;
+        $user->save();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Aura ' . $frames[$frameKey]['name'] . ' équipée avec succès !',
+            'frame' => $frames[$frameKey],
         ]);
     }
 }

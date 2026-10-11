@@ -842,11 +842,113 @@
                             body: JSON.stringify({ top_mangas: this.topMangasIds })
                         });
                         const data = await res.json();
+                // ═══ Bête Spirituelle & Cadres d'Avatar & Carte de Disciple ═══
+                currentFrame: @json($currentFrame ?? 'novice'),
+                avatarFrames: @json($avatarFrames),
+                spiritualBeast: @json($user->spiritual_beast ?? 'shadow_crow'),
+                spiritualBeasts: @json($spiritualBeasts),
+                userBeastStatus: @json($userBeastStatus),
+                cardModalOpen: false,
+                exportingCard: false,
+
+                getFrameClass(frameKey) {
+                    const k = frameKey || this.currentFrame || 'novice';
+                    return 'frame-' + k.replace(/_/g, '-');
+                },
+
+                async equipFrame(frameKey) {
+                    try {
+                        const token = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+                        const res = await fetch('/api/profile/avatar-frame', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'X-CSRF-TOKEN': token || '',
+                                'Accept': 'application/json',
+                            },
+                            body: JSON.stringify({ avatar_frame: frameKey })
+                        });
+                        const data = await res.json();
                         if (res.ok && data.success) {
-                            this.showToast('Top 5 séries mis à jour !');
+                            this.currentFrame = frameKey;
+                            this.showToast(data.message);
+                            if (window.anime) {
+                                window.anime('.profile-avatar-box', {
+                                    scale: [0.9, 1.05, 1],
+                                    duration: 700,
+                                    ease: 'outBack'
+                                });
+                            }
+                        } else {
+                            this.showToast(data.message || 'Impossible d\'équiper cette aura.');
                         }
                     } catch(e) {
-                        this.showToast('Erreur lors de l\'enregistrement.');
+                        this.showToast('Erreur lors de la mise à jour de l\'aura.');
+                    }
+                },
+
+                async chooseBeast(beastKey) {
+                    try {
+                        const token = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+                        const res = await fetch('/api/profile/spiritual-beast', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'X-CSRF-TOKEN': token || '',
+                                'Accept': 'application/json',
+                            },
+                            body: JSON.stringify({ spiritual_beast: beastKey })
+                        });
+                        const data = await res.json();
+                        if (res.ok && data.success) {
+                            this.spiritualBeast = beastKey;
+                            this.userBeastStatus = data.beast_status;
+                            this.showToast(data.message);
+                            if (window.anime) {
+                                window.anime('#current-beast-avatar', {
+                                    scale: [0.85, 1.15, 1],
+                                    rotate: [-10, 10, 0],
+                                    duration: 900,
+                                    ease: 'outElastic'
+                                });
+                            }
+                        } else {
+                            this.showToast(data.message || 'Erreur pacte.');
+                        }
+                    } catch(e) {
+                        this.showToast('Erreur lors du pacte spirituel.');
+                    }
+                },
+
+                openCardModal() {
+                    this.cardModalOpen = true;
+                    this.$nextTick(() => {
+                        if (window.anime) {
+                            window.anime('#disciple-card-render', {
+                                scale: [0.92, 1],
+                                opacity: [0, 1],
+                                duration: 600,
+                                ease: 'outCubic'
+                            });
+                        }
+                    });
+                },
+
+                closeCardModal() {
+                    this.cardModalOpen = false;
+                },
+
+                async downloadCard() {
+                    this.exportingCard = true;
+                    try {
+                        if (window.exportDiscipleCard) {
+                            await window.exportDiscipleCard('disciple-card-render', '{{ Str::slug($user->name) }}-carte-disciple.png');
+                            this.showToast('Carte de Disciple générée et téléchargée !');
+                        }
+                    } catch(e) {
+                        this.showToast('Erreur lors du téléchargement de la carte.');
+                    } finally {
+                        this.exportingCard = false;
                     }
                 },
 
@@ -1033,18 +1135,10 @@
                         <circle cx="240" cy="70" r="18" fill="url(#smallPlanetGradApp)" />
                         <circle cx="640" cy="105" r="54" fill="url(#moonGradApp)" />
                         <circle cx="625" cy="88" r="9" fill="#1e293b" opacity="0.25" />
-                        <circle cx="660" cy="118" r="11" fill="#1e293b" opacity="0.2" />
-                    </svg>
-                </template>
-                <template x-if="bannerPreview">
-                    <img :src="bannerPreview" class="profile-hero-img" alt="Bannière de profil">
-                </template>
-                <div class="profile-hero-overlay"></div>
-            </div>
-
-            <div class="profile-hero-content">
+                        <circle cx="660" cy="118" r="11" fill="#1e293b" opac            <div class="profile-hero-content">
                 <div class="profile-hero-left">
-                    <div class="profile-avatar-box">
+                    <div class="profile-avatar-box relative transition-all duration-300" :class="getFrameClass(currentFrame)">
+                        <div class="qi-pulse-ring" :class="currentFrame !== 'novice' ? 'block' : 'hidden'"></div>
                         <div class="profile-avatar-img-wrap">
                             <template x-if="!avatarPreview">
                                 <span class="profile-avatar-initials">{{ $initials }}</span>
@@ -1070,23 +1164,35 @@
                         <div class="profile-meta-info flex items-center gap-2.5 mt-1 text-xs text-mist flex-wrap">
                             <span>Niveau {{ $user->level }}</span>
                             <span>•</span>
-                            <span class="text-amber-400 font-bold">🔥 {{ $user->streak ?? 0 }}j d'assiduité</span>
+                            <span class="text-amber-400 font-bold">🔥 {{ $user->streak ?? 0 }}j de flamme</span>
+                            <span>•</span>
+                            <span class="text-emerald-400 font-bold flex items-center gap-1" title="Boucliers Spirituels de Qi : sauvent votre streak automatiquement en cas d'oubli d'une journée ! (1 gagné tous les 7 jours de lecture)">
+                                <span>🛡️</span>
+                                <span>{{ $qiShields }}/2 Bouclier(s)</span>
+                            </span>
+                            <span>•</span>
+                            <span class="text-indigo-400 font-bold flex items-center gap-1" title="Bête Spirituelle liée à votre âme martiale">
+                                <span x-text="userBeastStatus?.current_stage?.icon || '🦅'">🦅</span>
+                                <span x-text="userBeastStatus?.current_stage?.name || 'Familier'"></span>
+                            </span>
                             <span>•</span>
                             <span class="text-cyan-400 font-bold">⚡ {{ number_format($user->xp ?? ($readCount * 15)) }} Qi (XP)</span>
-                            <span>•</span>
-                            <span>Membre depuis {{ $user->created_at->translatedFormat('F Y') }}</span>
                         </div>
                     </div>
                 </div>
 
                 <div class="profile-hero-right">
                     <div class="profile-hero-buttons">
+                        <button type="button" class="btn-profile-ghost text-amber-400 border-amber-500/30 hover:border-amber-400 hover:bg-amber-500/10 shadow-lg" @click="openCardModal()">
+                            <span>🎴</span>
+                            <span>Carte de Disciple</span>
+                        </button>
                         <button type="button" class="btn-profile-ghost" @click="switchTab('edit')">
                             <svg viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
                             Modifier profil
                         </button>
                         <button type="button" class="btn-profile-ghost" @click="switchTab('settings')">
-                            <svg viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+                            <svg viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
                             Paramètres
                         </button>
                     </div>
@@ -1101,6 +1207,14 @@
             <button class="profile-tab-item" :class="currentTab === 'overview' ? 'active' : ''" @click="switchTab('overview')">
                 <span>🥋</span>
                 <span>Aperçu & Voie Martiale</span>
+            </button>
+            <button class="profile-tab-item" :class="currentTab === 'beast' ? 'active' : ''" @click="switchTab('beast')">
+                <span x-text="userBeastStatus?.current_stage?.icon || '🦅'">🦅</span>
+                <span>Bête Spirituelle</span>
+            </button>
+            <button class="profile-tab-item" :class="currentTab === 'auras' ? 'active' : ''" @click="switchTab('auras')">
+                <span>✨</span>
+                <span>Auras & Cadres</span>
             </button>
             <button class="profile-tab-item" :class="currentTab === 'activity' ? 'active' : ''" @click="switchTab('activity')">
                 <span>📅</span>
@@ -1120,6 +1234,13 @@
             </button>
             <button class="profile-tab-item" :class="currentTab === 'edit' ? 'active' : ''" @click="switchTab('edit')">
                 <svg viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4"><path d="M12 20h9"></path><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path></svg>
+                <span>Modifier profil</span>
+            </button>
+            <button class="profile-tab-item" :class="currentTab === 'settings' ? 'active' : ''" @click="switchTab('settings')">
+                <svg viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+                <span>Sécurité</span>
+            </button>
+        </div>
                 <span>Modifier profil</span>
             </button>
             <button class="profile-tab-item" :class="currentTab === 'settings' ? 'active' : ''" @click="switchTab('settings')">
@@ -1178,7 +1299,7 @@
                     </div>
 
                     {{-- Barre d'Essence de Qi --}}
-                    <div class="relative z-10">
+                    <div class="relative z-10 mb-4">
                         <div class="flex items-center justify-between text-xs font-bold mb-1.5">
                             <span class="text-chalk flex items-center gap-1.5">
                                 <span>⚡ Concentration de Qi</span>
@@ -1189,6 +1310,24 @@
                         <div class="w-full h-3 bg-black/50 rounded-full overflow-hidden border border-white/5 shadow-inner">
                             <div class="h-full bg-gradient-to-r from-amber-500 via-crimson to-amber-300 rounded-full transition-all duration-1000 shadow-[0_0_12px_rgba(245,158,11,0.5)]" style="width: {{ $murimStatus['percent'] }}%"></div>
                         </div>
+                    </div>
+
+                    {{-- Actions Rapides & Compagnon Lié --}}
+                    <div class="pt-4 border-t border-white/10 flex flex-wrap items-center justify-between gap-3 relative z-10">
+                        <div class="flex items-center gap-3">
+                            <button type="button" @click="switchTab('beast')" class="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-xs font-bold text-white transition">
+                                <span x-text="userBeastStatus?.current_stage?.icon || '🦅'">🦅</span>
+                                <span>Bête : <span class="text-amber-300" x-text="userBeastStatus?.beast?.name || 'Corbeau'">Corbeau</span></span>
+                            </button>
+                            <button type="button" @click="switchTab('auras')" class="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-xs font-bold text-white transition">
+                                <span>✨</span>
+                                <span>Aura : <span class="text-indigo-300" x-text="avatarFrames[currentFrame]?.name || 'Disciple'"></span></span>
+                            </button>
+                        </div>
+                        <button type="button" @click="cardModalOpen = true" class="px-4 py-2 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-black text-xs font-black transition flex items-center gap-2 shadow-lg shadow-amber-500/20">
+                            <span>🎴</span>
+                            <span>Ma Carte de Cultivation</span>
+                        </button>
                     </div>
                 </div>
 
@@ -1449,6 +1588,226 @@
                             <span class="w-3.5 h-3.5 rounded bg-gradient-to-tr from-amber-600 to-yellow-400 border border-amber-300" title="9+ chap."></span>
                             <span>Flamme Suprême</span>
                         </div>
+                    </div>
+                </div>
+            </div>
+
+            {{-- ── Panel : Bête Spirituelle de l'Ombre ── --}}
+            <div class="profile-tab-panel" :class="currentTab === 'beast' ? 'active' : ''">
+                <div class="profile-card-panel">
+                    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
+                        <div>
+                            <h2 class="text-xl font-black text-white flex items-center gap-2.5">
+                                <span>🐾</span>
+                                <span>Bête Spirituelle de l'Ombre</span>
+                                <span class="text-xs px-2.5 py-0.5 rounded-full bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 font-bold">
+                                    Familier Céleste Évolutif
+                                </span>
+                            </h2>
+                            <p class="text-xs text-mist mt-1">
+                                Votre âme de lecteur est liée à un familier ancestral. Il absorbe le Qi de chaque chapitre que vous lisez pour transcender ses stades !
+                            </p>
+                        </div>
+                    </div>
+
+                    {{-- Carte d'Honneur de la Bête Actuelle --}}
+                    <div class="p-6 md:p-8 rounded-2xl bg-gradient-to-br from-[#121124] via-[#0d0c18] to-[#161228] border border-indigo-500/30 shadow-2xl relative overflow-hidden mb-8">
+                        <div class="absolute -right-12 -bottom-12 w-64 h-64 bg-indigo-600/10 rounded-full blur-3xl pointer-events-none"></div>
+
+                        <div class="flex flex-col md:flex-row items-center gap-8 relative z-10">
+                            {{-- Avatar Animé de la Bête --}}
+                            <div class="relative flex-shrink-0">
+                                <div id="current-beast-avatar" class="w-28 h-28 md:w-32 md:h-32 rounded-3xl bg-gradient-to-tr from-indigo-950 to-purple-900/60 border-2 border-indigo-400/50 shadow-[0_0_35px_rgba(99,102,241,0.35)] flex items-center justify-center text-6xl md:text-7xl select-none">
+                                    <span x-text="userBeastStatus?.current_stage?.icon || '🦅'">🦅</span>
+                                </div>
+                                <div class="absolute -bottom-2.5 left-1/2 -translate-x-1/2 px-3 py-0.5 rounded-full bg-indigo-600 text-[10px] font-black uppercase tracking-wider text-white border border-indigo-300 shadow-md whitespace-nowrap">
+                                    Stade <span x-text="userBeastStatus?.current_stage?.stage || 1">1</span>/4
+                                </div>
+                            </div>
+
+                            {{-- Détails & Progression du Qi --}}
+                            <div class="flex-1 text-center md:text-left min-w-0">
+                                <div class="flex flex-wrap items-center justify-center md:justify-start gap-2.5 mb-2">
+                                    <h3 class="text-2xl font-black text-white" x-text="userBeastStatus?.beast?.name || 'Corbeau des Ombres'">Corbeau des Ombres</h3>
+                                    <span class="px-2.5 py-0.5 rounded-full text-xs font-bold bg-white/5 border border-white/10 text-mist" x-text="userBeastStatus?.beast?.element || 'Ténèbres'">Ténèbres</span>
+                                </div>
+
+                                <div class="text-sm font-bold text-amber-300 mb-2">
+                                    <span class="text-mist font-normal">Stade Actuel :</span> 
+                                    <span x-text="userBeastStatus?.current_stage?.name || 'Éclaireur'"></span>
+                                </div>
+
+                                <p class="text-xs text-mist leading-relaxed mb-5 max-w-xl" x-text="userBeastStatus?.current_stage?.description || userBeastStatus?.beast?.desc">
+                                    Un familier spirituel qui veille sur vos lectures d'arts martiaux.
+                                </p>
+
+                                {{-- Jauge de Percée vers le Prochain Stade --}}
+                                <div class="max-w-xl bg-black/40 p-4 rounded-xl border border-white/10">
+                                    <div class="flex items-center justify-between text-xs mb-2">
+                                        <span class="font-bold text-white flex items-center gap-1.5">
+                                            <span>⚡</span>
+                                            <span>Progression Spirituelle</span>
+                                        </span>
+                                        <span class="text-indigo-400 font-extrabold" x-text="(userBeastStatus?.read_count || 0) + ' / ' + (userBeastStatus?.next_stage ? userBeastStatus?.next_stage?.min_chapters + ' ch.' : 'MAX')">
+                                            0 / 20 ch.
+                                        </span>
+                                    </div>
+                                    <div class="w-full h-3 rounded-full bg-white/5 border border-white/10 overflow-hidden relative">
+                                        <div 
+                                            class="h-full rounded-full bg-gradient-to-r from-indigo-500 via-purple-500 to-amber-400 transition-all duration-700 shadow-[0_0_12px_rgba(168,85,247,0.5)]" 
+                                            :style="'width: ' + (userBeastStatus?.progress_percent || 0) + '%'"
+                                        ></div>
+                                    </div>
+                                    <div class="flex items-center justify-between text-[11px] text-mist mt-2">
+                                        <template x-if="userBeastStatus?.next_stage">
+                                            <span>Encore <strong class="text-amber-400" x-text="userBeastStatus?.chapters_needed">0</strong> chapitres avant l'éveil du <strong class="text-white" x-text="userBeastStatus?.next_stage?.name"></strong></span>
+                                        </template>
+                                        <template x-if="!userBeastStatus?.next_stage">
+                                            <span class="text-amber-400 font-black">👑 Stade Ultime Transcendant Atteint !</span>
+                                        </template>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {{-- Sélecteur de Familier : 4 Bêtes Ancestrales --}}
+                    <h3 class="text-sm font-black uppercase tracking-wider text-mist mb-4 flex items-center gap-2">
+                        <span>⛩️</span>
+                        <span>Choisir un Familier Martial parmi les 4 Totems</span>
+                    </h3>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <template x-for="(beast, bKey) in spiritualBeasts" :key="bKey">
+                            <div 
+                                class="p-5 rounded-2xl border transition-all duration-300 relative flex flex-col justify-between"
+                                :class="spiritualBeast === bKey ? 'bg-indigo-950/40 border-indigo-500 shadow-[0_0_20px_rgba(99,102,241,0.2)]' : 'bg-[#111118] border-white/10 hover:border-white/20'"
+                            >
+                                <div>
+                                    <div class="flex items-start justify-between gap-3 mb-3">
+                                        <div class="flex items-center gap-3">
+                                            <div class="w-12 h-12 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center text-3xl">
+                                                <span x-text="beast.stages[0]?.icon || '🐾'"></span>
+                                            </div>
+                                            <div>
+                                                <h4 class="text-base font-black text-white" x-text="beast.name"></h4>
+                                                <span class="text-[11px] text-indigo-400 font-bold" x-text="beast.element"></span>
+                                            </div>
+                                        </div>
+                                        <template x-if="spiritualBeast === bKey">
+                                            <span class="px-2.5 py-1 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 text-[10px] font-black uppercase tracking-wider">
+                                                ✓ Pacte Scellé
+                                            </span>
+                                        </template>
+                                    </div>
+                                    <p class="text-xs text-mist leading-relaxed mb-4" x-text="beast.desc"></p>
+
+                                    {{-- 4 Stades en mini-puces --}}
+                                    <div class="flex items-center gap-1.5 flex-wrap mb-4">
+                                        <template x-for="(st, idx) in beast.stages" :key="idx">
+                                            <span 
+                                                class="text-[10px] font-semibold px-2 py-0.5 rounded-lg border"
+                                                :class="(userBeastStatus?.read_count || 0) >= st.min_chapters ? 'bg-amber-400/10 text-amber-300 border-amber-400/30' : 'bg-white/[0.02] text-mist/60 border-white/5'"
+                                                :title="st.min_chapters + ' chapitres requis'"
+                                            >
+                                                <span x-text="st.icon"></span> <span x-text="st.name"></span>
+                                            </span>
+                                        </template>
+                                    </div>
+                                </div>
+
+                                <button 
+                                    type="button" 
+                                    @click="chooseBeast(bKey)"
+                                    class="w-full py-2.5 rounded-xl text-xs font-black transition-all flex items-center justify-center gap-2"
+                                    :class="spiritualBeast === bKey ? 'bg-indigo-600/30 text-indigo-300 border border-indigo-500/40 cursor-default' : 'bg-panel border border-white/10 hover:border-indigo-400 hover:bg-indigo-600/20 text-white'"
+                                    :disabled="spiritualBeast === bKey"
+                                >
+                                    <span x-text="spiritualBeast === bKey ? 'Pacte Actif' : 'Sceller le Pacte avec ce Familier'"></span>
+                                </button>
+                            </div>
+                        </template>
+                    </div>
+                </div>
+            </div>
+
+            {{-- ── Panel : Auras & Cadres d'Avatar ── --}}
+            <div class="profile-tab-panel" :class="currentTab === 'auras' ? 'active' : ''">
+                <div class="profile-card-panel">
+                    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
+                        <div>
+                            <h2 class="text-xl font-black text-white flex items-center gap-2.5">
+                                <span>✨</span>
+                                <span>Auras de Qi & Cadres d'Avatar</span>
+                                <span class="text-xs px-2.5 py-0.5 rounded-full bg-amber-400/10 text-amber-400 border border-amber-400/20 font-bold">
+                                    Déblocage au Mérite Martial
+                                </span>
+                            </h2>
+                            <p class="text-xs text-mist mt-1">
+                                Plus vous lisez de chapitres, plus votre Qi se condense en auras légendaires visibles autour de votre avatar sur tout le site !
+                            </p>
+                        </div>
+                    </div>
+
+                    {{-- Grille des 6 Auras --}}
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+                        <template x-for="(frame, fKey) in avatarFrames" :key="fKey">
+                            <div 
+                                class="p-5 rounded-2xl border transition-all duration-300 relative flex flex-col items-center text-center justify-between"
+                                :class="currentFrame === fKey ? 'bg-amber-950/20 border-amber-400 shadow-[0_0_20px_rgba(251,191,36,0.25)]' : (frame.unlocked ? 'bg-[#111118] border-white/10 hover:border-white/20' : 'bg-[#0d0d14]/70 border-white/5 opacity-60')"
+                            >
+                                <div class="w-full flex flex-col items-center">
+                                    {{-- Aperçu de l'Avatar dans le cadre --}}
+                                    <div class="my-3">
+                                        <div class="w-20 h-20 rounded-full flex items-center justify-center relative transition-all duration-300" :class="getFrameClass(fKey)">
+                                            <div class="qi-pulse-ring" :class="fKey !== 'novice' ? 'block' : 'hidden'"></div>
+                                            <div class="w-full h-full rounded-full overflow-hidden bg-panel border-2 border-white/10 flex items-center justify-center">
+                                                <template x-if="!avatarPreview">
+                                                    <span class="font-black text-xl text-indigo-300">{{ $initials }}</span>
+                                                </template>
+                                                <template x-if="avatarPreview">
+                                                    <img :src="avatarPreview" class="w-full h-full object-cover" alt="">
+                                                </template>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <h4 class="text-base font-black text-white mt-2" x-text="frame.name"></h4>
+                                    <p class="text-[11px] text-mist mt-1 mb-3 line-clamp-2" x-text="frame.desc"></p>
+
+                                    <div class="mb-4">
+                                        <template x-if="frame.unlocked">
+                                            <span class="px-2.5 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-[10px] font-extrabold uppercase tracking-wider">
+                                                ✓ Débloqué
+                                            </span>
+                                        </template>
+                                        <template x-if="!frame.unlocked">
+                                            <span class="px-2.5 py-0.5 rounded-full bg-white/5 text-mist border border-white/10 text-[10px] font-bold">
+                                                🔒 Requiert <strong class="text-amber-400" x-text="frame.min_chapters"></strong> chapitres
+                                            </span>
+                                        </template>
+                                    </div>
+                                </div>
+
+                                <button 
+                                    type="button" 
+                                    @click="frame.unlocked ? equipFrame(fKey) : null"
+                                    class="w-full py-2.5 rounded-xl text-xs font-black transition-all flex items-center justify-center gap-2"
+                                    :class="currentFrame === fKey ? 'bg-amber-400/20 text-amber-300 border border-amber-400/40 cursor-default' : (frame.unlocked ? 'bg-panel border border-white/10 hover:border-amber-400 hover:bg-amber-400/10 text-white' : 'bg-white/[0.02] border border-white/5 text-mist/40 cursor-not-allowed')"
+                                    :disabled="!frame.unlocked || currentFrame === fKey"
+                                >
+                                    <template x-if="currentFrame === fKey">
+                                        <span>✨ Aura Équipée</span>
+                                    </template>
+                                    <template x-if="currentFrame !== fKey && frame.unlocked">
+                                        <span>Équiper cette Aura</span>
+                                    </template>
+                                    <template x-if="!frame.unlocked">
+                                        <span>Aura Scellée</span>
+                                    </template>
+                                </button>
+                            </div>
+                        </template>
                     </div>
                 </div>
             </div>
@@ -1985,6 +2344,138 @@
                     <div x-show="filteredMangas.length === 0" class="col-span-full py-12 text-center text-mist text-xs">
                         Aucune série ne correspond à votre recherche.
                     </div>
+                </div>
+            </div>
+        </div>
+
+        {{-- ═══════════════════════════════════════════
+             MODAL CARTE DE DISCIPLE MARTIAL (COLLECTIONNABLE & PARTAGEABLE)
+             ═══════════════════════════════════════════ --}}
+        <div 
+            x-show="cardModalOpen" 
+            x-transition:enter="transition ease-out duration-300"
+            x-transition:enter-start="opacity-0"
+            x-transition:enter-end="opacity-100"
+            x-transition:leave="transition ease-in duration-200"
+            x-transition:leave-start="opacity-100"
+            x-transition:leave-end="opacity-0"
+            class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-md"
+            style="display: none;"
+            @keydown.escape.window="cardModalOpen = false"
+        >
+            <div 
+                @click.away="cardModalOpen = false"
+                class="relative w-full max-w-sm rounded-3xl bg-gradient-to-b from-[#181628] via-[#100f1c] to-[#0a0914] border border-amber-400/40 p-6 shadow-[0_0_50px_rgba(251,191,36,0.2)] overflow-hidden"
+            >
+                {{-- Halo décoratif --}}
+                <div class="absolute -top-16 -right-16 w-48 h-48 bg-amber-500/15 rounded-full blur-3xl pointer-events-none"></div>
+                <div class="absolute -bottom-16 -left-16 w-48 h-48 bg-indigo-500/15 rounded-full blur-3xl pointer-events-none"></div>
+
+                {{-- Header Modal --}}
+                <div class="flex items-center justify-between pb-3 mb-4 border-b border-white/10 relative z-10">
+                    <div class="flex items-center gap-2">
+                        <span class="text-xl">🎴</span>
+                        <h3 class="text-sm font-black text-white uppercase tracking-wider">Carte de Cultivation</h3>
+                    </div>
+                    <button type="button" @click="cardModalOpen = false" class="w-7 h-7 rounded-lg bg-white/5 hover:bg-white/10 text-mist hover:text-white flex items-center justify-center transition">
+                        ✕
+                    </button>
+                </div>
+
+                {{-- Corps de la Carte Martiale (Style Carte de Jeu Murim Holographique) --}}
+                <div id="murim-disciple-card" class="rounded-2xl p-5 bg-gradient-to-br from-[#1b192e] via-[#121122] to-[#0c0b16] border-2 border-amber-400/50 shadow-2xl relative overflow-hidden text-center">
+                    {{-- Sceau de fond en filigrane --}}
+                    <div class="absolute inset-0 flex items-center justify-center opacity-5 pointer-events-none select-none text-9xl">
+                        ☯️
+                    </div>
+
+                    {{-- En-tête de la Carte --}}
+                    <div class="flex items-center justify-between text-[10px] font-black tracking-widest text-amber-400/80 uppercase pb-2 mb-3 border-b border-amber-400/20">
+                        <span>HIDDEN SCAN</span>
+                        <span>ORDRE MARTIAL</span>
+                    </div>
+
+                    {{-- Avatar avec Aura équipée --}}
+                    <div class="flex justify-center my-3">
+                        <div class="w-20 h-20 rounded-full flex items-center justify-center relative" :class="getFrameClass(currentFrame)">
+                            <div class="qi-pulse-ring" :class="currentFrame !== 'novice' ? 'block' : 'hidden'"></div>
+                            <div class="w-full h-full rounded-full overflow-hidden bg-panel border-2 border-white/10 flex items-center justify-center">
+                                <template x-if="!avatarPreview">
+                                    <span class="font-black text-2xl text-amber-300">{{ $initials }}</span>
+                                </template>
+                                <template x-if="avatarPreview">
+                                    <img :src="avatarPreview" class="w-full h-full object-cover" alt="">
+                                </template>
+                            </div>
+                        </div>
+                    </div>
+
+                    {{-- Nom & Badge de Rang --}}
+                    <h4 class="text-lg font-black text-white tracking-wide mb-1">{{ $user->name }}</h4>
+                    <div class="inline-flex items-center gap-1 px-3 py-0.5 rounded-full text-xs font-black mb-4 shadow-sm" style="background-color: {{ $murimStatus['current']['color'] }}25; color: {{ $murimStatus['current']['color'] }}; border: 1px solid {{ $murimStatus['current']['color'] }}60;">
+                        <span>{{ $murimStatus['current']['badge'] }}</span>
+                        <span>{{ $murimStatus['current']['title'] }}</span>
+                    </div>
+
+                    {{-- Grille de Statistiques Martiales --}}
+                    <div class="grid grid-cols-2 gap-2 text-left bg-black/40 p-3 rounded-xl border border-white/5 mb-3">
+                        <div class="p-2 rounded-lg bg-white/[0.02]">
+                            <span class="text-[10px] text-mist block">📖 Chapitres Lus</span>
+                            <span class="text-xs font-black text-white" x-text="readCount">0</span>
+                        </div>
+                        <div class="p-2 rounded-lg bg-white/[0.02]">
+                            <span class="text-[10px] text-mist block">🔥 Assiduité</span>
+                            <span class="text-xs font-black text-amber-400">{{ $user->streak ?? 0 }} jours</span>
+                        </div>
+                        <div class="p-2 rounded-lg bg-white/[0.02]">
+                            <span class="text-[10px] text-mist block">🛡️ Boucliers Qi</span>
+                            <span class="text-xs font-black text-emerald-400">{{ $qiShields }}/2 Actifs</span>
+                        </div>
+                        <div class="p-2 rounded-lg bg-white/[0.02]">
+                            <span class="text-[10px] text-mist block">⚡ Réserve Qi</span>
+                            <span class="text-xs font-black text-cyan-400">{{ number_format($user->xp ?? ($readCount * 15)) }}</span>
+                        </div>
+                    </div>
+
+                    {{-- Compagnon Spirituel Lié --}}
+                    <div class="p-2.5 rounded-xl bg-indigo-950/30 border border-indigo-500/20 text-left flex items-center justify-between mb-3">
+                        <div class="flex items-center gap-2">
+                            <span class="text-2xl" x-text="userBeastStatus?.current_stage?.icon || '🦅'">🦅</span>
+                            <div>
+                                <span class="text-[10px] text-indigo-300 font-bold block uppercase tracking-wider">Familier Spirituel</span>
+                                <span class="text-xs font-black text-white" x-text="userBeastStatus?.beast?.name || 'Corbeau des Ombres'"></span>
+                            </div>
+                        </div>
+                        <span class="text-[10px] font-extrabold text-amber-300 px-2 py-0.5 rounded-md bg-amber-400/10 border border-amber-400/20" x-text="'Stade ' + (userBeastStatus?.current_stage?.stage || 1)"></span>
+                    </div>
+
+                    {{-- Devise Martiale & Pied de carte --}}
+                    <p class="text-[10px] italic text-mist/80 mb-2">
+                        "{{ $murimStatus['current']['quote'] }}"
+                    </p>
+                    <div class="text-[9px] text-mist/60 uppercase tracking-widest pt-2 border-t border-white/5 flex items-center justify-between">
+                        <span>Adoubé en {{ $user->created_at->translatedFormat('M Y') }}</span>
+                        <span class="text-amber-400/80">#SEAL-{{ str_pad($user->id, 5, '0', STR_PAD_LEFT) }}</span>
+                    </div>
+                </div>
+
+                {{-- Actions de Partage --}}
+                <div class="mt-4 flex items-center gap-2 relative z-10">
+                    <button 
+                        type="button" 
+                        @click="copyProfileCardLink()" 
+                        class="flex-1 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-black text-xs font-black transition flex items-center justify-center gap-1.5 shadow-lg shadow-amber-500/20"
+                    >
+                        <span>📋</span>
+                        <span>Copier mon Statut</span>
+                    </button>
+                    <button 
+                        type="button" 
+                        @click="cardModalOpen = false" 
+                        class="px-4 py-2.5 rounded-xl bg-panel hover:bg-white/10 text-mist hover:text-white text-xs font-bold transition border border-white/10"
+                    >
+                        Fermer
+                    </button>
                 </div>
             </div>
         </div>

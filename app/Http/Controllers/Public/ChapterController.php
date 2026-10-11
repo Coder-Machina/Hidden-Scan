@@ -41,17 +41,20 @@ class ChapterController extends Controller
         $counted = $chapter->recordView();
 
         // Enregistrer également la progression de lecture si l'utilisateur est authentifié
+        $streakInfo = null;
         if (auth()->check()) {
             \App\Models\ReadingProgress::updateOrCreate(
                 ['user_id' => auth()->id(), 'chapter_id' => $chapter->id],
                 ['manga_id' => $chapter->manga_id, 'is_read' => true]
             );
+            $streakInfo = \App\Services\MurimRankService::processStreakAndShields(auth()->user());
         }
 
         return response()->json([
             'success' => true,
             'counted' => $counted,
             'views_count' => $chapter->views_count,
+            'streak_info' => $streakInfo,
         ]);
     }
 }

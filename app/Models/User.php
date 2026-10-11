@@ -16,7 +16,7 @@ use Filament\Panel;
 #[Fillable([
     'name', 'email', 'password',
     'pass_code', 'last_ip_address',
-    'avatar', 'banner', 'bio', 'xp', 'streak', 'last_read_at', 'favorite_genre', 'reader_mode',
+    'avatar', 'banner', 'bio', 'xp', 'streak', 'qi_shields', 'spiritual_beast', 'avatar_frame', 'custom_title_color', 'last_read_at', 'favorite_genre', 'reader_mode',
     'tier_list', 'top_mangas',
     'is_banned', 'banned_at', 'ban_reason',
     'is_comment_banned', 'comment_banned_at', 'comment_ban_reason',

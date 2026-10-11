@@ -65,6 +65,10 @@ Route::middleware('auth')->group(function () {
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
     Route::post('/profile/regenerate-pass', [ProfileController::class, 'regeneratePass'])->name('profile.pass.regenerate');
+    Route::post('/profile/tier-list', [ProfileController::class, 'saveTierList'])->name('profile.tier_list.save');
+    Route::post('/profile/top-mangas', [ProfileController::class, 'saveTopMangas'])->name('profile.top_mangas.save');
+    Route::post('/profile/spiritual-beast', [ProfileController::class, 'saveSpiritualBeast'])->name('profile.spiritual_beast');
+    Route::post('/profile/avatar-frame', [ProfileController::class, 'saveAvatarFrame'])->name('profile.avatar_frame');
 });
 
 require __DIR__.'/auth.php';

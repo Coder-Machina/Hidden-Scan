@@ -33,10 +33,12 @@ Route::middleware(['web'])->group(function () {
     // Recommendations ("Si t'as aimé X, lis Y")
     Route::get('/recommendations', [ReadingProgressController::class, 'getRecommendations'])->name('api.recommendations');
 
-    // Profile Synchronization & Tier List & Top 5
+    // Profile Synchronization & Tier List & Top 5 & Beasts & Frames
     Route::post('/profile/sync', [\App\Http\Controllers\ProfileController::class, 'sync'])->name('api.profile.sync');
     Route::post('/profile/tier-list', [\App\Http\Controllers\ProfileController::class, 'saveTierList'])->name('api.profile.tier-list');
     Route::post('/profile/top-mangas', [\App\Http\Controllers\ProfileController::class, 'saveTopMangas'])->name('api.profile.top-mangas');
+    Route::post('/profile/spiritual-beast', [\App\Http\Controllers\ProfileController::class, 'saveSpiritualBeast'])->name('api.profile.spiritual-beast');
+    Route::post('/profile/avatar-frame', [\App\Http\Controllers\ProfileController::class, 'saveAvatarFrame'])->name('api.profile.avatar-frame');
 });
 
 // ═══ DISCORD BOT STAFF & RELEASES API ═══
