@@ -28,7 +28,10 @@ class DiscordWebhookService
     ];
 
     /**
-     * Détermine de manière stricte si une œuvre est externe (Sortie Site) ou officielle (Hidden Scan).
+     * Détermine si une œuvre est externe (Sortie Site) ou interne (Hidden Scan)
+     * directement d'après l'option du panel admin (Toggle 'is_external') :
+     * - Coché (true)   => Sortie d'une autre team -> Salon #sorties-site
+     * - Décoché (false) => Projet interne de l'équipe -> Salon #sorties
      */
     public static function isMangaExternal(?Manga $manga): bool
     {
@@ -36,13 +39,7 @@ class DiscordWebhookService
             return false;
         }
 
-        // Si c'est l'un des 4 projets internes traduits par l'équipe Hidden Scan
-        if (in_array($manga->slug, array_keys(self::VALID_OFFICIAL_ROLES), true)) {
-            return false;
-        }
-
-        // Toutes les autres séries du catalogue sont des sorties externes ("Sorties Site")
-        return true;
+        return (bool) $manga->is_external;
     }
 
     /**
