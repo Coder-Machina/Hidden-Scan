@@ -17,6 +17,7 @@ Route::post('/manga/{slug}/noter', [MangaController::class, 'rate'])->name('mang
 
 Route::get('/surprise-moi', [MangaController::class, 'random'])->name('manga.random');
 Route::get('/random', fn() => redirect()->route('manga.random'));
+Route::get('/leaderboard', fn() => redirect()->route('leaderboard'));
 
 Route::prefix('manga')->name('manga.')->group(function () {
     Route::get('/', [MangaController::class, 'index'])->name('index');
