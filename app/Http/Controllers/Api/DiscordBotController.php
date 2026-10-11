@@ -20,6 +20,7 @@ class DiscordBotController extends Controller
 
     /**
      * Liste des mangas pour l'autocomplétion des slash commands (/fiche, /rush, etc.)
+     * Retourne directement toutes les métadonnées pour permettre une synchronisation bot instantanée en 1 seule requête.
      */
     public function listMangas(Request $request): JsonResponse
     {
@@ -28,9 +29,45 @@ class DiscordBotController extends Controller
         }
 
         $mangas = Manga::query()
-            ->select(['id', 'title', 'slug', 'discord_role_id', 'cover_image', 'is_external', 'team_name'])
             ->orderBy('title')
-            ->get();
+            ->get()
+            ->map(function ($manga) {
+                $coverUrl = null;
+                if ($manga->cover_image) {
+                    $coverUrl = str_starts_with($manga->cover_image, 'http')
+                        ? $manga->cover_image
+                        : url(Storage::url($manga->cover_image));
+                }
+
+                return [
+                    'id' => $manga->id,
+                    'title' => $manga->title,
+                    'slug' => $manga->slug,
+                    'is_external' => (bool)$manga->is_external,
+                    'team_name' => $manga->team_name,
+                    'discord_role_id' => $manga->discord_role_id,
+                    'cover_image' => $manga->cover_image,
+                    'cover_url' => $coverUrl,
+                    'drive_url' => $manga->drive_url,
+                    'va_url' => $manga->va_url,
+                    'va_chapter' => (float)$manga->va_chapter_number,
+                    'is_rush' => (bool)$manga->is_rush,
+                    'staff' => [
+                        'trad' => $manga->trad_user && $manga->trad_user !== 'Non assigné' ? $manga->trad_user : null,
+                        'check' => $manga->check_user && $manga->check_user !== 'Non assigné' ? $manga->check_user : null,
+                        'clean' => $manga->clean_user && $manga->clean_user !== 'Non assigné' ? $manga->clean_user : null,
+                        'edit' => $manga->edit_user && $manga->edit_user !== 'Non assigné' ? $manga->edit_user : null,
+                        'qc' => $manga->qc_user && $manga->qc_user !== 'Non assigné' ? $manga->qc_user : null,
+                    ],
+                    'steps' => [
+                        'trad' => (float)$manga->step_trad_chapter,
+                        'check' => (float)$manga->step_check_chapter,
+                        'clean' => (float)$manga->step_clean_chapter,
+                        'edit' => (float)$manga->step_edit_chapter,
+                        'qc' => (float)$manga->step_qc_chapter,
+                    ],
+                ];
+            });
 
         return response()->json([
             'success' => true,

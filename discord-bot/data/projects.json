@@ -2,10 +2,10 @@
   "genius-grandson-of-the-loan-shark-king": {
     "slug": "genius-grandson-of-the-loan-shark-king",
     "title": "Genius Grandson of the Loan Shark King",
-    "drive_url": "https://drive.google.com/drive/u/3/folders/1PO59aCTMqJzcUkYTS-fQvUw597chfQhE?hl=fr",
-    "va_url": "https://qimanga.com/series/genius-grandson-of-the-loan-shark-king",
+    "drive_url": "https://drive.google.com/drive/u/3/folders/1QBANnAjGJ3y9TGPAqDrbHcKfDCO7ySO6?hl=fr",
+    "va_url": "https://www.webtoons.com/en/fantasy/the-returners-road-to-retirement/list?title_no=6738",
     "va_chapter": 126,
-    "cover_url": "https://book-pic.webnovel.com/bookcover/31396277800957005?imageMogr2/thumbnail/600x&imageId=1757295165865",
+    "cover_url": "http://127.0.0.1:8000/storage/mangas/covers/01M36QM6RK8QGSBYKCT3EENWSZ.png",
     "is_rush": false,
     "staff": {
       "trad": "<@1163161538652291074>",
@@ -15,15 +15,16 @@
       "qc": null
     },
     "steps": {
-      "trad": 0,
+      "trad": 9,
       "check": 8,
-      "clean": 0,
-      "edit": 0,
+      "clean": 9,
+      "edit": 5,
       "qc": 0
     },
     "is_external": false,
     "discord_role_id": "1535265318828511234",
-    "cover_image": "mangas/covers/01M36QM6RK8QGSBYKCT3EENWSZ.png"
+    "cover_image": "mangas/covers/01M36QM6RK8QGSBYKCT3EENWSZ.png",
+    "team_name": null
   },
   "hoegwi-suseonjeon": {
     "slug": "hoegwi-suseonjeon",
@@ -49,7 +50,8 @@
       "qc": 0
     },
     "discord_role_id": null,
-    "is_external": true
+    "is_external": true,
+    "team_name": null
   },
   "nano-machine": {
     "slug": "nano-machine",
@@ -75,7 +77,8 @@
       "qc": 0
     },
     "discord_role_id": null,
-    "is_external": true
+    "is_external": true,
+    "team_name": null
   },
   "omniscient-reader": {
     "slug": "omniscient-reader",
@@ -101,7 +104,8 @@
       "qc": 0
     },
     "discord_role_id": null,
-    "is_external": true
+    "is_external": true,
+    "team_name": null
   },
   "one-piece": {
     "slug": "one-piece",
@@ -127,7 +131,8 @@
       "qc": 0
     },
     "discord_role_id": null,
-    "is_external": true
+    "is_external": true,
+    "team_name": null
   },
   "solo-leveling": {
     "slug": "solo-leveling",
@@ -153,7 +158,8 @@
       "qc": 0
     },
     "discord_role_id": null,
-    "is_external": true
+    "is_external": true,
+    "team_name": null
   },
   "the-reborn-young-lord-is-an-assassin": {
     "slug": "the-reborn-young-lord-is-an-assassin",
@@ -179,14 +185,15 @@
       "qc": 0
     },
     "discord_role_id": null,
-    "is_external": true
+    "is_external": true,
+    "team_name": null
   },
   "the-returners-road-to-retirement": {
     "slug": "the-returners-road-to-retirement",
     "title": "The Returner's Road to Retirement",
-    "drive_url": null,
-    "va_url": null,
-    "va_chapter": 0,
+    "drive_url": "https://www.webtoons.com/en/fantasy/the-returners-road-to-retirement/list?title_no=6738",
+    "va_url": "https://www.webtoons.com/en/fantasy/the-returners-road-to-retirement/list?title_no=6738",
+    "va_chapter": 103,
     "cover_url": "http://127.0.0.1:8000/storage/mangas/covers/IA3BSgjLkwzCYrHFtR241LkTgii0Zc9J.png",
     "cover_image": "mangas/covers/IA3BSgjLkwzCYrHFtR241LkTgii0Zc9J.png",
     "is_rush": false,
@@ -199,13 +206,14 @@
     },
     "steps": {
       "trad": 1,
-      "check": 0,
-      "clean": 0,
+      "check": 1,
+      "clean": 5,
       "edit": 0,
       "qc": 0
     },
     "discord_role_id": "1535265320133066753",
-    "is_external": false
+    "is_external": false,
+    "team_name": null
   },
   "why-i-quit-being-the-demon-king": {
     "slug": "why-i-quit-being-the-demon-king",
@@ -231,7 +239,8 @@
       "qc": 0
     },
     "discord_role_id": null,
-    "is_external": true
+    "is_external": true,
+    "team_name": null
   },
   "academys-genius-swordmaster": {
     "slug": "academys-genius-swordmaster",
@@ -257,7 +266,8 @@
       "edit": 0,
       "qc": 0
     },
-    "is_external": true
+    "is_external": true,
+    "team_name": null
   },
   "my-passive-skills-are-invincible": {
     "slug": "my-passive-skills-are-invincible",
@@ -272,8 +282,8 @@
       "qc": null
     },
     "steps": {
-      "trad": 0,
-      "check": 0,
+      "trad": 1,
+      "check": 1,
       "clean": 0,
       "edit": 0,
       "qc": 0
@@ -304,6 +314,13 @@
       "clean": 0,
       "edit": 0,
       "qc": 0
-    }
+    },
+    "team_name": null,
+    "drive_url": null,
+    "va_url": null,
+    "va_chapter": 0,
+    "cover_url": null,
+    "cover_image": null,
+    "is_rush": false
   }
 }

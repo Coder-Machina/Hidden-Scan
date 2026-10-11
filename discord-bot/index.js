@@ -28,40 +28,69 @@ if (!fs.existsSync(DATA_DIR)) {
     fs.mkdirSync(DATA_DIR, { recursive: true });
 }
 
+// Variables en cache mémoire pour des performances maximales (accès instantané 0ms)
+let projectsCache = null;
+let statsCache = null;
+let panelCache = null;
+
 function loadPanelConfig() {
+    if (panelCache !== null) return panelCache;
     try {
-        if (!fs.existsSync(PANEL_FILE)) return {};
-        return JSON.parse(fs.readFileSync(PANEL_FILE, 'utf8') || '{}');
+        if (!fs.existsSync(PANEL_FILE)) {
+            panelCache = {};
+            return panelCache;
+        }
+        panelCache = JSON.parse(fs.readFileSync(PANEL_FILE, 'utf8') || '{}');
+        return panelCache;
     } catch (e) {
-        return {};
+        panelCache = {};
+        return panelCache;
     }
 }
 
 function savePanelConfig(data) {
-    fs.writeFileSync(PANEL_FILE, JSON.stringify(data, null, 2), 'utf8');
+    panelCache = data;
+    fs.promises.writeFile(PANEL_FILE, JSON.stringify(data, null, 2), 'utf8').catch(err => {
+        console.error('Erreur async savePanelConfig:', err.message);
+    });
 }
 
-// Chargement & sauvegarde des projets locaux
+// Chargement & sauvegarde des projets locaux (Cache mémoire haute performance)
 function loadProjects() {
+    if (projectsCache !== null) return projectsCache;
     try {
-        if (!fs.existsSync(PROJECTS_FILE)) return {};
-        return JSON.parse(fs.readFileSync(PROJECTS_FILE, 'utf8') || '{}');
+        if (!fs.existsSync(PROJECTS_FILE)) {
+            projectsCache = {};
+            return projectsCache;
+        }
+        projectsCache = JSON.parse(fs.readFileSync(PROJECTS_FILE, 'utf8') || '{}');
+        return projectsCache;
     } catch (e) {
-        return {};
+        projectsCache = {};
+        return projectsCache;
     }
 }
 
 function saveProjects(data) {
-    fs.writeFileSync(PROJECTS_FILE, JSON.stringify(data, null, 2), 'utf8');
+    projectsCache = data;
+    fs.promises.writeFile(PROJECTS_FILE, JSON.stringify(data, null, 2), 'utf8').catch(err => {
+        console.error('Erreur async saveProjects:', err.message);
+    });
 }
 
-// Chargement & sauvegarde des stats du staff
+// Chargement & sauvegarde des stats du staff (Cache mémoire haute performance)
 function loadStats() {
+    if (statsCache !== null) return statsCache;
     try {
-        if (!fs.existsSync(STATS_FILE)) return [];
-        return JSON.parse(fs.readFileSync(STATS_FILE, 'utf8') || '[]');
+        if (!fs.existsSync(STATS_FILE)) {
+            statsCache = [];
+            return statsCache;
+        }
+        statsCache = JSON.parse(fs.readFileSync(STATS_FILE, 'utf8') || '[]');
+        return statsCache;
     } catch (e) {
-        return [];
+        statsCache = [];
+        return statsCache;
     }
 }
 
@@ -75,7 +104,10 @@ function recordContribution(userId, userName, projectKey, step, chapterNumber) {
         chapterNumber,
         timestamp: new Date().toISOString(),
     });
-    fs.writeFileSync(STATS_FILE, JSON.stringify(stats, null, 2), 'utf8');
+    statsCache = stats;
+    fs.promises.writeFile(STATS_FILE, JSON.stringify(stats, null, 2), 'utf8').catch(err => {
+        console.error('Erreur async recordContribution:', err.message);
+    });
 }
 
 const ADMIN_IDS = (process.env.ADMIN_USER_IDS || '979449727047323668,1310979117172391940')
@@ -104,23 +136,15 @@ function isUserAdmin(member, user = null, guild = null) {
 }
 
 /**
- * Récupère les mentions des administrateurs du serveur pour la notification de fin de chapitre.
- * Notifie toujours les 2 administrateurs officiels du staff.
+ * Récupère instantanément en mémoire les mentions des administrateurs du serveur.
+ * 0ms de latence, aucun appel réseau Discord, évite tout timeout "L'application ne répond pas".
  */
-async function getAdminMentions(guild) {
-    if (!guild) {
-        return ADMIN_IDS.map(id => `<@${id}>`).join(' ');
+function getAdminMentions(guild = null) {
+    const adminSet = new Set(ADMIN_IDS);
+    if (guild?.ownerId) {
+        adminSet.add(guild.ownerId);
     }
-    try {
-        const members = await guild.members.fetch();
-        const admins = members.filter(m => !m.user.bot && (m.permissions.has(PermissionFlagsBits.Administrator) || m.id === guild.ownerId || ADMIN_IDS.includes(m.id)));
-        if (admins.size > 0) {
-            return admins.map(m => `<@${m.id}>`).join(' ');
-        }
-    } catch (e) {
-        console.warn('Erreur récupération admins guild:', e.message);
-    }
-    return ADMIN_IDS.map(id => `<@${id}>`).join(' ');
+    return Array.from(adminSet).map(id => `<@${id}>`).join(' ');
 }
 
 
@@ -374,7 +398,21 @@ function buildFicheComponents(project) {
 /**
  * Synchronise les mangas depuis l'API Laravel vers le stockage local du bot
  */
+let syncPromise = null;
+
+/**
+ * Synchronise les mangas depuis l'API Laravel vers le cache et stockage local du bot
+ * Déduplication des requêtes en vol pour éviter toute surcharge réseau.
+ */
 async function syncProjectsWithSite() {
+    if (syncPromise) return syncPromise;
+    syncPromise = doSyncProjectsWithSite().finally(() => {
+        syncPromise = null;
+    });
+    return syncPromise;
+}
+
+async function doSyncProjectsWithSite() {
     try {
         const apiUrl = process.env.API_BASE_URL || 'http://127.0.0.1:8000';
         const secret = process.env.DISCORD_BOT_SECRET || 'hiddenscan-secret-bot-key';
@@ -403,75 +441,46 @@ async function syncProjectsWithSite() {
         for (const manga of data.mangas) {
             const slug = manga.slug;
             const isExternal = Boolean(manga.is_external);
+            const existing = currentProjects[slug] || {};
 
-            if (!currentProjects[slug]) {
-                try {
-                    const ficheRes = await fetch(`${apiUrl}/api/bot/fiche/${slug}`, {
-                        headers: { 'X-Bot-Token': secret },
-                    });
-                    if (ficheRes.ok) {
-                        const ficheData = await ficheRes.json();
-                        if (ficheData.success && ficheData.manga) {
-                            const m = ficheData.manga;
-                            currentProjects[slug] = {
-                                slug: m.slug,
-                                title: m.title.trim(),
-                                is_external: isExternal,
-                                team_name: manga.team_name || null,
-                                discord_role_id: isExternal ? null : (manga.discord_role_id || null),
-                                drive_url: m.drive_url || null,
-                                va_url: m.va_url || null,
-                                va_chapter: m.va_chapter || 0,
-                                cover_url: m.cover_url || null,
-                                cover_image: m.cover_image || null,
-                                is_rush: m.is_rush || false,
-                                staff: {
-                                    trad: m.staff?.trad && m.staff?.trad !== 'Non assigné' ? m.staff?.trad : null,
-                                    check: m.staff?.check && m.staff?.check !== 'Non assigné' ? m.staff?.check : null,
-                                    clean: m.staff?.clean && m.staff?.clean !== 'Non assigné' ? m.staff?.clean : null,
-                                    edit: m.staff?.edit && m.staff?.edit !== 'Non assigné' ? m.staff?.edit : null,
-                                    qc: m.staff?.qc && m.staff?.qc !== 'Non assigné' ? m.staff?.qc : null,
-                                },
-                                steps: {
-                                    trad: m.steps?.trad || 0,
-                                    check: m.steps?.check || 0,
-                                    clean: m.steps?.clean || 0,
-                                    edit: m.steps?.edit || 0,
-                                    qc: m.steps?.qc || 0,
-                                },
-                            };
-                            changed = true;
-                        }
-                    }
-                } catch (e) {
-                    console.error(`Erreur sync manga ${slug}:`, e.message);
-                }
-            } else {
-                if (currentProjects[slug].is_external !== isExternal) {
-                    currentProjects[slug].is_external = isExternal;
-                    changed = true;
-                }
-                if (isExternal && currentProjects[slug].discord_role_id) {
-                    currentProjects[slug].discord_role_id = null;
-                    changed = true;
-                } else if (!isExternal && manga.discord_role_id && currentProjects[slug].discord_role_id !== manga.discord_role_id) {
-                    currentProjects[slug].discord_role_id = manga.discord_role_id;
-                    changed = true;
-                }
-                if (!currentProjects[slug].cover_image && manga.cover_image) {
-                    currentProjects[slug].cover_image = manga.cover_image;
-                    changed = true;
-                }
-                if (!currentProjects[slug].title) {
-                    currentProjects[slug].title = manga.title.trim();
-                    changed = true;
-                }
-            }
+            const mergedStaff = {
+                trad: manga.staff?.trad || existing.staff?.trad || null,
+                check: manga.staff?.check || existing.staff?.check || null,
+                clean: manga.staff?.clean || existing.staff?.clean || null,
+                edit: manga.staff?.edit || existing.staff?.edit || null,
+                qc: manga.staff?.qc || existing.staff?.qc || null,
+            };
+
+            const mergedSteps = {
+                trad: manga.steps?.trad !== undefined ? manga.steps.trad : (existing.steps?.trad || 0),
+                check: manga.steps?.check !== undefined ? manga.steps.check : (existing.steps?.check || 0),
+                clean: manga.steps?.clean !== undefined ? manga.steps.clean : (existing.steps?.clean || 0),
+                edit: manga.steps?.edit !== undefined ? manga.steps.edit : (existing.steps?.edit || 0),
+                qc: manga.steps?.qc !== undefined ? manga.steps.qc : (existing.steps?.qc || 0),
+            };
+
+            currentProjects[slug] = {
+                ...existing,
+                slug: manga.slug,
+                title: manga.title ? manga.title.trim() : (existing.title || slug),
+                is_external: isExternal,
+                team_name: manga.team_name || existing.team_name || null,
+                discord_role_id: isExternal ? null : (manga.discord_role_id || existing.discord_role_id || null),
+                drive_url: manga.drive_url || existing.drive_url || null,
+                va_url: manga.va_url || existing.va_url || null,
+                va_chapter: (manga.va_chapter !== undefined && manga.va_chapter !== null) ? manga.va_chapter : (existing.va_chapter || 0),
+                cover_url: manga.cover_url || existing.cover_url || null,
+                cover_image: manga.cover_image || existing.cover_image || null,
+                is_rush: Boolean(manga.is_rush !== undefined ? manga.is_rush : existing.is_rush),
+                staff: mergedStaff,
+                steps: mergedSteps,
+            };
+            changed = true;
         }
 
         if (changed) {
             saveProjects(currentProjects);
-            console.log(`✅ Synchronisation réussie : ${Object.keys(currentProjects).length} projets disponibles.`);
+            console.log(`✅ Synchronisation réussie : ${Object.keys(currentProjects).length} projets disponibles en mémoire.`);
         }
     } catch (err) {
         console.error('⚠️ Échec synchronisation mangas avec le site:', err.message);
@@ -1133,6 +1142,10 @@ client.on('interactionCreate', async interaction => {
         }
     }
 
+    // Acknowledge immédiat (< 50ms) pour éliminer tout risque d'expiration des 3 secondes Discord
+    const isEphemeral = commandName === 'sync-roles' || commandName === 'panneau-roles';
+    await interaction.deferReply({ ephemeral: isEphemeral });
+
     let projects = loadProjects();
 
     try {
@@ -1193,14 +1206,14 @@ client.on('interactionCreate', async interaction => {
             };
 
             saveProjects(projects);
-            await syncProjectToSite(projects[slug]);
+            syncProjectToSite(projects[slug]);
 
             const coverInfo = resolveProjectCover(projects[slug]);
             const embed = buildFicheEmbed(projects[slug], coverInfo);
             const components = buildFicheComponents(projects[slug]);
             const files = (coverInfo && coverInfo.isAttachment) ? [coverInfo.attachment] : [];
 
-            await interaction.reply({
+            await interaction.editReply({
                 content: `🎉 **Fiche enregistrée avec succès pour « ${projects[slug].title} » !**\nToutes les informations (Drive, VA, Staff) sont synchronisées. Vous pouvez continuer d'assigner ou modifier le staff avec \`/config-staff\`.`,
                 embeds: [embed],
                 components,
@@ -1220,7 +1233,7 @@ client.on('interactionCreate', async interaction => {
             }
 
             if (!matchedKey || !projects[matchedKey]) {
-                return await interaction.reply({ content: `❌ Projet « ${rawManga} » introuvable. Utilisez \`/creer-fiche\` d'abord pour l'enregistrer.`, ephemeral: true });
+                return await interaction.editReply({ content: `❌ Projet « ${rawManga} » introuvable. Utilisez \`/creer-fiche\` d'abord pour l'enregistrer.` });
             }
 
             const slug = matchedKey;
@@ -1257,9 +1270,8 @@ client.on('interactionCreate', async interaction => {
             const hasLinkUpdate = Boolean((drive && drive.trim()) || (va && va.trim()) || (vaChap !== null && vaChap !== undefined));
 
             if (Object.keys(assignments).length === 0 && !hasLinkUpdate) {
-                return await interaction.reply({
+                return await interaction.editReply({
                     content: '⚠️ Veuillez renseigner au moins un membre ou un lien à mettre à jour (ex: `trad: @Membre`, `check: @Membre`, `drive: https://...`, etc.).',
-                    ephemeral: true,
                 });
             }
 
@@ -1267,7 +1279,7 @@ client.on('interactionCreate', async interaction => {
                 project.staff[stepKey] = memberMention;
             }
             saveProjects(projects);
-            await syncProjectToSite(project);
+            syncProjectToSite(project);
 
             const roleLabels = {
                 trad: '✏️ Traduction (Trad)',
@@ -1289,7 +1301,7 @@ client.on('interactionCreate', async interaction => {
             let replyMsg = `✅ **Configuration mise à jour pour « ${project.title} » !**`;
             if (summaryList) replyMsg += `\n${summaryList}`;
 
-            await interaction.reply({
+            await interaction.editReply({
                 content: replyMsg,
                 embeds: [embed],
                 components,
@@ -1310,37 +1322,34 @@ client.on('interactionCreate', async interaction => {
             }
 
             if (!projects[slug]) {
-                return await interaction.reply({ content: '❌ Projet introuvable.', ephemeral: true });
+                return await interaction.editReply({ content: '❌ Projet introuvable.' });
             }
 
             projects[slug].discord_role_id = role.id;
             saveProjects(projects);
-            await syncProjectToSite(projects[slug]);
+            syncProjectToSite(projects[slug]);
 
-            // Sync avec l'API Laravel
-            try {
-                const apiUrl = process.env.API_BASE_URL || 'http://127.0.0.1:8000';
-                const secret = process.env.DISCORD_BOT_SECRET || 'hiddenscan-secret-bot-key';
-                await fetch(`${apiUrl}/api/bot/link-role`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-Bot-Token': secret,
-                    },
-                    body: JSON.stringify({ slug, role_id: role.id }),
-                });
-            } catch (e) {
+            // Sync avec l'API Laravel non-bloquante
+            const apiUrl = process.env.API_BASE_URL || 'http://127.0.0.1:8000';
+            const secret = process.env.DISCORD_BOT_SECRET || 'hiddenscan-secret-bot-key';
+            fetch(`${apiUrl}/api/bot/link-role`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-Bot-Token': secret,
+                },
+                body: JSON.stringify({ slug, role_id: role.id }),
+            }).catch(e => {
                 console.error('Erreur link-role API:', e.message);
-            }
+            });
 
-            await interaction.reply({
+            await interaction.editReply({
                 content: `✅ Le rôle <@&${role.id}> est désormais associé aux annonces de **${projects[slug].title}** ! Les sorties de chapitres mentionneront ce rôle avec un badge cliquable.`,
             });
         }
 
         // /sync-roles
         else if (commandName === 'sync-roles') {
-            await interaction.deferReply({ ephemeral: true });
             await syncProjectsWithSite();
             await ensureProjectRoles();
             await interaction.editReply({
@@ -1350,7 +1359,6 @@ client.on('interactionCreate', async interaction => {
 
         // /panneau-roles
         else if (commandName === 'panneau-roles') {
-            await interaction.deferReply({ ephemeral: true });
             const targetChannel = interaction.options.getChannel('salon');
             const cleanOld = interaction.options.getBoolean('nettoyer') || false;
 
@@ -1382,7 +1390,7 @@ client.on('interactionCreate', async interaction => {
             }
 
             if (!projects[slug]) {
-                return await interaction.reply({ content: '❌ Projet introuvable.', ephemeral: true });
+                return await interaction.editReply({ content: '❌ Projet introuvable.' });
             }
 
             if (!projects[slug].steps) {
@@ -1395,14 +1403,14 @@ client.on('interactionCreate', async interaction => {
                 projects[slug].steps[role] = numero;
             }
             saveProjects(projects);
-            await syncProjectToSite(projects[slug]);
+            syncProjectToSite(projects[slug]);
 
             const coverInfo = resolveProjectCover(projects[slug]);
             const embed = buildFicheEmbed(projects[slug], coverInfo);
             const components = buildFicheComponents(projects[slug]);
             const files = (coverInfo && coverInfo.isAttachment) ? [coverInfo.attachment] : [];
 
-            await interaction.reply({
+            await interaction.editReply({
                 content: `✅ Chapitre pour **${role.toUpperCase()}** mis à jour à **${numero}** sur **${projects[slug].title}**.`,
                 embeds: [embed],
                 components,
@@ -1422,12 +1430,10 @@ client.on('interactionCreate', async interaction => {
             }
 
             if (!projects[slug]) {
-                return await interaction.reply({
+                return await interaction.editReply({
                     content: `❌ Projet « ${rawManga} » non trouvé. Demandez à un administrateur d'initialiser sa fiche avec \`/creer-fiche\` !`,
-                    ephemeral: true,
                 });
             }
-
 
             const project = projects[slug];
             const coverInfo = resolveProjectCover(project);
@@ -1435,7 +1441,7 @@ client.on('interactionCreate', async interaction => {
             const components = buildFicheComponents(project);
             const files = (coverInfo && coverInfo.isAttachment) ? [coverInfo.attachment] : [];
 
-            await interaction.reply({
+            await interaction.editReply({
                 embeds: [embed],
                 components,
                 files,
@@ -1454,12 +1460,12 @@ client.on('interactionCreate', async interaction => {
             }
 
             if (!projects[slug]) {
-                return await interaction.reply({ content: '❌ Projet introuvable.', ephemeral: true });
+                return await interaction.editReply({ content: '❌ Projet introuvable.' });
             }
 
             projects[slug].is_rush = !projects[slug].is_rush;
             saveProjects(projects);
-            await syncProjectToSite(projects[slug]);
+            syncProjectToSite(projects[slug]);
 
             const coverInfo = resolveProjectCover(projects[slug]);
             const embed = buildFicheEmbed(projects[slug], coverInfo);
@@ -1467,7 +1473,7 @@ client.on('interactionCreate', async interaction => {
             const files = (coverInfo && coverInfo.isAttachment) ? [coverInfo.attachment] : [];
 
             const status = projects[slug].is_rush ? '🚨 **MODE RUSH ACTIVÉ**' : '✅ Mode Rush désactivé';
-            await interaction.reply({
+            await interaction.editReply({
                 content: `${status} pour **${projects[slug].title}** !`,
                 embeds: [embed],
                 components,
@@ -1479,7 +1485,7 @@ client.on('interactionCreate', async interaction => {
         else if (commandName === 'stats-staff') {
             const stats = loadStats();
             if (stats.length === 0) {
-                return await interaction.reply('📊 Aucun chapitre enregistré pour l\'instant. Cliquez sur les boutons des fiches pour comptabiliser le travail !');
+                return await interaction.editReply('📊 Aucun chapitre enregistré pour l\'instant. Cliquez sur les boutons des fiches pour comptabiliser le travail !');
             }
 
             const countsByUser = {};
@@ -1515,7 +1521,7 @@ client.on('interactionCreate', async interaction => {
                 .setFooter({ text: 'Hidden Scan Staff Stats' })
                 .setTimestamp();
 
-            await interaction.reply({ embeds: [embed] });
+            await interaction.editReply({ embeds: [embed] });
         }
 
         // /agenda
@@ -1524,7 +1530,7 @@ client.on('interactionCreate', async interaction => {
             const late = list.filter(p => p.is_rush || ((p.va_chapter || 0) - (p.steps?.trad || 0)) >= 3);
 
             if (late.length === 0) {
-                return await interaction.reply('🎉 **Tout est nickel !** Aucun projet en retard ou en mode rush.');
+                return await interaction.editReply('🎉 **Tout est nickel !** Aucun projet en retard ou en mode rush.');
             }
 
             const embed = new EmbedBuilder()
@@ -1541,12 +1547,14 @@ client.on('interactionCreate', async interaction => {
                 });
             });
 
-            await interaction.reply({ embeds: [embed] });
+            await interaction.editReply({ embeds: [embed] });
         }
     } catch (err) {
         console.error(`Erreur commande ${commandName}:`, err);
-        if (!interaction.replied && !interaction.deferred) {
-            await interaction.reply({ content: '⚠️ Une erreur est survenue lors de l\'exécution de la commande.', ephemeral: true }).catch(() => {});
+        if (interaction.deferred && !interaction.replied) {
+            await interaction.editReply({ content: '⚠️ Une erreur est survenue lors de l\'exécution de la commande.' }).catch(() => {});
+        } else if (!interaction.replied) {
+            await interaction.reply({ content: '⚠️ Une erreur est survenue.', ephemeral: true }).catch(() => {});
         }
     }
 });
@@ -1557,23 +1565,25 @@ client.on('interactionCreate', async interaction => {
 
     try {
         const customId = interaction.customId;
-        const projects = loadProjects();
 
         // Boutons d'étape (Trad, Check, Clean, Edit, QC)
         if (customId.startsWith('step_')) {
+            // Acknowledge immédiat (< 50ms) pour garantir 0 timeout Discord
+            await interaction.deferUpdate().catch(e => console.warn('deferUpdate warning:', e.message));
+
             const parts = customId.split('_');
             const step = parts[1]; // trad, check, clean, edit, qc
             const rawSlug = parts.slice(2).join('_');
 
+            const projects = loadProjects();
             let slug = findProjectKey(projects, rawSlug);
             if (!slug) {
                 await syncProjectsWithSite();
-                const refreshed = loadProjects();
-                slug = findProjectKey(refreshed, rawSlug) || rawSlug;
+                slug = findProjectKey(projects, rawSlug) || rawSlug;
             }
 
             if (!projects[slug]) {
-                return await interaction.reply({ content: 'Projet introuvable.', ephemeral: true });
+                return await interaction.followUp({ content: 'Projet introuvable.', ephemeral: true });
             }
 
             if (!projects[slug].steps) {
@@ -1593,46 +1603,39 @@ client.on('interactionCreate', async interaction => {
                 newVal
             );
 
-            // Synchronisation asynchrone avec l'API Laravel
-            try {
-                const apiUrl = process.env.API_BASE_URL || 'http://127.0.0.1:8000';
-                const secret = process.env.DISCORD_BOT_SECRET || 'hiddenscan-secret-bot-key';
-                await fetch(`${apiUrl}/api/bot/step-done`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-Bot-Token': secret,
-                    },
-                    body: JSON.stringify({
-                        slug,
-                        step,
-                        chapter_number: newVal,
-                        discord_user_id: interaction.user.id,
-                        discord_user_name: interaction.user.tag || interaction.user.username,
-                    }),
-                });
-            } catch (err) {
+            // Synchronisation asynchrone non-bloquante avec l'API Laravel (ne ralentit pas Discord)
+            const apiUrl = process.env.API_BASE_URL || 'http://127.0.0.1:8000';
+            const secret = process.env.DISCORD_BOT_SECRET || 'hiddenscan-secret-bot-key';
+            fetch(`${apiUrl}/api/bot/step-done`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-Bot-Token': secret,
+                },
+                body: JSON.stringify({
+                    slug,
+                    step,
+                    chapter_number: newVal,
+                    discord_user_id: interaction.user.id,
+                    discord_user_name: interaction.user.tag || interaction.user.username,
+                }),
+            }).catch(err => {
                 console.warn(`[Sync API] Échec step-done ${slug}:`, err.message);
-            }
+            });
 
             const coverInfo = resolveProjectCover(projects[slug]);
             const embed = buildFicheEmbed(projects[slug], coverInfo);
             const components = buildFicheComponents(projects[slug]);
             const files = (coverInfo && coverInfo.isAttachment) ? [coverInfo.attachment] : [];
 
-            await interaction.update({
+            await interaction.editReply({
                 embeds: [embed],
                 components,
                 files,
             });
 
-            // Détermine qui doit être notifié pour la suite selon la chaîne d'équipe :
-            // 1. Trad finit  -> ping Check
-            // 2. Clean finit -> ping Edit
-            // 3. Check finit -> ping Edit
-            // 4. Edit finit  -> Chapitre terminé & prêt à publier (ping des 2 admins du serveur)
-            // 5. QC finit    -> Chapitre validé & prêt à publier (ping des 2 admins du serveur)
-            const adminMentions = await getAdminMentions(interaction.guild);
+            // Mentions administrateurs instantanées en mémoire (0ms, aucun lag)
+            const adminMentions = getAdminMentions(interaction.guild);
 
             let nextAction = '';
             let targetMention = null;
@@ -1691,18 +1694,24 @@ client.on('interactionCreate', async interaction => {
                 });
             }
 
+            await interaction.deferUpdate().catch(e => console.warn('deferUpdate warning:', e.message));
+
             const slug = customId.replace('toggle_rush_', '');
+            const projects = loadProjects();
             if (!projects[slug]) return;
 
             projects[slug].is_rush = !projects[slug].is_rush;
             saveProjects(projects);
+
+            // Sync API en tâche de fond
+            syncProjectToSite(projects[slug]);
 
             const coverInfo = resolveProjectCover(projects[slug]);
             const embed = buildFicheEmbed(projects[slug], coverInfo);
             const components = buildFicheComponents(projects[slug]);
             const files = (coverInfo && coverInfo.isAttachment) ? [coverInfo.attachment] : [];
 
-            await interaction.update({
+            await interaction.editReply({
                 embeds: [embed],
                 components,
                 files,
@@ -1723,7 +1732,7 @@ client.on('interactionCreate', async interaction => {
             const allProjectsRoleId = process.env.DISCORD_ALL_PROJECTS_ROLE_ID || '1535294276618158180';
             const panelRoleIds = getPanelRoleIds(interaction.guild, projects, allProjectsRoleId);
 
-            const added = [];
+            const toAdd = [];
             const alreadyHave = [];
             const failed = [];
 
@@ -1738,13 +1747,24 @@ client.on('interactionCreate', async interaction => {
                     failed.push({ role, reason: 'Hiérarchie Discord (rôle placé au-dessus du bot)' });
                     continue;
                 }
+                toAdd.push(role);
+            }
+
+            if (toAdd.length > 0) {
                 try {
-                    await member.roles.add(roleId);
-                    added.push(role);
+                    await member.roles.add(toAdd.map(r => r.id));
                 } catch (e) {
-                    failed.push({ role, reason: e.message });
+                    for (const r of toAdd) {
+                        try {
+                            await member.roles.add(r.id);
+                        } catch (err) {
+                            failed.push({ role: r, reason: err.message });
+                        }
+                    }
                 }
             }
+
+            const added = toAdd.filter(r => !failed.some(f => f.role.id === r.id));
 
             let msg = `### 📚 Activation de toutes les séries\n\n`;
             if (added.length > 0) {
@@ -1769,7 +1789,7 @@ client.on('interactionCreate', async interaction => {
             const allProjectsRoleId = process.env.DISCORD_ALL_PROJECTS_ROLE_ID || '1535294276618158180';
             const panelRoleIds = getPanelRoleIds(interaction.guild, projects, allProjectsRoleId);
 
-            const removed = [];
+            const toRemove = [];
             const failed = [];
 
             for (const roleId of panelRoleIds) {
@@ -1779,13 +1799,24 @@ client.on('interactionCreate', async interaction => {
                     failed.push({ role, reason: 'Hiérarchie Discord (rôle placé au-dessus du bot)' });
                     continue;
                 }
+                toRemove.push(role);
+            }
+
+            if (toRemove.length > 0) {
                 try {
-                    await member.roles.remove(roleId);
-                    removed.push(role);
+                    await member.roles.remove(toRemove.map(r => r.id));
                 } catch (e) {
-                    failed.push({ role, reason: e.message });
+                    for (const r of toRemove) {
+                        try {
+                            await member.roles.remove(r.id);
+                        } catch (err) {
+                            failed.push({ role: r, reason: err.message });
+                        }
+                    }
                 }
             }
+
+            const removed = toRemove.filter(r => !failed.some(f => f.role.id === r.id));
 
             let msg = `### ❌ Désactivation des notifications\n\n`;
             if (removed.length > 0) {
@@ -1819,8 +1850,8 @@ client.on('interactionCreate', async interaction => {
         const allProjectsRoleId = process.env.DISCORD_ALL_PROJECTS_ROLE_ID || '1535294276618158180';
         const panelRoleIds = getPanelRoleIds(interaction.guild, projects, allProjectsRoleId);
 
-        const added = [];
-        const removed = [];
+        const toAdd = [];
+        const toRemove = [];
         const failed = [];
 
         for (const roleId of panelRoleIds) {
@@ -1834,26 +1865,39 @@ client.on('interactionCreate', async interaction => {
                 if (!role.editable) {
                     failed.push({ role, action: 'ajout', reason: 'Hiérarchie Discord (rôle placé au-dessus du bot)' });
                 } else {
-                    try {
-                        await member.roles.add(roleId);
-                        added.push(role);
-                    } catch (e) {
-                        failed.push({ role, action: 'ajout', reason: e.message });
-                    }
+                    toAdd.push(role);
                 }
             } else if (!isSelected && hasRole) {
                 if (!role.editable) {
                     failed.push({ role, action: 'retrait', reason: 'Hiérarchie Discord (rôle placé au-dessus du bot)' });
                 } else {
-                    try {
-                        await member.roles.remove(roleId);
-                        removed.push(role);
-                    } catch (e) {
-                        failed.push({ role, action: 'retrait', reason: e.message });
-                    }
+                    toRemove.push(role);
                 }
             }
         }
+
+        if (toAdd.length > 0) {
+            try {
+                await member.roles.add(toAdd.map(r => r.id));
+            } catch (e) {
+                for (const r of toAdd) {
+                    try { await member.roles.add(r.id); } catch (err) { failed.push({ role: r, action: 'ajout', reason: err.message }); }
+                }
+            }
+        }
+
+        if (toRemove.length > 0) {
+            try {
+                await member.roles.remove(toRemove.map(r => r.id));
+            } catch (e) {
+                for (const r of toRemove) {
+                    try { await member.roles.remove(r.id); } catch (err) { failed.push({ role: r, action: 'retrait', reason: err.message }); }
+                }
+            }
+        }
+
+        const added = toAdd.filter(r => !failed.some(f => f.role.id === r.id && f.action === 'ajout'));
+        const removed = toRemove.filter(r => !failed.some(f => f.role.id === r.id && f.action === 'retrait'));
 
         let replyText = '### 📕 Vos rôles de notification ont été mis à jour !\n\n';
         if (added.length > 0) {
