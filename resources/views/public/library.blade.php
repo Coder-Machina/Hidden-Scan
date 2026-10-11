@@ -7,7 +7,7 @@
         <div class="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 mb-6 sm:mb-8">
             <div>
                 <h1 class="font-display font-extrabold text-3xl sm:text-4xl tracking-tight flex items-center gap-3 text-white">
-                    <svg class="w-8 h-8 text-[#dc2626]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg class="w-8 h-8 text-[#ff2a55]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/>
                     </svg>
                     Bibliothèque
@@ -17,11 +17,11 @@
         </div>
 
         {{-- ═══ Onglets de Navigation ═══ --}}
-        <div class="flex gap-1.5 sm:gap-2 p-1.5 bg-[#111118] border border-[#1e1e2e] rounded-xl mb-6 sm:mb-8 overflow-x-auto hide-scrollbar">
+        <div class="flex gap-1.5 sm:gap-2 p-1.5 bg-[#0d1018] border border-[#1e1e2e] rounded-xl mb-6 sm:mb-8 overflow-x-auto hide-scrollbar">
             {{-- Onglet : Mode Rattrapage --}}
             <button @click="setTab('rattrapage')"
                     class="flex-1 min-w-max py-2 sm:py-2.5 px-3 sm:px-4 rounded-lg text-xs sm:text-sm font-semibold transition-all whitespace-nowrap flex items-center justify-center gap-1.5 sm:gap-2 group"
-                    :class="activeTab === 'rattrapage' ? 'bg-[#dc2626] text-white shadow-lg shadow-[#dc2626]/30' : 'text-[#7070a0] hover:text-[#e8e8f0] hover:bg-white/5'">
+                    :class="activeTab === 'rattrapage' ? 'bg-[#ff2a55] text-white shadow-lg shadow-[#ff2a55]/30' : 'text-[#7070a0] hover:text-[#e8e8f0] hover:bg-white/5'">
                 <svg class="w-3.5 h-3.5 sm:w-4 sm:h-4 flex-shrink-0 text-amber-400 group-hover:scale-110 transition-transform" fill="currentColor" viewBox="0 0 20 20">
                     <path fill-rule="evenodd" d="M11.3 1.046A1 1 0 0112 2v5h4a1 1 0 01.82 1.573l-7 10A1 1 0 018 18v-5H4a1 1 0 01-.82-1.573l7-10a1 1 0 011.12-.38z" clip-rule="evenodd"/>
                 </svg>
@@ -29,13 +29,13 @@
                 <span x-show="catchUpCount > 0"
                       x-text="catchUpCount"
                       class="px-1.5 py-0.5 rounded-full text-[10px] font-extrabold leading-none transition-colors"
-                      :class="activeTab === 'rattrapage' ? 'bg-white text-[#dc2626]' : 'bg-[#dc2626] text-white animate-pulse'"></span>
+                      :class="activeTab === 'rattrapage' ? 'bg-white text-[#ff2a55]' : 'bg-[#ff2a55] text-white animate-pulse'"></span>
             </button>
 
             {{-- Onglet : En cours --}}
             <button @click="setTab('progress')"
                     class="flex-1 min-w-max py-2 sm:py-2.5 px-3 sm:px-4 rounded-lg text-xs sm:text-sm font-semibold transition-all whitespace-nowrap flex items-center justify-center gap-1.5 sm:gap-2"
-                    :class="activeTab === 'progress' ? 'bg-[#dc2626] text-white shadow-lg shadow-[#dc2626]/30' : 'text-[#7070a0] hover:text-[#e8e8f0] hover:bg-white/5'">
+                    :class="activeTab === 'progress' ? 'bg-[#ff2a55] text-white shadow-lg shadow-[#ff2a55]/30' : 'text-[#7070a0] hover:text-[#e8e8f0] hover:bg-white/5'">
                 <svg class="w-3.5 h-3.5 sm:w-4 sm:h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/></svg>
                 <span>En cours ({{ count($mangasWithProgress) }})</span>
             </button>
@@ -43,7 +43,7 @@
             {{-- Onglet : Favoris --}}
             <button @click="setTab('favorites')"
                     class="flex-1 min-w-max py-2 sm:py-2.5 px-3 sm:px-4 rounded-lg text-xs sm:text-sm font-semibold transition-all whitespace-nowrap flex items-center justify-center gap-1.5 sm:gap-2"
-                    :class="activeTab === 'favorites' ? 'bg-[#dc2626] text-white shadow-lg shadow-[#dc2626]/30' : 'text-[#7070a0] hover:text-[#e8e8f0] hover:bg-white/5'">
+                    :class="activeTab === 'favorites' ? 'bg-[#ff2a55] text-white shadow-lg shadow-[#ff2a55]/30' : 'text-[#7070a0] hover:text-[#e8e8f0] hover:bg-white/5'">
                 <svg class="w-3.5 h-3.5 sm:w-4 sm:h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/></svg>
                 <span>Favoris (<span x-text="favorites.length">0</span>)</span>
             </button>
@@ -51,7 +51,7 @@
             {{-- Onglet : Historique --}}
             <button @click="setTab('history')"
                     class="flex-1 min-w-max py-2 sm:py-2.5 px-3 sm:px-4 rounded-lg text-xs sm:text-sm font-semibold transition-all whitespace-nowrap flex items-center justify-center gap-1.5 sm:gap-2"
-                    :class="activeTab === 'history' ? 'bg-[#dc2626] text-white shadow-lg shadow-[#dc2626]/30' : 'text-[#7070a0] hover:text-[#e8e8f0] hover:bg-white/5'">
+                    :class="activeTab === 'history' ? 'bg-[#ff2a55] text-white shadow-lg shadow-[#ff2a55]/30' : 'text-[#7070a0] hover:text-[#e8e8f0] hover:bg-white/5'">
                 <svg class="w-3.5 h-3.5 sm:w-4 sm:h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
                 <span>Historique (<span x-text="history.length">0</span>)</span>
             </button>
@@ -59,7 +59,7 @@
             {{-- Onglet : Recommandations "Si t'as aimé..." --}}
             <button @click="setTab('recommendations')"
                     class="flex-1 min-w-max py-2 sm:py-2.5 px-3 sm:px-4 rounded-lg text-xs sm:text-sm font-semibold transition-all whitespace-nowrap flex items-center justify-center gap-1.5 sm:gap-2 group"
-                    :class="activeTab === 'recommendations' ? 'bg-[#dc2626] text-white shadow-lg shadow-[#dc2626]/30' : 'text-[#7070a0] hover:text-[#e8e8f0] hover:bg-white/5'">
+                    :class="activeTab === 'recommendations' ? 'bg-[#ff2a55] text-white shadow-lg shadow-[#ff2a55]/30' : 'text-[#7070a0] hover:text-[#e8e8f0] hover:bg-white/5'">
                 <svg class="w-3.5 h-3.5 sm:w-4 sm:h-4 flex-shrink-0 text-amber-400 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
                 </svg>
@@ -77,7 +77,7 @@
                 {{-- Invitation de connexion pour les visiteurs non connectés --}}
                 <div class="mb-6 bg-gradient-to-r from-[#1c1830] to-[#12121a] border border-[#3b3260] rounded-2xl p-4 sm:p-6 flex flex-col sm:flex-row items-center justify-between gap-4 shadow-xl">
                     <div class="flex items-center gap-3.5">
-                        <div class="w-11 h-11 rounded-xl bg-[#dc2626]/20 border border-[#dc2626]/30 flex items-center justify-center text-amber-400 flex-shrink-0">
+                        <div class="w-11 h-11 rounded-xl bg-[#ff2a55]/20 border border-[#ff2a55]/30 flex items-center justify-center text-amber-400 flex-shrink-0">
                             <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
                                 <path fill-rule="evenodd" d="M11.3 1.046A1 1 0 0112 2v5h4a1 1 0 01.82 1.573l-7 10A1 1 0 018 18v-5H4a1 1 0 01-.82-1.573l7-10a1 1 0 011.12-.38z" clip-rule="evenodd"/>
                             </svg>
@@ -97,10 +97,10 @@
             <template x-if="catchUpCount > 0">
                 <div class="space-y-4 sm:space-y-5">
                     {{-- ── Barre d'outils Rattrapage ── --}}
-                    <div class="bg-[#111118] border border-[#1e1e2e] rounded-2xl p-3.5 sm:p-4 flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3 sm:gap-4 shadow-xl">
+                    <div class="bg-[#0d1018] border border-[#1e1e2e] rounded-2xl p-3.5 sm:p-4 flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3 sm:gap-4 shadow-xl">
                         {{-- Compteur & Résumé --}}
                         <div class="flex items-center gap-3">
-                            <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-[#dc2626]/20 to-[#f59e0b]/20 border border-[#dc2626]/30 flex items-center justify-center text-amber-400 flex-shrink-0 shadow-inner">
+                            <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-[#ff2a55]/20 to-[#f59e0b]/20 border border-[#ff2a55]/30 flex items-center justify-center text-amber-400 flex-shrink-0 shadow-inner">
                                 <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
                                     <path fill-rule="evenodd" d="M11.3 1.046A1 1 0 0112 2v5h4a1 1 0 01.82 1.573l-7 10A1 1 0 018 18v-5H4a1 1 0 01-.82-1.573l7-10a1 1 0 011.12-.38z" clip-rule="evenodd"/>
                                 </svg>
@@ -108,7 +108,7 @@
                             <div>
                                 <div class="flex items-center gap-2 flex-wrap">
                                     <h2 class="text-white font-bold text-base sm:text-lg">Chapitres non lus</h2>
-                                    <span class="px-2 py-0.5 rounded-full text-xs font-extrabold bg-[#dc2626] text-white" x-text="catchUpCount"></span>
+                                    <span class="px-2 py-0.5 rounded-full text-xs font-extrabold bg-[#ff2a55] text-white" x-text="catchUpCount"></span>
                                 </div>
                                 <p class="text-xs text-[#7070a0]">
                                     Sur <span class="text-white font-semibold" x-text="seriesWithUnreadCount"></span> manga(s) en cours de lecture
@@ -126,14 +126,14 @@
                                 <input type="text"
                                        x-model="filterText"
                                        placeholder="Filtrer une série..."
-                                       class="w-full bg-[#161622] border border-[#1e1e2e] focus:border-[#dc2626] rounded-xl pl-9 pr-3 py-1.5 text-xs text-white placeholder-[#7070a0] outline-none transition">
+                                       class="w-full bg-[#161622] border border-[#1e1e2e] focus:border-[#ff2a55] rounded-xl pl-9 pr-3 py-1.5 text-xs text-white placeholder-[#7070a0] outline-none transition">
                             </div>
 
                             {{-- Tri chronologique --}}
                             <button @click="sortOrder = (sortOrder === 'desc' ? 'asc' : 'desc')"
                                     class="px-3 py-1.5 rounded-xl bg-[#161622] border border-[#1e1e2e] hover:border-white/20 text-[#a0a6b8] hover:text-white text-xs font-medium flex items-center gap-1.5 transition"
                                     :title="sortOrder === 'desc' ? 'Trié du plus récent au plus ancien' : 'Trié du plus ancien au plus récent'">
-                                <svg class="w-3.5 h-3.5 text-[#dc2626]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <svg class="w-3.5 h-3.5 text-[#ff2a55]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4h13M3 8h9m-9 4h6m4 0l4-4m0 0l4 4m-4-4v12"/>
                                 </svg>
                                 <span class="hidden sm:inline" x-text="sortOrder === 'desc' ? 'Récents' : 'Anciens'"></span>
@@ -143,7 +143,7 @@
                             <div class="flex bg-[#161622] border border-[#1e1e2e] rounded-xl p-0.5">
                                 <button @click="catchUpView = 'feed'"
                                         class="px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-semibold transition flex items-center gap-1.5"
-                                        :class="catchUpView === 'feed' ? 'bg-[#dc2626] text-white shadow' : 'text-[#7070a0] hover:text-white'">
+                                        :class="catchUpView === 'feed' ? 'bg-[#ff2a55] text-white shadow' : 'text-[#7070a0] hover:text-white'">
                                     <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16"/>
                                     </svg>
@@ -151,7 +151,7 @@
                                 </button>
                                 <button @click="catchUpView = 'series'"
                                         class="px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-semibold transition flex items-center gap-1.5"
-                                        :class="catchUpView === 'series' ? 'bg-[#dc2626] text-white shadow' : 'text-[#7070a0] hover:text-white'">
+                                        :class="catchUpView === 'series' ? 'bg-[#ff2a55] text-white shadow' : 'text-[#7070a0] hover:text-white'">
                                     <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/>
                                     </svg>
@@ -164,7 +164,7 @@
                     {{-- ── VUE 1 : FLUX CHRONOLOGIQUE DES CHAPITRES ── --}}
                     <div x-show="catchUpView === 'feed'" class="space-y-3">
                         <template x-for="item in filteredCatchUpChapters" :key="item.chapter_id">
-                            <div class="bg-[#111118] border border-[#1e1e2e] hover:border-[#dc2626]/40 rounded-2xl p-3 sm:p-4 flex items-center justify-between gap-3 sm:gap-4 transition-all duration-200 shadow-md group">
+                            <div class="bg-[#0d1018] border border-[#1e1e2e] hover:border-[#ff2a55]/40 rounded-2xl p-3 sm:p-4 flex items-center justify-between gap-3 sm:gap-4 transition-all duration-200 shadow-md group">
                                 {{-- Thumbnail + Titre Manga + Détails Chapitre --}}
                                 <div class="flex items-center gap-3 sm:gap-4 min-w-0">
                                     <a :href="item.url" class="relative w-12 sm:w-14 aspect-[2/3] rounded-xl overflow-hidden bg-[#16161f] border border-white/5 flex-shrink-0 group-hover:scale-105 transition-transform duration-300">
@@ -181,7 +181,7 @@
                                     <div class="min-w-0">
                                         {{-- Titre de l'œuvre & Badges --}}
                                         <div class="flex items-center gap-2 flex-wrap">
-                                            <a :href="'/manga/' + item.manga_slug" class="font-bold text-white hover:text-[#dc2626] transition text-sm sm:text-base truncate" x-text="item.manga_title"></a>
+                                            <a :href="'/manga/' + item.manga_slug" class="font-bold text-white hover:text-[#ff2a55] transition text-sm sm:text-base truncate" x-text="item.manga_title"></a>
                                             <span class="text-[10px] font-bold uppercase tracking-wider text-[#a78bfa] bg-[#2a1a4a]/60 border border-[#4a2a8a]/40 px-1.5 py-0.5 rounded" x-text="item.manga_type"></span>
                                             <template x-if="item.is_recent">
                                                 <span class="px-1.5 py-0.5 rounded text-[9px] font-extrabold uppercase bg-amber-500/20 text-amber-300 border border-amber-500/30">Nouveau</span>
@@ -222,7 +222,7 @@
                                     </button>
 
                                     <a :href="item.url"
-                                       class="py-2 px-3 sm:px-4 rounded-xl bg-[#dc2626] hover:bg-[#b91c1c] text-white text-xs sm:text-sm font-bold flex items-center gap-1.5 shadow-md shadow-[#dc2626]/20 transition-all active:scale-95">
+                                       class="py-2 px-3 sm:px-4 rounded-xl bg-[#ff2a55] hover:bg-[#e01640] text-white text-xs sm:text-sm font-bold flex items-center gap-1.5 shadow-md shadow-[#ff2a55]/20 transition-all active:scale-95">
                                         <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/>
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
@@ -234,7 +234,7 @@
                         </template>
 
                         <template x-if="filteredCatchUpChapters.length === 0">
-                            <div class="text-center py-12 text-[#7070a0] text-sm bg-[#111118] border border-[#1e1e2e] rounded-2xl">
+                            <div class="text-center py-12 text-[#7070a0] text-sm bg-[#0d1018] border border-[#1e1e2e] rounded-2xl">
                                 Aucun chapitre ne correspond à votre recherche.
                             </div>
                         </template>
@@ -243,7 +243,7 @@
                     {{-- ── VUE 2 : PAR SÉRIE ── --}}
                     <div x-show="catchUpView === 'series'" class="space-y-4">
                         <template x-for="mangaGroup in filteredCatchUpByManga" :key="mangaGroup.manga_id">
-                            <div class="bg-[#111118] border border-[#1e1e2e] rounded-2xl p-4 sm:p-5 hover:border-[#dc2626]/30 transition shadow-lg">
+                            <div class="bg-[#0d1018] border border-[#1e1e2e] rounded-2xl p-4 sm:p-5 hover:border-[#ff2a55]/30 transition shadow-lg">
                                 {{-- Manga Header --}}
                                 <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-[#1e1e2e]">
                                     <div class="flex items-center gap-3.5 min-w-0">
@@ -256,10 +256,10 @@
                                             </template>
                                         </a>
                                         <div class="min-w-0">
-                                            <a :href="'/manga/' + mangaGroup.manga_slug" class="block font-bold text-white hover:text-[#dc2626] transition text-base sm:text-lg truncate" x-text="mangaGroup.manga_title"></a>
+                                            <a :href="'/manga/' + mangaGroup.manga_slug" class="block font-bold text-white hover:text-[#ff2a55] transition text-base sm:text-lg truncate" x-text="mangaGroup.manga_title"></a>
                                             <div class="flex items-center gap-2 mt-1">
                                                 <span class="text-[10px] font-bold uppercase tracking-wider text-[#a78bfa] bg-[#2a1a4a]/60 border border-[#4a2a8a]/40 px-1.5 py-0.5 rounded" x-text="mangaGroup.manga_type"></span>
-                                                <span class="text-xs font-extrabold text-[#ef4444] bg-[#dc2626]/15 border border-[#dc2626]/30 px-2 py-0.5 rounded-full" x-text="mangaGroup.unread_count + ' non lu(s)'"></span>
+                                                <span class="text-xs font-extrabold text-[#ef4444] bg-[#ff2a55]/15 border border-[#ff2a55]/30 px-2 py-0.5 rounded-full" x-text="mangaGroup.unread_count + ' non lu(s)'"></span>
                                             </div>
                                         </div>
                                     </div>
@@ -274,7 +274,7 @@
 
                                         <template x-if="mangaGroup.earliest_unread">
                                             <a :href="mangaGroup.earliest_unread.url"
-                                               class="py-1.5 px-3.5 rounded-xl bg-[#dc2626] hover:bg-[#b91c1c] text-white text-xs font-bold transition flex items-center gap-1.5 shadow-md shadow-[#dc2626]/20">
+                                               class="py-1.5 px-3.5 rounded-xl bg-[#ff2a55] hover:bg-[#e01640] text-white text-xs font-bold transition flex items-center gap-1.5 shadow-md shadow-[#ff2a55]/20">
                                                 <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/></svg>
                                                 <span>Reprendre (Ch. <span x-text="mangaGroup.earliest_unread.chapter_number"></span>)</span>
                                             </a>
@@ -300,7 +300,7 @@
                                                         <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>
                                                     </button>
                                                     <a :href="ch.url"
-                                                       class="px-2 py-1 rounded-lg bg-[#dc2626]/20 hover:bg-[#dc2626] text-[#ef4444] hover:text-white text-[11px] font-bold transition">
+                                                       class="px-2 py-1 rounded-lg bg-[#ff2a55]/20 hover:bg-[#ff2a55] text-[#ef4444] hover:text-white text-[11px] font-bold transition">
                                                         Lire
                                                     </a>
                                                 </div>
@@ -316,7 +316,7 @@
 
             {{-- ── État vide : quand 100% à jour ── --}}
             <template x-if="catchUpCount === 0">
-                <div class="text-center py-16 sm:py-20 bg-[#111118] border border-[#1e1e2e] rounded-2xl p-6 sm:p-10 relative overflow-hidden">
+                <div class="text-center py-16 sm:py-20 bg-[#0d1018] border border-[#1e1e2e] rounded-2xl p-6 sm:p-10 relative overflow-hidden">
                     <div class="w-16 h-16 sm:w-20 sm:h-20 mx-auto rounded-2xl bg-emerald-500/10 border border-emerald-500/25 flex items-center justify-center mb-4 text-emerald-400 shadow-lg shadow-emerald-500/10">
                         <svg class="w-8 h-8 sm:w-10 sm:h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
@@ -352,7 +352,7 @@
                             $percent = $item['percent'];
                             $resumeChapter = $item['resume_chapter'];
                         @endphp
-                        <div class="bg-[#111118] border border-[#1e1e2e] rounded-2xl p-3 sm:p-4 flex gap-3 sm:gap-4 hover:border-[#dc2626]/40 transition-all duration-300 shadow-xl group">
+                        <div class="bg-[#0d1018] border border-[#1e1e2e] rounded-2xl p-3 sm:p-4 flex gap-3 sm:gap-4 hover:border-[#ff2a55]/40 transition-all duration-300 shadow-xl group">
                             {{-- Cover --}}
                             <a href="{{ route('manga.show', $manga->slug) }}" class="flex-shrink-0 w-20 sm:w-28 rounded-xl overflow-hidden aspect-[2/3] bg-[#16161f] relative border border-white/5 shadow-md">
                                 @if($manga->cover_image)
@@ -367,7 +367,7 @@
                             {{-- Info & Actions --}}
                             <div class="flex-1 flex flex-col justify-between min-w-0">
                                 <div>
-                                    <a href="{{ route('manga.show', $manga->slug) }}" class="block font-bold text-white text-base truncate group-hover:text-[#dc2626] transition">
+                                    <a href="{{ route('manga.show', $manga->slug) }}" class="block font-bold text-white text-base truncate group-hover:text-[#ff2a55] transition">
                                         {{ $manga->title }}
                                     </a>
                                     
@@ -383,7 +383,7 @@
                                             <span class="text-white font-bold">{{ $percent }}%</span>
                                         </div>
                                         <div class="w-full bg-[#1b1c28] rounded-full h-2 overflow-hidden border border-white/5">
-                                            <div class="bg-gradient-to-r from-[#dc2626] to-[#ef4444] h-2 rounded-full transition-all duration-300" style="width: {{ $percent }}%"></div>
+                                            <div class="bg-gradient-to-r from-[#ff2a55] to-[#ef4444] h-2 rounded-full transition-all duration-300" style="width: {{ $percent }}%"></div>
                                         </div>
                                     </div>
                                 </div>
@@ -392,7 +392,7 @@
                                 <div class="mt-4 flex items-center gap-2">
                                     @if($resumeChapter)
                                         <a href="{{ route('chapter.show', [$manga->slug, $resumeChapter->slug]) }}"
-                                           class="flex-1 py-2 px-3 rounded-xl bg-[#dc2626] hover:bg-[#b91c1c] text-white text-xs font-bold text-center transition-all shadow-md shadow-[#dc2626]/25 flex items-center justify-center gap-1.5">
+                                           class="flex-1 py-2 px-3 rounded-xl bg-[#ff2a55] hover:bg-[#e01640] text-white text-xs font-bold text-center transition-all shadow-md shadow-[#ff2a55]/25 flex items-center justify-center gap-1.5">
                                             <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
                                             <span>{{ $percent >= 100 ? 'Relire' : 'Reprendre (Ch. ' . $resumeChapter->number . ')' }}</span>
                                         </a>
@@ -408,7 +408,7 @@
                     @endforeach
                 </div>
             @else
-                <div class="text-center py-20 bg-[#111118] border border-[#1e1e2e] rounded-2xl p-8">
+                <div class="text-center py-20 bg-[#0d1018] border border-[#1e1e2e] rounded-2xl p-8">
                     <svg class="w-16 h-16 mx-auto text-[#7070a0]/30 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/>
                     </svg>
@@ -428,7 +428,7 @@
             <template x-if="favorites.length > 0">
                 <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
                     <template x-for="manga in favorites" :key="manga.slug">
-                        <div class="bg-[#111118] border border-[#1e1e2e] rounded-2xl overflow-hidden group relative hover:border-[#dc2626]/40 transition-all flex flex-col justify-between">
+                        <div class="bg-[#0d1018] border border-[#1e1e2e] rounded-2xl overflow-hidden group relative hover:border-[#ff2a55]/40 transition-all flex flex-col justify-between">
                             <a :href="'/manga/' + manga.slug" class="block">
                                 <div class="relative overflow-hidden aspect-[2/3] bg-[#16161f]">
                                     <template x-if="manga.cover">
@@ -441,7 +441,7 @@
                                     </template>
                                 </div>
                                 <div class="p-3">
-                                    <p class="text-sm font-semibold text-[#e8e8f0] truncate group-hover:text-[#dc2626] transition" x-text="manga.title"></p>
+                                    <p class="text-sm font-semibold text-[#e8e8f0] truncate group-hover:text-[#ff2a55] transition" x-text="manga.title"></p>
                                     
                                     {{-- Progression si chargée --}}
                                     <template x-if="serverProgress[manga.slug]">
@@ -451,7 +451,7 @@
                                                 <span x-text="serverProgress[manga.slug].percent + '%'"></span>
                                             </div>
                                             <div class="w-full bg-[#1b1c28] rounded-full h-1.5 overflow-hidden">
-                                                <div class="bg-[#dc2626] h-1.5 rounded-full" :style="'width: ' + serverProgress[manga.slug].percent + '%'"></div>
+                                                <div class="bg-[#ff2a55] h-1.5 rounded-full" :style="'width: ' + serverProgress[manga.slug].percent + '%'"></div>
                                             </div>
                                         </div>
                                     </template>
@@ -462,7 +462,7 @@
                             <div class="p-3 pt-0 flex gap-2">
                                 <template x-if="serverProgress[manga.slug] && serverProgress[manga.slug].next_chapter">
                                     <a :href="serverProgress[manga.slug].next_chapter.url"
-                                       class="flex-1 py-1.5 rounded-lg bg-[#dc2626] hover:bg-[#b91c1c] text-white text-[11px] font-bold text-center transition">
+                                       class="flex-1 py-1.5 rounded-lg bg-[#ff2a55] hover:bg-[#e01640] text-white text-[11px] font-bold text-center transition">
                                         Reprendre
                                     </a>
                                 </template>
@@ -484,7 +484,7 @@
                 </div>
             </template>
             <template x-if="favorites.length === 0">
-                <div class="text-center py-20 bg-[#111118] border border-[#1e1e2e] rounded-2xl p-8">
+                <div class="text-center py-20 bg-[#0d1018] border border-[#1e1e2e] rounded-2xl p-8">
                     <svg class="w-16 h-16 mx-auto text-[#7070a0]/30 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/></svg>
                     <p class="text-lg text-white font-bold mb-2">Aucun favori pour le moment</p>
                     <p class="text-[#7070a0] mb-6 text-sm">Ajoutez des séries à vos favoris pour les retrouver facilement ici.</p>
@@ -506,7 +506,7 @@
                         </button>
                     </div>
 
-                    <div class="bg-[#111118] border border-[#1e1e2e] rounded-2xl overflow-hidden divide-y divide-[#1e1e2e]">
+                    <div class="bg-[#0d1018] border border-[#1e1e2e] rounded-2xl overflow-hidden divide-y divide-[#1e1e2e]">
                         <template x-for="item in historyDetails" :key="item.slug + item.chapter">
                             <div class="p-4 flex items-center justify-between gap-4 hover:bg-[#16161f] transition">
                                 <div class="flex items-center gap-4 min-w-0">
@@ -520,7 +520,7 @@
                                     </template>
 
                                     <div class="min-w-0">
-                                        <a :href="'/manga/' + item.slug" class="block font-bold text-white hover:text-[#dc2626] transition truncate text-sm" x-text="item.title || item.slug"></a>
+                                        <a :href="'/manga/' + item.slug" class="block font-bold text-white hover:text-[#ff2a55] transition truncate text-sm" x-text="item.title || item.slug"></a>
                                         <div class="flex items-center gap-2 mt-1">
                                             <a :href="'/manga/' + item.slug + '/chapter/' + item.chapterSlug" class="text-xs text-[#a0a6b8] hover:text-white transition font-medium">
                                                 Chapitre <span x-text="item.chapter"></span>
@@ -531,7 +531,7 @@
                                 </div>
 
                                 <a :href="'/manga/' + item.slug + '/chapter/' + item.chapterSlug"
-                                   class="px-3 py-1.5 rounded-lg bg-white/5 hover:bg-[#dc2626] hover:text-white text-[#a0a6b8] text-xs font-semibold transition flex-shrink-0">
+                                   class="px-3 py-1.5 rounded-lg bg-white/5 hover:bg-[#ff2a55] hover:text-white text-[#a0a6b8] text-xs font-semibold transition flex-shrink-0">
                                     Relire
                                 </a>
                             </div>
@@ -540,7 +540,7 @@
                 </div>
             </template>
             <template x-if="history.length === 0">
-                <div class="text-center py-20 bg-[#111118] border border-[#1e1e2e] rounded-2xl p-8">
+                <div class="text-center py-20 bg-[#0d1018] border border-[#1e1e2e] rounded-2xl p-8">
                     <svg class="w-16 h-16 mx-auto text-[#7070a0]/30 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
                     <p class="text-lg text-white font-bold mb-2">Aucun historique de lecture</p>
                     <p class="text-[#7070a0] mb-6 text-sm">Vos dernières lectures apparaîtront ici.</p>
@@ -556,7 +556,7 @@
             {{-- Bannière explicative --}}
             <div class="mb-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-gradient-to-r from-[#1c162b] via-[#12111c] to-[#1a1215] border border-amber-500/20 rounded-2xl p-4 sm:p-5 shadow-xl">
                 <div class="flex items-center gap-3.5">
-                    <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-amber-500/20 to-[#dc2626]/20 border border-amber-500/30 flex items-center justify-center text-amber-400 flex-shrink-0 shadow-inner">
+                    <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-amber-500/20 to-[#ff2a55]/20 border border-amber-500/30 flex items-center justify-center text-amber-400 flex-shrink-0 shadow-inner">
                         <svg class="w-6 h-6 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
                         </svg>
@@ -570,7 +570,7 @@
                     </div>
                 </div>
                 <div class="flex items-center gap-2 flex-shrink-0">
-                    <a href="{{ route('manga.random') }}" class="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl bg-[#dc2626]/10 hover:bg-[#dc2626]/20 border border-[#dc2626]/30 text-white text-xs font-semibold transition group">
+                    <a href="{{ route('manga.random') }}" class="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl bg-[#ff2a55]/10 hover:bg-[#ff2a55]/20 border border-[#ff2a55]/30 text-white text-xs font-semibold transition group">
                         <span class="group-hover:rotate-12 transition-transform">🎲</span>
                         <span>Surprends-moi</span>
                     </a>
@@ -579,7 +579,7 @@
 
             {{-- Chargement dynamique (notamment pour les invités) --}}
             <template x-if="loadingRecommendations">
-                <div class="bg-[#111118] border border-[#1e1e2e] rounded-2xl p-12 text-center">
+                <div class="bg-[#0d1018] border border-[#1e1e2e] rounded-2xl p-12 text-center">
                     <div class="inline-block w-8 h-8 border-2 border-amber-400 border-t-transparent rounded-full animate-spin mb-3"></div>
                     <p class="text-white font-bold text-sm">Calcul de vos affinités personnalisées...</p>
                     <p class="text-xs text-[#7070a0] mt-1">Analyse des auteurs, illustrateurs et genres en cours</p>
@@ -590,7 +590,7 @@
             <template x-if="!loadingRecommendations && recommendations.length > 0">
                 <div class="space-y-6 sm:space-y-8">
                     <template x-for="group in recommendations" :key="group.source_manga.id">
-                        <div class="bg-[#111118] border border-[#1e1e2e] hover:border-amber-500/30 rounded-2xl p-4 sm:p-6 shadow-xl transition-all duration-300">
+                        <div class="bg-[#0d1018] border border-[#1e1e2e] hover:border-amber-500/30 rounded-2xl p-4 sm:p-6 shadow-xl transition-all duration-300">
                             
                             {{-- En-tête de la source --}}
                             <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 mb-5 border-b border-[#1e1e2e]">
@@ -610,7 +610,7 @@
                                             </span>
                                             <span class="text-[10px] font-bold uppercase tracking-wider text-[#a78bfa] bg-[#2a1a4a]/60 border border-[#4a2a8a]/40 px-1.5 py-0.5 rounded" x-text="group.source_manga.type"></span>
                                         </div>
-                                        <a :href="group.source_manga.url" class="font-display font-extrabold text-white hover:text-[#dc2626] transition text-base sm:text-xl block mt-1 truncate">
+                                        <a :href="group.source_manga.url" class="font-display font-extrabold text-white hover:text-[#ff2a55] transition text-base sm:text-xl block mt-1 truncate">
                                             <span class="text-[#7070a0] font-normal text-sm sm:text-base">Si t'as aimé</span> <span class="text-white" x-text="group.source_manga.title"></span>...
                                         </a>
                                     </div>
@@ -626,7 +626,7 @@
                             {{-- Grille des mangas recommandés Y --}}
                             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                                 <template x-for="item in group.recommendations" :key="item.id">
-                                    <div class="bg-[#151520] border border-[#1e1e2e] hover:border-[#dc2626]/50 rounded-xl p-3 flex flex-col justify-between transition-all duration-300 hover:-translate-y-1 hover:shadow-2xl hover:shadow-[#dc2626]/10 group/card relative">
+                                    <div class="bg-[#151520] border border-[#1e1e2e] hover:border-[#ff2a55]/50 rounded-xl p-3 flex flex-col justify-between transition-all duration-300 hover:-translate-y-1 hover:shadow-2xl hover:shadow-[#ff2a55]/10 group/card relative">
                                         <div>
                                             {{-- Cover + Badges --}}
                                             <div class="relative w-full aspect-[3/4] rounded-lg overflow-hidden bg-[#1a1a26] border border-white/5 mb-3 group/cover">
@@ -659,7 +659,7 @@
                                             </div>
 
                                             {{-- Titre --}}
-                                            <h4 class="font-bold text-white group-hover/card:text-[#dc2626] transition text-sm line-clamp-1 mb-1.5" :title="item.title">
+                                            <h4 class="font-bold text-white group-hover/card:text-[#ff2a55] transition text-sm line-clamp-1 mb-1.5" :title="item.title">
                                                 <a :href="item.url" x-text="item.title"></a>
                                             </h4>
 
@@ -674,7 +674,7 @@
 
                                         {{-- Actions --}}
                                         <div class="pt-2 border-t border-[#1e1e2e] flex items-center gap-2">
-                                            <a :href="item.first_chapter_url" class="flex-1 py-2 px-2.5 rounded-lg bg-[#dc2626] hover:bg-[#b91c1c] text-white text-xs font-bold transition flex items-center justify-center gap-1 text-center shadow-md shadow-[#dc2626]/20">
+                                            <a :href="item.first_chapter_url" class="flex-1 py-2 px-2.5 rounded-lg bg-[#ff2a55] hover:bg-[#e01640] text-white text-xs font-bold transition flex items-center justify-center gap-1 text-center shadow-md shadow-[#ff2a55]/20">
                                                 <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
                                                 <span>Lire Ch. 1</span>
                                             </a>
@@ -692,7 +692,7 @@
 
             {{-- État vide --}}
             <template x-if="!loadingRecommendations && recommendations.length === 0">
-                <div class="text-center py-16 sm:py-20 bg-[#111118] border border-[#1e1e2e] rounded-2xl p-6 sm:p-8">
+                <div class="text-center py-16 sm:py-20 bg-[#0d1018] border border-[#1e1e2e] rounded-2xl p-6 sm:p-8">
                     <div class="w-16 h-16 mx-auto rounded-2xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-400 mb-4 shadow-inner">
                         <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />

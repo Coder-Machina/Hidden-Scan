@@ -4,13 +4,17 @@
     {{-- ═══ Header ═══ --}}
     <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-8 gap-4 animate-fade-in">
         <div>
-            <h1 class="font-display font-extrabold text-3xl sm:text-4xl tracking-tight">Catalogue</h1>
-            <p class="text-mist mt-1">{{ $mangas->total() }} séries disponibles</p>
+            <div class="flex items-center gap-2 mb-1">
+                <span class="w-2 h-4 rounded-full bg-crimson inline-block"></span>
+                <span class="text-xs font-bold uppercase tracking-wider text-crimson">EXPLORATION</span>
+            </div>
+            <h1 class="font-display font-black text-3xl sm:text-4xl tracking-tight text-chalk">Catalogue</h1>
+            <p class="text-mist text-sm mt-1">{{ $mangas->total() }} séries prêtes à être dévorées</p>
         </div>
         <div class="flex items-center gap-3">
             <a href="{{ route('manga.random') }}"
                onclick="if(window.HiddenScan && !{{ auth()->check() ? 'true' : 'false' }}){ const favs = window.HiddenScan.getFavorites().map(f => f.slug).join(','); if(favs) this.href = '{{ route('manga.random') }}?favs=' + encodeURIComponent(favs); }"
-               class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-red-600/20 via-red-600/10 to-amber-600/20 hover:from-red-600/30 hover:to-amber-600/30 text-chalk text-sm font-semibold border border-red-500/30 hover:border-red-500/50 shadow-lg shadow-red-950/20 hover:scale-105 active:scale-95 transition-all">
+               class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-crimson/20 via-panel to-purple/20 hover:from-crimson/30 hover:to-purple/30 text-chalk text-sm font-semibold border border-crimson/40 hover:border-crimson/60 shadow-lg shadow-crimson/15 hover:scale-105 active:scale-95 transition-all">
                 <span class="text-base">🎲</span>
                 <span>Surprends-moi</span>
                 <span class="text-[10px] px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-300 font-extrabold uppercase tracking-wider border border-amber-500/30">Ciblé</span>
@@ -26,12 +30,12 @@
             {{-- Bouton Toggle Mobile --}}
             <div class="lg:hidden mb-4">
                 <button type="button" @click="mobileFiltersOpen = !mobileFiltersOpen"
-                        class="w-full flex items-center justify-between px-4 py-3 bg-panel border border-line/50 rounded-xl text-sm font-semibold text-chalk shadow-sm hover:bg-panel-hi transition">
+                        class="w-full flex items-center justify-between px-4 py-3 bg-[#0D1018] border border-white/10 rounded-xl text-sm font-semibold text-chalk shadow-sm hover:bg-white/5 transition">
                     <span class="flex items-center gap-2">
-                        <svg class="w-4 h-4 text-violet" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"/></svg>
+                        <svg class="w-4 h-4 text-crimson" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"/></svg>
                         Filtres Avancés
                         @if(request()->hasAny(['q','include_genres','exclude_genres','type','status','sort']))
-                            <span class="w-2 h-2 rounded-full bg-violet animate-pulse"></span>
+                            <span class="w-2 h-2 rounded-full bg-crimson animate-pulse"></span>
                         @endif
                     </span>
                     <span class="text-xs text-mist flex items-center gap-1.5">
@@ -42,15 +46,15 @@
             </div>
 
             <form method="GET" action="{{ route('manga.index') }}" 
-                  class="bg-panel border border-line/50 rounded-xl p-5 sticky top-24"
+                  class="bg-[#0D1018] border border-white/[0.08] rounded-2xl p-5 sticky top-24 shadow-xl"
                   :class="mobileFiltersOpen ? 'block' : 'hidden lg:block'">
-                <div class="flex items-center justify-between mb-6">
-                    <h2 class="font-display font-bold text-lg text-chalk flex items-center gap-2">
-                        <svg class="w-5 h-5 text-violet" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"/></svg>
+                <div class="flex items-center justify-between mb-6 pb-4 border-b border-white/[0.06]">
+                    <h2 class="font-display font-extrabold text-base text-chalk flex items-center gap-2 tracking-wide uppercase">
+                        <svg class="w-4 h-4 text-crimson" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"/></svg>
                         Filtres Avancés
                     </h2>
                     @if(request()->hasAny(['q','include_genres','exclude_genres','type','status','sort']))
-                        <a href="{{ route('manga.index') }}" class="text-xs text-rose hover:text-rose/80 transition" title="Réinitialiser">
+                        <a href="{{ route('manga.index') }}" class="text-xs text-crimson hover:underline font-semibold" title="Réinitialiser">
                             Effacer
                         </a>
                     @endif
@@ -58,19 +62,19 @@
 
                 {{-- Recherche --}}
                 <div class="mb-5">
-                    <label class="block text-xs font-semibold text-mist mb-2 uppercase tracking-wider">Recherche</label>
+                    <label class="block text-xs font-bold text-mist mb-2 uppercase tracking-wider">Recherche</label>
                     <div class="relative">
-                        <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-mist" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+                        <svg class="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-mist" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
                         <input type="text" name="q" value="{{ request('q') }}" placeholder="Titre, auteur..."
-                            class="input-field pl-10 bg-ink-deep/50">
+                            class="input-field pl-10 bg-[#07080C] border-white/10 focus:border-crimson focus:ring-crimson/30 rounded-xl text-sm">
                     </div>
                 </div>
 
                 {{-- Type & Statut --}}
                 <div class="grid grid-cols-2 gap-3 mb-5">
                     <div>
-                        <label class="block text-xs font-semibold text-mist mb-2 uppercase tracking-wider">Type</label>
-                        <select name="type" class="input-field cursor-pointer bg-ink-deep/50 text-sm !px-2">
+                        <label class="block text-xs font-bold text-mist mb-2 uppercase tracking-wider">Type</label>
+                        <select name="type" class="input-field cursor-pointer bg-[#07080C] border-white/10 text-sm !px-2 rounded-xl focus:border-crimson">
                             <option value="">Tous</option>
                             <option value="manga" {{ request('type') == 'manga' ? 'selected' : '' }}>Manga</option>
                             <option value="manhwa" {{ request('type') == 'manhwa' ? 'selected' : '' }}>Manhwa</option>
@@ -78,8 +82,8 @@
                         </select>
                     </div>
                     <div>
-                        <label class="block text-xs font-semibold text-mist mb-2 uppercase tracking-wider">Statut</label>
-                        <select name="status" class="input-field cursor-pointer bg-ink-deep/50 text-sm !px-2">
+                        <label class="block text-xs font-bold text-mist mb-2 uppercase tracking-wider">Statut</label>
+                        <select name="status" class="input-field cursor-pointer bg-[#07080C] border-white/10 text-sm !px-2 rounded-xl focus:border-crimson">
                             <option value="">Tous</option>
                             <option value="en_cours" {{ request('status') == 'en_cours' ? 'selected' : '' }}>En cours</option>
                             <option value="termine" {{ request('status') == 'termine' ? 'selected' : '' }}>Terminé</option>
@@ -90,8 +94,8 @@
 
                 {{-- Tri --}}
                 <div class="mb-5">
-                    <label class="block text-xs font-semibold text-mist mb-2 uppercase tracking-wider">Trier par</label>
-                    <select name="sort" class="input-field cursor-pointer bg-ink-deep/50">
+                    <label class="block text-xs font-bold text-mist mb-2 uppercase tracking-wider">Trier par</label>
+                    <select name="sort" class="input-field cursor-pointer bg-[#07080C] border-white/10 rounded-xl focus:border-crimson">
                         <option value="latest" {{ request('sort', 'latest') == 'latest' ? 'selected' : '' }}>Plus récent</option>
                         <option value="popular" {{ request('sort') == 'popular' ? 'selected' : '' }}>Plus populaire</option>
                         <option value="rating" {{ request('sort') == 'rating' ? 'selected' : '' }}>Meilleure note</option>
@@ -101,20 +105,20 @@
 
                 {{-- Genres --}}
                 <div class="mb-6" x-data="{ open: true }">
-                    <button type="button" @click="open = !open" class="flex items-center justify-between w-full text-xs font-semibold text-mist mb-2 uppercase tracking-wider focus:outline-none">
-                        Genres
+                    <button type="button" @click="open = !open" class="flex items-center justify-between w-full text-xs font-bold text-mist mb-2.5 uppercase tracking-wider focus:outline-none">
+                        <span>Genres</span>
                         <svg class="w-4 h-4 transition-transform" :class="open ? 'rotate-180' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
                     </button>
-                    <div x-show="open" x-collapse class="space-y-1 max-h-52 overflow-y-auto custom-scrollbar pr-2">
+                    <div x-show="open" x-collapse class="space-y-1 max-h-56 overflow-y-auto custom-scrollbar pr-2">
                         @foreach($genres as $genre)
-                        <div class="flex items-center justify-between group">
-                            <label class="flex items-center gap-2 cursor-pointer flex-grow text-sm text-chalk group-hover:text-violet transition py-1">
-                                <input type="checkbox" name="include_genres[]" value="{{ $genre->slug }}" class="rounded bg-ink-deep border-line text-violet focus:ring-violet/50"
+                        <div class="flex items-center justify-between group py-1 px-1 rounded-lg hover:bg-white/[0.02]">
+                            <label class="flex items-center gap-2.5 cursor-pointer flex-grow text-xs font-medium text-chalk group-hover:text-crimson transition">
+                                <input type="checkbox" name="include_genres[]" value="{{ $genre->slug }}" class="rounded bg-[#07080C] border-white/20 text-crimson focus:ring-crimson/30"
                                     {{ in_array($genre->slug, (array)request('include_genres', [])) || request('genre') === $genre->slug ? 'checked' : '' }}>
-                                {{ $genre->name }}
+                                <span>{{ $genre->name }}</span>
                             </label>
                             <label class="cursor-pointer" title="Exclure ce genre">
-                                <input type="checkbox" name="exclude_genres[]" value="{{ $genre->slug }}" class="rounded-full bg-ink-deep border-line text-rose focus:ring-rose/50"
+                                <input type="checkbox" name="exclude_genres[]" value="{{ $genre->slug }}" class="rounded-full bg-[#07080C] border-white/20 text-crimson focus:ring-crimson/30"
                                     {{ in_array($genre->slug, (array)request('exclude_genres', [])) ? 'checked' : '' }}>
                             </label>
                         </div>
@@ -122,7 +126,7 @@
                     </div>
                 </div>
 
-                <button type="submit" class="btn-primary w-full justify-center !py-3 shadow-lg shadow-violet/20 hover:shadow-violet/40">
+                <button type="submit" class="btn-primary w-full justify-center !py-3">
                     Appliquer les filtres
                 </button>
             </form>
@@ -132,33 +136,33 @@
         <div class="flex-grow w-full">
             {{-- Badges des filtres actifs --}}
             @if(request()->hasAny(['q', 'include_genres', 'exclude_genres', 'type', 'status', 'genre']))
-            <div class="flex flex-wrap items-center gap-2 mb-6 p-3 rounded-xl bg-panel border border-line/40 animate-fade-in">
+            <div class="flex flex-wrap items-center gap-2 mb-6 p-3.5 rounded-2xl bg-[#0D1018] border border-white/10 animate-fade-in shadow-md">
                 <span class="text-xs text-mist font-semibold">Filtres actifs :</span>
                 @if(request('genre'))
-                    <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-violet/20 border border-violet/30 text-xs text-violet-glow font-semibold">
+                    <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-crimson/15 border border-crimson/35 text-xs text-chalk font-semibold">
                         Genre: {{ request('genre') }}
-                        <a href="{{ route('manga.index', request()->except('genre')) }}" class="hover:text-white">✕</a>
+                        <a href="{{ route('manga.index', request()->except('genre')) }}" class="hover:text-crimson font-bold ml-1">✕</a>
                     </span>
                 @endif
                 @if(request('type'))
-                    <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-panel-hi border border-line text-xs text-chalk font-semibold">
+                    <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/5 border border-white/10 text-xs text-chalk font-semibold">
                         Type: {{ ucfirst(request('type')) }}
-                        <a href="{{ route('manga.index', request()->except('type')) }}" class="hover:text-white">✕</a>
+                        <a href="{{ route('manga.index', request()->except('type')) }}" class="hover:text-crimson font-bold ml-1">✕</a>
                     </span>
                 @endif
                 @if(request('status'))
-                    <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-panel-hi border border-line text-xs text-chalk font-semibold">
+                    <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/5 border border-white/10 text-xs text-chalk font-semibold">
                         Statut: {{ ucfirst(request('status')) }}
-                        <a href="{{ route('manga.index', request()->except('status')) }}" class="hover:text-white">✕</a>
+                        <a href="{{ route('manga.index', request()->except('status')) }}" class="hover:text-crimson font-bold ml-1">✕</a>
                     </span>
                 @endif
                 @if(request('q'))
-                    <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-panel-hi border border-line text-xs text-chalk font-semibold">
+                    <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/5 border border-white/10 text-xs text-chalk font-semibold">
                         « {{ request('q') }} »
-                        <a href="{{ route('manga.index', request()->except('q')) }}" class="hover:text-white">✕</a>
+                        <a href="{{ route('manga.index', request()->except('q')) }}" class="hover:text-crimson font-bold ml-1">✕</a>
                     </span>
                 @endif
-                <a href="{{ route('manga.index') }}" class="text-xs text-rose hover:underline ml-auto font-medium">Tout effacer</a>
+                <a href="{{ route('manga.index') }}" class="text-xs text-crimson hover:underline ml-auto font-bold">Tout effacer</a>
             </div>
             @endif
 
@@ -177,12 +181,13 @@
             {{ $mangas->withQueryString()->links() }}
         </div>
     @else
-        <div class="text-center py-24 animate-fade-in">
-            <div class="w-16 h-16 mx-auto mb-4 rounded-full bg-panel-hi flex items-center justify-center">
+        <div class="text-center py-24 bg-[#0D1018] border border-white/[0.08] rounded-2xl p-8 animate-fade-in">
+            <div class="w-16 h-16 mx-auto mb-4 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center">
                 <svg class="w-8 h-8 text-mist" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
             </div>
-            <p class="text-lg text-mist mb-2">Aucune série trouvée</p>
-            <a href="{{ route('manga.index') }}" class="text-violet hover:text-violet-glow transition">Voir tout le catalogue →</a>
+            <p class="text-lg font-bold text-chalk mb-2">Aucune série trouvée</p>
+            <p class="text-xs text-mist mb-6 max-w-sm mx-auto">Essayez d'ajuster vos critères de recherche ou de réinitialiser vos filtres.</p>
+            <a href="{{ route('manga.index') }}" class="btn-primary !px-6 !py-2.5">Voir tout le catalogue</a>
         </div>
     @endif
         </div>

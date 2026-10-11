@@ -8,71 +8,80 @@
 @source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
 @source '../../storage/framework/views/*.php';
 
-/* ═══════════════════════════════════════════════════
-   Hidden Scan — Design System
-   Premium dark theme for manga/manhwa/manhua reading
-   ═══════════════════════════════════════════════════ */
+/* ═══════════════════════════════════════════════════════════════
+   HIDDEN SCAN — CHARTE GRAPHIQUE OFFICIELLE ("SHADOW REALM")
+   Design System sombre, néon, contrasté et immersif pour lecteurs
+   ═══════════════════════════════════════════════════════════════ */
 
 @theme {
-    /* ── Palette principale ── */
-    --color-ink: #111216;
-    --color-ink-deep: #0c0d10;
-    --color-panel: #161820;
-    --color-panel-hi: #1c1f2a;
-    --color-panel-hover: #252837;
-    --color-line: transparent;
-    --color-chalk: #ffffff;
+    /* ── Palette Abyssale & Surfaces ── */
+    --color-ink: #07080c;
+    --color-ink-deep: #040507;
+    --color-panel: #0d1018;
+    --color-panel-hi: #131722;
+    --color-panel-hover: #1c2130;
+    --color-line: rgba(255, 255, 255, 0.08);
+    --color-line-bright: rgba(255, 255, 255, 0.16);
+    --color-chalk: #f8fafc;
     --color-mist: #94a3b8;
+    --color-muted: #64748b;
     
-    /* Accents */
-    --color-violet: #5865f2; 
-    --color-violet-glow: #6975f5;
-    --color-violet-deep: #4752c4;
-    --color-mint: #5fd3a6;
+    /* ── Accents Signature Hidden Scan ── */
+    --color-crimson: #ff2a55;
+    --color-crimson-glow: #ff4d6e;
+    --color-crimson-deep: #dc2626;
+    --color-violet: #8b5cf6; 
+    --color-violet-glow: #a855f7;
+    --color-violet-deep: #7c3aed;
+    --color-gold: #f59e0b;
+    --color-cyan: #06b6d4;
+    --color-mint: #10b981;
     --color-amber: #f5b84b;
-    --color-sky: #6fb3ff;
-    --color-rose: #ff7ba8;
+    --color-sky: #38bdf8;
+    --color-rose: #fb7185;
 
     /* ── Typographie ── */
-    --font-display: 'Bricolage Grotesque Variable', 'Trebuchet MS', system-ui, sans-serif;
-    --font-sans: 'Hanken Grotesk Variable', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+    --font-display: 'Outfit', 'Bricolage Grotesque Variable', system-ui, sans-serif;
+    --font-sans: 'Plus Jakarta Sans', 'Hanken Grotesk Variable', system-ui, -apple-system, sans-serif;
 
-    /* ── Espacements ── */
-    --radius-sm: 6px;
-    --radius-md: 10px;
-    --radius-lg: 16px;
-    --radius-xl: 24px;
+    /* ── Arrondis ── */
+    --radius-sm: 8px;
+    --radius-md: 12px;
+    --radius-lg: 18px;
+    --radius-xl: 26px;
 }
 
-/* ── Scrollbar personnalisée ── */
+/* ── Scrollbar personnalisée néon sombre ── */
 ::-webkit-scrollbar {
     width: 8px;
     height: 8px;
 }
 ::-webkit-scrollbar-track {
-    background: var(--color-ink);
+    background: #07080c;
 }
 ::-webkit-scrollbar-thumb {
-    background: var(--color-line);
+    background: rgba(255, 255, 255, 0.14);
     border-radius: 999px;
+    border: 2px solid #07080c;
 }
 ::-webkit-scrollbar-thumb:hover {
-    background: var(--color-violet);
+    background: #ff2a55;
 }
 
 /* ── Sélection ── */
 ::selection {
-    background: var(--color-violet);
-    color: var(--color-ink);
+    background: #ff2a55;
+    color: #ffffff;
 }
 
 /* ── Base ── */
 html {
     scroll-behavior: smooth;
-    scroll-padding-top: 80px;
+    scroll-padding-top: 84px;
     overflow-x: hidden;
     max-width: 100%;
     width: 100%;
+    background-color: #07080c;
 }
 
 body {
@@ -81,144 +90,195 @@ body {
     overflow-x: hidden;
     max-width: 100%;
     width: 100%;
+    background-color: #07080c;
+    color: #f8fafc;
+    font-family: var(--font-sans);
 }
 
-/* ── Animations globales ── */
+/* ── Micro-animations & Effets ── */
 @keyframes fade-in {
-    from { opacity: 0; transform: translateY(12px); }
+    from { opacity: 0; transform: translateY(10px); }
     to { opacity: 1; transform: none; }
 }
 
 @keyframes fade-in-up {
-    from { opacity: 0; transform: translateY(24px); }
+    from { opacity: 0; transform: translateY(20px); }
     to { opacity: 1; transform: none; }
 }
 
-@keyframes slide-in-right {
-    from { opacity: 0; transform: translateX(20px); }
-    to { opacity: 1; transform: none; }
+@keyframes pulse-glow-crimson {
+    0%, 100% { box-shadow: 0 0 15px rgba(255, 42, 85, 0.35); }
+    50% { box-shadow: 0 0 30px rgba(255, 42, 85, 0.65); }
 }
 
-@keyframes pulse-glow {
-    0%, 100% { box-shadow: 0 0 0 0 rgba(155, 123, 255, 0.4); }
-    50% { box-shadow: 0 0 20px 4px rgba(155, 123, 255, 0.15); }
+@keyframes card-sheen {
+    0% { transform: translateX(-150%) skewX(-20deg); }
+    100% { transform: translateX(200%) skewX(-20deg); }
 }
 
-@keyframes shimmer {
-    from { background-position: -200% 0; }
-    to { background-position: 200% 0; }
-}
-
-@keyframes float {
+@keyframes float-gentle {
     0%, 100% { transform: translateY(0); }
-    50% { transform: translateY(-6px); }
+    50% { transform: translateY(-5px); }
 }
 
 .animate-fade-in {
-    animation: fade-in 0.5s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+    animation: fade-in 0.45s cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
 .animate-fade-in-up {
-    animation: fade-in-up 0.6s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+    animation: fade-in-up 0.55s cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
-.animate-slide-in {
-    animation: slide-in-right 0.5s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+.animate-pulse-glow {
+    animation: pulse-glow-crimson 2.5s infinite;
 }
 
-/* ── Cartes d'œuvres ── */
+.animate-float {
+    animation: float-gentle 4s ease-in-out infinite;
+}
+
+/* ── Cartes d'œuvres de Scans ("Manga Cards") ── */
 .manga-card {
     position: relative;
     overflow: hidden;
-    border-radius: var(--radius-md);
-    border: 1px solid var(--color-line);
-    background: var(--color-panel);
-    transition: all 0.3s cubic-bezier(0.2, 0.7, 0.2, 1);
+    border-radius: var(--radius-lg);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    background: #0d1018;
+    box-shadow: 0 8px 24px -6px rgba(0, 0, 0, 0.6);
+    transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .manga-card:hover {
-    border-color: var(--color-violet);
-    transform: translateY(-4px);
-    box-shadow: 0 12px 32px -8px rgba(155, 123, 255, 0.2);
+    border-color: rgba(255, 42, 85, 0.45);
+    transform: translateY(-5px);
+    box-shadow: 0 18px 36px -8px rgba(255, 42, 85, 0.22), 0 0 0 1px rgba(255, 42, 85, 0.25);
 }
 
 .manga-card .manga-cover {
     width: 100%;
     aspect-ratio: 2/3;
     object-fit: cover;
-    transition: transform 0.4s cubic-bezier(0.2, 0.7, 0.2, 1);
+    transition: transform 0.5s cubic-bezier(0.16, 1, 0.3, 1), filter 0.5s ease;
 }
 
 .manga-card:hover .manga-cover {
     transform: scale(1.05);
+    filter: brightness(1.05);
 }
 
-.manga-card .manga-overlay {
-    position: absolute;
-    inset: 0;
-    background: linear-gradient(to top, rgba(20, 17, 31, 0.95) 0%, rgba(20, 17, 31, 0.4) 40%, transparent 100%);
-    opacity: 0;
-    transition: opacity 0.3s ease;
-}
-
-.manga-card:hover .manga-overlay {
-    opacity: 1;
-}
-
-/* ── Badge de type ── */
+/* ── Badges de Type ── */
 .badge-type {
     display: inline-flex;
     align-items: center;
-    padding: 2px 10px;
+    gap: 4px;
+    padding: 3px 9px;
     border-radius: 999px;
-    font-size: 0.7rem;
-    font-weight: 700;
-    letter-spacing: 0.03em;
+    font-size: 0.68rem;
+    font-weight: 800;
+    letter-spacing: 0.05em;
     text-transform: uppercase;
+    backdrop-filter: blur(10px);
 }
 
-.badge-manga { background: rgba(111, 179, 255, 0.15); color: var(--color-sky); }
-.badge-manhwa { background: rgba(155, 123, 255, 0.15); color: var(--color-violet); }
-.badge-manhua { background: rgba(95, 211, 166, 0.15); color: var(--color-mint); }
+.badge-manhwa { 
+    background: rgba(255, 42, 85, 0.18); 
+    color: #ff4d6e; 
+    border: 1px solid rgba(255, 42, 85, 0.35); 
+}
+.badge-manga { 
+    background: rgba(56, 189, 248, 0.18); 
+    color: #38bdf8; 
+    border: 1px solid rgba(56, 189, 248, 0.35); 
+}
+.badge-manhua { 
+    background: rgba(16, 185, 129, 0.18); 
+    color: #34d399; 
+    border: 1px solid rgba(16, 185, 129, 0.35); 
+}
+.badge-comic { 
+    background: rgba(245, 158, 11, 0.18); 
+    color: #f59e0b; 
+    border: 1px solid rgba(245, 158, 11, 0.35); 
+}
 
-/* ── Badge de statut ── */
-.badge-status {
+/* ── Badge Exclusif "Projet Hidden Scan" ── */
+.badge-official-hs {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 3px 10px;
+    border-radius: 999px;
+    font-size: 0.65rem;
+    font-weight: 800;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    background: linear-gradient(135deg, rgba(255, 42, 85, 0.35), rgba(139, 92, 246, 0.35));
+    border: 1px solid rgba(255, 42, 85, 0.65);
+    color: #ffffff;
+    box-shadow: 0 0 12px rgba(255, 42, 85, 0.3);
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.8);
+}
+
+.badge-partner-series {
     display: inline-flex;
     align-items: center;
     gap: 4px;
-    padding: 2px 10px;
+    padding: 3px 9px;
     border-radius: 999px;
-    font-size: 0.75rem;
-    font-weight: 600;
+    font-size: 0.65rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    background: rgba(6, 182, 212, 0.15);
+    border: 1px solid rgba(6, 182, 212, 0.35);
+    color: #67e8f9;
 }
 
-.badge-en-cours { background: rgba(95, 211, 166, 0.12); color: var(--color-mint); border: 1px solid rgba(95, 211, 166, 0.25); }
-.badge-termine { background: rgba(111, 179, 255, 0.12); color: var(--color-sky); border: 1px solid rgba(111, 179, 255, 0.25); }
-.badge-pause { background: rgba(245, 184, 75, 0.12); color: var(--color-amber); border: 1px solid rgba(245, 184, 75, 0.25); }
-.badge-abandonne { background: rgba(255, 123, 168, 0.12); color: var(--color-rose); border: 1px solid rgba(255, 123, 168, 0.25); }
+/* ── Badges de Statut ── */
+.badge-status {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 3px 10px;
+    border-radius: 999px;
+    font-size: 0.72rem;
+    font-weight: 700;
+}
+.badge-en-cours { background: rgba(16, 185, 129, 0.14); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.3); }
+.badge-termine { background: rgba(56, 189, 248, 0.14); color: #38bdf8; border: 1px solid rgba(56, 189, 248, 0.3); }
+.badge-pause { background: rgba(245, 158, 11, 0.14); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.3); }
+.badge-abandonne { background: rgba(244, 63, 94, 0.14); color: #fb7185; border: 1px solid rgba(244, 63, 94, 0.3); }
 
-/* ── Bouton principal ── */
+/* ── Boutons Signature ── */
 .btn-primary {
     display: inline-flex;
     align-items: center;
     justify-content: center;
     gap: 8px;
-    padding: 10px 24px;
-    background: var(--color-violet);
-    color: var(--color-ink);
+    padding: 11px 24px;
+    background: linear-gradient(135deg, #ff2a55 0%, #dc2626 100%);
+    color: #ffffff;
+    font-family: var(--font-display);
     font-weight: 700;
-    font-size: 0.9rem;
+    font-size: 0.92rem;
+    letter-spacing: 0.01em;
     border-radius: var(--radius-md);
     border: none;
     cursor: pointer;
-    transition: all 0.2s ease;
+    transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+    box-shadow: 0 4px 20px rgba(255, 42, 85, 0.4), 0 2px 6px rgba(0, 0, 0, 0.4);
     text-decoration: none;
 }
 
 .btn-primary:hover {
-    background: var(--color-violet-deep);
-    transform: translateY(-1px);
-    box-shadow: 0 4px 16px rgba(155, 123, 255, 0.3);
+    background: linear-gradient(135deg, #ff4d6e 0%, #e11d48 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 28px rgba(255, 42, 85, 0.55), 0 4px 10px rgba(0, 0, 0, 0.5);
+    color: #ffffff;
+}
+
+.btn-primary:active {
+    transform: translateY(0) scale(0.98);
 }
 
 .btn-secondary {
@@ -226,124 +286,147 @@ body {
     align-items: center;
     justify-content: center;
     gap: 8px;
-    padding: 10px 24px;
-    background: var(--color-panel-hi);
-    color: var(--color-chalk);
+    padding: 11px 24px;
+    background: rgba(255, 255, 255, 0.05);
+    color: #f8fafc;
+    font-family: var(--font-display);
     font-weight: 600;
-    font-size: 0.9rem;
+    font-size: 0.92rem;
     border-radius: var(--radius-md);
-    border: 1px solid var(--color-line);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(14px);
     cursor: pointer;
-    transition: all 0.2s ease;
+    transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
     text-decoration: none;
 }
 
 .btn-secondary:hover {
-    border-color: var(--color-violet);
-    background: var(--color-panel-hover);
+    border-color: rgba(255, 42, 85, 0.4);
+    background: rgba(255, 255, 255, 0.09);
+    color: #ffffff;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
 }
 
-/* ── Glass effect ── */
+.btn-secondary:active {
+    transform: translateY(0) scale(0.98);
+}
+
+/* ── Glassmorphism Haute Définition ── */
 .glass {
-    background: rgba(29, 25, 48, 0.75);
+    background: rgba(13, 16, 24, 0.78);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.07);
+}
+
+.glass-card {
+    background: linear-gradient(180deg, rgba(19, 23, 34, 0.7) 0%, rgba(13, 16, 24, 0.85) 100%);
     backdrop-filter: blur(16px);
     -webkit-backdrop-filter: blur(16px);
-    border: 1px solid rgba(61, 54, 96, 0.5);
+    border: 1px solid rgba(255, 255, 255, 0.07);
+    box-shadow: 0 10px 30px -8px rgba(0, 0, 0, 0.6);
 }
 
-/* ── Input styling ── */
+/* ── Champs de formulaire ── */
 .input-field {
-    background: var(--color-ink);
-    border: 1px solid var(--color-line);
+    background: #080a10;
+    border: 1px solid rgba(255, 255, 255, 0.09);
     border-radius: var(--radius-md);
-    padding: 10px 16px;
+    padding: 11px 16px;
     font-size: 0.9rem;
-    color: var(--color-chalk);
-    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    color: #f8fafc;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
     outline: none;
     width: 100%;
 }
 
 .input-field::placeholder {
-    color: var(--color-mist);
-    opacity: 0.7;
+    color: #64748b;
 }
 
 .input-field:focus {
-    border-color: var(--color-violet);
-    box-shadow: 0 0 0 3px rgba(155, 123, 255, 0.1);
+    border-color: #ff2a55;
+    background: #0b0e16;
+    box-shadow: 0 0 0 3px rgba(255, 42, 85, 0.15);
 }
 
-/* ── Section headings ── */
+/* ── Titres de Section avec Signe Luminescent ── */
 .section-title {
     font-family: var(--font-display);
     font-weight: 800;
-    font-size: 1.5rem;
-    color: var(--color-chalk);
+    font-size: 1.55rem;
     letter-spacing: -0.02em;
+    color: #ffffff;
     display: flex;
     align-items: center;
     gap: 12px;
+}
+
+.section-title::before {
+    content: '';
+    display: inline-block;
+    width: 4px;
+    height: 22px;
+    background: linear-gradient(180deg, #ff2a55, #8b5cf6);
+    border-radius: 999px;
+    box-shadow: 0 0 10px rgba(255, 42, 85, 0.6);
+    flex-shrink: 0;
 }
 
 .section-title::after {
     content: '';
     flex: 1;
     height: 1px;
-    background: linear-gradient(to right, var(--color-line), transparent);
+    background: linear-gradient(to right, rgba(255, 255, 255, 0.1), transparent);
 }
 
-/* ── Skeleton loading ── */
-.skeleton {
-    background: linear-gradient(90deg, var(--color-panel) 25%, var(--color-panel-hi) 50%, var(--color-panel) 75%);
-    background-size: 200% 100%;
-    animation: shimmer 1.5s infinite;
-    border-radius: var(--radius-sm);
-}
-
-/* ── Pagination custom ── */
-nav[role="navigation"] .relative {
-    display: inline-flex;
-}
-
-nav[role="navigation"] span[aria-current="page"] span {
-    background: var(--color-violet) !important;
-    border-color: var(--color-violet) !important;
-    color: white !important;
-}
-
-nav[role="navigation"] a {
-    border-color: var(--color-line) !important;
-    background: var(--color-panel) !important;
-    color: var(--color-mist) !important;
-    transition: all 0.2s ease;
-}
-
-nav[role="navigation"] a:hover {
-    border-color: var(--color-violet) !important;
-    color: var(--color-chalk) !important;
-}
-
-/* ── Stagger animation delays ── */
-.stagger-1 { animation-delay: 0.05s; }
-.stagger-2 { animation-delay: 0.1s; }
-.stagger-3 { animation-delay: 0.15s; }
-.stagger-4 { animation-delay: 0.2s; }
-.stagger-5 { animation-delay: 0.25s; }
-.stagger-6 { animation-delay: 0.3s; }
-
-/* ── Manga cover placeholder ── */
-.cover-placeholder {
-    width: 100%;
-    aspect-ratio: 2/3;
-    background: linear-gradient(135deg, var(--color-panel-hi), var(--color-panel));
+/* ── Pill de Chapitre pour Manga Card ── */
+.chapter-pill {
     display: flex;
     align-items: center;
-    justify-content: center;
-    color: var(--color-mist);
+    justify-content: space-between;
+    padding: 6px 12px;
+    background: #141722;
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    border-radius: 999px;
     font-size: 0.75rem;
-    text-align: center;
-    padding: 8px;
+    font-weight: 600;
+    color: #d1d5db;
+    transition: all 0.2s ease;
+    text-decoration: none;
+}
+
+.chapter-pill:hover {
+    background: #1c2130;
+    border-color: rgba(255, 42, 85, 0.35);
+    color: #ffffff;
+    transform: translateX(2px);
+}
+
+.chapter-pill.is-recent {
+    border-color: rgba(255, 42, 85, 0.3);
+}
+
+.chapter-pill.is-recent:hover {
+    border-color: #ff2a55;
+    box-shadow: 0 0 10px rgba(255, 42, 85, 0.2);
+}
+
+/* ── Swiper Hero Custom Styles ── */
+.hero-swiper .swiper-pagination-bullet {
+    background: rgba(255, 255, 255, 0.3) !important;
+    opacity: 1 !important;
+    width: 8px !important;
+    height: 8px !important;
+    transition: all 0.3s ease !important;
+    border-radius: 999px !important;
+}
+
+.hero-swiper .swiper-pagination-bullet-active {
+    background: #ff2a55 !important;
+    width: 24px !important;
+    box-shadow: 0 0 12px rgba(255, 42, 85, 0.8) !important;
 }
 
 /* ── Responsive adjustments ── */
@@ -352,83 +435,3 @@ nav[role="navigation"] a:hover {
         font-size: 1.25rem;
     }
 }
-
-/* ── Widget Discord Flottant & Bouton Remonter ── */
-.discord-float-btn {
-    position: fixed !important;
-    bottom: calc(16px + env(safe-area-inset-bottom, 0px)) !important;
-    left: calc(16px + env(safe-area-inset-left, 0px)) !important;
-    z-index: 40 !important;
-    display: inline-flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-    background: linear-gradient(135deg, #5865F2, #4752C4) !important;
-    color: #ffffff !important;
-    box-shadow: 0 4px 20px rgba(88, 101, 242, 0.45), 0 2px 8px rgba(0, 0, 0, 0.4) !important;
-    border: 1px solid rgba(255, 255, 255, 0.22) !important;
-    border-radius: 9999px !important;
-    text-decoration: none !important;
-    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1) !important;
-    cursor: pointer !important;
-}
-.discord-float-btn:hover {
-    background: linear-gradient(135deg, #4752C4, #3b43a0) !important;
-    box-shadow: 0 6px 26px rgba(88, 101, 242, 0.6), 0 4px 12px rgba(0, 0, 0, 0.45) !important;
-    transform: translateY(-2px) !important;
-}
-.discord-float-btn:active {
-    transform: scale(0.94) !important;
-}
-
-/* Mobile layout: Masqué sur mobile pour ne jamais masquer la lecture (accessible dans le menu et le footer) */
-@media (max-width: 639px) {
-    .discord-float-btn {
-        display: none !important;
-    }
-}
-
-@media (min-width: 640px) {
-    .discord-float-btn {
-        bottom: 24px !important;
-        left: 24px !important;
-        height: 44px !important;
-        padding: 0 16px 0 13px !important;
-        gap: 10px !important;
-    }
-    .discord-float-btn svg {
-        width: 22px !important;
-        height: 22px !important;
-        flex-shrink: 0 !important;
-    }
-    .discord-float-btn .discord-label {
-        display: inline-block !important;
-        font-size: 13px !important;
-        font-weight: 700 !important;
-        letter-spacing: -0.01em !important;
-        white-space: nowrap !important;
-        color: #ffffff !important;
-    }
-}
-
-.scroll-top-btn {
-    position: fixed !important;
-    bottom: calc(14px + env(safe-area-inset-bottom, 0px)) !important;
-    right: calc(14px + env(safe-area-inset-right, 0px)) !important;
-    z-index: 40 !important;
-    width: 44px !important;
-    height: 44px !important;
-    display: inline-flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-    border-radius: 9999px !important;
-    box-shadow: 0 4px 18px rgba(0, 0, 0, 0.45) !important;
-}
-@media (min-width: 640px) {
-    .scroll-top-btn {
-        bottom: 24px !important;
-        right: 24px !important;
-        width: 44px !important;
-        height: 44px !important;
-    }
-}
-

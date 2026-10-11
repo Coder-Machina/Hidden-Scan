@@ -1,23 +1,21 @@
 @use('Illuminate\Support\Facades\Storage')
 <x-layouts.public :title="$manga->title . ' — Ch. ' . $chapter->number . ' | Hidden Scan'" :hide-navbar="true">
 
-    <div x-data="chapterReader()" x-init="init()" class="animate-fade-in pt-14">
-
-        {{-- ═══ Barre de navigation ═══ --}}
-        <div class="fixed top-0 left-0 right-0 z-50 px-4 sm:px-6 py-2 glass border-b border-line/30 transition-all duration-300"
+    <div x-data="chapterReader()" x-init="init()" class="animate-fade-in pt-14">        {{-- ═══ Barre de navigation ═══ --}}
+        <div class="fixed top-0 left-0 right-0 z-50 px-4 sm:px-6 py-2.5 bg-[#07080C]/90 backdrop-blur-md border-b border-white/[0.08] transition-all duration-300 shadow-lg"
              :class="navHidden && !showSettings ? '-translate-y-full opacity-0 pointer-events-none' : 'translate-y-0 opacity-100'"
              @mouseenter="navHidden = false">
 
             <div class="max-w-4xl mx-auto flex items-center justify-between gap-3">
                 {{-- Retour --}}
-                <a href="{{ route('manga.show', $manga->slug) }}" class="flex items-center gap-2 text-violet hover:text-violet-glow transition text-sm font-semibold flex-shrink-0">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
-                    <span class="hidden sm:inline">{{ Str::limit($manga->title, 25) }}</span>
+                <a href="{{ route('manga.show', $manga->slug) }}" class="flex items-center gap-2 text-crimson hover:text-white transition text-sm font-bold flex-shrink-0">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 19l-7-7 7-7"/></svg>
+                    <span class="hidden sm:inline font-display">{{ Str::limit($manga->title, 25) }}</span>
                 </a>
 
                 {{-- Sélecteur de chapitre --}}
                 <select @change="window.location.href=$event.target.value"
-                    class="input-field !w-auto !py-1 px-2 text-xs sm:text-sm text-center !rounded-full max-w-[130px] sm:max-w-[200px]">
+                    class="bg-[#0D1018] border border-white/15 text-chalk !w-auto !py-1 px-3 text-xs sm:text-sm font-semibold text-center !rounded-full max-w-[140px] sm:max-w-[220px] focus:border-crimson">
                     @foreach($manga->chapters as $c)
                         <option value="{{ route('chapter.show', [$manga->slug, $c->slug]) }}"
                             {{ $c->id === $chapter->id ? 'selected' : '' }}>
@@ -30,28 +28,28 @@
                 <div class="flex items-center gap-1">
                     @if($prev)
                         <a href="{{ route('chapter.show', [$manga->slug, $prev->slug]) }}"
-                           class="p-2 rounded-lg text-mist hover:text-chalk hover:bg-panel-hi transition" title="Chapitre précédent">
+                           class="p-2 rounded-xl text-mist hover:text-chalk hover:bg-white/5 transition" title="Chapitre précédent">
                             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
                         </a>
                     @endif
                     @if($next)
                         <a href="{{ route('chapter.show', [$manga->slug, $next->slug]) }}"
-                           class="p-2 rounded-lg text-mist hover:text-chalk hover:bg-panel-hi transition" title="Chapitre suivant">
+                           class="p-2 rounded-xl text-mist hover:text-chalk hover:bg-white/5 transition" title="Chapitre suivant">
                             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
                         </a>
                     @endif
 
                     {{-- Réglages --}}
                     <button @click="showSettings = !showSettings"
-                            class="p-2 rounded-lg transition"
-                            :class="showSettings ? 'text-violet bg-violet/10' : 'text-mist hover:text-chalk hover:bg-panel-hi'"
+                            class="p-2 rounded-xl transition"
+                            :class="showSettings ? 'text-crimson bg-crimson/15 ring-1 ring-crimson/30' : 'text-mist hover:text-chalk hover:bg-white/5'"
                             title="Paramètres de lecture">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
                     </button>
 
                     {{-- Signaler un problème --}}
                     <button @click="openReportModal()"
-                            class="p-2 rounded-lg text-mist hover:text-crimson hover:bg-crimson/10 transition"
+                            class="p-2 rounded-xl text-mist hover:text-crimson hover:bg-crimson/10 transition"
                             title="Signaler un problème sur ce chapitre">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 21v-4m0 0V5a2 2 0 012-2h6.5l1 1H21l-3 6 3 6h-8.5l-1-1H5a2 2 0 00-2 2zm9-13.5V9"/></svg>
                     </button>
@@ -59,18 +57,18 @@
             </div>
 
             {{-- Panneau réglages --}}
-            <div x-show="showSettings" x-cloak x-transition class="max-w-4xl mx-auto mt-3 p-4 bg-panel-hi rounded-xl border border-line/50">
-                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div x-show="showSettings" x-cloak x-transition class="max-w-4xl mx-auto mt-3 p-5 bg-[#0D1018] rounded-2xl border border-white/10 shadow-2xl">
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-5">
                     {{-- Mode de lecture --}}
                     <div>
-                        <label class="block text-xs font-semibold text-mist mb-2 uppercase tracking-wider">Mode</label>
+                        <label class="block text-xs font-bold text-mist mb-2 uppercase tracking-wider">Mode de lecture</label>
                         <div class="flex gap-2">
-                            <button @click="readMode = 'vertical'" class="flex-1 py-2 px-3 rounded-lg text-sm font-medium transition-all"
-                                    :class="readMode === 'vertical' ? 'bg-violet text-white' : 'bg-ink text-mist hover:text-chalk border border-line'">
+                            <button @click="readMode = 'vertical'" class="flex-1 py-2 px-3 rounded-xl text-xs font-bold transition-all"
+                                    :class="readMode === 'vertical' ? 'bg-crimson text-white shadow-md shadow-crimson/25' : 'bg-[#07080C] text-mist hover:text-chalk border border-white/10'">
                                 ↕ Vertical
                             </button>
-                            <button @click="readMode = 'page'" class="flex-1 py-2 px-3 rounded-lg text-sm font-medium transition-all"
-                                    :class="readMode === 'page' ? 'bg-violet text-white' : 'bg-ink text-mist hover:text-chalk border border-line'">
+                            <button @click="readMode = 'page'" class="flex-1 py-2 px-3 rounded-xl text-xs font-bold transition-all"
+                                    :class="readMode === 'page' ? 'bg-crimson text-white shadow-md shadow-crimson/25' : 'bg-[#07080C] text-mist hover:text-chalk border border-white/10'">
                                 ⬜ Page
                             </button>
                         </div>
@@ -78,31 +76,32 @@
 
                     {{-- Largeur --}}
                     <div x-show="!isMobile">
-                        <label class="block text-xs font-semibold text-mist mb-2 uppercase tracking-wider">
-                            Largeur : <span x-text="readerWidth + '%'"></span>
+                        <label class="block text-xs font-bold text-mist mb-2 uppercase tracking-wider">
+                            Largeur : <span class="text-chalk" x-text="readerWidth + '%'"></span>
                         </label>
                         <input type="range" min="50" max="100" x-model="readerWidth"
-                               @input="saveSettings()"
-                               class="w-full accent-violet cursor-pointer">
+                                @input="saveSettings()"
+                                class="w-full accent-crimson cursor-pointer">
                     </div>
 
                     {{-- Espacement --}}
                     <div>
-                        <label class="block text-xs font-semibold text-mist mb-2 uppercase tracking-wider">
-                            Espacement : <span x-text="pageGap + 'px'"></span>
+                        <label class="block text-xs font-bold text-mist mb-2 uppercase tracking-wider">
+                            Espacement : <span class="text-chalk" x-text="pageGap + 'px'"></span>
                         </label>
                         <input type="range" min="0" max="16" x-model="pageGap"
-                               @input="saveSettings()"
-                               class="w-full accent-violet cursor-pointer">
+                                @input="saveSettings()"
+                                class="w-full accent-crimson cursor-pointer">
                     </div>
                 </div>
             </div>
         </div>
 
         {{-- ═══ Barre de progression ═══ --}}
-        <div class="fixed top-0 left-0 right-0 z-50 h-0.5 bg-ink-deep">
-            <div class="h-full bg-gradient-to-r from-violet to-violet-glow transition-all duration-200 ease-out"
+        <div class="fixed top-0 left-0 right-0 z-50 h-1 bg-black/50">
+            <div class="h-full bg-gradient-to-r from-crimson to-purple transition-all duration-200 ease-out shadow-sm shadow-crimson/50"
                  :style="'width:' + progressPercent + '%'"></div>
+        </div>ressPercent + '%'"></div>
         </div>
 
         {{-- ═══ Pages du chapitre ═══ --}}
@@ -170,7 +169,7 @@
                     Chapitre précédent
                 </a>
             @endif
-            <a href="{{ route('manga.show', $manga->slug) }}" class="btn-secondary w-full sm:w-auto justify-center !border-violet/30 !text-violet">
+            <a href="{{ route('manga.show', $manga->slug) }}" class="btn-secondary w-full sm:w-auto justify-center !border-white/10 !text-chalk hover:!border-crimson/50 hover:!text-crimson">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16"/></svg>
                 Tous les chapitres
             </a>
@@ -184,16 +183,16 @@
 
         {{-- ═══ Réactions au chapitre (style Raijin) ═══ --}}
         <div class="max-w-3xl mx-auto mt-6 mb-4" x-data="chapterReactions()" x-init="init()">
-            <div class="bg-[#14151e] rounded-2xl p-5 sm:p-6 text-center">
-                <p class="text-[#9da3b4] text-sm mb-4 font-semibold">Qu'avez-vous pensé de ce chapitre ?</p>
+            <div class="bg-[#0D1018] border border-white/[0.08] rounded-2xl p-6 text-center shadow-xl">
+                <p class="text-mist text-sm mb-4 font-bold uppercase tracking-wider">Qu'avez-vous pensé de ce chapitre ?</p>
                 <div class="flex items-center justify-center gap-3 flex-wrap">
                     <template x-for="r in reactions" :key="r.emoji">
                         <button @click="react(r.emoji)"
-                                class="flex flex-col items-center gap-1 px-3.5 py-2 rounded-xl transition-all hover:scale-110 cursor-pointer"
-                                :class="userReaction === r.emoji ? 'bg-white/10 scale-105' : 'hover:bg-[#1e2029]'">
+                                class="flex flex-col items-center gap-1 px-3.5 py-2.5 rounded-xl transition-all hover:scale-110 cursor-pointer"
+                                :class="userReaction === r.emoji ? 'bg-crimson/15 ring-2 ring-crimson scale-105' : 'hover:bg-white/5'">
                             <span class="text-2xl" x-text="r.emoji"></span>
-                            <span class="text-xs font-bold" :class="userReaction === r.emoji ? 'text-white' : 'text-[#7d8498]'" x-text="r.count"></span>
-                            <span class="text-[10px] text-[#7d8498]" x-text="r.label"></span>
+                            <span class="text-xs font-bold" :class="userReaction === r.emoji ? 'text-chalk' : 'text-mist'" x-text="r.count"></span>
+                            <span class="text-[10px] text-mist" x-text="r.label"></span>
                         </button>
                     </template>
                 </div>
@@ -359,7 +358,8 @@
         </div>
 
         {{-- ═══ Commentaires ═══ --}}
-        <div class="max-w-3xl mx-auto mt-6 bg-[#131318] rounded-xl sm:rounded-2xl p-3.5 sm:p-7" style="border: 1px solid #252535;">
+        <div class="max-w-3xl mx-auto mt-6 bg-[#0D1018] rounded-2xl p-5 sm:p-8 border border-white/[0.08] shadow-2xl relative overflow-hidden">
+            <div class="absolute -right-16 -bottom-16 w-48 h-48 bg-crimson/5 rounded-full blur-3xl pointer-events-none"></div>
             <livewire:public.comment-section
                 type="App\Models\Chapter"
                 :id="$chapter->id"

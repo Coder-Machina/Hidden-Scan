@@ -33,6 +33,12 @@
                 {{-- Titre et infos rapides --}}
                 <div class="pb-4 min-w-0">
                     <div class="flex flex-wrap items-center gap-2 mb-2">
+                        @if(!($manga->is_external ?? false))
+                            <span class="badge-official-hs shadow-md">
+                                <span>👑</span>
+                                <span>PROJET OFFICIEL HIDDEN SCAN</span>
+                            </span>
+                        @endif
                         <span class="badge-type badge-{{ $manga->type->value }}">{{ $manga->type->getLabel() }}</span>
                         <span class="badge-status badge-{{ $manga->status->value }}">{{ $manga->status->getLabel() }}</span>
                     </div>
@@ -57,26 +63,26 @@
 
     {{-- ═══ Surprise Notification Banner ═══ --}}
     @if(session('surprise_info'))
-        <div x-data="{ show: true }" x-show="show" x-transition.opacity.duration.300ms class="mb-6 p-4 rounded-2xl bg-gradient-to-r from-red-950/60 via-ink-card to-amber-950/40 border border-red-500/30 backdrop-blur-md shadow-xl shadow-red-950/20 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 animate-fade-in-up">
+        <div x-data="{ show: true }" x-show="show" x-transition.opacity.duration.300ms class="mb-6 p-4 rounded-2xl bg-gradient-to-r from-crimson/20 via-panel to-purple/20 border border-crimson/40 backdrop-blur-md shadow-xl shadow-crimson/10 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 animate-fade-in-up">
             <div class="flex items-center gap-3">
-                <div class="w-10 h-10 rounded-xl bg-red-600/20 border border-red-500/30 flex items-center justify-center text-xl flex-shrink-0 animate-bounce">
+                <div class="w-10 h-10 rounded-xl bg-crimson/20 border border-crimson/40 flex items-center justify-center text-xl flex-shrink-0 animate-bounce">
                     🎲
                 </div>
                 <div>
                     <div class="flex items-center gap-2">
-                        <span class="text-xs font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-red-600/30 text-red-300 border border-red-500/40">Surprise !</span>
+                        <span class="text-xs font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-crimson/30 text-chalk border border-crimson/50">Surprise !</span>
                         <h4 class="text-sm font-semibold text-chalk">Recommandation personnalisée</h4>
                     </div>
-                    <p class="text-xs text-chalk-muted mt-0.5">{{ session('surprise_info') }}</p>
+                    <p class="text-xs text-mist mt-0.5">{{ session('surprise_info') }}</p>
                 </div>
             </div>
             <div class="flex items-center gap-2 w-full sm:w-auto justify-end">
                 <a href="{{ route('manga.random') }}" 
                    onclick="if(window.HiddenScan && !{{ auth()->check() ? 'true' : 'false' }}){ const favs = window.HiddenScan.getFavorites().map(f => f.slug).join(','); if(favs) this.href = '{{ route('manga.random') }}?favs=' + encodeURIComponent(favs); }"
-                   class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-red-600/20 hover:bg-red-600/30 text-chalk text-xs font-semibold transition-all hover:scale-105 active:scale-95 border border-red-500/30 shadow-sm">
+                   class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-crimson/20 hover:bg-crimson/30 text-chalk text-xs font-semibold transition-all hover:scale-105 active:scale-95 border border-crimson/40 shadow-sm">
                     <span>Relancer une surprise 🎲</span>
                 </a>
-                <button @click="show = false" class="p-1.5 rounded-lg text-chalk-muted hover:text-chalk hover:bg-chalk/10 transition-colors" title="Fermer">
+                <button @click="show = false" class="p-1.5 rounded-lg text-mist hover:text-chalk hover:bg-white/10 transition-colors" title="Fermer">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
                 </button>
             </div>
@@ -95,7 +101,7 @@
          }">
         @if($manga->chapters->count())
             <a id="top-read-btn" href="{{ route('chapter.show', [$manga->slug, $resumeChapter?->slug ?? $manga->chapters->last()->slug]) }}" 
-               class="inline-flex items-center justify-center gap-2.5 px-6 py-3.5 rounded-xl bg-[#dc2626] hover:bg-[#b91c1c] text-white font-bold text-sm sm:text-base shadow-lg shadow-red-950/50 hover:shadow-red-900/60 transition-all hover:-translate-y-0.5 active:scale-[0.98]">
+               class="btn-primary !py-3.5 !px-7 !text-sm sm:!text-base">
                 <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
                 <span id="top-read-btn-text">{{ count($readChapterIds) > 0 && $resumeChapter ? 'Reprendre (Ch. ' . $resumeChapter->number . ')' : 'Commencer à lire' }}</span>
             </a>
@@ -103,96 +109,45 @@
 
         <button
             @click="if (window.HiddenScan) { isFav = window.HiddenScan.toggleFavorite('{{ $manga->slug }}', '{{ addslashes($manga->title) }}', '{{ $manga->cover_image ? Storage::url($manga->cover_image) : '' }}'); }"
-            class="inline-flex items-center justify-center gap-2.5 px-6 py-3.5 rounded-xl bg-[#161622] hover:bg-[#1f2030] text-[#e0e0f0] hover:text-white border border-[#262638] hover:border-[#dc2626]/40 font-semibold text-sm sm:text-base transition-all hover:-translate-y-0.5 active:scale-[0.98] shadow-md"
-            :class="isFav ? '!bg-white !border-white !text-[#0e0e14] shadow-lg shadow-white/10' : ''"
+            class="btn-secondary !py-3.5 !px-6 !text-sm sm:!text-base cursor-pointer"
+            :class="isFav ? '!bg-white !text-black !border-white shadow-lg shadow-white/20' : ''"
         >
-            <svg class="w-5 h-5 flex-shrink-0" fill="none" :fill="isFav ? 'currentColor' : 'none'" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/></svg>
+            <svg class="w-5 h-5 flex-shrink-0 text-crimson" fill="none" :fill="isFav ? 'currentColor' : 'none'" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/></svg>
             <span x-text="isFav ? 'Dans vos favoris' : 'Ajouter aux favoris'">{{ (auth()->check() && auth()->user()->favoriteMangas->contains($manga->id)) ? 'Dans vos favoris' : 'Ajouter aux favoris' }}</span>
         </button>
     </div>
 
-    {{-- Halos d'arrière-plan fixes --}}
-    <div class="manga-page-halo-red"></div>
-    <div class="manga-page-halo-purple"></div>
-
     <style>
-        body {
-            background-color: #0e0e14 !important;
-        }
-        .manga-page-halo-red {
-            position: fixed;
-            top: -60px;
-            left: -60px;
-            width: 420px;
-            height: 420px;
-            background: radial-gradient(circle, rgba(180, 20, 20, 0.15) 0%, transparent 70%);
-            pointer-events: none;
-            z-index: 0;
-        }
-        .manga-page-halo-purple {
-            position: fixed;
-            bottom: -60px;
-            right: -60px;
-            width: 380px;
-            height: 380px;
-            background: radial-gradient(circle, rgba(80, 40, 160, 0.12) 0%, transparent 70%);
-            pointer-events: none;
-            z-index: 0;
-        }
-        .manga-page-content-wrap {
-            position: relative;
-            z-index: 1;
-        }
-
-        @media (max-width: 639px) {
-            .manga-page-halo-red {
-                width: 240px;
-                height: 240px;
-                top: -30px;
-                left: -30px;
-            }
-            .manga-page-halo-purple {
-                width: 220px;
-                height: 220px;
-                bottom: -30px;
-                right: -30px;
-            }
-            .manga-sidebar-card {
-                padding: 12px 14px !important;
-                margin-bottom: 12px !important;
-            }
-            .info-row-item {
-                padding: 10px 14px !important;
-            }
-        }
-
-        /* ─── Section Note ─── */
         .manga-sidebar-card {
-            background: #16161f;
-            border: 1px solid #1e1e2e;
-            border-radius: 10px;
-            padding: 16px 18px;
+            background: #0d1018;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 16px;
+            padding: 20px;
             margin-bottom: 16px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.35);
         }
         .section-title-note {
             display: flex;
             align-items: center;
             gap: 8px;
-            font-size: 15px;
-            font-weight: 700;
+            font-family: var(--font-display, 'Outfit', sans-serif);
+            font-size: 14px;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
             color: #ffffff;
-            margin-bottom: 10px;
+            margin-bottom: 12px;
         }
         .rating-body-wrap {
             display: flex;
             align-items: center;
-            gap: 10px;
+            gap: 12px;
             flex-wrap: wrap;
         }
         .stars-group {
             display: flex;
             align-items: center;
-            gap: 2px;
+            gap: 3px;
         }
         .star-btn {
             font-size: 22px;
@@ -200,10 +155,10 @@
             background: transparent;
             border: none;
             padding: 0;
-            transition: transform 0.15s ease, color 0.15s ease;
+            transition: transform 0.15s cubic-bezier(0.16, 1, 0.3, 1), color 0.15s ease;
         }
         .star-btn:hover {
-            transform: scale(1.15);
+            transform: scale(1.25);
         }
         .rating-text-group {
             display: flex;
@@ -211,26 +166,29 @@
             gap: 6px;
         }
         .rating-score-num {
-            font-size: 13px;
-            font-weight: 700;
+            font-size: 14px;
+            font-weight: 800;
             color: #ffffff;
         }
         .rating-votes-num {
             font-size: 12px;
-            color: #60608a;
+            color: #94a3b8;
         }
 
         /* ─── Section Informations ─── */
         .section-title-info {
-            font-size: 15px;
-            font-weight: 700;
+            font-family: var(--font-display, 'Outfit', sans-serif);
+            font-size: 14px;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
             color: #ffffff;
-            margin-bottom: 10px;
+            margin-bottom: 12px;
         }
         .info-card-table {
-            background: #16161f;
-            border: 1px solid #1e1e2e;
-            border-radius: 10px;
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid rgba(255, 255, 255, 0.07);
+            border-radius: 14px;
             overflow: hidden;
             margin-bottom: 16px;
         }
@@ -239,69 +197,73 @@
             align-items: center;
             justify-content: space-between;
             padding: 12px 18px;
-            border-bottom: 1px solid #13131e;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.04);
             transition: background-color 0.15s ease;
         }
         .info-row-item:last-child {
             border-bottom: none;
         }
         .info-row-item:hover {
-            background: rgba(255, 255, 255, 0.02);
+            background: rgba(255, 255, 255, 0.03);
         }
         .info-key {
-            color: #60608a;
+            color: #94a3b8;
             font-size: 13px;
             font-weight: 500;
         }
         .info-value {
-            color: #e8e8f4;
+            color: #f8fafc;
             font-size: 13px;
-            font-weight: 600;
+            font-weight: 700;
         }
         .badge-type-custom {
-            background: #2a1a4a;
-            border: 1px solid #4a2a8a;
-            color: #b090ff;
-            font-size: 10px;
+            background: rgba(139, 92, 246, 0.15);
+            border: 1px solid rgba(139, 92, 246, 0.35);
+            color: #c4b5fd;
+            font-size: 11px;
             font-weight: 800;
-            border-radius: 5px;
-            padding: 3px 8px;
+            border-radius: 6px;
+            padding: 3px 10px;
             text-transform: uppercase;
-            letter-spacing: 0.5px;
+            letter-spacing: 0.05em;
             display: inline-block;
         }
 
         /* ─── Section Genres ─── */
         .section-title-genres {
-            font-size: 13px;
-            font-weight: 700;
+            font-family: var(--font-display, 'Outfit', sans-serif);
+            font-size: 14px;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
             color: #ffffff;
-            margin-bottom: 10px;
+            margin-bottom: 12px;
         }
         .genres-wrap-list {
             display: flex;
             flex-wrap: wrap;
-            gap: 7px;
+            gap: 8px;
             margin-bottom: 16px;
         }
         .genre-tag-item {
-            background: rgba(220, 38, 38, 0.07);
-            border: 1px solid rgba(220, 38, 38, 0.2);
-            color: #e08080;
-            border-radius: 6px;
-            padding: 5px 12px;
+            background: rgba(255, 42, 85, 0.08);
+            border: 1px solid rgba(255, 42, 85, 0.25);
+            color: #ffa3b5;
+            border-radius: 9999px;
+            padding: 5px 14px;
             font-size: 12px;
-            font-weight: 500;
+            font-weight: 600;
             text-decoration: none;
-            transition: all 0.2s ease;
+            transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
             display: inline-flex;
             align-items: center;
         }
         .genre-tag-item:hover {
-            background: rgba(220, 38, 38, 0.2);
-            border-color: rgba(220, 38, 38, 0.5);
+            background: #ff2a55;
+            border-color: #ff2a55;
             color: #ffffff;
-            transform: translateY(-1px);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(255, 42, 85, 0.35);
         }
 
     </style>
@@ -310,12 +272,13 @@
 
     {{-- ═══ Synopsis (Présentation de l'œuvre) ═══ --}}
     @if($manga->synopsis)
-    <div class="bg-[#14151e] border border-[#1e1e2e] rounded-2xl p-5 sm:p-6 mb-8 animate-fade-in-up" style="animation-delay: 0.15s;">
-        <h2 class="font-display font-bold text-white mb-3 text-base sm:text-lg flex items-center gap-2">
-            <svg class="w-5 h-5 text-red-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/></svg>
+    <div class="bg-[#0D1018] border border-white/[0.08] rounded-2xl p-6 sm:p-7 mb-8 shadow-xl relative overflow-hidden group">
+        <div class="absolute -right-16 -top-16 w-48 h-48 bg-crimson/10 rounded-full blur-3xl pointer-events-none"></div>
+        <h2 class="font-display font-bold text-chalk mb-3 text-base sm:text-lg flex items-center gap-2.5">
+            <span class="w-2 h-5 rounded-full bg-crimson inline-block shadow-sm shadow-crimson/50"></span>
             <span>Synopsis</span>
         </h2>
-        <p class="text-[#9da3b4] text-sm sm:text-base leading-relaxed">{{ $manga->synopsis }}</p>
+        <p class="text-mist text-sm sm:text-base leading-relaxed whitespace-pre-line">{{ $manga->synopsis }}</p>
     </div>
     @endif
 
@@ -508,58 +471,59 @@
             {{-- ═══ Composant Liste de Chapitres Thème Sombre ═══ --}}
             <style>
                 .chapters-container-card {
-                    background: #111118;
-                    border: 1px solid #1e1e2e;
-                    border-radius: 12px;
-                    padding: 20px;
+                    background: #0d1018;
+                    border: 1px solid rgba(255, 255, 255, 0.08);
+                    border-radius: 18px;
+                    padding: 24px;
                     width: 100%;
-                    max-width: 640px;
-                    margin: 0 auto;
                     color: #e8e8f0;
-                    font-family: system-ui, -apple-system, sans-serif;
+                    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
                 }
                 .chapters-header {
                     display: flex;
                     align-items: center;
                     justify-content: space-between;
-                    margin-bottom: 12px;
+                    margin-bottom: 14px;
                 }
                 .chapters-title-left {
                     display: flex;
                     align-items: center;
-                    gap: 8px;
-                    font-size: 15px;
-                    font-weight: 700;
+                    gap: 10px;
+                    font-family: var(--font-display, 'Outfit', sans-serif);
+                    font-size: 16px;
+                    font-weight: 800;
+                    text-transform: uppercase;
+                    letter-spacing: 0.05em;
                     color: #ffffff;
                 }
                 .chapters-title-left svg {
-                    width: 16px;
-                    height: 16px;
-                    color: #dc2626;
+                    width: 18px;
+                    height: 18px;
+                    color: #ff2a55;
                 }
                 .chapters-badge {
-                    background: #16161f;
-                    border: 1px solid #1e1e2e;
+                    background: rgba(255, 255, 255, 0.04);
+                    border: 1px solid rgba(255, 255, 255, 0.08);
                     border-radius: 20px;
-                    padding: 4px 12px;
+                    padding: 4px 14px;
                     font-size: 12px;
                     font-weight: 600;
-                    color: #a0a0c0;
+                    color: #94a3b8;
                 }
                 .chapters-badge .badge-read-count {
-                    color: #dc2626;
+                    color: #ff2a55;
                     font-weight: 700;
                 }
                 .chapters-progress-bar-wrap {
-                    height: 2px;
-                    background: #1a1a28;
+                    height: 4px;
+                    background: rgba(255, 255, 255, 0.05);
                     border-radius: 9999px;
                     overflow: hidden;
-                    margin-bottom: 16px;
+                    margin-bottom: 20px;
                 }
                 .chapters-progress-bar-fill {
                     height: 100%;
-                    background: #dc2626;
+                    background: linear-gradient(90deg, #ff2a55, #8b5cf6);
                     transition: width 0.3s cubic-bezier(0.16, 1, 0.3, 1);
                     width: 0%;
                 }
@@ -568,62 +532,65 @@
                     display: flex;
                     align-items: center;
                     justify-content: center;
-                    gap: 8px;
-                    background: #16161f;
-                    border: 1px solid #1e1e2e;
-                    border-radius: 8px;
-                    padding: 10px 14px;
-                    font-size: 13px;
-                    font-weight: 600;
-                    color: #a0a0c0;
+                    gap: 10px;
+                    background: linear-gradient(135deg, rgba(255, 42, 85, 0.12), rgba(139, 92, 246, 0.12));
+                    border: 1px solid rgba(255, 42, 85, 0.3);
+                    border-radius: 12px;
+                    padding: 12px 18px;
+                    font-size: 14px;
+                    font-weight: 700;
+                    color: #ffffff;
                     cursor: pointer;
                     text-decoration: none;
-                    transition: all 0.2s ease;
-                    margin-bottom: 14px;
+                    transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+                    margin-bottom: 16px;
                 }
                 .btn-resume-chapters:hover {
-                    background: #1c1c2c;
-                    border-color: #2e2e48;
-                    color: #ffffff;
+                    background: linear-gradient(135deg, rgba(255, 42, 85, 0.22), rgba(139, 92, 246, 0.22));
+                    border-color: #ff2a55;
+                    box-shadow: 0 4px 20px rgba(255, 42, 85, 0.25);
                 }
                 .btn-resume-chapters .play-icon {
-                    width: 14px;
-                    height: 14px;
-                    fill: #dc2626;
+                    width: 15px;
+                    height: 15px;
+                    fill: #ff2a55;
                     flex-shrink: 0;
                 }
                 .chapters-list-wrap {
                     display: flex;
                     flex-direction: column;
-                    gap: 3px;
-                    max-height: 480px;
+                    gap: 4px;
+                    max-height: 520px;
                     overflow-y: auto;
-                    padding-right: 4px;
+                    padding-right: 6px;
                 }
                 .chapters-list-wrap::-webkit-scrollbar {
-                    width: 4px;
+                    width: 5px;
                 }
                 .chapters-list-wrap::-webkit-scrollbar-track {
-                    background: #111118;
+                    background: rgba(255, 255, 255, 0.02);
                 }
                 .chapters-list-wrap::-webkit-scrollbar-thumb {
-                    background: #1e1e2e;
+                    background: rgba(255, 255, 255, 0.12);
                     border-radius: 4px;
                 }
                 .chapter-row {
                     display: flex;
                     align-items: center;
                     justify-content: space-between;
-                    padding: 10px 12px;
-                    border-radius: 8px;
+                    padding: 11px 14px;
+                    border-radius: 10px;
+                    border: 1px solid transparent;
                     cursor: pointer;
-                    transition: all 0.2s ease;
+                    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
                     gap: 12px;
                     user-select: none;
-                    background: transparent;
+                    background: rgba(255, 255, 255, 0.015);
                 }
                 .chapter-row:hover {
-                    background: #16161f;
+                    background: rgba(255, 255, 255, 0.04);
+                    border-color: rgba(255, 255, 255, 0.06);
+                    transform: translateX(2px);
                 }
                 .chapter-row.is-read {
                     opacity: 0.5;
@@ -639,7 +606,7 @@
                     width: 22px;
                     height: 22px;
                     border-radius: 50%;
-                    border: 1.5px solid #2e2e48;
+                    border: 1.5px solid rgba(255, 255, 255, 0.2);
                     background: transparent;
                     display: inline-flex;
                     align-items: center;
@@ -650,11 +617,13 @@
                     padding: 0;
                 }
                 .chapter-circle-btn:hover {
-                    border-color: #dc2626;
+                    border-color: #ff2a55;
+                    transform: scale(1.1);
                 }
                 .chapter-circle-btn.checked {
-                    background: #dc2626;
-                    border-color: #dc2626;
+                    background: #ff2a55;
+                    border-color: #ff2a55;
+                    box-shadow: 0 0 10px rgba(255, 42, 85, 0.4);
                 }
                 .chapter-circle-btn .check-svg {
                     width: 11px;
@@ -676,7 +645,7 @@
                     flex: 1;
                 }
                 .chapter-name {
-                    font-size: 13px;
+                    font-size: 13.5px;
                     font-weight: 600;
                     color: #e8e8f0;
                     white-space: nowrap;
@@ -689,12 +658,12 @@
                 }
                 .chapter-subtitle {
                     font-weight: 400;
-                    color: #7070a0;
+                    color: #94a3b8;
                     font-size: 12px;
                 }
                 .chapter-date {
                     font-size: 11px;
-                    color: #40405a;
+                    color: #64748b;
                 }
                 .chapter-right {
                     display: flex;
@@ -703,11 +672,11 @@
                     flex-shrink: 0;
                 }
                 .chapter-mark-upto-btn {
-                    padding: 3px 8px;
+                    padding: 3px 9px;
                     border-radius: 6px;
                     font-size: 10px;
                     font-weight: 600;
-                    color: #7070a0;
+                    color: #94a3b8;
                     background: rgba(255,255,255,0.03);
                     border: 1px solid rgba(255,255,255,0.06);
                     transition: all 0.2s ease;
@@ -722,46 +691,46 @@
                 }
                 .chapter-mark-upto-btn:hover {
                     color: #ffffff;
-                    background: rgba(220, 38, 38, 0.15);
-                    border-color: rgba(220, 38, 38, 0.4);
+                    background: rgba(255, 42, 85, 0.2);
+                    border-color: rgba(255, 42, 85, 0.4);
                 }
                 .chapter-arrow {
                     width: 14px;
                     height: 14px;
-                    color: #40405a;
+                    color: #64748b;
                     transition: all 0.2s ease;
                 }
                 .chapter-row:hover .chapter-arrow {
-                    color: #a0a0c0;
+                    color: #cbd5e1;
                     transform: translateX(2px);
                 }
 
                 @media (max-width: 639px) {
                     .chapters-container-card {
-                        padding: 14px 10px !important;
-                        border-radius: 10px !important;
+                        padding: 16px 12px !important;
+                        border-radius: 14px !important;
                     }
                     .chapters-header {
-                        margin-bottom: 10px !important;
+                        margin-bottom: 12px !important;
                     }
                     .chapters-badge {
                         padding: 3px 8px !important;
                         font-size: 11px !important;
                     }
                     .btn-resume-chapters {
-                        padding: 9px 12px !important;
-                        font-size: 12px !important;
-                        margin-bottom: 10px !important;
+                        padding: 10px 14px !important;
+                        font-size: 13px !important;
+                        margin-bottom: 12px !important;
                     }
                     .chapter-row {
-                        padding: 8px 8px !important;
+                        padding: 9px 10px !important;
                         gap: 8px !important;
                     }
                     .chapter-left {
                         gap: 8px !important;
                     }
                     .chapter-name {
-                        font-size: 12.5px !important;
+                        font-size: 13px !important;
                     }
                     .chapter-date {
                         font-size: 10px !important;
@@ -1069,7 +1038,8 @@
     </div>
 
     {{-- ═══ Section Commentaires (Strictement tout en bas à la fin) ═══ --}}
-    <div id="manga-comments-section" class="mt-10 sm:mt-14 bg-[#131318] rounded-xl sm:rounded-2xl p-4 sm:p-6 lg:p-8 border border-[#252535] shadow-xl">
+    <div id="manga-comments-section" class="mt-10 sm:mt-14 bg-[#0D1018] rounded-2xl p-5 sm:p-7 lg:p-9 border border-white/[0.08] shadow-2xl relative overflow-hidden">
+        <div class="absolute -right-20 -bottom-20 w-60 h-60 bg-crimson/5 rounded-full blur-3xl pointer-events-none"></div>
         <livewire:public.comment-section
             type="App\Models\Manga"
             :id="$manga->id"

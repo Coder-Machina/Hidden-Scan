@@ -21,7 +21,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="color-scheme" content="dark">
     <meta name="description" content="{{ $description ?? 'Hidden Scan — Lis tes mangas, manhwas et manhuas en ligne gratuitement et sans inscription.' }}">
-    <meta name="theme-color" content="#14111f">
+    <meta name="theme-color" content="#07080C">
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <meta property="og:title" content="{{ $title ?? 'Hidden Scan' }}">
     <meta property="og:description" content="{{ $description ?? 'Plateforme de lecture de mangas, manhwas et manhuas. Accès libre, sans compte.' }}">
@@ -311,6 +311,11 @@
     }
     </script>
 
+    {{-- Google Fonts : Outfit & Plus Jakarta Sans pour la charte graphique Hidden Scan --}}
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800;900&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
     {{-- Swiper --}}
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css" />
     <script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
@@ -561,34 +566,37 @@
             <div class="flex items-center justify-between h-16">
 
                 {{-- Logo --}}
-                <a href="{{ route('home') }}" class="flex items-center gap-3 px-3 py-2 bg-panel-hi border border-line/50 rounded-xl hover:bg-panel-hover transition-all group shadow-sm">
-                    <img src="{{ asset('images/logo.png') }}" alt="Hidden Scan Logo" class="h-8 w-8 rounded-md group-hover:scale-105 transition-transform duration-300">
-                    <span class="font-display font-extrabold text-xl tracking-tight text-chalk hidden sm:block leading-none">
-                        Hidden<span class="text-mist">Scan</span>
-                    </span>
+                <a href="{{ route('home') }}" class="flex items-center gap-3 px-3 py-1.5 bg-panel border border-white/10 rounded-xl hover:border-crimson/50 hover:bg-panel-hi transition-all group shadow-md">
+                    <img src="{{ asset('images/logo.png') }}" alt="Hidden Scan Logo" class="h-9 w-9 object-contain rounded-lg group-hover:scale-105 group-hover:drop-shadow-[0_0_8px_rgba(255,42,85,0.6)] transition-all duration-300">
+                    <div class="flex flex-col leading-none">
+                        <span class="font-display font-black text-xl tracking-tight text-white flex items-center">
+                            HIDDEN<span class="text-crimson drop-shadow-[0_0_8px_rgba(255,42,85,0.5)]">SCAN</span>
+                        </span>
+                        <span class="text-[9px] font-extrabold uppercase tracking-widest text-mist">Scantrad</span>
+                    </div>
                 </a>
 
                 {{-- Navigation desktop --}}
-                <div class="hidden md:flex items-center gap-1">
+                <div class="hidden md:flex items-center gap-1.5">
                     <a href="{{ route('home') }}"
-                       class="px-4 py-2 rounded-lg text-sm font-medium transition-colors {{ request()->routeIs('home') ? 'text-violet bg-violet/10' : 'text-mist hover:text-chalk hover:bg-panel-hi/50' }}">
+                       class="px-4 py-2 rounded-xl text-sm font-semibold transition-all {{ request()->routeIs('home') ? 'text-white bg-crimson/15 border border-crimson/40 shadow-[0_0_15px_rgba(255,42,85,0.25)]' : 'text-mist hover:text-white hover:bg-panel-hi' }}">
                         Accueil
                     </a>
                     <a href="{{ route('manga.index') }}"
-                       class="px-4 py-2 rounded-lg text-sm font-medium transition-colors {{ request()->routeIs('manga.index') ? 'text-violet bg-violet/10' : 'text-mist hover:text-chalk hover:bg-panel-hi/50' }}">
+                       class="px-4 py-2 rounded-xl text-sm font-semibold transition-all {{ request()->routeIs('manga.index') ? 'text-white bg-crimson/15 border border-crimson/40 shadow-[0_0_15px_rgba(255,42,85,0.25)]' : 'text-mist hover:text-white hover:bg-panel-hi' }}">
                         Catalogue
                     </a>
                     <a href="{{ route('manga.random') }}"
                        onclick="if(window.HiddenScan && !{{ auth()->check() ? 'true' : 'false' }}){ const favs = window.HiddenScan.getFavorites().map(f => f.slug).join(','); if(favs) this.href = '{{ route('manga.random') }}?favs=' + encodeURIComponent(favs); }"
                        title="Lancer un manga aléatoire selon vos genres préférés"
-                       class="px-3 py-1.5 rounded-lg text-xs font-semibold transition-all flex items-center gap-1.5 bg-gradient-to-r from-red-600/15 via-red-500/10 to-amber-500/15 hover:from-red-600/25 hover:to-amber-500/25 text-red-400 hover:text-red-300 border border-red-500/25 hover:border-red-500/40 shadow-sm hover:scale-105 active:scale-95">
+                       class="px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 bg-gradient-to-r from-crimson/20 via-crimson/10 to-amber-500/20 hover:from-crimson/30 hover:to-amber-500/30 text-chalk border border-crimson/30 hover:border-crimson/60 shadow-sm hover:scale-105 active:scale-95">
                         <span class="text-sm leading-none">🎲</span>
                         <span>Surprends-moi</span>
                     </a>
                     <a href="{{ route('library') }}"
-                       class="px-4 py-2 rounded-lg text-sm font-medium transition-colors {{ request()->routeIs('library') ? 'text-violet bg-violet/10' : 'text-mist hover:text-chalk hover:bg-panel-hi/50' }}">
+                       class="px-4 py-2 rounded-xl text-sm font-semibold transition-all {{ request()->routeIs('library') ? 'text-white bg-crimson/15 border border-crimson/40 shadow-[0_0_15px_rgba(255,42,85,0.25)]' : 'text-mist hover:text-white hover:bg-panel-hi' }}">
                         <span class="flex items-center gap-1.5">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/></svg>
+                            <svg class="w-4 h-4 text-crimson" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/></svg>
                             Bibliothèque
                         </span>
                     </a>
@@ -598,12 +606,12 @@
                 <div class="hidden md:flex items-center gap-3">
                     {{-- Search --}}
                     <form action="{{ route('manga.index') }}" method="GET" class="relative">
-                        <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-mist" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+                        <svg class="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-mist" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
                         <input
                             type="text"
                             name="q"
                             placeholder="Rechercher une série..."
-                            class="input-field !pl-10 pr-4 py-2 w-56 text-sm !rounded-full !bg-ink-deep/50 !border-line/60 focus:!w-72 transition-all duration-300"
+                            class="input-field !pl-10 pr-4 py-2 w-56 text-sm !rounded-full !bg-ink-deep/70 !border-white/10 focus:!w-72 focus:!border-crimson/60 transition-all duration-300"
                         >
                     </form>
                     
@@ -613,7 +621,7 @@
                         <div class="relative" x-data="{ notifOpen: false }" @click.outside="notifOpen = false">
                             <button 
                                 @click="notifOpen = !notifOpen; if(notifOpen && $store?.notifications) $store.notifications.fetchNotifications()" 
-                                class="relative p-2.5 rounded-xl bg-[#141420] border border-[#222234] text-[#a0a0c0] hover:text-white hover:border-[#dc2626]/50 hover:bg-[#1a1a28] transition-all cursor-pointer flex items-center justify-center shadow-md focus:outline-none"
+                                class="relative p-2.5 rounded-xl bg-[#141420] border border-[#222234] text-[#a0a0c0] hover:text-white hover:border-[#ff2a55]/50 hover:bg-[#1a1a28] transition-all cursor-pointer flex items-center justify-center shadow-md focus:outline-none"
                                 title="Notifications de vos séries favorites"
                                 aria-label="Notifications"
                             >
@@ -623,7 +631,7 @@
 
                                 {{-- Badge non lu --}}
                                 <template x-if="$store?.notifications && $store.notifications.unreadCount > 0">
-                                    <span class="absolute -top-1 -right-1 flex h-4 min-w-[16px] px-1 items-center justify-center rounded-full bg-[#dc2626] text-[10px] font-extrabold text-white ring-2 ring-[#0e0e15] shadow-lg animate-pulse"
+                                    <span class="absolute -top-1 -right-1 flex h-4 min-w-[16px] px-1 items-center justify-center rounded-full bg-[#ff2a55] text-[10px] font-extrabold text-white ring-2 ring-[#0e0e15] shadow-lg animate-pulse"
                                           x-text="$store.notifications.unreadCount > 99 ? '99+' : $store.notifications.unreadCount">
                                     </span>
                                 </template>
@@ -679,7 +687,7 @@
                                     <template x-for="item in ($store?.notifications?.notifications || [])" :key="item.id">
                                         <div 
                                             @click="$store.notifications.handleClick(item)"
-                                            :class="item.is_read ? 'bg-[#12121c] opacity-80' : 'bg-[#181828] border-l-2 border-[#dc2626]'"
+                                            :class="item.is_read ? 'bg-[#12121c] opacity-80' : 'bg-[#181828] border-l-2 border-[#ff2a55]'"
                                             class="p-3 flex items-start gap-3 hover:bg-[#1e1e30] transition cursor-pointer group"
                                         >
                                             {{-- Cover miniature --}}
@@ -707,7 +715,7 @@
                                                         Lire maintenant →
                                                     </span>
                                                     <template x-if="!item.is_read">
-                                                        <span class="w-1.5 h-1.5 rounded-full bg-[#dc2626]"></span>
+                                                        <span class="w-1.5 h-1.5 rounded-full bg-[#ff2a55]"></span>
                                                     </template>
                                                 </div>
                                             </div>
@@ -718,7 +726,7 @@
                                 {{-- Pied du menu --}}
                                 <div class="p-2.5 bg-[#141422] border-t border-[#222234] flex items-center justify-between">
                                     <a href="{{ route('library', ['tab' => 'rattrapage']) }}" class="text-xs font-semibold text-[#f87171] hover:text-white transition flex items-center gap-1.5">
-                                        <svg class="w-3.5 h-3.5 text-[#dc2626]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+                                        <svg class="w-3.5 h-3.5 text-[#ff2a55]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
                                         Mode Rattrapage complet
                                     </a>
                                     <a href="{{ route('library') }}" class="text-xs text-[#7070a0] hover:text-white transition">
@@ -732,7 +740,7 @@
                         <div class="relative" x-data="{ userMenuOpen: false }" @click.outside="userMenuOpen = false">
                             <button 
                                 @click="userMenuOpen = !userMenuOpen" 
-                                class="w-10 h-10 rounded-full overflow-hidden ring-2 ring-[#dc2626]/70 hover:ring-[#dc2626] transition-all cursor-pointer flex items-center justify-center bg-[#111118] shadow-lg shadow-black/40 focus:outline-none"
+                                class="w-10 h-10 rounded-full overflow-hidden ring-2 ring-[#ff2a55]/70 hover:ring-[#ff2a55] transition-all cursor-pointer flex items-center justify-center bg-[#111118] shadow-lg shadow-black/40 focus:outline-none"
                                 title="{{ Auth::user()->name }}"
                             >
                                 <img src="{{ Auth::user()->avatar_url }}" alt="{{ Auth::user()->name }}" class="w-full h-full object-cover navbar-avatar-img">
@@ -776,30 +784,30 @@
                                 {{-- Liens --}}
                                 <div class="py-1.5 space-y-0.5">
                                     <a href="{{ route('profile.edit', ['tab' => 'overview']) }}" class="flex items-center gap-3 px-3 py-2 rounded-lg text-xs font-semibold text-[#c0c0d8] hover:text-white hover:bg-[#1a1a28] transition group">
-                                        <svg class="w-4 h-4 text-[#dc2626] group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
+                                        <svg class="w-4 h-4 text-[#ff2a55] group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
                                         Mon Profil
                                     </a>
 
                                     <a href="{{ route('library', ['tab' => 'rattrapage']) }}" class="flex items-center justify-between px-3 py-2 rounded-lg text-xs font-semibold text-[#f87171] hover:text-white hover:bg-red-950/40 border border-red-500/20 transition group">
                                         <span class="flex items-center gap-3">
-                                            <svg class="w-4 h-4 text-[#dc2626] group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+                                            <svg class="w-4 h-4 text-[#ff2a55] group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
                                             Mode Rattrapage
                                         </span>
                                         <span class="text-[10px] px-1.5 py-0.5 rounded bg-red-600 text-white font-extrabold">NEW</span>
                                     </a>
 
                                     <a href="{{ route('library') }}" class="flex items-center gap-3 px-3 py-2 rounded-lg text-xs font-semibold text-[#c0c0d8] hover:text-white hover:bg-[#1a1a28] transition group">
-                                        <svg class="w-4 h-4 text-[#dc2626] group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/></svg>
+                                        <svg class="w-4 h-4 text-[#ff2a55] group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/></svg>
                                         Ma Bibliothèque
                                     </a>
 
                                     <a href="{{ route('profile.edit', ['tab' => 'edit']) }}" class="flex items-center gap-3 px-3 py-2 rounded-lg text-xs font-semibold text-[#c0c0d8] hover:text-white hover:bg-[#1a1a28] transition group">
-                                        <svg class="w-4 h-4 text-[#dc2626] group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+                                        <svg class="w-4 h-4 text-[#ff2a55] group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
                                         Modifier mon profil
                                     </a>
 
                                     <a href="{{ route('profile.edit', ['tab' => 'settings']) }}" class="flex items-center gap-3 px-3 py-2 rounded-lg text-xs font-semibold text-[#c0c0d8] hover:text-white hover:bg-[#1a1a28] transition group">
-                                        <svg class="w-4 h-4 text-[#dc2626] group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+                                        <svg class="w-4 h-4 text-[#ff2a55] group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
                                         Paramètres & Sécurité
                                     </a>
 
@@ -879,7 +887,7 @@
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/>
                             </svg>
                             <template x-if="$store?.notifications && $store.notifications.unreadCount > 0">
-                                <span class="absolute top-1 right-1 flex h-4 min-w-[16px] px-1 items-center justify-center rounded-full bg-[#dc2626] text-[9px] font-extrabold text-white ring-2 ring-[#0e0e15] pointer-events-none"
+                                <span class="absolute top-1 right-1 flex h-4 min-w-[16px] px-1 items-center justify-center rounded-full bg-[#ff2a55] text-[9px] font-extrabold text-white ring-2 ring-[#0e0e15] pointer-events-none"
                                       x-text="$store.notifications.unreadCount > 99 ? '99+' : $store.notifications.unreadCount">
                                 </span>
                             </template>
@@ -890,7 +898,7 @@
                             <button 
                                 type="button"
                                 @click.stop="toggleUserMobileMenu()" 
-                                class="w-9 h-9 rounded-full overflow-hidden ring-2 ring-[#dc2626]/80 hover:ring-[#dc2626] active:scale-95 transition-all cursor-pointer flex items-center justify-center bg-[#111118] shadow-md shadow-black/40 focus:outline-none"
+                                class="w-9 h-9 rounded-full overflow-hidden ring-2 ring-[#ff2a55]/80 hover:ring-[#ff2a55] active:scale-95 transition-all cursor-pointer flex items-center justify-center bg-[#111118] shadow-md shadow-black/40 focus:outline-none"
                                 title="{{ Auth::user()->name }}"
                                 aria-label="Menu profil utilisateur"
                             >
@@ -935,13 +943,13 @@
 
                                 {{-- Navigation Principale Mobile --}}
                                 <div class="py-1.5 space-y-0.5 border-b border-[#222234]">
-                                    <a href="{{ route('home') }}" class="flex items-center gap-3 px-3 py-2 rounded-lg text-xs font-semibold {{ request()->routeIs('home') ? 'text-white bg-[#dc2626]' : 'text-[#c0c0d8] hover:text-white hover:bg-[#1a1a28]' }} transition group">
-                                        <svg class="w-4 h-4 text-[#dc2626] group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
+                                    <a href="{{ route('home') }}" class="flex items-center gap-3 px-3 py-2 rounded-lg text-xs font-semibold {{ request()->routeIs('home') ? 'text-white bg-[#ff2a55]' : 'text-[#c0c0d8] hover:text-white hover:bg-[#1a1a28]' }} transition group">
+                                        <svg class="w-4 h-4 text-[#ff2a55] group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
                                         <span>Accueil</span>
                                     </a>
 
-                                    <a href="{{ route('manga.index') }}" class="flex items-center gap-3 px-3 py-2 rounded-lg text-xs font-semibold {{ request()->routeIs('manga.index') ? 'text-white bg-[#dc2626]' : 'text-[#c0c0d8] hover:text-white hover:bg-[#1a1a28]' }} transition group">
-                                        <svg class="w-4 h-4 text-[#dc2626] group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16"/></svg>
+                                    <a href="{{ route('manga.index') }}" class="flex items-center gap-3 px-3 py-2 rounded-lg text-xs font-semibold {{ request()->routeIs('manga.index') ? 'text-white bg-[#ff2a55]' : 'text-[#c0c0d8] hover:text-white hover:bg-[#1a1a28]' }} transition group">
+                                        <svg class="w-4 h-4 text-[#ff2a55] group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16"/></svg>
                                         <span>Catalogue</span>
                                     </a>
 
@@ -955,14 +963,14 @@
 
                                     <a href="{{ route('library', ['tab' => 'rattrapage']) }}" class="flex items-center justify-between px-3 py-2 rounded-lg text-xs font-semibold text-[#f87171] hover:text-white hover:bg-red-950/40 border border-red-500/20 transition group">
                                         <span class="flex items-center gap-3">
-                                            <svg class="w-4 h-4 text-[#dc2626] group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+                                            <svg class="w-4 h-4 text-[#ff2a55] group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
                                             <span>Mode Rattrapage</span>
                                         </span>
                                         <span class="text-[10px] px-1.5 py-0.5 rounded bg-red-600 text-white font-extrabold">NON LUS</span>
                                     </a>
 
-                                    <a href="{{ route('library') }}" class="flex items-center gap-3 px-3 py-2 rounded-lg text-xs font-semibold {{ request()->routeIs('library') && request('tab') !== 'rattrapage' ? 'text-white bg-[#dc2626]' : 'text-[#c0c0d8] hover:text-white hover:bg-[#1a1a28]' }} transition group">
-                                        <svg class="w-4 h-4 text-[#dc2626] group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/></svg>
+                                    <a href="{{ route('library') }}" class="flex items-center gap-3 px-3 py-2 rounded-lg text-xs font-semibold {{ request()->routeIs('library') && request('tab') !== 'rattrapage' ? 'text-white bg-[#ff2a55]' : 'text-[#c0c0d8] hover:text-white hover:bg-[#1a1a28]' }} transition group">
+                                        <svg class="w-4 h-4 text-[#ff2a55] group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/></svg>
                                         <span>Ma Bibliothèque</span>
                                     </a>
                                 </div>
@@ -970,17 +978,17 @@
                                 {{-- Liens du profil --}}
                                 <div class="py-1.5 space-y-0.5">
                                     <a href="{{ route('profile.edit', ['tab' => 'overview']) }}" class="flex items-center gap-3 px-3 py-2 rounded-lg text-xs font-semibold text-[#c0c0d8] hover:text-white hover:bg-[#1a1a28] transition group">
-                                        <svg class="w-4 h-4 text-[#dc2626] group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
+                                        <svg class="w-4 h-4 text-[#ff2a55] group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
                                         <span>Mon Profil</span>
                                     </a>
 
                                     <a href="{{ route('profile.edit', ['tab' => 'edit']) }}" class="flex items-center gap-3 px-3 py-2 rounded-lg text-xs font-semibold text-[#c0c0d8] hover:text-white hover:bg-[#1a1a28] transition group">
-                                        <svg class="w-4 h-4 text-[#dc2626] group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+                                        <svg class="w-4 h-4 text-[#ff2a55] group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
                                         <span>Modifier mon profil</span>
                                     </a>
 
                                     <a href="{{ route('profile.edit', ['tab' => 'settings']) }}" class="flex items-center gap-3 px-3 py-2 rounded-lg text-xs font-semibold text-[#c0c0d8] hover:text-white hover:bg-[#1a1a28] transition group">
-                                        <svg class="w-4 h-4 text-[#dc2626] group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+                                        <svg class="w-4 h-4 text-[#ff2a55] group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
                                         <span>Paramètres & Sécurité</span>
                                     </a>
 
@@ -1040,7 +1048,7 @@
                     @else
                         {{-- Bouton Se connecter Mobile (Visiteur) --}}
                         <a href="{{ route('login') }}" 
-                           class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-gradient-to-r from-[#dc2626] to-[#b91c1c] hover:from-[#ef4444] hover:to-[#dc2626] text-white text-xs font-bold transition shadow-md shadow-red-950/50 flex-shrink-0 active:scale-95">
+                           class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-gradient-to-r from-[#ff2a55] to-[#b91c1c] hover:from-[#ef4444] hover:to-[#ff2a55] text-white text-xs font-bold transition shadow-md shadow-red-950/50 flex-shrink-0 active:scale-95">
                             <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1"/></svg>
                             <span>Se connecter</span>
                         </a>
@@ -1069,7 +1077,7 @@
                 <form action="{{ route('manga.index') }}" method="GET" class="relative flex items-center">
                     <svg class="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-mist pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
                     <input type="text" name="q" placeholder="Rechercher une série..."
-                        class="input-field w-full text-sm !pl-10 !pr-10 !py-2.5 !rounded-xl !bg-[#12121c] !border-[#262638] focus:!border-[#dc2626] shadow-inner text-white placeholder-[#7070a0]" autofocus>
+                        class="input-field w-full text-sm !pl-10 !pr-10 !py-2.5 !rounded-xl !bg-[#12121c] !border-[#262638] focus:!border-[#ff2a55] shadow-inner text-white placeholder-[#7070a0]" autofocus>
                     <button type="submit" class="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 text-mist hover:text-white" aria-label="Rechercher">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
                     </button>
@@ -1102,7 +1110,7 @@
 
                         <template x-for="item in ($store?.notifications?.notifications || [])" :key="item.id">
                             <div @click="handleNotifClick(item)"
-                                 :class="item.is_read ? 'bg-[#12121c] opacity-80' : 'bg-[#181828] border-l-2 border-[#dc2626]'"
+                                 :class="item.is_read ? 'bg-[#12121c] opacity-80' : 'bg-[#181828] border-l-2 border-[#ff2a55]'"
                                  class="p-2.5 flex items-start gap-2.5 hover:bg-[#1e1e30] transition cursor-pointer">
                                 <div class="w-9 h-12 rounded bg-[#1f1f2e] overflow-hidden flex-shrink-0">
                                     <template x-if="item.manga_cover">
@@ -1144,11 +1152,11 @@
             <div class="px-4 py-3 space-y-2">
                 {{-- Liens de navigation principale --}}
                 <div class="space-y-1">
-                    <a href="{{ route('home') }}" class="flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-semibold {{ request()->routeIs('home') ? 'text-white bg-[#dc2626]' : 'text-[#a0a0c0] hover:text-white hover:bg-[#161622]' }} transition">
+                    <a href="{{ route('home') }}" class="flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-semibold {{ request()->routeIs('home') ? 'text-white bg-[#ff2a55]' : 'text-[#a0a0c0] hover:text-white hover:bg-[#161622]' }} transition">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
                         Accueil
                     </a>
-                    <a href="{{ route('manga.index') }}" class="flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-semibold {{ request()->routeIs('manga.index') ? 'text-white bg-[#dc2626]' : 'text-[#a0a0c0] hover:text-white hover:bg-[#161622]' }} transition">
+                    <a href="{{ route('manga.index') }}" class="flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-semibold {{ request()->routeIs('manga.index') ? 'text-white bg-[#ff2a55]' : 'text-[#a0a0c0] hover:text-white hover:bg-[#161622]' }} transition">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16"/></svg>
                         Catalogue
                     </a>
@@ -1164,12 +1172,12 @@
                     </a>
                     <a href="{{ route('library', ['tab' => 'rattrapage']) }}" class="flex items-center justify-between px-3.5 py-2.5 rounded-xl text-sm font-bold text-[#f87171] bg-red-950/30 border border-red-500/30 hover:bg-red-900/40 transition">
                         <span class="flex items-center gap-3">
-                            <svg class="w-4 h-4 text-[#dc2626]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+                            <svg class="w-4 h-4 text-[#ff2a55]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
                             Mode Rattrapage
                         </span>
                         <span class="text-[10px] px-2 py-0.5 rounded-full bg-red-600 text-white font-extrabold uppercase">Non lus</span>
                     </a>
-                    <a href="{{ route('library') }}" class="flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-semibold {{ request()->routeIs('library') && request('tab') !== 'rattrapage' ? 'text-white bg-[#dc2626]' : 'text-[#a0a0c0] hover:text-white hover:bg-[#161622]' }} transition">
+                    <a href="{{ route('library') }}" class="flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-semibold {{ request()->routeIs('library') && request('tab') !== 'rattrapage' ? 'text-white bg-[#ff2a55]' : 'text-[#a0a0c0] hover:text-white hover:bg-[#161622]' }} transition">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/></svg>
                         Bibliothèque
                     </a>
@@ -1177,7 +1185,7 @@
 
                 {{-- Connexion / Inscription pour invité --}}
                 <div class="pt-2 border-t border-[#1e1e2e] grid grid-cols-2 gap-2">
-                    <a href="{{ route('login') }}" class="flex items-center justify-center gap-1.5 py-2.5 px-3 rounded-xl bg-gradient-to-r from-[#dc2626] to-[#b91c1c] hover:from-[#ef4444] hover:to-[#dc2626] text-white text-xs font-bold transition text-center shadow-md">
+                    <a href="{{ route('login') }}" class="flex items-center justify-center gap-1.5 py-2.5 px-3 rounded-xl bg-gradient-to-r from-[#ff2a55] to-[#b91c1c] hover:from-[#ef4444] hover:to-[#ff2a55] text-white text-xs font-bold transition text-center shadow-md">
                         Se connecter
                     </a>
                     <a href="{{ route('register') }}" class="flex items-center justify-center gap-1.5 py-2.5 px-3 rounded-xl bg-[#181826] hover:bg-[#202032] text-white text-xs font-semibold border border-[#2a2a3e] transition text-center">
@@ -1335,7 +1343,7 @@
         x-transition:leave-start="opacity-100 translate-y-0 scale-100"
         x-transition:leave-end="opacity-0 translate-y-2 scale-90"
         @click="window.scrollTo({ top: 0, behavior: 'smooth' })"
-        class="scroll-top-btn bg-panel-hi/90 hover:bg-[#dc2626] text-white border border-line/50 hover:border-[#dc2626]/50 backdrop-blur-md cursor-pointer transition-all hover:scale-105"
+        class="scroll-top-btn bg-panel-hi/90 hover:bg-[#ff2a55] text-white border border-line/50 hover:border-[#ff2a55]/50 backdrop-blur-md cursor-pointer transition-all hover:scale-105"
         title="Retour en haut"
         aria-label="Retour en haut de page"
     >
