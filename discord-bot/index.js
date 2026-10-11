@@ -77,8 +77,6 @@ function recordContribution(userId, userName, projectKey, step, chapterNumber) {
     fs.writeFileSync(STATS_FILE, JSON.stringify(stats, null, 2), 'utf8');
 }
 
-const LEAD_USER_ID = process.env.DISCORD_LEAD_USER_ID || '1310979117172391940';
-
 /**
  * Recherche robuste d'un projet par clé, titre ou slug normalisé.
  * Évite tout décalage entre la création de fiche et la configuration du staff.
@@ -1552,15 +1550,12 @@ client.on('interactionCreate', async interaction => {
                 files,
             });
 
-            // Détermine qui doit être notifié pour la suite selon la chaîne demandée par Meliodas Sama :
+            // Détermine qui doit être notifié pour la suite selon la chaîne d'équipe :
             // 1. Trad finit  -> ping Check
             // 2. Clean finit -> ping Edit
             // 3. Check finit -> ping Edit
-            // 4. Edit finit  -> ping Meliodas Sama (Lead) / QC
-            // 5. QC finit    -> ping Meliodas Sama (Publication)
-            const LEAD_ID = process.env.DISCORD_LEAD_USER_ID || '1310979117172391940';
-            const leadMention = `<@${LEAD_ID}>`;
-
+            // 4. Edit finit  -> ping QC (si assigné)
+            // 5. QC finit    -> Prêt pour la publication
             let nextAction = '';
             let targetMention = null;
 
@@ -1575,10 +1570,10 @@ client.on('interactionCreate', async interaction => {
                 targetMention = projects[slug].staff?.edit || null;
             } else if (step === 'edit') {
                 nextAction = 'le **QC / Contrôle Qualité**';
-                targetMention = projects[slug].staff?.qc ? `${projects[slug].staff.qc} (${leadMention})` : leadMention;
+                targetMention = projects[slug].staff?.qc || null;
             } else if (step === 'qc') {
                 nextAction = 'la **Publication**';
-                targetMention = leadMention;
+                targetMention = null;
             }
 
             const stepLabels = {
@@ -1592,6 +1587,8 @@ client.on('interactionCreate', async interaction => {
             let followUpMsg = `🎉 <@${interaction.user.id}> vient de terminer la **${stepLabels[step] || step.toUpperCase()}** pour le chapitre **${newVal}** de **${projects[slug].title}** !`;
             if (targetMention) {
                 followUpMsg += `\n👉 C'est ton tour pour ${nextAction} : ${targetMention}`;
+            } else if (step === 'qc') {
+                followUpMsg += `\n🚀 Le chapitre est validé et prêt pour la **Publication** !`;
             } else {
                 followUpMsg += `\n👉 Prochaine étape : ${nextAction} *(aucun membre assigné pour le moment)*`;
             }

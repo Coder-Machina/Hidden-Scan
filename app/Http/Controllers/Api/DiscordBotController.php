@@ -171,17 +171,14 @@ class DiscordBotController extends Controller
         // - Trad -> Check
         // - Clean -> Edit
         // - Check -> Edit
-        // - Edit -> Meliodas Sama (Lead) / QC
-        // - QC -> Publication / Lead
-        $leadUserId = config('services.discord.lead_user_id', env('DISCORD_LEAD_USER_ID', '1310979117172391940'));
-        $leadMention = "<@{$leadUserId}>";
-
+        // - Edit -> QC
+        // - QC -> Publication
         $nextStepInfo = match($validated['step']) {
             'trad' => ['next_step' => 'check', 'next_user' => $manga->check_user, 'label' => 'Check'],
             'clean' => ['next_step' => 'edit', 'next_user' => $manga->edit_user, 'label' => 'Édition (Edit)'],
             'check' => ['next_step' => 'edit', 'next_user' => $manga->edit_user, 'label' => 'Édition (Edit)'],
-            'edit' => ['next_step' => 'qc', 'next_user' => $manga->qc_user ?? $leadMention, 'label' => 'QC / Meliodas Sama'],
-            'qc' => ['next_step' => 'publication', 'next_user' => $leadMention, 'label' => 'Publication'],
+            'edit' => ['next_step' => 'qc', 'next_user' => $manga->qc_user, 'label' => 'QC'],
+            'qc' => ['next_step' => 'publication', 'next_user' => null, 'label' => 'Publication'],
         };
 
         return response()->json([
