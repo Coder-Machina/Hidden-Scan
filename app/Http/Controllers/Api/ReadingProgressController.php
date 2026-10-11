@@ -61,6 +61,29 @@ class ReadingProgressController extends Controller
     }
 
     /**
+     * Get Murim martial rank status for the user.
+     * GET /api/progress/murim
+     */
+    public function getMurimStatus(Request $request): JsonResponse
+    {
+        $userId = Auth::id();
+        $readCount = 0;
+        if ($userId) {
+            $readCount = ReadingProgress::where('user_id', $userId)->where('is_read', true)->count();
+        } else {
+            $readCount = (int) $request->input('local_read_count', 0);
+        }
+        $streak = (int) $request->input('streak', 0);
+
+        $status = \App\Services\MurimRankService::calculateStatus($readCount, $streak);
+
+        return response()->json([
+            'success' => true,
+            'status' => $status,
+        ]);
+    }
+
+    /**
      * Mark all chapters from chapter 1 up to the specified chapter as read.
      * POST /api/progress/mark-up-to
      */

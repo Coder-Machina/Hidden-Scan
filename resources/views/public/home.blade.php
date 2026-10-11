@@ -230,6 +230,132 @@
     </section>
     @endif
 
+    {{-- ═══ Section Planning Hebdomadaire des Sorties (Option 1) ═══ --}}
+    @if(isset($weeklySchedule) && count($weeklySchedule))
+    <section class="mb-14 animate-fade-in-up" x-data="{ activeDay: '{{ $todayKey ?? 'lundi' }}' }">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6">
+            <div>
+                <div class="flex items-center gap-2 mb-1">
+                    <span class="text-xs font-black uppercase tracking-wider text-crimson px-2.5 py-0.5 rounded-full bg-crimson/15 border border-crimson/30">
+                        ⚡ Programme Officiel
+                    </span>
+                    <span class="text-xs text-mist font-semibold">Mise à jour en continu</span>
+                </div>
+                <h2 class="section-title">
+                    <span>Planning des Sorties</span>
+                </h2>
+            </div>
+            <a href="{{ route('planning') }}" class="inline-flex items-center gap-2 text-xs sm:text-sm font-bold text-mist hover:text-white transition group">
+                <span>Voir le calendrier complet de la semaine</span>
+                <span class="group-hover:translate-x-1 transition-transform text-crimson">→</span>
+            </a>
+        </div>
+
+        {{-- Onglets des 7 jours --}}
+        <div class="flex items-center gap-2 overflow-x-auto pb-3 mb-6 no-scrollbar">
+            @foreach($weeklySchedule as $dayKey => $dayData)
+                <button type="button"
+                        @click="activeDay = '{{ $dayKey }}'"
+                        :class="activeDay === '{{ $dayKey }}' 
+                            ? 'bg-crimson text-white border-crimson shadow-[0_0_18px_rgba(255,42,85,0.4)] scale-105' 
+                            : 'bg-panel text-mist hover:text-white hover:bg-panel-hi border-white/5'"
+                        class="px-4 py-2.5 rounded-2xl border text-xs sm:text-sm font-bold transition-all duration-200 cursor-pointer flex-shrink-0 flex items-center gap-2 select-none">
+                    <span>{{ $dayData['label'] }}</span>
+                    @if(!empty($dayData['is_today']))
+                        <span class="text-[9px] uppercase px-1.5 py-0.2 rounded-full {{ $dayKey === ($todayKey ?? 'lundi') ? 'bg-black/30 text-white' : 'bg-crimson/20 text-crimson' }} font-black">
+                            Auj.
+                        </span>
+                    @endif
+                    <span class="text-[10px] px-1.5 py-0.5 rounded-full bg-white/10"
+                          :class="activeDay === '{{ $dayKey }}' ? 'bg-white/25 text-white' : 'text-mist'">
+                        {{ count($dayData['items'] ?? []) }}
+                    </span>
+                </button>
+            @endforeach
+        </div>
+
+        {{-- Conteneur des cartes par jour --}}
+        @foreach($weeklySchedule as $dayKey => $dayData)
+            <div x-show="activeDay === '{{ $dayKey }}'"
+                 x-cloak
+                 x-transition:enter="transition ease-out duration-200"
+                 x-transition:enter-start="opacity-0 translate-y-2"
+                 x-transition:enter-end="opacity-100 translate-y-0"
+                 class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                @forelse(($dayData['items'] ?? []) as $slot)
+                    @php
+                        $manga = $slot['manga'] ?? null;
+                        $latestCh = $slot['latest_chapter'] ?? null;
+                        $isOfficial = $manga && !($manga->is_external ?? false);
+                    @endphp
+                    @if($manga)
+                    <div class="relative overflow-hidden rounded-2xl bg-panel/90 border border-white/10 p-4 hover:border-crimson/50 hover:bg-panel-hi transition-all group flex items-center gap-4 shadow-lg">
+                        {{-- Cover Image --}}
+                        <a href="{{ route('manga.show', $manga->slug) }}" class="w-16 h-22 sm:w-20 sm:h-28 rounded-xl overflow-hidden bg-ink-deep flex-shrink-0 relative block">
+                            @if($manga->cover_image)
+                                <img src="{{ Storage::url($manga->cover_image) }}" alt="{{ $manga->title }}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300">
+                            @else
+                                <div class="w-full h-full bg-gradient-to-br from-panel-hi to-ink-deep flex items-center justify-center text-xl">📖</div>
+                            @endif
+                            <span class="absolute top-1 left-1 text-[9px] font-black px-1.5 py-0.5 rounded bg-black/70 backdrop-blur-md text-amber-300 border border-white/10">
+                                {{ $slot['time'] ?? '18h00' }}
+                            </span>
+                        </a>
+
+                        {{-- Détails --}}
+                        <div class="flex-1 min-w-0">
+                            <div class="flex items-center gap-1.5 mb-1">
+                                @if($isOfficial)
+                                    <span class="text-[9px] font-black uppercase px-2 py-0.5 rounded bg-crimson/20 border border-crimson/40 text-crimson">
+                                        Officiel HS
+                                    </span>
+                                @else
+                                    <span class="text-[9px] font-bold uppercase px-2 py-0.5 rounded bg-white/10 text-mist">
+                                        Scan
+                                    </span>
+                                @endif
+                                <span class="text-[10px] text-amber-300 font-semibold truncate">{{ $slot['status_label'] ?? 'Sortie' }}</span>
+                            </div>
+
+                            <h3 class="font-display font-bold text-sm sm:text-base text-white group-hover:text-crimson transition-colors truncate">
+                                <a href="{{ route('manga.show', $manga->slug) }}">
+                                    {{ $manga->title }}
+                                </a>
+                            </h3>
+
+                            <p class="text-xs text-mist mt-1 line-clamp-1">
+                                {{ $manga->synopsis ? Str::limit($manga->synopsis, 60) : 'Nouveau chapitre prévu cette semaine.' }}
+                            </p>
+
+                            <div class="mt-2.5 flex items-center gap-2">
+                                @if($latestCh)
+                                    <a href="{{ route('chapter.show', [$manga->slug, $latestCh->slug]) }}"
+                                       class="inline-flex items-center gap-1 text-[11px] font-extrabold text-crimson hover:text-white bg-crimson/10 hover:bg-crimson px-2.5 py-1 rounded-lg transition">
+                                        <span>Lire Ch. {{ $latestCh->number }}</span>
+                                        <span>→</span>
+                                    </a>
+                                @else
+                                    <a href="{{ route('manga.show', $manga->slug) }}"
+                                       class="inline-flex items-center gap-1 text-[11px] font-extrabold text-mist hover:text-white bg-white/5 hover:bg-white/15 px-2.5 py-1 rounded-lg transition">
+                                        <span>Voir la fiche</span>
+                                    </a>
+                                @endif
+                            </div>
+                        </div>
+                    </div>
+                    @endif
+                @empty
+                    <div class="col-span-full p-8 text-center bg-panel border border-white/5 rounded-2xl">
+                        <span class="text-3xl mb-2 block">☕</span>
+                        <p class="text-sm font-bold text-white">Aucun drop programmé ce jour-là</p>
+                        <p class="text-xs text-mist mt-1">L'équipe prépare les prochains chapitres en coulisses.</p>
+                    </div>
+                @endforelse
+            </div>
+        @endforeach
+    </section>
+    @endif
+
     {{-- ═══ Dernières Sorties ═══ --}}
     @if($latest_updates->count())
     @php
@@ -382,5 +508,47 @@
             <span>Surprends-moi 🎲</span>
         </a>
     </div>
+
+    {{-- ═══ Bannière Discord Communautaire (Option 5) ═══ --}}
+    <section class="mb-12 rounded-3xl bg-gradient-to-br from-[#181a38] via-[#101226] to-[#0c0d18] border border-[#5865F2]/40 shadow-2xl p-6 sm:p-8 relative overflow-hidden animate-fade-in-up">
+        <div class="absolute -right-12 -top-12 w-64 h-64 bg-[#5865F2]/20 rounded-full blur-3xl pointer-events-none"></div>
+        <div class="absolute -left-12 -bottom-12 w-48 h-48 bg-crimson/15 rounded-full blur-3xl pointer-events-none"></div>
+
+        <div class="relative z-10 flex flex-col md:flex-row items-center justify-between gap-6">
+            <div class="flex items-center sm:items-start gap-5 text-center sm:text-left">
+                <div class="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl bg-[#5865F2]/20 border border-[#5865F2]/40 flex items-center justify-center text-3xl sm:text-4xl flex-shrink-0 shadow-lg shadow-[#5865F2]/30">
+                    <svg class="w-10 h-10 sm:w-12 sm:h-12 text-[#5865F2]" viewBox="0 0 127.14 96.36" fill="currentColor">
+                        <path d="M107.7,8.07A105.15,105.15,0,0,0,81.47,0a72.06,72.06,0,0,0-3.36,6.83A97.68,97.68,0,0,0,49,6.83,72.37,72.37,0,0,0,45.64,0,105.89,105.89,0,0,0,19.39,8.09C2.79,32.65-1.71,56.6.54,80.21h0A105.73,105.73,0,0,0,32.71,96.36,77.7,77.7,0,0,0,39.6,85.25a68.42,68.42,0,0,1-10.85-5.18c.91-.66,1.8-1.34,2.66-2a75.57,75.57,0,0,0,64.32,0c.87.71,1.76,1.39,2.66,2a68.68,68.68,0,0,1-10.87,5.19,77,77,0,0,0,6.89,11.1A105.25,105.25,0,0,0,126.6,80.22h0C129.24,52.84,122.09,29.11,107.7,8.07ZM42.45,65.69C36.18,65.69,31,60,31,53s5-12.74,11.43-12.74S54,46,53.89,53,48.84,65.69,42.45,65.69Zm42.24,0C78.41,65.69,73.31,60,73.31,53s5-12.74,11.43-12.74S96.2,46,96.12,53,91.08,65.69,84.69,65.69Z"/>
+                    </svg>
+                </div>
+                <div class="max-w-xl">
+                    <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#5865F2]/20 border border-[#5865F2]/30 text-[#8ea1ff] text-xs font-black uppercase tracking-wider mb-2">
+                        <span>⛩️ Le Dojo des Ombres</span>
+                        <span>•</span>
+                        <span>Discord Officiel</span>
+                    </div>
+                    <h3 class="font-display font-black text-xl sm:text-2xl text-white">
+                        Rejoins la communauté <span class="text-[#8ea1ff]">Hidden Scan</span>
+                    </h3>
+                    <p class="text-xs sm:text-sm text-mist mt-1 leading-relaxed">
+                        Alertes instantanées lors des sorties de chapitres, discussions avec les traducteurs & lecteurs, sondages et événements exclusifs !
+                    </p>
+                </div>
+            </div>
+
+            <div class="flex-shrink-0 w-full sm:w-auto text-center">
+                <a href="https://discord.gg/sMUeFSks4"
+                   target="_blank"
+                   rel="noopener noreferrer"
+                   class="inline-flex items-center justify-center gap-2.5 w-full sm:w-auto px-7 py-3.5 rounded-2xl bg-[#5865F2] hover:bg-[#4752C4] text-white font-black text-sm shadow-xl shadow-[#5865F2]/40 hover:scale-105 active:scale-95 transition-all">
+                    <svg class="w-5 h-5 fill-current" viewBox="0 0 127.14 96.36">
+                        <path d="M107.7,8.07A105.15,105.15,0,0,0,81.47,0a72.06,72.06,0,0,0-3.36,6.83A97.68,97.68,0,0,0,49,6.83,72.37,72.37,0,0,0,45.64,0,105.89,105.89,0,0,0,19.39,8.09C2.79,32.65-1.71,56.6.54,80.21h0A105.73,105.73,0,0,0,32.71,96.36,77.7,77.7,0,0,0,39.6,85.25a68.42,68.42,0,0,1-10.85-5.18c.91-.66,1.8-1.34,2.66-2a75.57,75.57,0,0,0,64.32,0c.87.71,1.76,1.39,2.66,2a68.68,68.68,0,0,1-10.87,5.19,77,77,0,0,0,6.89,11.1A105.25,105.25,0,0,0,126.6,80.22h0C129.24,52.84,122.09,29.11,107.7,8.07ZM42.45,65.69C36.18,65.69,31,60,31,53s5-12.74,11.43-12.74S54,46,53.89,53,48.84,65.69,42.45,65.69Zm42.24,0C78.41,65.69,73.31,60,73.31,53s5-12.74,11.43-12.74S96.2,46,96.12,53,91.08,65.69,84.69,65.69Z"/>
+                    </svg>
+                    <span>Rejoindre le Discord</span>
+                </a>
+                <span class="block text-[11px] text-mist/70 mt-2">Accès libre & gratuit</span>
+            </div>
+        </div>
+    </section>
 
 </x-layouts.public>

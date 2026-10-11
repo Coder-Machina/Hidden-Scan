@@ -12,8 +12,9 @@ use Illuminate\Support\Facades\Route;
 */
 
 Route::middleware(['web'])->group(function () {
-    // Reading Progress & Catch-Up
+    // Reading Progress & Catch-Up & Murim Rank
     Route::get('/progress', [ReadingProgressController::class, 'getAllProgress'])->name('api.progress.all');
+    Route::get('/progress/murim', [ReadingProgressController::class, 'getMurimStatus'])->name('api.progress.murim');
     Route::get('/progress/catch-up', [ReadingProgressController::class, 'getCatchUp'])->name('api.progress.catch-up');
     Route::get('/progress/{manga_id}', [ReadingProgressController::class, 'getMangaProgress'])->name('api.progress.manga');
     Route::post('/progress/toggle', [ReadingProgressController::class, 'toggle'])->name('api.progress.toggle');

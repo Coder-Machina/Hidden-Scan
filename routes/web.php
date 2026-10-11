@@ -5,10 +5,12 @@ use App\Http\Controllers\Public\HomeController;
 use App\Http\Controllers\Public\MangaController;
 use App\Http\Controllers\Public\ChapterController;
 use App\Http\Controllers\Public\LibraryController;
+use App\Http\Controllers\Public\PlanningController;
 use App\Http\Controllers\ProfileController;
 
 // ═══ PUBLIC ROUTES ═══
 Route::get('/', [HomeController::class, 'index'])->name('home');
+Route::get('/planning', [PlanningController::class, 'index'])->name('planning');
 Route::get('/bibliotheque', [LibraryController::class, 'index'])->name('library');
 Route::post('/manga/{slug}/noter', [MangaController::class, 'rate'])->name('manga.rate');
 

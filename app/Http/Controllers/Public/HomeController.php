@@ -36,6 +36,9 @@ class HomeController extends Controller
             ->take(12)
             ->get();
 
-        return view('public.home', compact('featured', 'latest_updates', 'popular'));
+        $weeklySchedule = \App\Services\ScheduleService::getHydratedSchedule();
+        $todayKey = \App\Services\ScheduleService::getTodayKey();
+
+        return view('public.home', compact('featured', 'latest_updates', 'popular', 'weeklySchedule', 'todayKey'));
     }
 }

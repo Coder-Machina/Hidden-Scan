@@ -303,11 +303,128 @@
         }
     }
 
-    document.addEventListener('alpine:init', setupNotificationsStore);
-    document.addEventListener('livewire:init', setupNotificationsStore);
-    document.addEventListener('DOMContentLoaded', setupNotificationsStore);
-    if (window.Alpine) {
+    // ═══ Alpine Store : Voie Martiale & Rangs Murim ═══
+    function setupMurimStore() {
+        if (!window.Alpine) return;
+        try {
+            if (typeof Alpine.store === 'function' && Alpine.store('murim')) return;
+        } catch(e) {}
+
+        try {
+            Alpine.store('murim', {
+                open: false,
+                loading: false,
+                status: null,
+                streak: 0,
+                breakthroughAlert: false,
+
+                async init() {
+                    this.updateStreak();
+                    await this.fetchStatus();
+                    window.addEventListener('chapter-read', () => {
+                        this.onChapterRead();
+                    });
+                },
+
+                updateStreak() {
+                    try {
+                        const todayStr = new Date().toISOString().split('T')[0];
+                        const data = JSON.parse(localStorage.getItem('hs_murim_streak') || '{}');
+                        if (data.lastDate === todayStr) {
+                            this.streak = data.streak || 1;
+                        } else if (data.lastDate) {
+                            const yesterday = new Date();
+                            yesterday.setDate(yesterday.getDate() - 1);
+                            const yesterdayStr = yesterday.toISOString().split('T')[0];
+                            if (data.lastDate === yesterdayStr) {
+                                this.streak = data.streak || 1;
+                            } else {
+                                this.streak = 0;
+                            }
+                        } else {
+                            this.streak = 0;
+                        }
+                    } catch(e) { this.streak = 0; }
+                },
+
+                recordDailyReading() {
+                    try {
+                        const todayStr = new Date().toISOString().split('T')[0];
+                        const data = JSON.parse(localStorage.getItem('hs_murim_streak') || '{}');
+                        if (data.lastDate !== todayStr) {
+                            const yesterday = new Date();
+                            yesterday.setDate(yesterday.getDate() - 1);
+                            const yesterdayStr = yesterday.toISOString().split('T')[0];
+                            let newStreak = 1;
+                            if (data.lastDate === yesterdayStr) {
+                                newStreak = (data.streak || 0) + 1;
+                            }
+                            localStorage.setItem('hs_murim_streak', JSON.stringify({ lastDate: todayStr, streak: newStreak }));
+                            this.streak = newStreak;
+                        }
+                    } catch(e) {}
+                },
+
+                async onChapterRead() {
+                    this.recordDailyReading();
+                    const oldRankId = this.status?.current?.id;
+                    const prevCount = parseInt(localStorage.getItem('hs_total_read_chapters') || '0');
+                    localStorage.setItem('hs_total_read_chapters', (prevCount + 1).toString());
+                    await this.fetchStatus();
+                    if (oldRankId && this.status?.current?.id > oldRankId) {
+                        this.breakthroughAlert = true;
+                        setTimeout(() => { this.breakthroughAlert = false; }, 7000);
+                    }
+                },
+
+                getLocalReadCount() {
+                    try {
+                        const data = window.HiddenScan ? window.HiddenScan._getData() : {};
+                        const progress = data.progress || {};
+                        let count = 0;
+                        Object.values(progress).forEach(p => {
+                            if (p && Array.isArray(p.readChapterIds)) count += p.readChapterIds.length;
+                            else if (p && p.chapter) count += 1;
+                        });
+                        const explicit = parseInt(localStorage.getItem('hs_total_read_chapters') || '0');
+                        return Math.max(count, explicit);
+                    } catch(e) { return 0; }
+                },
+
+                async fetchStatus() {
+                    try {
+                        const localCount = this.getLocalReadCount();
+                        const res = await fetch(`/api/progress/murim?local_read_count=${localCount}&streak=${this.streak}`);
+                        if (!res.ok) return;
+                        const json = await res.json();
+                        if (json && json.success) {
+                            this.status = json.status;
+                        }
+                    } catch(e) {}
+                },
+
+                toggle() {
+                    this.open = !this.open;
+                    if (this.open) {
+                        this.fetchStatus();
+                    }
+                }
+            });
+        } catch(e) {
+            console.warn('Could not register murim store:', e);
+        }
+    }
+
+    function initStores() {
         setupNotificationsStore();
+        setupMurimStore();
+    }
+
+    document.addEventListener('alpine:init', initStores);
+    document.addEventListener('livewire:init', initStores);
+    document.addEventListener('DOMContentLoaded', initStores);
+    if (window.Alpine) {
+        initStores();
     }
     </script>
 
@@ -579,22 +696,26 @@
                 {{-- Navigation desktop --}}
                 <div class="hidden md:flex items-center gap-1.5">
                     <a href="{{ route('home') }}"
-                       class="px-4 py-2 rounded-xl text-sm font-semibold transition-all {{ request()->routeIs('home') ? 'text-white bg-crimson/15 border border-crimson/40 shadow-[0_0_15px_rgba(255,42,85,0.25)]' : 'text-mist hover:text-white hover:bg-panel-hi' }}">
+                       class="px-3.5 py-2 rounded-xl text-sm font-semibold transition-all {{ request()->routeIs('home') ? 'text-white bg-crimson/15 border border-crimson/40 shadow-[0_0_15px_rgba(255,42,85,0.25)]' : 'text-mist hover:text-white hover:bg-panel-hi' }}">
                         Accueil
                     </a>
                     <a href="{{ route('manga.index') }}"
-                       class="px-4 py-2 rounded-xl text-sm font-semibold transition-all {{ request()->routeIs('manga.index') ? 'text-white bg-crimson/15 border border-crimson/40 shadow-[0_0_15px_rgba(255,42,85,0.25)]' : 'text-mist hover:text-white hover:bg-panel-hi' }}">
+                       class="px-3.5 py-2 rounded-xl text-sm font-semibold transition-all {{ request()->routeIs('manga.index') ? 'text-white bg-crimson/15 border border-crimson/40 shadow-[0_0_15px_rgba(255,42,85,0.25)]' : 'text-mist hover:text-white hover:bg-panel-hi' }}">
                         Catalogue
+                    </a>
+                    <a href="{{ route('planning') }}"
+                       class="px-3.5 py-2 rounded-xl text-sm font-semibold transition-all {{ request()->routeIs('planning') ? 'text-white bg-crimson/15 border border-crimson/40 shadow-[0_0_15px_rgba(255,42,85,0.25)]' : 'text-mist hover:text-white hover:bg-panel-hi' }}">
+                        Planning
                     </a>
                     <a href="{{ route('manga.random') }}"
                        onclick="if(window.HiddenScan && !{{ auth()->check() ? 'true' : 'false' }}){ const favs = window.HiddenScan.getFavorites().map(f => f.slug).join(','); if(favs) this.href = '{{ route('manga.random') }}?favs=' + encodeURIComponent(favs); }"
                        title="Lancer un manga aléatoire selon vos genres préférés"
-                       class="px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 bg-gradient-to-r from-crimson/20 via-crimson/10 to-amber-500/20 hover:from-crimson/30 hover:to-amber-500/30 text-chalk border border-crimson/30 hover:border-crimson/60 shadow-sm hover:scale-105 active:scale-95">
+                       class="px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 bg-gradient-to-r from-crimson/20 via-crimson/10 to-amber-500/20 hover:from-crimson/30 hover:to-amber-500/30 text-chalk border border-crimson/30 hover:border-crimson/60 shadow-sm hover:scale-105 active:scale-95">
                         <span class="text-sm leading-none">🎲</span>
                         <span>Surprends-moi</span>
                     </a>
                     <a href="{{ route('library') }}"
-                       class="px-4 py-2 rounded-xl text-sm font-semibold transition-all {{ request()->routeIs('library') ? 'text-white bg-crimson/15 border border-crimson/40 shadow-[0_0_15px_rgba(255,42,85,0.25)]' : 'text-mist hover:text-white hover:bg-panel-hi' }}">
+                       class="px-3.5 py-2 rounded-xl text-sm font-semibold transition-all {{ request()->routeIs('library') ? 'text-white bg-crimson/15 border border-crimson/40 shadow-[0_0_15px_rgba(255,42,85,0.25)]' : 'text-mist hover:text-white hover:bg-panel-hi' }}">
                         <span class="flex items-center gap-1.5">
                             <svg class="w-4 h-4 text-crimson" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/></svg>
                             Bibliothèque
@@ -611,9 +732,29 @@
                             type="text"
                             name="q"
                             placeholder="Rechercher une série..."
-                            class="input-field !pl-10 pr-4 py-2 w-56 text-sm !rounded-full !bg-ink-deep/70 !border-white/10 focus:!w-72 focus:!border-crimson/60 transition-all duration-300"
+                            class="input-field !pl-10 pr-4 py-2 w-52 text-sm !rounded-full !bg-ink-deep/70 !border-white/10 focus:!w-64 focus:!border-crimson/60 transition-all duration-300"
                         >
                     </form>
+
+                    {{-- Rang Murim & Flamme Martiale --}}
+                    <div x-data x-cloak>
+                        <button @click="$store.murim.toggle()"
+                                type="button"
+                                class="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-white/[0.04] border border-white/10 hover:border-crimson/50 hover:bg-white/[0.08] transition-all cursor-pointer shadow-md group"
+                                :title="'Votre Rang Murim : ' + ($store.murim.status?.current?.title || 'Disciple')">
+                            <span class="text-base leading-none group-hover:scale-125 transition-transform" x-text="$store.murim.status?.current?.badge || '🥉'"></span>
+                            <div class="hidden lg:flex flex-col text-left leading-none">
+                                <span class="text-[11px] font-black text-chalk" x-text="$store.murim.status?.current?.title || 'Disciple Tiers-Rang'"></span>
+                                <span class="text-[9px] text-mist font-semibold" x-text="$store.murim.status?.current?.aura || 'Voie Martiale'"></span>
+                            </div>
+                            <template x-if="$store.murim.streak > 0">
+                                <span class="flex items-center gap-0.5 text-[10px] font-black text-amber-400 bg-amber-500/15 border border-amber-500/30 px-1.5 py-0.5 rounded-md">
+                                    <span>🔥</span>
+                                    <span x-text="$store.murim.streak + 'j'"></span>
+                                </span>
+                            </template>
+                        </button>
+                    </div>
                     
                     {{-- Avatar Utilisateur avec Menu Déroulant & Notifications --}}
                     @auth
@@ -862,6 +1003,22 @@
 
                 {{-- Boutons mobile --}}
                 <div class="flex md:hidden items-center gap-1 sm:gap-2">
+                    {{-- Bouton Rang Murim Mobile --}}
+                    <button 
+                        type="button"
+                        @click.stop="$store.murim.toggle()" 
+                        class="flex items-center gap-1 px-2 py-1.5 rounded-xl bg-white/[0.05] border border-white/10 hover:border-crimson/50 text-xs font-bold text-chalk active:scale-95 transition cursor-pointer"
+                        title="Votre Rang Murim & Voie Martiale"
+                        aria-label="Rang Murim"
+                    >
+                        <span class="text-sm" x-text="$store.murim.status?.current?.badge || '🥉'"></span>
+                        <template x-if="$store.murim.streak > 0">
+                            <span class="text-[10px] text-amber-400 font-black flex items-center leading-none">
+                                🔥<span x-text="$store.murim.streak"></span>
+                            </span>
+                        </template>
+                    </button>
+
                     {{-- Bouton Recherche Mobile --}}
                     <button 
                         type="button"
@@ -951,6 +1108,11 @@
                                     <a href="{{ route('manga.index') }}" class="flex items-center gap-3 px-3 py-2 rounded-lg text-xs font-semibold {{ request()->routeIs('manga.index') ? 'text-white bg-[#ff2a55]' : 'text-[#c0c0d8] hover:text-white hover:bg-[#1a1a28]' }} transition group">
                                         <svg class="w-4 h-4 text-[#ff2a55] group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16"/></svg>
                                         <span>Catalogue</span>
+                                    </a>
+
+                                    <a href="{{ route('planning') }}" class="flex items-center gap-3 px-3 py-2 rounded-lg text-xs font-semibold {{ request()->routeIs('planning') ? 'text-white bg-[#ff2a55]' : 'text-[#c0c0d8] hover:text-white hover:bg-[#1a1a28]' }} transition group">
+                                        <svg class="w-4 h-4 text-[#ff2a55] group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                                        <span>Planning des sorties</span>
                                     </a>
 
                                     <a href="{{ route('manga.random') }}" class="flex items-center justify-between px-3 py-2 rounded-lg text-xs font-semibold text-amber-400 hover:text-white hover:bg-amber-950/30 border border-amber-500/20 transition group">
@@ -1160,6 +1322,10 @@
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16"/></svg>
                         Catalogue
                     </a>
+                    <a href="{{ route('planning') }}" class="flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-semibold {{ request()->routeIs('planning') ? 'text-white bg-[#ff2a55]' : 'text-[#a0a0c0] hover:text-white hover:bg-[#161622]' }} transition">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                        Planning
+                    </a>
 
                     <a href="{{ route('manga.random') }}"
                        onclick="if(window.HiddenScan){ const favs = window.HiddenScan.getFavorites().map(f => f.slug).join(','); if(favs) this.href = '{{ route('manga.random') }}?favs=' + encodeURIComponent(favs); }"
@@ -1349,6 +1515,177 @@
     >
         <svg class="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 15l7-7 7 7"/></svg>
     </button>
+
+    {{-- ═══ Toast Alerte Percée Martiale (Murim Breakthrough) ═══ --}}
+    <div x-show="$store?.murim?.breakthroughAlert"
+         x-cloak
+         x-transition:enter="transition ease-out duration-300"
+         x-transition:enter-start="opacity-0 translate-y-4 scale-95"
+         x-transition:enter-end="opacity-100 translate-y-0 scale-100"
+         x-transition:leave="transition ease-in duration-200"
+         x-transition:leave-start="opacity-100 translate-y-0 scale-100"
+         x-transition:leave-end="opacity-0 translate-y-4 scale-95"
+         class="fixed bottom-6 right-6 z-[120] max-w-sm w-full p-4 rounded-2xl bg-gradient-to-br from-[#1c1218] via-[#12121c] to-[#0a0a12] border-2 border-amber-500/70 shadow-[0_0_35px_rgba(245,158,11,0.4)] flex items-start gap-3.5">
+        <div class="w-12 h-12 rounded-xl bg-amber-500/20 border border-amber-500/40 flex items-center justify-center text-2xl flex-shrink-0 animate-pulse">
+            ⚡
+        </div>
+        <div class="flex-1 min-w-0">
+            <div class="flex items-center justify-between">
+                <span class="text-[10px] font-black uppercase tracking-widest text-amber-400">Percée Martiale Réussie !</span>
+                <button @click="$store.murim.breakthroughAlert = false" class="text-mist hover:text-white text-xs">✕</button>
+            </div>
+            <h4 class="text-sm font-black text-white mt-0.5" x-text="'Rang atteint : ' + ($store.murim.status?.current?.title || '')"></h4>
+            <p class="text-xs text-amber-200/90 mt-1 leading-relaxed">
+                Votre Qi a atteint un niveau supérieur ! Poursuivez votre entraînement pour défier le ciel.
+            </p>
+            <button @click="$store.murim.open = true; $store.murim.breakthroughAlert = false" class="mt-2 text-[11px] font-bold text-amber-400 hover:text-amber-300 underline">
+                Voir mon statut martial →
+            </button>
+        </div>
+    </div>
+
+    {{-- ═══ Modal Sanctuaire Murim (Voie Martiale & Paliers de Cultivation) ═══ --}}
+    <div x-show="$store?.murim?.open"
+         x-cloak
+         class="fixed inset-0 z-[110] flex items-center justify-center p-3 sm:p-5 bg-black/85 backdrop-blur-md animate-fade-in"
+         @keydown.escape.window="$store.murim.open = false">
+        
+        {{-- Backdrop click --}}
+        <div class="fixed inset-0" @click="$store.murim.open = false"></div>
+
+        <div class="relative w-full max-w-2xl bg-gradient-to-b from-[#161424] via-[#10101b] to-[#0b0b12] border border-amber-500/30 rounded-3xl p-5 sm:p-8 shadow-[0_0_60px_rgba(0,0,0,0.9),0_0_25px_rgba(245,158,11,0.15)] z-10 max-h-[92vh] overflow-y-auto">
+            
+            {{-- Close button --}}
+            <button @click="$store.murim.open = false"
+                    class="absolute top-4 right-4 sm:top-6 sm:right-6 w-9 h-9 rounded-full bg-white/[0.06] hover:bg-white/[0.15] border border-white/10 text-mist hover:text-white flex items-center justify-center transition cursor-pointer"
+                    aria-label="Fermer le sanctuaire">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+            </button>
+
+            {{-- En-tête Murim avec sceau martial --}}
+            <div class="text-center mb-6">
+                <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-500/15 border border-amber-500/30 text-amber-400 text-xs font-black uppercase tracking-wider mb-2">
+                    <span>⛩️</span>
+                    <span>Voie Martiale de Hidden Scan</span>
+                    <span>⛩️</span>
+                </div>
+                <h3 class="font-display text-2xl sm:text-3xl font-black text-white tracking-tight">
+                    Sanctuaire de <span class="bg-gradient-to-r from-amber-400 via-crimson to-red-500 bg-clip-text text-transparent">Cultivation Murim</span>
+                </h3>
+                <p class="text-xs sm:text-sm text-mist max-w-md mx-auto mt-1">
+                    Lisez des chapitres pour forger votre Danjeon, condenser votre Qi et gravir les 7 Paliers légendaires du monde des arts martiaux.
+                </p>
+            </div>
+
+            {{-- Carte de Statut Actuel --}}
+            <div class="relative overflow-hidden rounded-2xl p-5 sm:p-6 bg-gradient-to-br from-amber-500/10 via-crimson/10 to-transparent border border-amber-500/30 mb-6 shadow-inner">
+                <div class="flex flex-col sm:flex-row items-center sm:items-start gap-4 sm:gap-5 text-center sm:text-left">
+                    <div class="w-20 h-20 sm:w-24 sm:h-24 rounded-2xl bg-gradient-to-tr from-amber-600/30 via-crimson/30 to-violet-600/30 border-2 border-amber-500/50 flex items-center justify-center text-4xl sm:text-5xl shadow-[0_0_20px_rgba(245,158,11,0.25)] flex-shrink-0 animate-pulse">
+                        <span x-text="$store.murim.status?.current?.badge || '🥉'"></span>
+                    </div>
+                    <div class="flex-1 min-w-0">
+                        <div class="flex flex-wrap items-center justify-center sm:justify-start gap-2 mb-1">
+                            <span class="text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full bg-crimson/20 border border-crimson/40 text-crimson"
+                                  x-text="'Palier ' + ($store.murim.status?.current?.level || '1') + ' / 7'"></span>
+                            <span class="text-[10px] font-bold text-amber-300/80" x-text="$store.murim.status?.current?.aura || ''"></span>
+                        </div>
+                        <h4 class="text-xl sm:text-2xl font-black text-white" x-text="$store.murim.status?.current?.title || 'Disciple Tiers-Rang'"></h4>
+                        
+                        {{-- Proverbe / Citation Murim --}}
+                        <p class="text-xs italic text-mist/90 mt-1 mb-3" x-text="'« ' + ($store.murim.status?.current?.quote || 'L\'entraînement commence par le premier pas.') + ' »'"></p>
+
+                        {{-- Stats Clés --}}
+                        <div class="grid grid-cols-2 sm:grid-cols-3 gap-2 text-left">
+                            <div class="p-2.5 rounded-xl bg-ink-deep/60 border border-white/5">
+                                <span class="text-[10px] uppercase font-bold text-mist block">Chapitres Digestés</span>
+                                <span class="text-base font-black text-white" x-text="($store.murim.status?.read_count || 0) + ' chapitres'"></span>
+                            </div>
+                            <div class="p-2.5 rounded-xl bg-ink-deep/60 border border-white/5">
+                                <span class="text-[10px] uppercase font-bold text-mist block">Flamme Martiale</span>
+                                <span class="text-base font-black text-amber-400 flex items-center gap-1">
+                                    🔥 <span x-text="($store.murim.streak || 0) + ' jours'"></span>
+                                </span>
+                            </div>
+                            <div class="col-span-2 sm:col-span-1 p-2.5 rounded-xl bg-ink-deep/60 border border-white/5">
+                                <span class="text-[10px] uppercase font-bold text-mist block">Prochaine Percée</span>
+                                <span class="text-base font-black text-crimson" x-text="$store.murim.status?.next ? ($store.murim.status.chapters_needed + ' ch.') : 'Apex Céleste'"></span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                {{-- Jauge de Progression vers la Percée --}}
+                <template x-if="$store.murim.status?.next">
+                    <div class="mt-5 pt-4 border-t border-white/10">
+                        <div class="flex items-center justify-between text-xs font-bold mb-1.5">
+                            <span class="text-mist flex items-center gap-1.5">
+                                <span>Percée vers :</span>
+                                <span class="text-white" x-text="$store.murim.status.next.title"></span>
+                            </span>
+                            <span class="text-amber-400" x-text="($store.murim.status?.progress_percent || 0) + '%'"></span>
+                        </div>
+                        <div class="h-2.5 w-full bg-ink-deep rounded-full overflow-hidden border border-white/10">
+                            <div class="h-full bg-gradient-to-r from-amber-500 via-crimson to-red-500 rounded-full transition-all duration-500 shadow-[0_0_10px_rgba(255,42,85,0.5)]"
+                                 :style="'width: ' + ($store.murim.status?.progress_percent || 0) + '%'"></div>
+                        </div>
+                        <p class="text-[11px] text-mist/80 mt-1.5 text-right">
+                            Encore <span class="text-amber-400 font-bold" x-text="$store.murim.status.chapters_needed"></span> chapitres à lire pour accomplir la percée.
+                        </p>
+                    </div>
+                </template>
+                <template x-if="!$store.murim.status?.next">
+                    <div class="mt-4 pt-3 border-t border-white/10 text-center text-xs font-bold text-amber-400">
+                        👑 Vous avez atteint le pinacle du Murim ! Votre nom résonne à travers tous les cieux martiaux.
+                    </div>
+                </template>
+            </div>
+
+            {{-- Échelle des 7 Rangs Murim --}}
+            <div class="mb-6">
+                <h5 class="text-xs uppercase font-black tracking-wider text-mist mb-3 flex items-center gap-2">
+                    <span>📜</span>
+                    <span>Les 7 Paliers de la Voie Martiale</span>
+                </h5>
+                <div class="space-y-2">
+                    <template x-for="r in ($store.murim.status?.all_ranks || [])" :key="r.id">
+                        <div :class="r.is_unlocked ? (r.is_current ? 'bg-amber-500/15 border-amber-500/60 shadow-md shadow-amber-500/10' : 'bg-white/[0.04] border-white/10') : 'bg-white/[0.01] border-white/5 opacity-50'"
+                             class="p-3 rounded-xl border flex items-center justify-between gap-3 transition">
+                            <div class="flex items-center gap-3 min-w-0">
+                                <span class="text-2xl flex-shrink-0" x-text="r.badge"></span>
+                                <div class="min-w-0">
+                                    <div class="flex items-center gap-2">
+                                        <span class="text-xs sm:text-sm font-black text-white truncate" x-text="r.title"></span>
+                                        <template x-if="r.is_current">
+                                            <span class="text-[9px] font-black uppercase px-1.5 py-0.5 rounded bg-amber-500 text-black">Actuel</span>
+                                        </template>
+                                    </div>
+                                    <span class="text-[10px] text-mist truncate block" x-text="r.aura"></span>
+                                </div>
+                            </div>
+                            <div class="text-right flex-shrink-0">
+                                <span class="text-xs font-bold" :class="r.is_unlocked ? 'text-amber-400' : 'text-mist'" x-text="r.min_chapters + (r.max_chapters ? '-' + r.max_chapters : '+') + ' ch.'"></span>
+                                <span class="block text-[9px] uppercase font-bold" :class="r.is_unlocked ? 'text-emerald-400' : 'text-mist/60'" x-text="r.is_unlocked ? 'Atteint ✓' : 'Verrouillé 🔒'"></span>
+                            </div>
+                        </div>
+                    </template>
+                </div>
+            </div>
+
+            {{-- Actions & Bouton Discord --}}
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-4 border-t border-white/10">
+                <a href="{{ route('manga.index') }}" @click="$store.murim.open = false"
+                   class="py-3 px-4 rounded-xl bg-gradient-to-r from-crimson to-red-600 hover:from-crimson-hi hover:to-red-500 text-white font-extrabold text-xs sm:text-sm transition text-center shadow-lg shadow-crimson/30 flex items-center justify-center gap-2">
+                    <span>📖</span>
+                    <span>Méditer & S'entraîner (Lire)</span>
+                </a>
+                <a href="https://discord.gg/sMUeFSks4" target="_blank" rel="noopener noreferrer"
+                   class="py-3 px-4 rounded-xl bg-[#5865F2]/20 hover:bg-[#5865F2]/30 text-[#8ea1ff] border border-[#5865F2]/40 font-extrabold text-xs sm:text-sm transition text-center flex items-center justify-center gap-2">
+                    <svg class="w-4 h-4 fill-current" viewBox="0 0 127.14 96.36"><path d="M107.7,8.07A105.15,105.15,0,0,0,81.47,0a72.06,72.06,0,0,0-3.36,6.83A97.68,97.68,0,0,0,49,6.83,72.37,72.37,0,0,0,45.64,0,105.89,105.89,0,0,0,19.39,8.09C2.79,32.65-1.71,56.6.54,80.21h0A105.73,105.73,0,0,0,32.71,96.36,77.7,77.7,0,0,0,39.6,85.25a68.42,68.42,0,0,1-10.85-5.18c.91-.66,1.8-1.34,2.66-2a75.57,75.57,0,0,0,64.32,0c.87.71,1.76,1.39,2.66,2a68.68,68.68,0,0,1-10.87,5.19,77,77,0,0,0,6.89,11.1A105.25,105.25,0,0,0,126.6,80.22h0C129.24,52.84,122.09,29.11,107.7,8.07ZM42.45,65.69C36.18,65.69,31,60,31,53s5-12.74,11.43-12.74S54,46,53.89,53,48.84,65.69,42.45,65.69Zm42.24,0C78.41,65.69,73.31,60,73.31,53s5-12.74,11.43-12.74S96.2,46,96.12,53,91.08,65.69,84.69,65.69Z"/></svg>
+                    <span>Pavillon Martial sur Discord</span>
+                </a>
+            </div>
+        </div>
+    </div>
 
     @livewireScripts
     <script>

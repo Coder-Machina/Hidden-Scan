@@ -101,7 +101,6 @@
         <div class="fixed top-0 left-0 right-0 z-50 h-1 bg-black/50">
             <div class="h-full bg-gradient-to-r from-crimson to-purple transition-all duration-200 ease-out shadow-sm shadow-crimson/50"
                  :style="'width:' + progressPercent + '%'"></div>
-        </div>ressPercent + '%'"></div>
         </div>
 
         {{-- ═══ Pages du chapitre ═══ --}}
@@ -396,6 +395,10 @@
                             'Accept': 'application/json'
                         }
                     });
+                    // Déclenchement de la progression Murim & Flamme Martiale
+                    window.dispatchEvent(new CustomEvent('chapter-read', { 
+                        detail: { chapterId: {{ $chapter->id }}, mangaSlug: '{{ $manga->slug }}' } 
+                    }));
                 } catch(e) {}
             },
 
@@ -456,6 +459,21 @@
                 @endforeach
             ],
 
+            preloadQueue: new Set(),
+
+            preloadAhead(startIndex, count = 4) {
+                if (!this.pages || !this.pages.length) return;
+                for (let i = startIndex; i < Math.min(this.pages.length, startIndex + count); i++) {
+                    const page = this.pages[i];
+                    if (page && page.src && !this.preloadQueue.has(page.src)) {
+                        this.preloadQueue.add(page.src);
+                        const img = new Image();
+                        img.decoding = 'async';
+                        img.src = page.src;
+                    }
+                }
+            },
+
             init() {
                 this.isMobile = window.innerWidth < 768;
                 window.addEventListener('resize', () => {
@@ -489,6 +507,9 @@
 
                 // Sauvegarder la progression
                 this.saveProgress();
+
+                // Préchargement anticipé des premières pages du chapitre
+                this.preloadAhead(0, 5);
 
                 // Déclencher le comptage réaliste si le lecteur reste actif au moins 10 secondes
                 setTimeout(() => {
@@ -566,6 +587,7 @@
             nextPage() {
                 if (this.currentPage < this.totalPages) {
                     this.currentPage++;
+                    this.preloadAhead(this.currentPage, 4);
                     this.trackReadingView();
                     this.saveProgress();
                     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -596,7 +618,8 @@
             },
 
             handleImageLoad(pageNum) {
-                // Track loaded pages for preloading
+                // Préchargement intelligent des 4 prochaines pages dès qu'une page est chargée
+                this.preloadAhead(pageNum, 4);
             }
         };
     }
