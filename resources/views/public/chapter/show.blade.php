@@ -537,6 +537,10 @@
                     this.trackReadingView();
                 }
 
+                // Preload ahead dynamically as user scrolls
+                const currentScrollPage = Math.floor((this.progressPercent / 100) * this.totalPages);
+                this.preloadAhead(currentScrollPage, 4);
+
                 // Save progress periodically
                 if (this.progressPercent > 5) {
                     this.saveProgress();

@@ -33,8 +33,10 @@ Route::middleware(['web'])->group(function () {
     // Recommendations ("Si t'as aimé X, lis Y")
     Route::get('/recommendations', [ReadingProgressController::class, 'getRecommendations'])->name('api.recommendations');
 
-    // Profile Synchronization
+    // Profile Synchronization & Tier List & Top 5
     Route::post('/profile/sync', [\App\Http\Controllers\ProfileController::class, 'sync'])->name('api.profile.sync');
+    Route::post('/profile/tier-list', [\App\Http\Controllers\ProfileController::class, 'saveTierList'])->name('api.profile.tier-list');
+    Route::post('/profile/top-mangas', [\App\Http\Controllers\ProfileController::class, 'saveTopMangas'])->name('api.profile.top-mangas');
 });
 
 // ═══ DISCORD BOT STAFF & RELEASES API ═══

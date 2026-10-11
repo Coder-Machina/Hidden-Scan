@@ -3,12 +3,13 @@
 namespace App\Services;
 
 use App\Models\Manga;
+use App\Models\ReleaseSchedule;
 use Carbon\Carbon;
 
 class ScheduleService
 {
     /**
-     * Configuration du planning hebdomadaire des sorties
+     * Configuration par défaut du planning hebdomadaire
      */
     public static function getScheduleConfig(): array
     {
@@ -85,51 +86,92 @@ class ScheduleService
     }
 
     /**
-     * Retourne le planning complet hydraté avec les modèles Manga
+     * Initialise les sorties par défaut si la table est vide
+     */
+    public static function seedDefaultsIfNeeded(): void
+    {
+        try {
+            if (ReleaseSchedule::count() > 0) {
+                return;
+            }
+
+            $config = self::getScheduleConfig();
+            foreach ($config as $dayKey => $day) {
+                $sort = 0;
+                foreach ($day['slots'] as $slot) {
+                    $manga = Manga::where('slug', $slot['slug'])->first();
+                    if ($manga) {
+                        ReleaseSchedule::create([
+                            'day_of_week' => $dayKey,
+                            'manga_id' => $manga->id,
+                            'release_time' => $slot['time'],
+                            'status_label' => $slot['status_label'],
+                            'is_priority' => (bool) ($slot['is_priority'] ?? false),
+                            'is_active' => true,
+                            'sort_order' => $sort++,
+                        ]);
+                    }
+                }
+            }
+        } catch (\Throwable $e) {
+            // Ignorer si la table n'est pas encore migrée
+        }
+    }
+
+    /**
+     * Retourne le planning complet hydraté avec les modèles Manga depuis la DB
      */
     public static function getHydratedSchedule(): array
     {
-        $config = self::getScheduleConfig();
-        $allSlugs = [];
+        self::seedDefaultsIfNeeded();
 
-        foreach ($config as $day) {
-            foreach ($day['slots'] as $slot) {
-                $allSlugs[] = $slot['slug'];
-            }
-        }
-
-        $mangas = Manga::whereIn('slug', array_unique($allSlugs))
-            ->with(['chapters' => function ($q) {
-                $q->published()->orderBy('number', 'desc')->take(1);
-            }])
-            ->get()
-            ->keyBy('slug');
+        $daysDef = [
+            'lundi' => ['label' => 'Lundi', 'short' => 'Lun', 'iso' => 1],
+            'mardi' => ['label' => 'Mardi', 'short' => 'Mar', 'iso' => 2],
+            'mercredi' => ['label' => 'Mercredi', 'short' => 'Mer', 'iso' => 3],
+            'jeudi' => ['label' => 'Jeudi', 'short' => 'Jeu', 'iso' => 4],
+            'vendredi' => ['label' => 'Vendredi', 'short' => 'Ven', 'iso' => 5],
+            'samedi' => ['label' => 'Samedi', 'short' => 'Sam', 'iso' => 6],
+            'dimanche' => ['label' => 'Dimanche', 'short' => 'Dim', 'iso' => 7],
+        ];
 
         $todayIso = Carbon::now('Europe/Paris')->dayOfWeekIso; // 1 (Lundi) -> 7 (Dimanche)
 
+        $schedules = ReleaseSchedule::with(['manga' => function ($q) {
+            $q->with(['chapters' => function ($c) {
+                $c->published()->orderBy('number', 'desc')->take(1);
+            }]);
+        }])
+        ->active()
+        ->orderBy('sort_order', 'asc')
+        ->orderBy('id', 'asc')
+        ->get()
+        ->groupBy('day_of_week');
+
         $result = [];
-        foreach ($config as $key => $day) {
-            $hydratedItems = [];
-            foreach ($day['slots'] as $slot) {
-                $manga = $mangas->get($slot['slug']);
-                if ($manga) {
-                    $hydratedItems[] = [
-                        'manga' => $manga,
-                        'time' => $slot['time'],
-                        'status_label' => $slot['status_label'],
-                        'is_priority' => $slot['is_priority'],
-                        'latest_chapter' => $manga->chapters->first(),
+        foreach ($daysDef as $key => $meta) {
+            $daySchedules = $schedules->get($key, collect());
+            $items = [];
+
+            foreach ($daySchedules as $sched) {
+                if ($sched->manga) {
+                    $items[] = [
+                        'manga' => $sched->manga,
+                        'time' => $sched->release_time ?: '18h00',
+                        'status_label' => $sched->status_label ?: 'Régulier',
+                        'is_priority' => (bool) $sched->is_priority,
+                        'latest_chapter' => $sched->manga->chapters->first(),
                     ];
                 }
             }
 
             $result[$key] = [
-                'day_key' => $day['day_key'],
-                'label' => $day['label'],
-                'short' => $day['short'],
-                'iso_day' => $day['iso_day'],
-                'is_today' => ($day['iso_day'] === $todayIso),
-                'items' => $hydratedItems,
+                'day_key' => $key,
+                'label' => $meta['label'],
+                'short' => $meta['short'],
+                'iso_day' => $meta['iso'],
+                'is_today' => ($meta['iso'] === $todayIso),
+                'items' => $items,
             ];
         }
 

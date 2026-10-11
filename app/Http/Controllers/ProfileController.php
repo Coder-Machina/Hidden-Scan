@@ -18,7 +18,9 @@ class ProfileController extends Controller
     {
         $user = $request->user();
         
-        // Comments stats
+        // Stats de lecture et Voie Martiale Murim
+        $readCount = $user->readingProgress()->where('is_read', true)->count();
+        $favoritesCount = $user->favorites()->count();
         $commentsCount = $user->comments()->count();
         $likesReceived = $user->comments()->sum('likes_count') ?? 0;
         $recentComments = $user->comments()
@@ -27,23 +29,67 @@ class ProfileController extends Controller
             ->take(6)
             ->get();
 
+        $murimStatus = \App\Services\MurimRankService::calculateStatus($readCount, (int) ($user->streak ?? 0));
+        $monthlyHeatmap = \App\Services\LeaderboardService::getMonthlyHeatmap($user);
+        $leaderboard = \App\Services\LeaderboardService::getTopCultivators(15, $user);
+
         $genres = \App\Models\Genre::orderBy('name')->get();
 
+        $allMangas = \App\Models\Manga::select(['id', 'title', 'slug', 'cover_image', 'type'])
+            ->orderBy('title')
+            ->get();
+
         // Manga lookup mapping for covers & titles in library / reading history
-        $mangasLookup = \App\Models\Manga::all(['id', 'title', 'slug', 'cover_image'])->mapWithKeys(function ($m) {
+        $mangasLookup = $allMangas->mapWithKeys(function ($m) {
             return [$m->slug => [
+                'id' => $m->id,
                 'title' => $m->title,
                 'cover' => $m->cover_image ? \Illuminate\Support\Facades\Storage::url($m->cover_image) : null,
             ]];
         });
 
+        // Hydratation du Top 5
+        $topMangasIds = is_array($user->top_mangas) ? $user->top_mangas : [];
+        $topMangasMap = !empty($topMangasIds) 
+            ? \App\Models\Manga::whereIn('id', $topMangasIds)->get()->keyBy('id')
+            : collect();
+
+        // Hydratation de la Tier List
+        $tierListConfig = is_array($user->tier_list) ? $user->tier_list : [
+            'S' => [], 'A' => [], 'B' => [], 'C' => [], 'D' => [], 'F' => []
+        ];
+
+        // Données allMangas préparées pour Javascript
+        $allMangasData = $allMangas->map(fn($m) => [
+            'id' => $m->id,
+            'title' => $m->title,
+            'slug' => $m->slug,
+            'cover' => $m->cover_image ? \Illuminate\Support\Facades\Storage::url($m->cover_image) : null,
+            'type' => is_object($m->type) ? ($m->type->value ?? 'manga') : ($m->type ?? 'manga'),
+        ])->values()->all();
+
+        $validTabs = ['overview', 'activity', 'tierlist', 'leaderboard', 'library', 'edit', 'settings'];
+        $reqTab = $request->query('tab');
+        $defaultTab = in_array($reqTab, $validTabs) ? $reqTab : 'overview';
+
         return view('profile.edit', [
             'user' => $user,
+            'defaultTab' => $defaultTab,
+            'readCount' => $readCount,
+            'favoritesCount' => $favoritesCount,
             'commentsCount' => $commentsCount,
             'likesReceived' => $likesReceived,
             'recentComments' => $recentComments,
+            'murimStatus' => $murimStatus,
+            'monthlyHeatmap' => $monthlyHeatmap,
+            'leaderboard' => $leaderboard,
             'genres' => $genres,
+            'allMangas' => $allMangas,
+            'allMangasData' => $allMangasData,
             'mangasLookup' => $mangasLookup,
+            'topMangasIds' => $topMangasIds,
+            'topMangasMap' => $topMangasMap,
+            'tierListConfig' => $tierListConfig,
         ]);
     }
 
@@ -207,5 +253,51 @@ class ProfileController extends Controller
         $request->session()->regenerateToken();
 
         return Redirect::to('/');
+    }
+
+    /**
+     * Enregistre la Tier List personnalisée de l'utilisateur
+     */
+    public function saveTierList(Request $request): \Illuminate\Http\JsonResponse
+    {
+        $user = $request->user();
+        if (!$user) {
+            return response()->json(['success' => false, 'message' => 'Non authentifié'], 401);
+        }
+
+        $validated = $request->validate([
+            'tier_list' => ['required', 'array'],
+        ]);
+
+        $user->tier_list = $validated['tier_list'];
+        $user->save();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Votre Tier List a été enregistrée avec succès !',
+        ]);
+    }
+
+    /**
+     * Enregistre les 5 séries représentatives (Top 5) de l'utilisateur
+     */
+    public function saveTopMangas(Request $request): \Illuminate\Http\JsonResponse
+    {
+        $user = $request->user();
+        if (!$user) {
+            return response()->json(['success' => false, 'message' => 'Non authentifié'], 401);
+        }
+
+        $validated = $request->validate([
+            'top_mangas' => ['required', 'array'],
+        ]);
+
+        $user->top_mangas = array_slice($validated['top_mangas'], 0, 5);
+        $user->save();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Votre Top 5 a été mis à jour !',
+        ]);
     }
 }

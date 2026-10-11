@@ -720,9 +720,9 @@
     <script>
         function profileComponent() {
             return {
-                currentTab: '{{ in_array(request('tab'), ['overview', 'library', 'edit', 'settings']) ? request('tab') : ((session('status') === 'password-updated' || $errors->updatePassword->isNotEmpty()) ? 'settings' : 'overview') }}',
-                avatarPreview: '{{ $user->avatar ? $user->avatar_url : '' }}',
-                bannerPreview: '{{ $user->banner ? $user->banner_url : '' }}',
+                currentTab: '{{ $defaultTab ?? 'overview' }}',
+                avatarPreview: @json($user->avatar ? $user->avatar_url : ''),
+                bannerPreview: @json($user->banner ? $user->banner_url : ''),
                 avatarData: '',
                 bannerData: '',
                 favorites: [],
@@ -730,6 +730,126 @@
                 serverProgress: {},
                 libTab: 'favorites',
                 mangasLookup: @json($mangasLookup ?? []),
+
+                // ═══ Top 5 Séries & Tier List ═══
+                topMangasIds: @json($topMangasIds ?? []),
+                topMangasMap: @json($topMangasMap ?? []),
+                tierList: @json($tierListConfig),
+                allMangas: @json($allMangasData ?? []),
+
+                // ═══ Sélecteur Modal Partagé ═══
+                selectorOpen: false,
+                selectorTarget: null, // 'top:0', 'tier:S', etc.
+                selectorSearch: '',
+                toastMessage: '',
+                toastVisible: false,
+
+                showToast(msg) {
+                    this.toastMessage = msg;
+                    this.toastVisible = true;
+                    setTimeout(() => { this.toastVisible = false; }, 3500);
+                },
+
+                openSelector(target) {
+                    this.selectorTarget = target;
+                    this.selectorSearch = '';
+                    this.selectorOpen = true;
+                },
+
+                closeSelector() {
+                    this.selectorOpen = false;
+                    this.selectorTarget = null;
+                },
+
+                get filteredMangas() {
+                    if (!this.selectorSearch.trim()) return this.allMangas;
+                    const q = this.selectorSearch.toLowerCase();
+                    return this.allMangas.filter(m => m.title.toLowerCase().includes(q));
+                },
+
+                getManga(id) {
+                    return this.allMangas.find(m => m.id === parseInt(id)) || this.topMangasMap[id] || null;
+                },
+
+                async selectMangaForTarget(manga) {
+                    if (!this.selectorTarget) return;
+
+                    if (this.selectorTarget.startsWith('top:')) {
+                        const slot = parseInt(this.selectorTarget.split(':')[1]);
+                        while (this.topMangasIds.length <= slot) {
+                            this.topMangasIds.push(null);
+                        }
+                        this.topMangasIds[slot] = manga.id;
+                        this.topMangasMap[manga.id] = manga;
+                        await this.saveTopMangas();
+                    } else if (this.selectorTarget.startsWith('tier:')) {
+                        const tierKey = this.selectorTarget.split(':')[1];
+                        if (!this.tierList[tierKey]) this.tierList[tierKey] = [];
+                        if (!this.tierList[tierKey].includes(manga.id)) {
+                            this.tierList[tierKey].push(manga.id);
+                            await this.saveTierList();
+                        } else {
+                            this.showToast('Cette série est déjà dans ce rang !');
+                        }
+                    }
+
+                    this.closeSelector();
+                },
+
+                async removeTopSlot(slotIndex) {
+                    this.topMangasIds.splice(slotIndex, 1);
+                    await this.saveTopMangas();
+                },
+
+                async removeFromTier(tierKey, mangaId) {
+                    if (this.tierList[tierKey]) {
+                        this.tierList[tierKey] = this.tierList[tierKey].filter(id => id !== mangaId);
+                        await this.saveTierList();
+                    }
+                },
+
+                async saveTierList() {
+                    try {
+                        const token = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+                        const res = await fetch('/api/profile/tier-list', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'X-CSRF-TOKEN': token || '',
+                                'Accept': 'application/json',
+                            },
+                            body: JSON.stringify({ tier_list: this.tierList })
+                        });
+                        const data = await res.json();
+                        if (res.ok && data.success) {
+                            this.showToast('Tier List enregistrée avec succès !');
+                        }
+                    } catch(e) {
+                        this.showToast('Erreur lors de l\'enregistrement.');
+                    }
+                },
+
+                async saveTopMangas() {
+                    try {
+                        const token = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+                        const res = await fetch('/api/profile/top-mangas', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'X-CSRF-TOKEN': token || '',
+                                'Accept': 'application/json',
+                            },
+                            body: JSON.stringify({ top_mangas: this.topMangasIds })
+                        });
+                        const data = await res.json();
+                        if (res.ok && data.success) {
+                            this.showToast('Top 5 séries mis à jour !');
+                        }
+                    } catch(e) {
+                        this.showToast('Erreur lors de l\'enregistrement.');
+                    }
+                },
+
                 init() {
                     this.loadData();
                     this.fetchProgress();
@@ -934,19 +1054,27 @@
                             </template>
                         </div>
                     </div>
-
                     <div class="profile-user-details">
                         <div class="profile-username-row">
                             <span class="profile-username">{{ $user->name }}</span>
+                            <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-black shadow-sm" style="background-color: {{ $murimStatus['current']['color'] }}20; color: {{ $murimStatus['current']['color'] }}; border: 1px solid {{ $murimStatus['current']['color'] }}50;">
+                                <span>{{ $murimStatus['current']['badge'] }}</span>
+                                <span>{{ $murimStatus['current']['title'] }}</span>
+                            </span>
                             @if($user->staff_badge)
-                                <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-extrabold uppercase tracking-wider border {{ $user->staff_badge['bg'] }} {{ $user->staff_badge['text'] }} {{ $user->staff_badge['border'] }} shadow-sm">
-                                    <span class="w-1.5 h-1.5 rounded-full" style="background-color: {{ $user->staff_badge['hex'] }}"></span>
+                                <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase tracking-wider border {{ $user->staff_badge['bg'] }} {{ $user->staff_badge['text'] }} {{ $user->staff_badge['border'] }} shadow-sm">
                                     {{ $user->staff_badge['name'] }}
                                 </span>
                             @endif
                         </div>
-                        <div class="profile-meta-info">
-                            Membre depuis {{ $user->created_at->translatedFormat('F Y') }}
+                        <div class="profile-meta-info flex items-center gap-2.5 mt-1 text-xs text-mist flex-wrap">
+                            <span>Niveau {{ $user->level }}</span>
+                            <span>•</span>
+                            <span class="text-amber-400 font-bold">🔥 {{ $user->streak ?? 0 }}j d'assiduité</span>
+                            <span>•</span>
+                            <span class="text-cyan-400 font-bold">⚡ {{ number_format($user->xp ?? ($readCount * 15)) }} Qi (XP)</span>
+                            <span>•</span>
+                            <span>Membre depuis {{ $user->created_at->translatedFormat('F Y') }}</span>
                         </div>
                     </div>
                 </div>
@@ -967,24 +1095,36 @@
         </div>
 
         {{-- ═══════════════════════════════════════════
-             BLOC 2 — BARRE D'ONGLETS (Moderne & Pleine Page)
+             BLOC 2 — BARRE D'ONGLETS DE L'ÉCOSYSTÈME
              ═══════════════════════════════════════════ --}}
         <div class="profile-tabs-bar">
             <button class="profile-tab-item" :class="currentTab === 'overview' ? 'active' : ''" @click="switchTab('overview')">
-                <svg viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
-                Aperçu
+                <span>🥋</span>
+                <span>Aperçu & Voie Martiale</span>
+            </button>
+            <button class="profile-tab-item" :class="currentTab === 'activity' ? 'active' : ''" @click="switchTab('activity')">
+                <span>📅</span>
+                <span>Suivi d'Assiduité</span>
+            </button>
+            <button class="profile-tab-item" :class="currentTab === 'tierlist' ? 'active' : ''" @click="switchTab('tierlist')">
+                <span>👑</span>
+                <span>Tier List Webtoons</span>
+            </button>
+            <button class="profile-tab-item" :class="currentTab === 'leaderboard' ? 'active' : ''" @click="switchTab('leaderboard')">
+                <span>🏆</span>
+                <span>Classement</span>
             </button>
             <button class="profile-tab-item" :class="currentTab === 'library' ? 'active' : ''" @click="switchTab('library')">
-                <svg viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path></svg>
-                Ma Bibliothèque (<span x-text="favorites.length">0</span>)
+                <svg viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path></svg>
+                <span>Bibliothèque (<span x-text="favorites.length">0</span>)</span>
             </button>
             <button class="profile-tab-item" :class="currentTab === 'edit' ? 'active' : ''" @click="switchTab('edit')">
-                <svg viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"></path><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path></svg>
-                Modifier mon profil
+                <svg viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4"><path d="M12 20h9"></path><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path></svg>
+                <span>Modifier profil</span>
             </button>
             <button class="profile-tab-item" :class="currentTab === 'settings' ? 'active' : ''" @click="switchTab('settings')">
-                <svg viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
-                Paramètres & Sécurité
+                <svg viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+                <span>Sécurité</span>
             </button>
         </div>
 
@@ -997,19 +1137,128 @@
             <div class="profile-tab-panel" :class="currentTab === 'overview' ? 'active' : ''">
 
 
-                {{-- Grille Statistiques --}}
-                <div class="profile-stats-grid">
+                {{-- Encart de Percée de Qi & Voie Martiale --}}
+                <div class="mb-8 p-6 rounded-2xl bg-gradient-to-br from-ink-deep via-panel to-panel border border-white/10 shadow-xl relative overflow-hidden">
+                    <div class="absolute -right-10 -bottom-10 w-48 h-48 bg-amber-500/10 rounded-full blur-3xl pointer-events-none"></div>
+                    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-4 relative z-10">
+                        <div class="flex items-center gap-3.5">
+                            <div class="w-14 h-14 rounded-2xl bg-white/[0.04] border border-white/10 flex items-center justify-center text-3xl shadow-inner">
+                                {{ $murimStatus['current']['badge'] }}
+                            </div>
+                            <div>
+                                <div class="flex items-center gap-2">
+                                    <span class="text-xs font-black uppercase tracking-wider text-amber-400">Royaume Actuel</span>
+                                    <span class="text-[10px] text-mist font-bold">({{ $murimStatus['current']['hangeul'] }} / {{ $murimStatus['current']['pinyin'] }})</span>
+                                </div>
+                                <h2 class="text-xl font-black text-white flex items-center gap-2">
+                                    {{ $murimStatus['current']['title'] }}
+                                    <span class="text-xs font-semibold px-2 py-0.5 rounded-full bg-white/5 text-chalk border border-white/10">{{ $murimStatus['current']['aura'] }}</span>
+                                </h2>
+                                <p class="text-xs text-mist italic mt-0.5">« {{ $murimStatus['current']['quote'] }} »</p>
+                            </div>
+                        </div>
+
+                        <div class="text-left md:text-right">
+                            <span class="text-xs text-mist font-semibold">Prochaine Percée :</span>
+                            <div class="text-sm font-black text-amber-400">
+                                @if($murimStatus['next'])
+                                    {{ $murimStatus['next']['badge'] }} {{ $murimStatus['next']['title'] }}
+                                @else
+                                    👑 Sommet Absolu du Jianghu
+                                @endif
+                            </div>
+                            <span class="text-[11px] text-mist font-medium">
+                                @if($murimStatus['next'])
+                                    Encore <strong class="text-white">{{ $murimStatus['chapters_needed'] }}</strong> chapitres
+                                @else
+                                    Aucun rival sous les cieux
+                                @endif
+                            </span>
+                        </div>
+                    </div>
+
+                    {{-- Barre d'Essence de Qi --}}
+                    <div class="relative z-10">
+                        <div class="flex items-center justify-between text-xs font-bold mb-1.5">
+                            <span class="text-chalk flex items-center gap-1.5">
+                                <span>⚡ Concentration de Qi</span>
+                                <span class="text-amber-400">({{ $murimStatus['percent'] }}%)</span>
+                            </span>
+                            <span class="text-mist">{{ number_format($readCount) }} / {{ $murimStatus['next'] ? $murimStatus['next']['min_chapters'] : number_format($readCount) }} chapitres</span>
+                        </div>
+                        <div class="w-full h-3 bg-black/50 rounded-full overflow-hidden border border-white/5 shadow-inner">
+                            <div class="h-full bg-gradient-to-r from-amber-500 via-crimson to-amber-300 rounded-full transition-all duration-1000 shadow-[0_0_12px_rgba(245,158,11,0.5)]" style="width: {{ $murimStatus['percent'] }}%"></div>
+                        </div>
+                    </div>
+                </div>
+
+                {{-- Grille Statistiques Clés --}}
+                <div class="profile-stats-grid mb-8">
                     <div class="profile-stat-box">
-                        <span class="profile-stat-num" x-text="history.length">0</span>
-                        <span class="profile-stat-label">Chapitres lus</span>
+                        <span class="profile-stat-num">{{ number_format($readCount) }}</span>
+                        <span class="profile-stat-label">📖 Chapitres lus</span>
                     </div>
                     <div class="profile-stat-box">
-                        <span class="profile-stat-num" x-text="favorites.length">0</span>
-                        <span class="profile-stat-label">Favoris</span>
+                        <span class="profile-stat-num" x-text="favorites.length">{{ $favoritesCount }}</span>
+                        <span class="profile-stat-label">❤️ Favoris</span>
                     </div>
                     <div class="profile-stat-box">
                         <span class="profile-stat-num">{{ $commentsCount }}</span>
-                        <span class="profile-stat-label">Commentaires</span>
+                        <span class="profile-stat-label">💬 Commentaires</span>
+                    </div>
+                    <div class="profile-stat-box">
+                        <span class="profile-stat-num text-amber-400">{{ $user->streak ?? 0 }}j</span>
+                        <span class="profile-stat-label">🔥 Flamme active</span>
+                    </div>
+                </div>
+
+                {{-- Section Top 5 Séries Représentatives --}}
+                <div class="mb-8 p-6 rounded-2xl bg-panel border border-white/10 shadow-lg">
+                    <div class="flex items-center justify-between mb-4">
+                        <div>
+                            <h3 class="text-base font-black text-white flex items-center gap-2">
+                                <span>⭐</span>
+                                <span>Mes 5 Séries Incontournables</span>
+                            </h3>
+                            <p class="text-xs text-mist">Les 5 œuvres majeures qui illustrent votre voie dans le Jianghu.</p>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <button type="button" @click="saveTopMangas()" class="px-3 py-1.5 rounded-xl bg-crimson hover:bg-crimson/80 text-white text-xs font-bold transition shadow-sm flex items-center gap-1.5">
+                                <span>💾</span>
+                                <span>Sauvegarder</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3.5">
+                        @for($slot = 0; $slot < 5; $slot++)
+                            <div class="relative group rounded-xl overflow-hidden border border-white/10 bg-ink-deep aspect-[2/3] flex flex-col items-center justify-center text-center p-2 transition hover:border-amber-400/50">
+                                <div class="absolute top-2 left-2 z-20 w-6 h-6 rounded-full bg-black/80 backdrop-blur-sm border border-white/20 flex items-center justify-center text-[10px] font-black text-amber-400 shadow">
+                                    #{{ $slot + 1 }}
+                                </div>
+
+                                <template x-if="topMangasIds[{{ $slot }}] && getManga(topMangasIds[{{ $slot }}])">
+                                    <div class="w-full h-full relative">
+                                        <img :src="getManga(topMangasIds[{{ $slot }}]).cover || '/images/default-cover.jpg'" class="w-full h-full object-cover rounded-lg" alt="">
+                                        <div class="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent flex flex-col justify-end p-2.5">
+                                            <span class="text-xs font-bold text-white line-clamp-2 leading-tight" x-text="getManga(topMangasIds[{{ $slot }}]).title"></span>
+                                        </div>
+                                        <button type="button" @click.stop="removeTopSlot({{ $slot }})" class="absolute top-2 right-2 z-20 w-6 h-6 rounded-full bg-crimson/90 text-white flex items-center justify-center text-xs opacity-0 group-hover:opacity-100 transition shadow hover:scale-110" title="Retirer">
+                                            ✕
+                                        </button>
+                                    </div>
+                                </template>
+
+                                <template x-if="!topMangasIds[{{ $slot }}] || !getManga(topMangasIds[{{ $slot }}])">
+                                    <button type="button" @click="openSelector('top:{{ $slot }}')" class="w-full h-full flex flex-col items-center justify-center gap-2 border-2 border-dashed border-white/10 rounded-lg hover:border-crimson/60 hover:bg-white/[0.02] transition cursor-pointer p-4 group">
+                                        <div class="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center text-lg group-hover:scale-110 transition text-mist group-hover:text-crimson">
+                                            +
+                                        </div>
+                                        <span class="text-[11px] font-bold text-mist group-hover:text-white transition">Choisir une série</span>
+                                    </button>
+                                </template>
+                            </div>
+                        @endfor
                     </div>
                 </div>
 
@@ -1087,7 +1336,310 @@
                 </div>
             </div>
 
-            {{-- ── Panel 2 : Ma Bibliothèque ── --}}
+            {{-- ── Panel : Suivi d'Assiduité (Heatmap Mensuelle) ── --}}
+            <div class="profile-tab-panel" :class="currentTab === 'activity' ? 'active' : ''">
+                <div class="profile-card-panel">
+                    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
+                        <div>
+                            <h2 class="text-xl font-black text-white flex items-center gap-2.5">
+                                <span>📅</span>
+                                <span>Suivi d'Assiduité Martiale</span>
+                                <span class="text-xs px-2.5 py-0.5 rounded-full bg-amber-500/10 text-amber-400 border border-amber-500/20 font-bold">
+                                    {{ $monthlyHeatmap['month_label'] }}
+                                </span>
+                            </h2>
+                            <p class="text-xs text-mist mt-1">
+                                Visualisez l'intensité de votre cultivation quotidienne. Chaque chapitre lu nourrit votre Qi martial !
+                            </p>
+                        </div>
+                        <div class="flex items-center gap-3">
+                            <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl bg-panel border border-white/10 text-xs font-bold text-chalk">
+                                <span class="text-amber-400">🔥 Flamme active :</span>
+                                <strong class="text-white">{{ $user->streak ?? 0 }} jours</strong>
+                            </span>
+                        </div>
+                    </div>
+
+                    {{-- 4 Cartes Statistiques Mensuelles --}}
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-3.5 mb-8">
+                        <div class="p-4 rounded-xl bg-ink-deep/80 border border-white/5">
+                            <span class="text-2xl font-black text-white block">{{ $monthlyHeatmap['total_chapters'] }}</span>
+                            <span class="text-xs text-mist font-medium mt-0.5 block">Chapitres ce mois</span>
+                        </div>
+                        <div class="p-4 rounded-xl bg-ink-deep/80 border border-white/5">
+                            <span class="text-2xl font-black text-amber-400 block">{{ $monthlyHeatmap['active_days'] }} j</span>
+                            <span class="text-xs text-mist font-medium mt-0.5 block">Jours actifs</span>
+                        </div>
+                        <div class="p-4 rounded-xl bg-ink-deep/80 border border-white/5">
+                            <span class="text-2xl font-black text-cyan-400 block">{{ $monthlyHeatmap['best_day_count'] }}</span>
+                            <span class="text-xs text-mist font-medium mt-0.5 block">Record en 1 jour ({{ $monthlyHeatmap['best_day_label'] }})</span>
+                        </div>
+                        <div class="p-4 rounded-xl bg-ink-deep/80 border border-white/5">
+                            <span class="text-2xl font-black text-emerald-400 block">{{ $monthlyHeatmap['assiduity_rate'] }}%</span>
+                            <span class="text-xs text-mist font-medium mt-0.5 block">Taux d'assiduité</span>
+                        </div>
+                    </div>
+
+                    {{-- Grille du Calendrier --}}
+                    <div class="p-5 rounded-2xl bg-[#0e0e18] border border-white/10">
+                        {{-- Jours de la semaine --}}
+                        <div class="grid grid-cols-7 gap-2 text-center text-[11px] font-black tracking-wider text-mist mb-2">
+                            <span>LUN</span>
+                            <span>MAR</span>
+                            <span>MER</span>
+                            <span>JEU</span>
+                            <span>VEN</span>
+                            <span>SAM</span>
+                            <span>DIM</span>
+                        </div>
+
+                        {{-- Cases des jours --}}
+                        <div class="grid grid-cols-7 gap-2">
+                            {{-- Cases vides début de mois --}}
+                            @for($i = 0; $i < $monthlyHeatmap['leading_empty_days']; $i++)
+                                <div class="aspect-square rounded-xl bg-transparent border border-dashed border-white/[0.03]"></div>
+                            @endfor
+
+                            {{-- Jours réels du mois --}}
+                            @foreach($monthlyHeatmap['days'] as $day)
+                                @php
+                                    $bgClass = match($day['intensity']) {
+                                        0 => 'bg-[#151522] border-white/5 text-mist/60 hover:border-white/20',
+                                        1 => 'bg-indigo-950/70 border-indigo-700/50 text-indigo-200 hover:border-indigo-400',
+                                        2 => 'bg-red-950/80 border-red-600/50 text-red-100 hover:border-red-400',
+                                        3 => 'bg-red-800/90 border-red-500/80 text-white hover:border-red-300 shadow-[0_0_10px_rgba(239,68,68,0.3)]',
+                                        4 => 'bg-gradient-to-tr from-amber-600 to-yellow-400 border-amber-300 text-black font-black shadow-[0_0_15px_rgba(245,158,11,0.6)] hover:scale-105',
+                                        default => 'bg-[#151522] border-white/5 text-mist/60',
+                                    };
+                                @endphp
+                                <div 
+                                    class="aspect-square rounded-xl border p-1.5 flex flex-col justify-between transition relative group cursor-pointer {{ $bgClass }} {{ $day['is_today'] ? 'ring-2 ring-amber-400 ring-offset-2 ring-offset-black' : '' }}"
+                                    title="{{ $day['day_number'] }} {{ $monthlyHeatmap['month_label'] }} : {{ $day['chapters_read'] }} chapitre(s) lus"
+                                >
+                                    <div class="flex items-center justify-between text-[11px] font-bold">
+                                        <span>{{ $day['day_number'] }}</span>
+                                        @if($day['is_today'])
+                                            <span class="w-1.5 h-1.5 rounded-full bg-amber-400 animate-ping"></span>
+                                        @endif
+                                    </div>
+
+                                    <div class="text-right">
+                                        @if($day['chapters_read'] > 0)
+                                            <span class="text-[10px] font-black {{ $day['intensity'] === 4 ? 'text-black' : 'text-amber-300' }}">
+                                                ⚡{{ $day['chapters_read'] }}
+                                            </span>
+                                        @endif
+                                    </div>
+
+                                    {{-- Tooltip au hover --}}
+                                    <div class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover:block z-30 px-2.5 py-1 rounded-lg bg-black text-white text-[10px] whitespace-nowrap shadow-xl border border-white/10 pointer-events-none">
+                                        {{ $day['day_number'] }} {{ $monthlyHeatmap['month_label'] }} : <strong>{{ $day['chapters_read'] }}</strong> chap.
+                                    </div>
+                                </div>
+                            @endforeach
+                        </div>
+
+                        {{-- Légende d'intensité de Qi --}}
+                        <div class="flex items-center justify-end gap-2 mt-4 pt-4 border-t border-white/5 text-[11px] text-mist font-medium">
+                            <span>Moins de Qi</span>
+                            <span class="w-3.5 h-3.5 rounded bg-[#151522] border border-white/10" title="0 chap."></span>
+                            <span class="w-3.5 h-3.5 rounded bg-indigo-950/70 border border-indigo-700/50" title="1-2 chap."></span>
+                            <span class="w-3.5 h-3.5 rounded bg-red-950/80 border border-red-600/50" title="3-5 chap."></span>
+                            <span class="w-3.5 h-3.5 rounded bg-red-800/90 border border-red-500/80" title="6-8 chap."></span>
+                            <span class="w-3.5 h-3.5 rounded bg-gradient-to-tr from-amber-600 to-yellow-400 border border-amber-300" title="9+ chap."></span>
+                            <span>Flamme Suprême</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            {{-- ── Panel : Tier List Webtoons ── --}}
+            <div class="profile-tab-panel" :class="currentTab === 'tierlist' ? 'active' : ''">
+                <div class="profile-card-panel">
+                    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
+                        <div>
+                            <h2 class="text-xl font-black text-white flex items-center gap-2.5">
+                                <span>👑</span>
+                                <span>Ma Tier List Webtoons</span>
+                                <span class="text-xs px-2.5 py-0.5 rounded-full bg-crimson/10 text-crimson border border-crimson/20 font-bold">
+                                    Échelle de Jugement S à F
+                                </span>
+                            </h2>
+                            <p class="text-xs text-mist mt-1">
+                                Hiérarchisez vos séries selon leur valeur martiale. Vos choix sont enregistrés sur votre profil !
+                            </p>
+                        </div>
+                        <div class="flex items-center gap-2.5">
+                            <button type="button" @click="saveTierList()" class="btn-save-red !py-2.5 !px-5 text-xs flex items-center gap-2 shadow-lg">
+                                <span>💾</span>
+                                <span>Enregistrer ma Tier List</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    {{-- Rangées de la Tier List --}}
+                    @php
+                        $tiersMeta = [
+                            'S' => ['label' => 'Divin & Suprême', 'bg' => 'bg-red-600 text-white', 'border' => 'border-red-500/40'],
+                            'A' => ['label' => 'Grand Maître', 'bg' => 'bg-purple-600 text-white', 'border' => 'border-purple-500/40'],
+                            'B' => ['label' => 'Élite du Qi', 'bg' => 'bg-blue-600 text-white', 'border' => 'border-blue-500/40'],
+                            'C' => ['label' => 'Disciple Prometteur', 'bg' => 'bg-emerald-600 text-white', 'border' => 'border-emerald-500/40'],
+                            'D' => ['label' => 'Guerrier Moyen', 'bg' => 'bg-amber-600 text-white', 'border' => 'border-amber-500/40'],
+                            'F' => ['label' => 'Abysses Martiales', 'bg' => 'bg-zinc-700 text-white', 'border' => 'border-zinc-600/40'],
+                        ];
+                    @endphp
+
+                    <div class="space-y-3">
+                        @foreach(['S', 'A', 'B', 'C', 'D', 'F'] as $tierKey)
+                            @php $meta = $tiersMeta[$tierKey]; @endphp
+                            <div class="flex flex-col sm:flex-row items-stretch rounded-2xl bg-[#0e0e18] border border-white/10 overflow-hidden shadow-md">
+                                {{-- En-tête du Rang (gauche) --}}
+                                <div class="w-full sm:w-28 sm:min-w-[7rem] flex sm:flex-col items-center justify-between sm:justify-center p-3 text-center {{ $meta['bg'] }} font-black">
+                                    <span class="text-2xl">{{ $tierKey }}</span>
+                                    <span class="text-[9px] uppercase tracking-wider opacity-90 leading-tight">{{ $meta['label'] }}</span>
+                                    <button type="button" @click="openSelector('tier:{{ $tierKey }}')" class="sm:hidden px-2 py-1 rounded bg-black/30 text-white text-[10px] font-bold">
+                                        + Ajouter
+                                    </button>
+                                </div>
+
+                                {{-- Conteneur des cartes de ce rang --}}
+                                <div class="flex-1 p-3 flex items-center gap-3 overflow-x-auto min-h-[110px] bg-ink-deep/50">
+                                    <template x-for="mId in (tierList['{{ $tierKey }}'] || [])" :key="mId">
+                                        <div class="relative group/manga flex-shrink-0 w-20 aspect-[2/3] rounded-lg overflow-hidden border border-white/10 bg-black/60 shadow-md">
+                                            <template x-if="getManga(mId)">
+                                                <div class="w-full h-full relative">
+                                                    <img :src="getManga(mId).cover || '/images/default-cover.jpg'" class="w-full h-full object-cover" alt="">
+                                                    <div class="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-transparent p-1 flex flex-col justify-end">
+                                                        <span class="text-[10px] font-bold text-white line-clamp-2 leading-tight" x-text="getManga(mId).title"></span>
+                                                    </div>
+                                                    <button type="button" @click.stop="removeFromTier('{{ $tierKey }}', mId)" class="absolute top-1 right-1 w-5 h-5 rounded-full bg-crimson text-white flex items-center justify-center text-[10px] opacity-0 group-hover/manga:opacity-100 transition shadow hover:scale-110" title="Retirer de ce rang">
+                                                        ✕
+                                                    </button>
+                                                </div>
+                                            </template>
+                                        </div>
+                                    </template>
+
+                                    {{-- Bouton ajouter dans le flux desktop --}}
+                                    <button type="button" @click="openSelector('tier:{{ $tierKey }}')" class="flex-shrink-0 w-20 aspect-[2/3] rounded-lg border-2 border-dashed border-white/10 hover:border-amber-400/60 hover:bg-white/[0.02] transition flex flex-col items-center justify-center gap-1 text-mist hover:text-white cursor-pointer group">
+                                        <span class="text-xl group-hover:scale-110 transition">+</span>
+                                        <span class="text-[9px] font-bold uppercase tracking-wider">Ajouter</span>
+                                    </button>
+                                </div>
+                            </div>
+                        @endforeach
+                    </div>
+                </div>
+            </div>
+
+            {{-- ── Panel : Classement des Lecteurs ── --}}
+            <div class="profile-tab-panel" :class="currentTab === 'leaderboard' ? 'active' : ''">
+                <div class="profile-card-panel">
+                    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
+                        <div>
+                            <h2 class="text-xl font-black text-white flex items-center gap-2.5">
+                                <span>🏆</span>
+                                <span>Panthéon des Cultivateurs</span>
+                                <span class="text-xs px-2.5 py-0.5 rounded-full bg-amber-500/10 text-amber-400 border border-amber-500/20 font-bold">
+                                    Top Disciples du Jianghu
+                                </span>
+                            </h2>
+                            <p class="text-xs text-mist mt-1">
+                                Le classement officiel des lecteurs de Hidden Scan selon leur niveau de cultivation et leurs chapitres maîtrisés.
+                            </p>
+                        </div>
+                        <a href="{{ route('leaderboard') }}" class="px-4 py-2 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-xs font-bold text-white transition flex items-center gap-2">
+                            <span>Voir le Panthéon Public</span>
+                            <span>→</span>
+                        </a>
+                    </div>
+
+                    {{-- Position actuelle du lecteur connecté --}}
+                    <div class="mb-6 p-4 rounded-xl bg-gradient-to-r from-amber-500/10 via-panel to-panel border border-amber-500/30 flex items-center justify-between gap-4 flex-wrap">
+                        <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 rounded-xl bg-amber-500/20 border border-amber-500/40 flex items-center justify-center text-lg font-black text-amber-400">
+                                #{{ $leaderboard['current_user_rank'] }}
+                            </div>
+                            <div>
+                                <span class="text-xs text-mist font-semibold">Votre rang actuel dans le Jianghu</span>
+                                <div class="text-sm font-bold text-white flex items-center gap-2">
+                                    <span>{{ $user->name }}</span>
+                                    <span class="text-xs text-amber-400">{{ $murimStatus['current']['badge'] }} {{ $murimStatus['current']['title'] }}</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-4 text-xs font-bold text-mist">
+                            <span>📖 <strong>{{ number_format($readCount) }}</strong> chapitres</span>
+                            <span>⚡ <strong>{{ number_format($user->xp ?? ($readCount * 15)) }}</strong> Qi</span>
+                            <span>🔥 <strong>{{ $user->streak ?? 0 }}j</strong> streak</span>
+                        </div>
+                    </div>
+
+                    {{-- Tableau du Panthéon --}}
+                    <div class="rounded-2xl bg-[#0e0e18] border border-white/10 overflow-hidden">
+                        <div class="grid grid-cols-12 gap-3 p-3.5 bg-black/40 text-[11px] font-black uppercase tracking-wider text-mist border-b border-white/5">
+                            <span class="col-span-2 sm:col-span-1 text-center">Rang</span>
+                            <span class="col-span-6 sm:col-span-5">Disciple</span>
+                            <span class="hidden sm:block sm:col-span-3">Royaume Martial</span>
+                            <span class="col-span-4 sm:col-span-3 text-right">Chapitres / Qi</span>
+                        </div>
+
+                        <div class="divide-y divide-white/5">
+                            @foreach($leaderboard['all'] as $rankNum => $cultivator)
+                                @php
+                                    $isMe = ($cultivator['id'] === $user->id);
+                                @endphp
+                                <div class="grid grid-cols-12 gap-3 p-3.5 items-center transition {{ $isMe ? 'bg-amber-500/10 border-l-4 border-amber-400' : 'hover:bg-white/[0.02]' }}">
+                                    <div class="col-span-2 sm:col-span-1 text-center font-black">
+                                        @if($rankNum === 0)
+                                            <span class="text-lg">🥇</span>
+                                        @elseif($rankNum === 1)
+                                            <span class="text-lg">🥈</span>
+                                        @elseif($rankNum === 2)
+                                            <span class="text-lg">🥉</span>
+                                        @else
+                                            <span class="text-xs text-mist">#{{ $rankNum + 1 }}</span>
+                                        @endif
+                                    </div>
+
+                                    <div class="col-span-6 sm:col-span-5 flex items-center gap-3 min-w-0">
+                                        <div class="w-8 h-8 rounded-full bg-panel border border-white/10 overflow-hidden flex-shrink-0 flex items-center justify-center text-xs font-bold text-white">
+                                            @if(!empty($cultivator['avatar_url']))
+                                                <img src="{{ $cultivator['avatar_url'] }}" class="w-full h-full object-cover" alt="">
+                                            @else
+                                                {{ strtoupper(substr($cultivator['name'], 0, 2)) }}
+                                            @endif
+                                        </div>
+                                        <div class="min-w-0">
+                                            <span class="text-xs font-bold text-white truncate block {{ $isMe ? 'text-amber-400' : '' }}">
+                                                {{ $cultivator['name'] }}
+                                                @if($isMe) <span class="text-[10px] text-amber-300 font-normal">(Vous)</span> @endif
+                                            </span>
+                                            <span class="text-[10px] text-mist block sm:hidden">
+                                                {{ $cultivator['murim_badge'] }} {{ $cultivator['murim_title'] }}
+                                            </span>
+                                        </div>
+                                    </div>
+
+                                    <div class="hidden sm:block sm:col-span-3">
+                                        <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold" style="background-color: {{ $cultivator['murim_color'] }}15; color: {{ $cultivator['murim_color'] }}; border: 1px solid {{ $cultivator['murim_color'] }}40;">
+                                            <span>{{ $cultivator['murim_badge'] }}</span>
+                                            <span class="truncate">{{ $cultivator['murim_title'] }}</span>
+                                        </span>
+                                    </div>
+
+                                    <div class="col-span-4 sm:col-span-3 text-right">
+                                        <span class="text-xs font-black text-white block">{{ number_format($cultivator['read_count']) }} chap.</span>
+                                        <span class="text-[10px] text-amber-400 font-bold block">⚡ {{ number_format($cultivator['xp'] ?? ($cultivator['read_count'] * 15)) }} XP</span>
+                                    </div>
+                                </div>
+                            @endforeach
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            {{-- ── Panel : Ma Bibliothèque ── --}}
             <div class="profile-tab-panel" :class="currentTab === 'library' ? 'active' : ''">
                 {{-- Bannière Mode Rattrapage --}}
                 <div style="background: linear-gradient(135deg, rgba(220,38,38,0.16) 0%, rgba(20,20,32,0.95) 100%); border: 1px solid rgba(220,38,38,0.35); border-radius: 14px; padding: 16px 20px; margin-bottom: 22px; display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; box-shadow: 0 8px 24px rgba(0,0,0,0.4);">
@@ -1371,6 +1923,86 @@
                 </div>
             </div>
 
+        </div>
+
+        {{-- ═══════════════════════════════════════════
+             MODALE DE SÉLECTION D'ŒUVRE (TOP 5 & TIER LIST)
+             ═══════════════════════════════════════════ --}}
+        <div 
+            x-show="selectorOpen" 
+            x-transition.opacity
+            class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md"
+            style="display: none;"
+            @keydown.escape.window="closeSelector()"
+        >
+            <div 
+                class="w-full max-w-2xl bg-[#0f0f18] border border-white/10 rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[85vh]"
+                @click.outside="closeSelector()"
+            >
+                {{-- En-tête Modal --}}
+                <div class="p-5 border-b border-white/10 flex items-center justify-between">
+                    <div>
+                        <h3 class="text-base font-black text-white flex items-center gap-2">
+                            <span>📚</span>
+                            <span>Choisir une série</span>
+                        </h3>
+                        <p class="text-xs text-mist mt-0.5">Sélectionnez le webtoon à ajouter.</p>
+                    </div>
+                    <button type="button" @click="closeSelector()" class="w-8 h-8 rounded-full bg-white/5 hover:bg-white/10 text-mist hover:text-white flex items-center justify-center transition">
+                        ✕
+                    </button>
+                </div>
+
+                {{-- Barre de recherche --}}
+                <div class="p-4 border-b border-white/5 bg-ink-deep/50">
+                    <div class="relative">
+                        <svg class="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-mist" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+                        <input 
+                            type="text" 
+                            x-model="selectorSearch" 
+                            placeholder="Rechercher une série par son titre..." 
+                            class="w-full pl-10 pr-4 py-2.5 rounded-xl bg-panel border border-white/10 text-white placeholder-mist/60 text-xs focus:outline-none focus:border-crimson"
+                            x-ref="searchInput"
+                        >
+                    </div>
+                </div>
+
+                {{-- Grille des Séries --}}
+                <div class="p-4 overflow-y-auto flex-1 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+                    <template x-for="manga in filteredMangas" :key="manga.id">
+                        <div 
+                            @click="selectMangaForTarget(manga)"
+                            class="group rounded-xl overflow-hidden border border-white/10 bg-panel hover:border-amber-400 hover:scale-[1.02] transition cursor-pointer p-2 flex flex-col items-center text-center shadow-md"
+                        >
+                            <div class="w-full aspect-[2/3] rounded-lg overflow-hidden bg-black/40 mb-2">
+                                <img :src="manga.cover || '/images/default-cover.jpg'" class="w-full h-full object-cover group-hover:scale-105 transition duration-300" alt="">
+                            </div>
+                            <span class="text-xs font-bold text-white line-clamp-2 leading-tight group-hover:text-amber-400 transition" x-text="manga.title"></span>
+                            <span class="text-[10px] text-mist font-semibold uppercase mt-1" x-text="manga.type || 'Webtoon'"></span>
+                        </div>
+                    </template>
+
+                    <div x-show="filteredMangas.length === 0" class="col-span-full py-12 text-center text-mist text-xs">
+                        Aucune série ne correspond à votre recherche.
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        {{-- Toast Notification --}}
+        <div 
+            x-show="toastVisible" 
+            x-transition:enter="transition ease-out duration-300"
+            x-transition:enter-start="opacity-0 translate-y-4"
+            x-transition:enter-end="opacity-100 translate-y-0"
+            x-transition:leave="transition ease-in duration-200"
+            x-transition:leave-start="opacity-100 translate-y-0"
+            x-transition:leave-end="opacity-0 translate-y-4"
+            class="fixed bottom-6 right-6 z-50 px-4 py-3 rounded-xl bg-panel border border-amber-400/50 text-white text-xs font-bold shadow-2xl flex items-center gap-2.5 backdrop-blur-md"
+            style="display: none;"
+        >
+            <span class="text-amber-400 text-sm">✓</span>
+            <span x-text="toastMessage"></span>
         </div>
 
     </div>

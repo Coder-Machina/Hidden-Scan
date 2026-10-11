@@ -16,7 +16,8 @@ use Filament\Panel;
 #[Fillable([
     'name', 'email', 'password',
     'pass_code', 'last_ip_address',
-    'avatar', 'banner', 'bio', 'xp', 'favorite_genre', 'reader_mode',
+    'avatar', 'banner', 'bio', 'xp', 'streak', 'last_read_at', 'favorite_genre', 'reader_mode',
+    'tier_list', 'top_mangas',
     'is_banned', 'banned_at', 'ban_reason',
     'is_comment_banned', 'comment_banned_at', 'comment_ban_reason',
 ])]
@@ -126,11 +127,24 @@ class User extends Authenticatable implements FilamentUser
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
             'xp' => 'integer',
+            'streak' => 'integer',
+            'last_read_at' => 'datetime',
+            'tier_list' => 'array',
+            'top_mangas' => 'array',
             'is_banned' => 'boolean',
             'banned_at' => 'datetime',
             'is_comment_banned' => 'boolean',
             'comment_banned_at' => 'datetime',
         ];
+    }
+
+    /**
+     * Calcule le statut de cultivation Murim de l'utilisateur
+     */
+    public function getMurimRankAttribute(): array
+    {
+        $readCount = $this->readingProgress()->where('is_read', true)->count();
+        return \App\Services\MurimRankService::calculate($readCount, $this->streak ?? 0);
     }
 
     public function comments()

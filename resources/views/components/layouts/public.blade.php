@@ -693,62 +693,63 @@
                     </div>
                 </a>
 
-                {{-- Navigation desktop --}}
-                <div class="hidden md:flex items-center gap-1.5">
+                {{-- Navigation desktop épurée & aérée --}}
+                <div class="hidden md:flex items-center gap-1 lg:gap-2">
                     <a href="{{ route('home') }}"
-                       class="px-3.5 py-2 rounded-xl text-sm font-semibold transition-all {{ request()->routeIs('home') ? 'text-white bg-crimson/15 border border-crimson/40 shadow-[0_0_15px_rgba(255,42,85,0.25)]' : 'text-mist hover:text-white hover:bg-panel-hi' }}">
+                       class="px-3 py-1.5 rounded-xl text-xs sm:text-sm font-bold transition-all {{ request()->routeIs('home') ? 'text-white bg-crimson/15 border border-crimson/40 shadow-[0_0_12px_rgba(255,42,85,0.25)]' : 'text-mist hover:text-white hover:bg-panel-hi' }}">
                         Accueil
                     </a>
                     <a href="{{ route('manga.index') }}"
-                       class="px-3.5 py-2 rounded-xl text-sm font-semibold transition-all {{ request()->routeIs('manga.index') ? 'text-white bg-crimson/15 border border-crimson/40 shadow-[0_0_15px_rgba(255,42,85,0.25)]' : 'text-mist hover:text-white hover:bg-panel-hi' }}">
+                       class="px-3 py-1.5 rounded-xl text-xs sm:text-sm font-bold transition-all {{ request()->routeIs('manga.index') ? 'text-white bg-crimson/15 border border-crimson/40 shadow-[0_0_12px_rgba(255,42,85,0.25)]' : 'text-mist hover:text-white hover:bg-panel-hi' }}">
                         Catalogue
                     </a>
                     <a href="{{ route('planning') }}"
-                       class="px-3.5 py-2 rounded-xl text-sm font-semibold transition-all {{ request()->routeIs('planning') ? 'text-white bg-crimson/15 border border-crimson/40 shadow-[0_0_15px_rgba(255,42,85,0.25)]' : 'text-mist hover:text-white hover:bg-panel-hi' }}">
+                       class="px-3 py-1.5 rounded-xl text-xs sm:text-sm font-bold transition-all {{ request()->routeIs('planning') ? 'text-white bg-crimson/15 border border-crimson/40 shadow-[0_0_12px_rgba(255,42,85,0.25)]' : 'text-mist hover:text-white hover:bg-panel-hi' }}">
                         Planning
+                    </a>
+                    <a href="{{ route('leaderboard') }}"
+                       class="px-3 py-1.5 rounded-xl text-xs sm:text-sm font-bold transition-all {{ request()->routeIs('leaderboard') ? 'text-white bg-crimson/15 border border-crimson/40 shadow-[0_0_12px_rgba(255,42,85,0.25)]' : 'text-mist hover:text-white hover:bg-panel-hi' }}">
+                        Classement
                     </a>
                     <a href="{{ route('manga.random') }}"
                        onclick="if(window.HiddenScan && !{{ auth()->check() ? 'true' : 'false' }}){ const favs = window.HiddenScan.getFavorites().map(f => f.slug).join(','); if(favs) this.href = '{{ route('manga.random') }}?favs=' + encodeURIComponent(favs); }"
-                       title="Lancer un manga aléatoire selon vos genres préférés"
-                       class="px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 bg-gradient-to-r from-crimson/20 via-crimson/10 to-amber-500/20 hover:from-crimson/30 hover:to-amber-500/30 text-chalk border border-crimson/30 hover:border-crimson/60 shadow-sm hover:scale-105 active:scale-95">
-                        <span class="text-sm leading-none">🎲</span>
-                        <span>Surprends-moi</span>
-                    </a>
-                    <a href="{{ route('library') }}"
-                       class="px-3.5 py-2 rounded-xl text-sm font-semibold transition-all {{ request()->routeIs('library') ? 'text-white bg-crimson/15 border border-crimson/40 shadow-[0_0_15px_rgba(255,42,85,0.25)]' : 'text-mist hover:text-white hover:bg-panel-hi' }}">
-                        <span class="flex items-center gap-1.5">
-                            <svg class="w-4 h-4 text-crimson" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/></svg>
-                            Bibliothèque
-                        </span>
+                       title="Lancer un manga aléatoire"
+                       class="px-2.5 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1 bg-white/[0.04] hover:bg-crimson/20 text-chalk border border-white/10 hover:border-crimson/40 hover:scale-105 active:scale-95">
+                        <span>🎲</span>
+                        <span class="hidden xl:inline">Surprends-moi</span>
                     </a>
                 </div>
 
-                {{-- Actions Desktop --}}
-                <div class="hidden md:flex items-center gap-3">
-                    {{-- Search --}}
+                {{-- Actions Desktop Équilibrées (Pas de conflit de place) --}}
+                <div class="hidden md:flex items-center gap-2 lg:gap-3">
+                    {{-- Search Input Dynamique & Compact --}}
                     <form action="{{ route('manga.index') }}" method="GET" class="relative">
-                        <svg class="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-mist" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+                        <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-mist pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
                         <input
                             type="text"
                             name="q"
-                            placeholder="Rechercher une série..."
-                            class="input-field !pl-10 pr-4 py-2 w-52 text-sm !rounded-full !bg-ink-deep/70 !border-white/10 focus:!w-64 focus:!border-crimson/60 transition-all duration-300"
+                            placeholder="Rechercher..."
+                            class="input-field !pl-8 !pr-3 !py-1.5 w-36 lg:w-44 focus:!w-56 text-xs !rounded-full !bg-ink-deep/80 !border-white/10 focus:!border-crimson/60 transition-all duration-300"
                         >
                     </form>
 
-                    {{-- Rang Murim & Flamme Martiale --}}
+                    {{-- Bouton Discord Officiel --}}
+                    <a href="https://discord.gg/sMUeFSks4" target="_blank" rel="noopener noreferrer"
+                       class="p-2 rounded-xl bg-[#5865F2]/10 border border-[#5865F2]/25 text-[#5865F2] hover:bg-[#5865F2] hover:text-white transition-all shadow-sm flex items-center justify-center"
+                       title="Rejoindre notre communauté Discord">
+                        <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057 19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028c.462-.63.874-1.295 1.226-1.994.021-.041.001-.09-.041-.106a13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.892.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03zM8.02 15.33c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.956-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.956 2.418-2.157 2.418zm7.975 0c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.955-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.946 2.418-2.157 2.418z"/></svg>
+                    </a>
+
+                    {{-- Rang Murim & Flamme Martiale : Pilule Compacte & Élégante --}}
                     <div x-data x-cloak>
                         <button @click="$store.murim.toggle()"
                                 type="button"
-                                class="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-white/[0.04] border border-white/10 hover:border-crimson/50 hover:bg-white/[0.08] transition-all cursor-pointer shadow-md group"
+                                class="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-white/[0.04] border border-white/10 hover:border-amber-400/50 hover:bg-white/[0.08] transition-all cursor-pointer shadow-sm group"
                                 :title="'Votre Rang Murim : ' + ($store.murim.status?.current?.title || 'Disciple')">
-                            <span class="text-base leading-none group-hover:scale-125 transition-transform" x-text="$store.murim.status?.current?.badge || '🥉'"></span>
-                            <div class="hidden lg:flex flex-col text-left leading-none">
-                                <span class="text-[11px] font-black text-chalk" x-text="$store.murim.status?.current?.title || 'Disciple Tiers-Rang'"></span>
-                                <span class="text-[9px] text-mist font-semibold" x-text="$store.murim.status?.current?.aura || 'Voie Martiale'"></span>
-                            </div>
+                            <span class="text-sm leading-none group-hover:scale-125 transition-transform" x-text="$store.murim.status?.current?.badge || '🥉'"></span>
+                            <span class="text-[11px] font-black text-chalk hidden xl:inline" x-text="$store.murim.status?.current?.title || 'Disciple Tiers-Rang'"></span>
                             <template x-if="$store.murim.streak > 0">
-                                <span class="flex items-center gap-0.5 text-[10px] font-black text-amber-400 bg-amber-500/15 border border-amber-500/30 px-1.5 py-0.5 rounded-md">
+                                <span class="flex items-center gap-0.5 text-[10px] font-black text-amber-400 bg-amber-500/15 border border-amber-500/30 px-1 py-0.2 rounded">
                                     <span>🔥</span>
                                     <span x-text="$store.murim.streak + 'j'"></span>
                                 </span>
@@ -920,13 +921,48 @@
                                             </span>
                                         @endif
                                     </div>
+
+                                    {{-- Statut de Cultivation Murim --}}
+                                    <div class="mt-2.5 p-2.5 rounded-xl bg-[#161624] border border-[#262638]" x-data x-cloak>
+                                        <div class="flex items-center justify-between text-[10px] font-bold text-[#8080a8] mb-1">
+                                            <span class="text-amber-400">⚡ VOIE MARTIALE</span>
+                                            <template x-if="$store.murim.streak > 0">
+                                                <span class="text-amber-300">🔥 <span x-text="$store.murim.streak"></span>j</span>
+                                            </template>
+                                        </div>
+                                        <div class="flex items-center gap-2 mb-1.5">
+                                            <span class="text-base" x-text="$store.murim.status?.current?.badge || '🥉'"></span>
+                                            <div class="min-w-0 flex-1">
+                                                <div class="text-xs font-bold text-white truncate" x-text="$store.murim.status?.current?.title || 'Disciple Tiers-Rang'"></div>
+                                                <div class="text-[10px] text-[#8080a8] truncate" x-text="$store.murim.status?.current?.aura || 'Aura Naissante'"></div>
+                                            </div>
+                                        </div>
+                                        <div class="w-full bg-[#11111a] rounded-full h-1.5 overflow-hidden border border-white/5">
+                                            <div class="bg-gradient-to-r from-amber-500 to-[#ff2a55] h-full rounded-full transition-all duration-500" :style="'width: ' + ($store.murim.status?.percent || 0) + '%'"></div>
+                                        </div>
+                                    </div>
                                 </div>
 
-                                {{-- Liens --}}
+                                {{-- Liens Écosystème --}}
                                 <div class="py-1.5 space-y-0.5">
                                     <a href="{{ route('profile.edit', ['tab' => 'overview']) }}" class="flex items-center gap-3 px-3 py-2 rounded-lg text-xs font-semibold text-[#c0c0d8] hover:text-white hover:bg-[#1a1a28] transition group">
                                         <svg class="w-4 h-4 text-[#ff2a55] group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
-                                        Mon Profil
+                                        Mon Profil & Voie Martiale
+                                    </a>
+
+                                    <a href="{{ route('profile.edit', ['tab' => 'tierlist']) }}" class="flex items-center gap-3 px-3 py-2 rounded-lg text-xs font-semibold text-[#c0c0d8] hover:text-white hover:bg-[#1a1a28] transition group">
+                                        <span class="text-xs">👑</span>
+                                        Ma Tier List Webtoon
+                                    </a>
+
+                                    <a href="{{ route('profile.edit', ['tab' => 'activity']) }}" class="flex items-center gap-3 px-3 py-2 rounded-lg text-xs font-semibold text-[#c0c0d8] hover:text-white hover:bg-[#1a1a28] transition group">
+                                        <span class="text-xs">📅</span>
+                                        Suivi d'Assiduité (Heatmap)
+                                    </a>
+
+                                    <a href="{{ route('leaderboard') }}" class="flex items-center gap-3 px-3 py-2 rounded-lg text-xs font-semibold text-[#c0c0d8] hover:text-white hover:bg-[#1a1a28] transition group">
+                                        <span class="text-xs">🏆</span>
+                                        Classement des Lecteurs
                                     </a>
 
                                     <a href="{{ route('library', ['tab' => 'rattrapage']) }}" class="flex items-center justify-between px-3 py-2 rounded-lg text-xs font-semibold text-[#f87171] hover:text-white hover:bg-red-950/40 border border-red-500/20 transition group">
@@ -1113,6 +1149,11 @@
                                     <a href="{{ route('planning') }}" class="flex items-center gap-3 px-3 py-2 rounded-lg text-xs font-semibold {{ request()->routeIs('planning') ? 'text-white bg-[#ff2a55]' : 'text-[#c0c0d8] hover:text-white hover:bg-[#1a1a28]' }} transition group">
                                         <svg class="w-4 h-4 text-[#ff2a55] group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
                                         <span>Planning des sorties</span>
+                                    </a>
+
+                                    <a href="{{ route('leaderboard') }}" class="flex items-center gap-3 px-3 py-2 rounded-lg text-xs font-semibold {{ request()->routeIs('leaderboard') ? 'text-white bg-[#ff2a55]' : 'text-[#c0c0d8] hover:text-white hover:bg-[#1a1a28]' }} transition group">
+                                        <span class="text-sm">🏆</span>
+                                        <span>Classement des Lecteurs</span>
                                     </a>
 
                                     <a href="{{ route('manga.random') }}" class="flex items-center justify-between px-3 py-2 rounded-lg text-xs font-semibold text-amber-400 hover:text-white hover:bg-amber-950/30 border border-amber-500/20 transition group">

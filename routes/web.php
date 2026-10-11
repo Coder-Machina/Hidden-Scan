@@ -11,6 +11,7 @@ use App\Http\Controllers\ProfileController;
 // ═══ PUBLIC ROUTES ═══
 Route::get('/', [HomeController::class, 'index'])->name('home');
 Route::get('/planning', [PlanningController::class, 'index'])->name('planning');
+Route::get('/classement', [\App\Http\Controllers\Public\LeaderboardController::class, 'index'])->name('leaderboard');
 Route::get('/bibliotheque', [LibraryController::class, 'index'])->name('library');
 Route::post('/manga/{slug}/noter', [MangaController::class, 'rate'])->name('manga.rate');
 
