@@ -73,17 +73,59 @@ class DiscordBotApiTest extends TestCase
         $stepRes->assertStatus(200)
             ->assertJsonPath('success', true)
             ->assertJsonPath('chapter_number', 77)
+            ->assertJsonPath('next_step.next_step', 'check')
             ->assertJsonPath('next_step.next_user', '@Klate');
 
         $this->assertEquals(77, $manga->fresh()->step_trad_chapter);
 
-        // 3. Verify StaffContribution logged
+        // 3. Clean finishes -> pings Edit
+        $cleanRes = $this->withHeader('X-Bot-Token', $this->botToken)
+            ->postJson('/api/bot/step-done', [
+                'slug' => $manga->slug,
+                'step' => 'clean',
+                'discord_user_name' => 'focah',
+            ]);
+        $cleanRes->assertStatus(200)
+            ->assertJsonPath('next_step.next_step', 'edit')
+            ->assertJsonPath('next_step.next_user', '@focah');
+
+        // 4. Check finishes -> pings Edit
+        $checkRes = $this->withHeader('X-Bot-Token', $this->botToken)
+            ->postJson('/api/bot/step-done', [
+                'slug' => $manga->slug,
+                'step' => 'check',
+                'discord_user_name' => 'Klate',
+            ]);
+        $checkRes->assertStatus(200)
+            ->assertJsonPath('next_step.next_step', 'edit')
+            ->assertJsonPath('next_step.next_user', '@focah');
+
+        // 5. Verify StaffContribution logged
         $this->assertDatabaseHas('staff_contributions', [
             'manga_id' => $manga->id,
             'step' => 'trad',
             'chapter_number' => 77,
             'discord_user_name' => 'Neksyos',
         ]);
+
+        // 6. Test saveFiche endpoint
+        $saveRes = $this->withHeader('X-Bot-Token', $this->botToken)
+            ->postJson('/api/bot/save-fiche', [
+                'slug' => $manga->slug,
+                'drive_url' => 'https://drive.google.com/updated',
+                'va_url' => 'https://va-link.com/updated',
+                'va_chapter_number' => 80,
+                'trad_user' => '<@1163161538652291074>',
+                'check_user' => '<@929297904852697138>',
+            ]);
+
+        $saveRes->assertStatus(200)
+            ->assertJsonPath('success', true)
+            ->assertJsonPath('manga.drive_url', 'https://drive.google.com/updated')
+            ->assertJsonPath('manga.va_url', 'https://va-link.com/updated')
+            ->assertJsonPath('manga.staff.trad', '<@1163161538652291074>');
+
+        $this->assertEquals('https://drive.google.com/updated', $manga->fresh()->drive_url);
     }
 
     public function test_bot_api_can_toggle_rush_and_fetch_stats(): void

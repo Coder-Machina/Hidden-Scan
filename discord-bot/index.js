@@ -77,6 +77,113 @@ function recordContribution(userId, userName, projectKey, step, chapterNumber) {
     fs.writeFileSync(STATS_FILE, JSON.stringify(stats, null, 2), 'utf8');
 }
 
+const LEAD_USER_ID = process.env.DISCORD_LEAD_USER_ID || '1310979117172391940';
+
+/**
+ * Recherche robuste d'un projet par clé, titre ou slug normalisé.
+ * Évite tout décalage entre la création de fiche et la configuration du staff.
+ */
+function findProjectKey(projects, input) {
+    if (!input || typeof input !== 'string') return null;
+    const cleanInput = input.trim();
+    if (!cleanInput) return null;
+
+    // 1. Correspondance clé directe
+    if (projects[cleanInput]) return cleanInput;
+
+    const lowerInput = cleanInput.toLowerCase();
+
+    // 2. Correspondance directe insensible à la casse
+    for (const key of Object.keys(projects)) {
+        if (key.toLowerCase() === lowerInput) return key;
+    }
+
+    // 3. Slugification standard sans apostrophes (ex: The Returner's Road -> the-returners-road-to-retirement)
+    const slugWithoutQuotes = lowerInput
+        .replace(/['’]/g, '')
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/(^-|-$)+/g, '');
+
+    if (projects[slugWithoutQuotes]) return slugWithoutQuotes;
+
+    // 4. Slugification standard avec tirets
+    const slugStandard = lowerInput
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/(^-|-$)+/g, '');
+
+    if (projects[slugStandard]) return slugStandard;
+
+    // 5. Comparaison exacte par titre (insensible à la casse)
+    for (const [key, p] of Object.entries(projects)) {
+        if (p.title && p.title.trim().toLowerCase() === lowerInput) {
+            return key;
+        }
+    }
+
+    // 6. Comparaison alphanumérique pure (ignore ponctuation, tirets, espaces)
+    const alphaInput = lowerInput.replace(/[^a-z0-9]/g, '');
+    if (alphaInput.length >= 3) {
+        for (const [key, p] of Object.entries(projects)) {
+            const alphaKey = key.replace(/[^a-z0-9]/g, '');
+            const alphaTitle = (p.title || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+            if (alphaKey === alphaInput || alphaTitle === alphaInput) {
+                return key;
+            }
+        }
+
+        // 7. Recherche par sous-chaîne (ex: "genius grandson" pour Genius Grandson of the Loan Shark King)
+        for (const [key, p] of Object.entries(projects)) {
+            const alphaKey = key.replace(/[^a-z0-9]/g, '');
+            const alphaTitle = (p.title || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+            if (alphaTitle.includes(alphaInput) || alphaKey.includes(alphaInput) || (alphaInput.length >= 6 && alphaInput.includes(alphaTitle))) {
+                return key;
+            }
+        }
+    }
+
+    return null;
+}
+
+/**
+ * Envoie les métadonnées et le staff du projet à l'API Laravel pour persistance intégrale en base
+ */
+async function syncProjectToSite(project) {
+    if (!project || !project.slug) return;
+    try {
+        const apiUrl = process.env.API_BASE_URL || 'http://127.0.0.1:8000';
+        const secret = process.env.DISCORD_BOT_SECRET || 'hiddenscan-secret-bot-key';
+        await fetch(`${apiUrl}/api/bot/save-fiche`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-Bot-Token': secret,
+            },
+            body: JSON.stringify({
+                slug: project.slug,
+                title: project.title,
+                drive_url: project.drive_url || null,
+                va_url: project.va_url || null,
+                va_chapter_number: project.va_chapter || 0,
+                cover_image: project.cover_image || null,
+                is_rush: !!project.is_rush,
+                discord_role_id: project.discord_role_id || null,
+                trad_user: project.staff?.trad || null,
+                check_user: project.staff?.check || null,
+                clean_user: project.staff?.clean || null,
+                edit_user: project.staff?.edit || null,
+                qc_user: project.staff?.qc || null,
+                step_trad_chapter: project.steps?.trad || 0,
+                step_check_chapter: project.steps?.check || 0,
+                step_clean_chapter: project.steps?.clean || 0,
+                step_edit_chapter: project.steps?.edit || 0,
+                step_qc_chapter: project.steps?.qc || 0,
+            }),
+        });
+    } catch (err) {
+        console.warn(`[Sync API] Échec sync fiche ${project.slug}:`, err.message);
+    }
+}
+
 /**
  * Résout l'image de couverture d'un manga (locale ou web) pour affichage garanti sur Discord
  */
@@ -204,6 +311,15 @@ function buildFicheComponents(project) {
                 .setLabel('📁 Ouvrir Drive')
                 .setStyle(ButtonStyle.Link)
                 .setURL(project.drive_url)
+        );
+    }
+
+    if (project.va_url) {
+        row2.addComponents(
+            new ButtonBuilder()
+                .setLabel('🌐 Ouvrir VA')
+                .setStyle(ButtonStyle.Link)
+                .setURL(project.va_url)
         );
     }
 
@@ -649,11 +765,12 @@ async function registerCommands() {
             ),
         new SlashCommandBuilder()
             .setName('creer-fiche')
-            .setDescription('Crée une nouvelle fiche de projet directement depuis Discord')
+            .setDescription('Crée ou met à jour une fiche de projet (Drive, VA, Staff) directement depuis Discord')
             .addStringOption(option =>
                 option.setName('nom')
-                    .setDescription('Nom de l\'œuvre (ex: The Executioner)')
+                    .setDescription('Nom ou sélection du projet (ex: The Returner\'s Road, Genius Grandson...)')
                     .setRequired(true)
+                    .setAutocomplete(true)
             )
             .addStringOption(option =>
                 option.setName('drive')
@@ -674,10 +791,35 @@ async function registerCommands() {
                 option.setName('image')
                     .setDescription('Lien de l\'affiche/couverture du projet')
                     .setRequired(false)
+            )
+            .addUserOption(option =>
+                option.setName('trad')
+                    .setDescription('Traducteur (Trad)')
+                    .setRequired(false)
+            )
+            .addUserOption(option =>
+                option.setName('check')
+                    .setDescription('Correcteur (Check)')
+                    .setRequired(false)
+            )
+            .addUserOption(option =>
+                option.setName('clean')
+                    .setDescription('Cleaneur (Clean)')
+                    .setRequired(false)
+            )
+            .addUserOption(option =>
+                option.setName('edit')
+                    .setDescription('Éditeur / Lettrage (Edit)')
+                    .setRequired(false)
+            )
+            .addUserOption(option =>
+                option.setName('qc')
+                    .setDescription('Contrôle Qualité (QC)')
+                    .setRequired(false)
             ),
         new SlashCommandBuilder()
             .setName('config-staff')
-            .setDescription('Assigne les membres du staff aux étapes d\'un projet (un ou plusieurs à la fois)')
+            .setDescription('Assigne les membres du staff et met à jour les liens (Drive, VA, etc.) d\'un projet')
             .addStringOption(option =>
                 option.setName('manga')
                     .setDescription('Projet concerné')
@@ -707,6 +849,21 @@ async function registerCommands() {
             .addUserOption(option =>
                 option.setName('qc')
                     .setDescription('Contrôle Qualité (QC)')
+                    .setRequired(false)
+            )
+            .addStringOption(option =>
+                option.setName('drive')
+                    .setDescription('Lien du dossier Google Drive partagé')
+                    .setRequired(false)
+            )
+            .addStringOption(option =>
+                option.setName('va')
+                    .setDescription('Lien de la VA / RAW source')
+                    .setRequired(false)
+            )
+            .addNumberOption(option =>
+                option.setName('va_chapitre')
+                    .setDescription('Dernier numéro de chapitre disponible en VA')
                     .setRequired(false)
             )
             .addStringOption(option =>
@@ -911,36 +1068,59 @@ client.on('interactionCreate', async interaction => {
             const nom = interaction.options.getString('nom');
             const drive = interaction.options.getString('drive');
             const va = interaction.options.getString('va');
-            const vaChap = interaction.options.getNumber('va_chapitre') || 0;
+            const vaChap = interaction.options.getNumber('va_chapitre');
             const img = interaction.options.getString('image');
 
-            const slug = nom.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)+/g, '');
+            const tradUser = interaction.options.getUser('trad');
+            const checkUser = interaction.options.getUser('check');
+            const cleanUser = interaction.options.getUser('clean');
+            const editUser = interaction.options.getUser('edit');
+            const qcUser = interaction.options.getUser('qc');
+
+            // Recherche si le projet existe déjà (par slug, titre, ou variante)
+            const matchedKey = findProjectKey(projects, nom);
+            const slug = matchedKey || nom.toLowerCase().replace(/['’]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)+/g, '');
+            const existing = (matchedKey ? projects[matchedKey] : projects[slug]) || {};
+
+            const finalTitle = (existing.title && (nom === slug || nom === matchedKey))
+                ? existing.title
+                : (nom && nom !== slug ? nom.trim() : (existing.title || nom));
+
+            const staff = {
+                trad: tradUser ? `<@${tradUser.id}>` : (existing.staff?.trad || null),
+                check: checkUser ? `<@${checkUser.id}>` : (existing.staff?.check || null),
+                clean: cleanUser ? `<@${cleanUser.id}>` : (existing.staff?.clean || null),
+                edit: editUser ? `<@${editUser.id}>` : (existing.staff?.edit || null),
+                qc: qcUser ? `<@${qcUser.id}>` : (existing.staff?.qc || null),
+            };
+
+            const steps = existing.steps || {
+                trad: 0,
+                check: 0,
+                clean: 0,
+                edit: 0,
+                qc: 0,
+            };
 
             projects[slug] = {
+                ...existing,
                 slug,
-                title: nom,
-                drive_url: drive || null,
-                va_url: va || null,
-                va_chapter: vaChap,
-                cover_url: img || null,
-                is_rush: false,
-                staff: {
-                    trad: null,
-                    check: null,
-                    clean: null,
-                    edit: null,
-                    qc: null,
-                },
-                steps: {
-                    trad: 0,
-                    check: 0,
-                    clean: 0,
-                    edit: 0,
-                    qc: 0,
-                },
+                title: finalTitle,
+                drive_url: (drive && drive.trim()) ? drive.trim() : (existing.drive_url || null),
+                va_url: (va && va.trim()) ? va.trim() : (existing.va_url || null),
+                va_chapter: (vaChap !== null && vaChap !== undefined && vaChap >= 0) ? vaChap : (existing.va_chapter || 0),
+                cover_url: (img && img.trim()) ? img.trim() : (existing.cover_url || null),
+                cover_image: existing.cover_image || null,
+                is_rush: existing.is_rush || false,
+                is_external: existing.is_external || false,
+                discord_role_id: existing.discord_role_id || null,
+                team_name: existing.team_name || null,
+                staff,
+                steps,
             };
 
             saveProjects(projects);
+            await syncProjectToSite(projects[slug]);
 
             const coverInfo = resolveProjectCover(projects[slug]);
             const embed = buildFicheEmbed(projects[slug], coverInfo);
@@ -948,7 +1128,7 @@ client.on('interactionCreate', async interaction => {
             const files = (coverInfo && coverInfo.isAttachment) ? [coverInfo.attachment] : [];
 
             await interaction.reply({
-                content: `🎉 **Fiche créée avec succès pour « ${nom} » !** Utilisez \`/config-staff\` pour assigner les membres de votre équipe.`,
+                content: `🎉 **Fiche enregistrée avec succès pour « ${projects[slug].title} » !**\nToutes les informations (Drive, VA, Staff) sont synchronisées. Vous pouvez continuer d'assigner ou modifier le staff avec \`/config-staff\`.`,
                 embeds: [embed],
                 components,
                 files,
@@ -957,7 +1137,26 @@ client.on('interactionCreate', async interaction => {
 
         // /config-staff
         else if (commandName === 'config-staff') {
-            const slug = interaction.options.getString('manga');
+            const rawManga = interaction.options.getString('manga');
+            let matchedKey = findProjectKey(projects, rawManga);
+
+            if (!matchedKey) {
+                await syncProjectsWithSite();
+                projects = loadProjects();
+                matchedKey = findProjectKey(projects, rawManga);
+            }
+
+            if (!matchedKey || !projects[matchedKey]) {
+                return await interaction.reply({ content: `❌ Projet « ${rawManga} » introuvable. Utilisez \`/creer-fiche\` d'abord pour l'enregistrer.`, ephemeral: true });
+            }
+
+            const slug = matchedKey;
+            const project = projects[slug];
+
+            if (!project.staff) {
+                project.staff = { trad: null, check: null, clean: null, edit: null, qc: null };
+            }
+
             const tradUser = interaction.options.getUser('trad');
             const checkUser = interaction.options.getUser('check');
             const cleanUser = interaction.options.getUser('clean');
@@ -966,18 +1165,13 @@ client.on('interactionCreate', async interaction => {
             const singleRole = interaction.options.getString('role');
             const singleMember = interaction.options.getUser('membre');
 
-            if (!projects[slug]) {
-                await syncProjectsWithSite();
-                projects = loadProjects();
-            }
+            const drive = interaction.options.getString('drive');
+            const va = interaction.options.getString('va');
+            const vaChap = interaction.options.getNumber('va_chapitre');
 
-            if (!projects[slug]) {
-                return await interaction.reply({ content: '❌ Projet introuvable.', ephemeral: true });
-            }
-
-            if (!projects[slug].staff) {
-                projects[slug].staff = {};
-            }
+            if (drive && drive.trim()) project.drive_url = drive.trim();
+            if (va && va.trim()) project.va_url = va.trim();
+            if (vaChap !== null && vaChap !== undefined && vaChap >= 0) project.va_chapter = vaChap;
 
             const assignments = {};
             if (tradUser) assignments.trad = `<@${tradUser.id}>`;
@@ -987,17 +1181,20 @@ client.on('interactionCreate', async interaction => {
             if (qcUser) assignments.qc = `<@${qcUser.id}>`;
             if (singleRole && singleMember) assignments[singleRole] = `<@${singleMember.id}>`;
 
-            if (Object.keys(assignments).length === 0) {
+            const hasLinkUpdate = Boolean((drive && drive.trim()) || (va && va.trim()) || (vaChap !== null && vaChap !== undefined));
+
+            if (Object.keys(assignments).length === 0 && !hasLinkUpdate) {
                 return await interaction.reply({
-                    content: '⚠️ Veuillez renseigner au moins un membre à assigner (ex: `trad: @Membre`, `check: @Membre`, `clean: @Membre`, etc.).',
+                    content: '⚠️ Veuillez renseigner au moins un membre ou un lien à mettre à jour (ex: `trad: @Membre`, `check: @Membre`, `drive: https://...`, etc.).',
                     ephemeral: true,
                 });
             }
 
             for (const [stepKey, memberMention] of Object.entries(assignments)) {
-                projects[slug].staff[stepKey] = memberMention;
+                project.staff[stepKey] = memberMention;
             }
             saveProjects(projects);
+            await syncProjectToSite(project);
 
             const roleLabels = {
                 trad: '✏️ Traduction (Trad)',
@@ -1011,13 +1208,16 @@ client.on('interactionCreate', async interaction => {
                 .map(([stepKey, memberMention]) => `• ${roleLabels[stepKey] || stepKey.toUpperCase()} : ${memberMention}`)
                 .join('\n');
 
-            const coverInfo = resolveProjectCover(projects[slug]);
-            const embed = buildFicheEmbed(projects[slug], coverInfo);
-            const components = buildFicheComponents(projects[slug]);
+            const coverInfo = resolveProjectCover(project);
+            const embed = buildFicheEmbed(project, coverInfo);
+            const components = buildFicheComponents(project);
             const files = (coverInfo && coverInfo.isAttachment) ? [coverInfo.attachment] : [];
 
+            let replyMsg = `✅ **Configuration mise à jour pour « ${project.title} » !**`;
+            if (summaryList) replyMsg += `\n${summaryList}`;
+
             await interaction.reply({
-                content: `✅ **Staff mis à jour pour « ${projects[slug].title} » :**\n${summaryList}`,
+                content: replyMsg,
                 embeds: [embed],
                 components,
                 files,
@@ -1026,12 +1226,14 @@ client.on('interactionCreate', async interaction => {
 
         // /role-projet
         else if (commandName === 'role-projet') {
-            const slug = interaction.options.getString('manga');
+            const rawManga = interaction.options.getString('manga');
             const role = interaction.options.getRole('role');
 
-            if (!projects[slug]) {
+            let slug = findProjectKey(projects, rawManga);
+            if (!slug) {
                 await syncProjectsWithSite();
                 projects = loadProjects();
+                slug = findProjectKey(projects, rawManga) || rawManga;
             }
 
             if (!projects[slug]) {
@@ -1040,6 +1242,7 @@ client.on('interactionCreate', async interaction => {
 
             projects[slug].discord_role_id = role.id;
             saveProjects(projects);
+            await syncProjectToSite(projects[slug]);
 
             // Sync avec l'API Laravel
             try {
@@ -1094,13 +1297,15 @@ client.on('interactionCreate', async interaction => {
 
         // /set-chapitre
         else if (commandName === 'set-chapitre') {
-            const slug = interaction.options.getString('manga');
+            const rawManga = interaction.options.getString('manga');
             const role = interaction.options.getString('role');
             const numero = interaction.options.getNumber('numero');
 
-            if (!projects[slug]) {
+            let slug = findProjectKey(projects, rawManga);
+            if (!slug) {
                 await syncProjectsWithSite();
                 projects = loadProjects();
+                slug = findProjectKey(projects, rawManga) || rawManga;
             }
 
             if (!projects[slug]) {
@@ -1117,6 +1322,7 @@ client.on('interactionCreate', async interaction => {
                 projects[slug].steps[role] = numero;
             }
             saveProjects(projects);
+            await syncProjectToSite(projects[slug]);
 
             const coverInfo = resolveProjectCover(projects[slug]);
             const embed = buildFicheEmbed(projects[slug], coverInfo);
@@ -1133,16 +1339,18 @@ client.on('interactionCreate', async interaction => {
 
         // /fiche
         else if (commandName === 'fiche') {
-            const slug = interaction.options.getString('manga');
+            const rawManga = interaction.options.getString('manga');
+            let slug = findProjectKey(projects, rawManga);
 
-            if (!projects[slug]) {
+            if (!slug) {
                 await syncProjectsWithSite();
                 projects = loadProjects();
+                slug = findProjectKey(projects, rawManga) || rawManga;
             }
 
             if (!projects[slug]) {
                 return await interaction.reply({
-                    content: `❌ Projet « ${slug} » non trouvé. Utilisez d'abord \`/creer-fiche\` pour l'ajouter !`,
+                    content: `❌ Projet « ${rawManga} » non trouvé. Utilisez d'abord \`/creer-fiche\` pour l'ajouter !`,
                     ephemeral: true,
                 });
             }
@@ -1162,11 +1370,13 @@ client.on('interactionCreate', async interaction => {
 
         // /rush
         else if (commandName === 'rush') {
-            const slug = interaction.options.getString('manga');
+            const rawManga = interaction.options.getString('manga');
+            let slug = findProjectKey(projects, rawManga);
 
-            if (!projects[slug]) {
+            if (!slug) {
                 await syncProjectsWithSite();
                 projects = loadProjects();
+                slug = findProjectKey(projects, rawManga) || rawManga;
             }
 
             if (!projects[slug]) {
@@ -1175,6 +1385,7 @@ client.on('interactionCreate', async interaction => {
 
             projects[slug].is_rush = !projects[slug].is_rush;
             saveProjects(projects);
+            await syncProjectToSite(projects[slug]);
 
             const coverInfo = resolveProjectCover(projects[slug]);
             const embed = buildFicheEmbed(projects[slug], coverInfo);
@@ -1278,7 +1489,14 @@ client.on('interactionCreate', async interaction => {
         if (customId.startsWith('step_')) {
             const parts = customId.split('_');
             const step = parts[1]; // trad, check, clean, edit, qc
-            const slug = parts.slice(2).join('_');
+            const rawSlug = parts.slice(2).join('_');
+
+            let slug = findProjectKey(projects, rawSlug);
+            if (!slug) {
+                await syncProjectsWithSite();
+                const refreshed = loadProjects();
+                slug = findProjectKey(refreshed, rawSlug) || rawSlug;
+            }
 
             if (!projects[slug]) {
                 return await interaction.reply({ content: 'Projet introuvable.', ephemeral: true });
@@ -1301,6 +1519,28 @@ client.on('interactionCreate', async interaction => {
                 newVal
             );
 
+            // Synchronisation asynchrone avec l'API Laravel
+            try {
+                const apiUrl = process.env.API_BASE_URL || 'http://127.0.0.1:8000';
+                const secret = process.env.DISCORD_BOT_SECRET || 'hiddenscan-secret-bot-key';
+                await fetch(`${apiUrl}/api/bot/step-done`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-Bot-Token': secret,
+                    },
+                    body: JSON.stringify({
+                        slug,
+                        step,
+                        chapter_number: newVal,
+                        discord_user_id: interaction.user.id,
+                        discord_user_name: interaction.user.tag || interaction.user.username,
+                    }),
+                });
+            } catch (err) {
+                console.warn(`[Sync API] Échec step-done ${slug}:`, err.message);
+            }
+
             const coverInfo = resolveProjectCover(projects[slug]);
             const embed = buildFicheEmbed(projects[slug], coverInfo);
             const components = buildFicheComponents(projects[slug]);
@@ -1312,22 +1552,54 @@ client.on('interactionCreate', async interaction => {
                 files,
             });
 
-            // Détermine qui doit être notifié pour la suite
-            const nextRoles = {
-                trad: { name: 'Check', mention: projects[slug].staff?.check },
-                check: { name: 'Clean', mention: projects[slug].staff?.clean },
-                clean: { name: 'Edit', mention: projects[slug].staff?.edit },
-                edit: { name: 'QC', mention: projects[slug].staff?.qc },
-                qc: { name: 'Publication', mention: null },
-            };
+            // Détermine qui doit être notifié pour la suite selon la chaîne demandée par Meliodas Sama :
+            // 1. Trad finit  -> ping Check
+            // 2. Clean finit -> ping Edit
+            // 3. Check finit -> ping Edit
+            // 4. Edit finit  -> ping Meliodas Sama (Lead) / QC
+            // 5. QC finit    -> ping Meliodas Sama (Publication)
+            const LEAD_ID = process.env.DISCORD_LEAD_USER_ID || '1310979117172391940';
+            const leadMention = `<@${LEAD_ID}>`;
 
-            const next = nextRoles[step];
-            let followUpMsg = `🎉 <@${interaction.user.id}> vient de terminer **${step.toUpperCase()}** pour le chapitre **${newVal}** de **${projects[slug].title}** !`;
-            if (next && next.mention) {
-                followUpMsg += `\n👉 C'est ton tour pour le **${next.name}** : ${next.mention}`;
+            let nextAction = '';
+            let targetMention = null;
+
+            if (step === 'trad') {
+                nextAction = 'la **Correction (Check)**';
+                targetMention = projects[slug].staff?.check || null;
+            } else if (step === 'clean') {
+                nextAction = 'l\'**Édition (Edit)**';
+                targetMention = projects[slug].staff?.edit || null;
+            } else if (step === 'check') {
+                nextAction = 'l\'**Édition (Edit)**';
+                targetMention = projects[slug].staff?.edit || null;
+            } else if (step === 'edit') {
+                nextAction = 'le **QC / Contrôle Qualité**';
+                targetMention = projects[slug].staff?.qc ? `${projects[slug].staff.qc} (${leadMention})` : leadMention;
+            } else if (step === 'qc') {
+                nextAction = 'la **Publication**';
+                targetMention = leadMention;
             }
 
-            await interaction.followUp({ content: followUpMsg });
+            const stepLabels = {
+                trad: 'TRADUCTION (Trad)',
+                check: 'CORRECTION (Check)',
+                clean: 'CLEAN',
+                edit: 'ÉDITION (Edit)',
+                qc: 'CONTRÔLE QUALITÉ (QC)',
+            };
+
+            let followUpMsg = `🎉 <@${interaction.user.id}> vient de terminer la **${stepLabels[step] || step.toUpperCase()}** pour le chapitre **${newVal}** de **${projects[slug].title}** !`;
+            if (targetMention) {
+                followUpMsg += `\n👉 C'est ton tour pour ${nextAction} : ${targetMention}`;
+            } else {
+                followUpMsg += `\n👉 Prochaine étape : ${nextAction} *(aucun membre assigné pour le moment)*`;
+            }
+
+            await interaction.followUp({
+                content: followUpMsg,
+                allowedMentions: { parse: ['users', 'roles'] },
+            });
         }
 
         // Bouton Rush

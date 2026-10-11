@@ -167,13 +167,21 @@ class DiscordBotController extends Controller
             'discord_user_name' => $validated['discord_user_name'] ?? 'Staff',
         ]);
 
-        // Détermine la prochaine étape et le staff à notifier
+        // Détermine la prochaine étape et le staff à notifier selon le flux d'équipe :
+        // - Trad -> Check
+        // - Clean -> Edit
+        // - Check -> Edit
+        // - Edit -> Meliodas Sama (Lead) / QC
+        // - QC -> Publication / Lead
+        $leadUserId = config('services.discord.lead_user_id', env('DISCORD_LEAD_USER_ID', '1310979117172391940'));
+        $leadMention = "<@{$leadUserId}>";
+
         $nextStepInfo = match($validated['step']) {
             'trad' => ['next_step' => 'check', 'next_user' => $manga->check_user, 'label' => 'Check'],
-            'check' => ['next_step' => 'clean', 'next_user' => $manga->clean_user, 'label' => 'Clean'],
-            'clean' => ['next_step' => 'edit', 'next_user' => $manga->edit_user, 'label' => 'Edit'],
-            'edit' => ['next_step' => 'qc', 'next_user' => $manga->qc_user, 'label' => 'QC'],
-            'qc' => ['next_step' => 'publication', 'next_user' => null, 'label' => 'Publication'],
+            'clean' => ['next_step' => 'edit', 'next_user' => $manga->edit_user, 'label' => 'Édition (Edit)'],
+            'check' => ['next_step' => 'edit', 'next_user' => $manga->edit_user, 'label' => 'Édition (Edit)'],
+            'edit' => ['next_step' => 'qc', 'next_user' => $manga->qc_user ?? $leadMention, 'label' => 'QC / Meliodas Sama'],
+            'qc' => ['next_step' => 'publication', 'next_user' => $leadMention, 'label' => 'Publication'],
         };
 
         return response()->json([
@@ -181,6 +189,61 @@ class DiscordBotController extends Controller
             'step' => $validated['step'],
             'chapter_number' => $newNumber,
             'next_step' => $nextStepInfo,
+            'manga' => $this->getFiche($manga->slug, $request)->getData(true)['manga'],
+        ]);
+    }
+
+    /**
+     * Enregistre ou met à jour la fiche complète d'un projet (liens Drive/VA, staff, avancement).
+     */
+    public function saveFiche(Request $request): JsonResponse
+    {
+        if (!$this->authorizeBot($request)) {
+            return response()->json(['error' => 'Non autorisé'], 401);
+        }
+
+        $validated = $request->validate([
+            'slug' => 'required|string',
+            'title' => 'nullable|string',
+            'drive_url' => 'nullable|string',
+            'va_url' => 'nullable|string',
+            'va_chapter_number' => 'nullable|numeric',
+            'cover_image' => 'nullable|string',
+            'is_rush' => 'nullable|boolean',
+            'discord_role_id' => 'nullable|string',
+            'trad_user' => 'nullable|string',
+            'check_user' => 'nullable|string',
+            'clean_user' => 'nullable|string',
+            'edit_user' => 'nullable|string',
+            'qc_user' => 'nullable|string',
+            'step_trad_chapter' => 'nullable|numeric',
+            'step_check_chapter' => 'nullable|numeric',
+            'step_clean_chapter' => 'nullable|numeric',
+            'step_edit_chapter' => 'nullable|numeric',
+            'step_qc_chapter' => 'nullable|numeric',
+        ]);
+
+        $manga = Manga::where('slug', $validated['slug'])
+            ->orWhere('title', $validated['title'] ?? '')
+            ->first();
+
+        if (!$manga) {
+            $manga = Manga::create([
+                'title' => $validated['title'] ?? ucfirst(str_replace('-', ' ', $validated['slug'])),
+                'slug' => $validated['slug'],
+                'synopsis' => 'Ajouté via Discord Bot',
+                'type' => \App\Enums\MangaType::MANGA,
+                'status' => \App\Enums\MangaStatus::EN_COURS,
+            ]);
+        }
+
+        $fieldsToUpdate = array_filter($validated, fn ($val) => !is_null($val));
+        unset($fieldsToUpdate['slug']);
+        $manga->update($fieldsToUpdate);
+
+        return response()->json([
+            'success' => true,
+            'message' => "Fiche « {$manga->title} » mise à jour avec succès",
             'manga' => $this->getFiche($manga->slug, $request)->getData(true)['manga'],
         ]);
     }

@@ -40,6 +40,7 @@ Route::middleware(['web'])->group(function () {
 Route::prefix('bot')->group(function () {
     Route::get('/mangas', [\App\Http\Controllers\Api\DiscordBotController::class, 'listMangas'])->name('api.bot.mangas');
     Route::get('/fiche/{slug}', [\App\Http\Controllers\Api\DiscordBotController::class, 'getFiche'])->name('api.bot.fiche');
+    Route::post('/save-fiche', [\App\Http\Controllers\Api\DiscordBotController::class, 'saveFiche'])->name('api.bot.save-fiche');
     Route::post('/link-role', [\App\Http\Controllers\Api\DiscordBotController::class, 'linkRole'])->name('api.bot.link-role');
     Route::post('/step-done', [\App\Http\Controllers\Api\DiscordBotController::class, 'recordStepDone'])->name('api.bot.step-done');
     Route::post('/toggle-rush', [\App\Http\Controllers\Api\DiscordBotController::class, 'toggleRush'])->name('api.bot.toggle-rush');
