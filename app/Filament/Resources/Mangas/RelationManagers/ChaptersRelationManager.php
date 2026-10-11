@@ -493,7 +493,7 @@ class ChaptersRelationManager extends RelationManager
                         ->action(function (Collection $records) {
                             /** @var Manga $manga */
                             $manga = $this->getOwnerRecord();
-                            $sent = app(\App\Services\DiscordWebhookService::class)->sendBatchChaptersNotification($manga, $records);
+                            $sent = app(\App\Services\DiscordWebhookService::class)->sendBatchChaptersNotification($manga, $records, force: true);
                             if ($sent) {
                                 Notification::make()
                                     ->title('Annonce de lot envoyée')

@@ -183,7 +183,7 @@ class ChaptersTable
                             foreach ($grouped as $mangaId => $chapters) {
                                 $manga = $chapters->first()->manga;
                                 if ($manga) {
-                                    $service->sendBatchChaptersNotification($manga, $chapters);
+                                    $service->sendBatchChaptersNotification($manga, $chapters, force: true);
                                 }
                             }
                             \Filament\Notifications\Notification::make()

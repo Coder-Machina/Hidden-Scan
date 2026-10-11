@@ -14,17 +14,27 @@ class DiscordWebhookService
     /**
      * Résout l'URL du webhook selon la source de l'œuvre (interne Hidden Scan ou externe / autre team).
      */
+    public const ACTIVE_WEBHOOK_URL = 'https://discord.com/api/webhooks/1558768915629478018/xip0NUzOWQk1QQ6YM0AZTkVzfCc7c7BCpXm8lPA59_bU8bYkE28SUNmjGnc6enG6WAnq';
+    public const DEAD_WEBHOOK_ID = '1558548282387468388';
+
+    /**
+     * Résout l'URL du webhook selon la source de l'œuvre (interne Hidden Scan ou externe / autre team).
+     */
     public function resolveWebhookUrl(?Manga $manga = null): ?string
     {
         if ($manga && !empty($manga->discord_webhook_url)) {
-            return $manga->discord_webhook_url;
+            $url = $manga->discord_webhook_url;
+        } elseif ($manga && $manga->is_external) {
+            $url = config('services.discord.site_webhook_url') ?: config('services.discord.webhook_url');
+        } else {
+            $url = config('services.discord.webhook_url');
         }
 
-        if ($manga && $manga->is_external) {
-            return config('services.discord.site_webhook_url') ?: config('services.discord.webhook_url');
+        if (!empty($url) && str_contains($url, self::DEAD_WEBHOOK_ID)) {
+            $url = self::ACTIVE_WEBHOOK_URL;
         }
 
-        return config('services.discord.webhook_url');
+        return $url;
     }
 
     /**
@@ -33,6 +43,34 @@ class DiscordWebhookService
     public function isConfigured(?Manga $manga = null): bool
     {
         return !empty($this->resolveWebhookUrl($manga));
+    }
+
+    /**
+     * Envoie une requête vers un Webhook Discord avec gestion de pièce jointe et auto-secours sur 404.
+     */
+    protected function postToWebhook(string $webhookUrl, array $payload, ?string $localFilePath = null): \Illuminate\Http\Client\Response
+    {
+        if ($localFilePath && file_exists($localFilePath)) {
+            $ext = pathinfo($localFilePath, PATHINFO_EXTENSION) ?: 'png';
+            $filename = 'cover.' . $ext;
+            $payload['embeds'][0]['image'] = ['url' => 'attachment://' . $filename];
+
+            $response = Http::timeout(10)
+                ->attach('files[0]', file_get_contents($localFilePath), $filename)
+                ->post($webhookUrl, [
+                    'payload_json' => json_encode($payload),
+                ]);
+        } else {
+            $response = Http::timeout(10)->post($webhookUrl, $payload);
+        }
+
+        // Auto-récupération immédiate si le webhook configuré a été supprimé sur Discord (erreur 404)
+        if ($response->status() === 404 && $webhookUrl !== self::ACTIVE_WEBHOOK_URL) {
+            Log::warning("Discord Webhook 404 sur {$webhookUrl}, bascule automatique vers le webhook actif : " . self::ACTIVE_WEBHOOK_URL);
+            return $this->postToWebhook(self::ACTIVE_WEBHOOK_URL, $payload, $localFilePath);
+        }
+
+        return $response;
     }
 
     /**
@@ -47,12 +85,11 @@ class DiscordWebhookService
             return false;
         }
 
-        // 1. Protection Anti-Doublon : ne jamais renvoyer de notification pour un chapitre déjà notifié
+        // 1. Protection Anti-Doublon : ne jamais renvoyer de notification pour un chapitre déjà notifié (sauf si forcé)
         if (!$force && !is_null($chapter->discord_notified_at)) {
             Log::info("Discord webhook ignoré pour le chapitre {$chapter->id} de {$manga->title} : déjà notifié le {$chapter->discord_notified_at}");
             return true;
         }
-
 
         $webhookUrl = $this->resolveWebhookUrl($manga);
         if (empty($webhookUrl)) {
@@ -115,26 +152,15 @@ class DiscordWebhookService
             $payload['content'] = implode(' ', $pings);
         }
 
-        // Détection de l'image de couverture pour affichage pleine largeur garanti
+        // Image de couverture
+        if ($manga->cover_image && str_starts_with($manga->cover_image, 'http')) {
+            $payload['embeds'][0]['image'] = ['url' => $manga->cover_image];
+        }
+
         $localFilePath = $this->resolveLocalCoverPath($manga->cover_image);
 
         try {
-            if ($localFilePath && file_exists($localFilePath)) {
-                $ext = pathinfo($localFilePath, PATHINFO_EXTENSION) ?: 'png';
-                $filename = 'cover.' . $ext;
-                $payload['embeds'][0]['image'] = ['url' => 'attachment://' . $filename];
-
-                $response = Http::timeout(10)
-                    ->attach('files[0]', file_get_contents($localFilePath), $filename)
-                    ->post($webhookUrl, [
-                        'payload_json' => json_encode($payload),
-                    ]);
-            } else {
-                if ($manga->cover_image && str_starts_with($manga->cover_image, 'http')) {
-                    $payload['embeds'][0]['image'] = ['url' => $manga->cover_image];
-                }
-                $response = Http::timeout(10)->post($webhookUrl, $payload);
-            }
+            $response = $this->postToWebhook($webhookUrl, $payload, $localFilePath);
 
             if ($response->successful()) {
                 $chapter->updateQuietly(['discord_notified_at' => now()]);
@@ -156,7 +182,7 @@ class DiscordWebhookService
     /**
      * Envoie une notification groupée pour plusieurs chapitres publiés d'un coup (lot).
      */
-    public function sendBatchChaptersNotification(Manga $manga, array|Collection $chapters): bool
+    public function sendBatchChaptersNotification(Manga $manga, array|Collection $chapters, bool $force = false): bool
     {
         if (!$this->isConfigured($manga)) {
             return false;
@@ -167,15 +193,18 @@ class DiscordWebhookService
             return false;
         }
 
-        // Filtre les chapitres qui n'ont pas encore été notifiés sur Discord
-        $unnotified = collect($chapters)->filter(fn($c) => is_null($c->discord_notified_at));
-        if ($unnotified->isEmpty()) {
-            Log::info("Tous les chapitres du lot ont déjà été notifiés sur Discord pour {$manga->title}, lot ignoré.");
-            return true;
+        // Filtre les chapitres qui n'ont pas encore été notifiés sur Discord (sauf si forcé)
+        $chaptersToNotify = collect($chapters);
+        if (!$force) {
+            $chaptersToNotify = $chaptersToNotify->filter(fn($c) => is_null($c->discord_notified_at));
+            if ($chaptersToNotify->isEmpty()) {
+                Log::info("Tous les chapitres du lot ont déjà été notifiés sur Discord pour {$manga->title}, lot ignoré.");
+                return true;
+            }
         }
 
-        if ($unnotified->count() === 1) {
-            return $this->sendChapterNotification($unnotified->first());
+        if ($chaptersToNotify->count() === 1) {
+            return $this->sendChapterNotification($chaptersToNotify->first(), force: $force);
         }
 
         $webhookUrl = $this->resolveWebhookUrl($manga);
@@ -190,7 +219,7 @@ class DiscordWebhookService
             ? (config('services.discord.site_role_id') ?: config('services.discord.all_projects_role_id'))
             : config('services.discord.all_projects_role_id');
 
-        $numbers = $unnotified->pluck('number')->sort()->values();
+        $numbers = $chaptersToNotify->pluck('number')->sort()->values();
         $min = $numbers->first();
         $max = $numbers->last();
 
@@ -233,39 +262,33 @@ class DiscordWebhookService
             $payload['content'] = implode(' ', $pings);
         }
 
+        if ($manga->cover_image && str_starts_with($manga->cover_image, 'http')) {
+            $payload['embeds'][0]['image'] = ['url' => $manga->cover_image];
+        }
+
         $localFilePath = $this->resolveLocalCoverPath($manga->cover_image);
 
         try {
-            if ($localFilePath && file_exists($localFilePath)) {
-                $ext = pathinfo($localFilePath, PATHINFO_EXTENSION) ?: 'png';
-                $filename = 'cover.' . $ext;
-                $payload['embeds'][0]['image'] = ['url' => 'attachment://' . $filename];
-
-                $response = Http::timeout(10)
-                    ->attach('files[0]', file_get_contents($localFilePath), $filename)
-                    ->post($webhookUrl, [
-                        'payload_json' => json_encode($payload),
-                    ]);
-            } else {
-                if ($manga->cover_image && str_starts_with($manga->cover_image, 'http')) {
-                    $payload['embeds'][0]['image'] = ['url' => $manga->cover_image];
-                }
-                $response = Http::timeout(10)->post($webhookUrl, $payload);
-            }
+            $response = $this->postToWebhook($webhookUrl, $payload, $localFilePath);
 
             if ($response->successful()) {
-                foreach ($unnotified as $c) {
+                foreach ($chaptersToNotify as $c) {
                     $c->updateQuietly(['discord_notified_at' => now()]);
                 }
                 return true;
             }
 
+            Log::error("Échec de l'envoi du webhook Discord en masse", [
+                'status' => $response->status(),
+                'body' => $response->body(),
+            ]);
             return false;
         } catch (\Throwable $e) {
             Log::error("Erreur envoi notification Discord en masse : " . $e->getMessage());
             return false;
         }
     }
+
 
     /**
      * Résout le chemin absolu sur le disque local pour la couverture du manga.
@@ -301,7 +324,7 @@ class DiscordWebhookService
             ];
         }
 
-        $webhookUrl = config('services.discord.webhook_url');
+        $webhookUrl = $this->resolveWebhookUrl();
 
         $embed = [
             'title' => '🤖 Test de connexion Discord — Hidden Scan',
@@ -318,7 +341,7 @@ class DiscordWebhookService
         ];
 
         try {
-            $response = Http::timeout(6)->post($webhookUrl, ['embeds' => [$embed]]);
+            $response = $this->postToWebhook($webhookUrl, ['embeds' => [$embed]]);
 
             if ($response->successful()) {
                 return [
