@@ -36,9 +36,14 @@ fi
 echo "📦 Running database migrations..."
 php artisan migrate --force || true
 
-# Initialiser les données de démarrage sans jamais écraser les modifications du panel
-echo "🌱 Checking and ensuring initial data (preserves all existing admin modifications)..."
-php artisan db:seed --class=ProductionDataSeeder --force || true
+# Initialiser les données de démarrage uniquement si la base est vide (premier déploiement)
+MANGA_COUNT=$(php artisan tinker --execute='echo \App\Models\Manga::count();' 2>/dev/null | tail -n 1)
+if [ "$MANGA_COUNT" = "0" ]; then
+    echo "🌱 Fresh database detected, seeding initial data..."
+    php artisan db:seed --class=ProductionDataSeeder --force || true
+else
+    echo "✅ Database already contains data ($MANGA_COUNT mangas), skipping seeder."
+fi
 
 # Mettre en cache la configuration, les routes et les vues
 echo "⚡ Caching configuration, routes, and views..."

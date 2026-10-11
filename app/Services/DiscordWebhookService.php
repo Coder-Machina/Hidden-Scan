@@ -18,13 +18,64 @@ class DiscordWebhookService
     public const DEAD_WEBHOOK_ID = '1558548282387468388';
 
     /**
+     * Les 4 projets officiels produits par l'équipe Hidden Scan avec leurs rôles Discord vérifiés.
+     */
+    public const VALID_OFFICIAL_ROLES = [
+        'genius-grandson-of-the-loan-shark-king' => '1535265318828511234',
+        'the-returners-road-to-retirement' => '1535265320133066753',
+        'my-passive-skills-are-invincible' => '1535265321328447550',
+        'all-football-talents-are-mine' => '1535265322485944360',
+    ];
+
+    /**
+     * Détermine de manière stricte si une œuvre est externe (Sortie Site) ou officielle (Hidden Scan).
+     */
+    public static function isMangaExternal(?Manga $manga): bool
+    {
+        if (!$manga) {
+            return false;
+        }
+
+        // Si c'est l'un des 4 projets internes traduits par l'équipe Hidden Scan
+        if (in_array($manga->slug, array_keys(self::VALID_OFFICIAL_ROLES), true)) {
+            return false;
+        }
+
+        // Toutes les autres séries du catalogue sont des sorties externes ("Sorties Site")
+        return true;
+    }
+
+    /**
+     * Résout le rôle Discord officiel d'une série pour éviter tout ping inexistant (@rôle inconnu).
+     */
+    public static function resolveMangaRoleId(?Manga $manga): ?string
+    {
+        if (!$manga || self::isMangaExternal($manga)) {
+            return null;
+        }
+
+        // Si l'œuvre fait partie des 4 projets officiels, renvoyer son rôle Discord garanti
+        if (!empty(self::VALID_OFFICIAL_ROLES[$manga->slug])) {
+            return self::VALID_OFFICIAL_ROLES[$manga->slug];
+        }
+
+        $roleId = $manga->discord_role_id;
+        // Filtrer les anciens IDs de rôles créés par erreur qui n'existent plus sur Discord
+        if (!empty($roleId) && is_numeric($roleId) && !str_starts_with($roleId, '155858')) {
+            return $roleId;
+        }
+
+        return null;
+    }
+
+    /**
      * Résout l'URL du webhook selon la source de l'œuvre (interne Hidden Scan ou externe / autre team).
      */
     public function resolveWebhookUrl(?Manga $manga = null): ?string
     {
         if ($manga && !empty($manga->discord_webhook_url)) {
             $url = $manga->discord_webhook_url;
-        } elseif ($manga && $manga->is_external) {
+        } elseif (self::isMangaExternal($manga)) {
             $url = config('services.discord.site_webhook_url') ?: config('services.discord.webhook_url');
         } else {
             $url = config('services.discord.webhook_url');
@@ -97,7 +148,7 @@ class DiscordWebhookService
             return false;
         }
 
-        $isExternal = (bool) ($manga->is_external ?? false);
+        $isExternal = self::isMangaExternal($manga);
         $baseUrl = config('services.discord.base_url', config('app.url'));
         $roleId = config('services.discord.role_id');
         $allProjectsRoleId = $isExternal
@@ -132,15 +183,18 @@ class DiscordWebhookService
             'timestamp' => now()->toIso8601String(),
         ];
 
-        // Mentions de rôles : Rôle du manga (uniquement si série officielle avec ID valide) + Rôle global de notification
+        // Mentions de rôles : Rôle du manga garanti (uniquement si série officielle) + Rôle global de notification
         $pings = [];
-        if (!$isExternal && !empty($manga->discord_role_id) && is_numeric($manga->discord_role_id)) {
-            $pings[] = "<@&{$manga->discord_role_id}>";
+        if (!$isExternal) {
+            $mangaRoleId = self::resolveMangaRoleId($manga);
+            if (!empty($mangaRoleId)) {
+                $pings[] = "<@&{$mangaRoleId}>";
+            }
         }
 
         if (!empty($allProjectsRoleId) && is_numeric($allProjectsRoleId)) {
             $pings[] = "<@&{$allProjectsRoleId}>";
-        } elseif (!empty($roleId) && is_numeric($roleId) && $roleId !== $manga->discord_role_id) {
+        } elseif (!empty($roleId) && is_numeric($roleId) && $roleId !== ($mangaRoleId ?? null)) {
             $pings[] = "<@&{$roleId}>";
         }
 
@@ -212,7 +266,7 @@ class DiscordWebhookService
             return false;
         }
 
-        $isExternal = (bool) ($manga->is_external ?? false);
+        $isExternal = self::isMangaExternal($manga);
         $baseUrl = config('services.discord.base_url', config('app.url'));
         $roleId = config('services.discord.role_id');
         $allProjectsRoleId = $isExternal
@@ -244,13 +298,16 @@ class DiscordWebhookService
         ];
 
         $pings = [];
-        if (!$isExternal && !empty($manga->discord_role_id) && is_numeric($manga->discord_role_id)) {
-            $pings[] = "<@&{$manga->discord_role_id}>";
+        if (!$isExternal) {
+            $mangaRoleId = self::resolveMangaRoleId($manga);
+            if (!empty($mangaRoleId)) {
+                $pings[] = "<@&{$mangaRoleId}>";
+            }
         }
 
         if (!empty($allProjectsRoleId) && is_numeric($allProjectsRoleId)) {
             $pings[] = "<@&{$allProjectsRoleId}>";
-        } elseif (!empty($roleId) && is_numeric($roleId) && $roleId !== $manga->discord_role_id) {
+        } elseif (!empty($roleId) && is_numeric($roleId) && $roleId !== ($mangaRoleId ?? null)) {
             $pings[] = "<@&{$roleId}>";
         }
 

@@ -106,10 +106,20 @@ class Chapter extends Model
     {
         static::saved(function (Chapter $chapter) {
             $isPublished = ($chapter->status === \App\Enums\ChapterStatus::PUBLIE || $chapter->status?->value === 'publie');
-            if ($isPublished && !static::$skipDiscordNotification && is_null($chapter->discord_notified_at)) {
+            if ($isPublished && is_null($chapter->discord_notified_at)) {
                 if ($chapter->wasRecentlyCreated || $chapter->wasChanged('status') || $chapter->wasChanged('published_at')) {
                     $chapter->notifyFavoriteUsers();
-                    $chapter->notifyDiscord();
+
+                    // Notification Discord (silencieuse en seeder/CLI de déploiement)
+                    if (!static::$skipDiscordNotification) {
+                        $isSeederOrDeploy = app()->runningInConsole()
+                            && !app()->runningUnitTests()
+                            && !in_array(request()->server('argv')[1] ?? '', ['chapters:publish-scheduled']);
+
+                        if (!$isSeederOrDeploy) {
+                            $chapter->notifyDiscord();
+                        }
+                    }
                 }
             }
         });

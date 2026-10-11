@@ -15,10 +15,12 @@ class ProductionDataSeeder extends Seeder
 {
     public function run(): void
     {
-        $this->call([
-            RoleSeeder::class,
-            RolesAndPermissionsSeeder::class,
-        ]);
+        Chapter::$skipDiscordNotification = true;
+        try {
+            $this->call([
+                RoleSeeder::class,
+                RolesAndPermissionsSeeder::class,
+            ]);
 
         $users = array (
   0 => 
@@ -796,7 +798,7 @@ class ProductionDataSeeder extends Seeder
     'is_featured' => true,
     'is_external' => false,
     'team_name' => NULL,
-    'discord_role_id' => '1558581259821650020',
+    'discord_role_id' => '1535265320133066753',
     'discord_webhook_url' => NULL,
     'views_count' => 105,
     'average_rating' => 5.0,
@@ -1882,9 +1884,9 @@ class ProductionDataSeeder extends Seeder
     'cover_image' => 'mangas/covers/3Bo9YAYzyr8fOUik8EMRCO7rvD7S33MR.jpg',
     'banner_image' => NULL,
     'is_featured' => true,
-    'is_external' => false,
+    'is_external' => true,
     'team_name' => NULL,
-    'discord_role_id' => '1558585109702115501',
+    'discord_role_id' => NULL,
     'discord_webhook_url' => NULL,
     'views_count' => 1,
     'average_rating' => 0.0,
@@ -1921,9 +1923,9 @@ class ProductionDataSeeder extends Seeder
     'cover_image' => 'mangas/covers/o2HZ06glhAf3McFris7ePbZuHg3iN6VT.jpg',
     'banner_image' => NULL,
     'is_featured' => true,
-    'is_external' => false,
+    'is_external' => true,
     'team_name' => NULL,
-    'discord_role_id' => '1558585105289711648',
+    'discord_role_id' => NULL,
     'discord_webhook_url' => NULL,
     'views_count' => 0,
     'average_rating' => 0.0,
@@ -1962,9 +1964,9 @@ class ProductionDataSeeder extends Seeder
     'cover_image' => 'mangas/covers/NAqO2xsIkbmEDMpNui03jv4MmPKtEvuX.jpg',
     'banner_image' => NULL,
     'is_featured' => true,
-    'is_external' => false,
+    'is_external' => true,
     'team_name' => NULL,
-    'discord_role_id' => '1558585112130748437',
+    'discord_role_id' => NULL,
     'discord_webhook_url' => NULL,
     'views_count' => 1,
     'average_rating' => 0.0,
@@ -2003,9 +2005,9 @@ class ProductionDataSeeder extends Seeder
     'cover_image' => 'mangas/covers/DFN8qcVsRQBxxGQbwGHjglnv0GhYv8E5.jpg',
     'banner_image' => NULL,
     'is_featured' => false,
-    'is_external' => false,
+    'is_external' => true,
     'team_name' => NULL,
-    'discord_role_id' => '1558585117205725206',
+    'discord_role_id' => NULL,
     'discord_webhook_url' => NULL,
     'views_count' => 1,
     'average_rating' => 5.0,
@@ -2042,9 +2044,9 @@ class ProductionDataSeeder extends Seeder
     'cover_image' => 'mangas/covers/GAAns3Sok1hu8e1AztkTxLlzzBcWY0gW.jpg',
     'banner_image' => NULL,
     'is_featured' => false,
-    'is_external' => false,
+    'is_external' => true,
     'team_name' => NULL,
-    'discord_role_id' => '1558585102550835352',
+    'discord_role_id' => NULL,
     'discord_webhook_url' => NULL,
     'views_count' => 1,
     'average_rating' => 0.0,
@@ -2089,9 +2091,9 @@ class ProductionDataSeeder extends Seeder
     'cover_image' => 'mangas/covers/jvaZTb3naPVsQVhWUQgyZj0dvbBUYiv0.jpg',
     'banner_image' => NULL,
     'is_featured' => false,
-    'is_external' => false,
+    'is_external' => true,
     'team_name' => NULL,
-    'discord_role_id' => '1558585114777362583',
+    'discord_role_id' => NULL,
     'discord_webhook_url' => NULL,
     'views_count' => 0,
     'average_rating' => 0.0,
@@ -2572,9 +2574,9 @@ class ProductionDataSeeder extends Seeder
     'cover_image' => 'mangas/covers/1Tf0CbSeuvvbh0uJJP0REJAYu3aP6mrD.jpg',
     'banner_image' => NULL,
     'is_featured' => true,
-    'is_external' => false,
+    'is_external' => true,
     'team_name' => NULL,
-    'discord_role_id' => '1558585107625807872',
+    'discord_role_id' => NULL,
     'discord_webhook_url' => NULL,
     'views_count' => 0,
     'average_rating' => 0.0,
@@ -3001,9 +3003,9 @@ class ProductionDataSeeder extends Seeder
     'cover_image' => 'mangas/covers/ig2OEEoUA8RPXA6irn3COB7HAaamIPL2.jpg',
     'banner_image' => NULL,
     'is_featured' => false,
-    'is_external' => false,
+    'is_external' => true,
     'team_name' => NULL,
-    'discord_role_id' => '1558585119495684097',
+    'discord_role_id' => NULL,
     'discord_webhook_url' => NULL,
     'views_count' => 0,
     'average_rating' => 0.0,
@@ -3118,5 +3120,8 @@ class ProductionDataSeeder extends Seeder
                 }
             }
         }
+    } finally {
+        Chapter::$skipDiscordNotification = false;
     }
+}
 }
