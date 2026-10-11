@@ -78,26 +78,51 @@ function recordContribution(userId, userName, projectKey, step, chapterNumber) {
     fs.writeFileSync(STATS_FILE, JSON.stringify(stats, null, 2), 'utf8');
 }
 
+const ADMIN_IDS = (process.env.ADMIN_USER_IDS || '979449727047323668,1310979117172391940')
+    .split(',')
+    .map(id => id.trim())
+    .filter(Boolean);
+
+/**
+ * Vérifie si un utilisateur/membre est administrateur (ID direct, rôle Administrateur Discord, ou propriétaire du serveur).
+ */
+function isUserAdmin(member, user = null, guild = null) {
+    const userId = user?.id || member?.id || member?.user?.id;
+    if (userId && ADMIN_IDS.includes(userId)) return true;
+    if (guild && userId && guild.ownerId === userId) return true;
+    if (member && member.permissions) {
+        if (typeof member.permissions.has === 'function' && member.permissions.has(PermissionFlagsBits.Administrator)) {
+            return true;
+        }
+        if (typeof member.permissions === 'string') {
+            const perms = BigInt(member.permissions);
+            const adminBit = BigInt(PermissionFlagsBits.Administrator);
+            if ((perms & adminBit) === adminBit) return true;
+        }
+    }
+    return false;
+}
+
 /**
  * Récupère les mentions des administrateurs du serveur pour la notification de fin de chapitre.
  * Notifie toujours les 2 administrateurs officiels du staff.
  */
 async function getAdminMentions(guild) {
-    const defaultAdminIds = ['979449727047323668', '1310979117172391940'];
     if (!guild) {
-        return defaultAdminIds.map(id => `<@${id}>`).join(' ');
+        return ADMIN_IDS.map(id => `<@${id}>`).join(' ');
     }
     try {
         const members = await guild.members.fetch();
-        const admins = members.filter(m => !m.user.bot && (m.permissions.has(PermissionFlagsBits.Administrator) || m.id === guild.ownerId || defaultAdminIds.includes(m.id)));
+        const admins = members.filter(m => !m.user.bot && (m.permissions.has(PermissionFlagsBits.Administrator) || m.id === guild.ownerId || ADMIN_IDS.includes(m.id)));
         if (admins.size > 0) {
             return admins.map(m => `<@${m.id}>`).join(' ');
         }
     } catch (e) {
         console.warn('Erreur récupération admins guild:', e.message);
     }
-    return defaultAdminIds.map(id => `<@${id}>`).join(' ');
+    return ADMIN_IDS.map(id => `<@${id}>`).join(' ');
 }
+
 
 /**
  * Recherche robuste d'un projet par clé, titre ou slug normalisé.
@@ -786,6 +811,7 @@ async function registerCommands() {
         new SlashCommandBuilder()
             .setName('creer-fiche')
             .setDescription('Crée ou met à jour une fiche de projet (Drive, VA, Staff) directement depuis Discord')
+            .setDefaultMemberPermissions(PermissionFlagsBits.Administrator)
             .addStringOption(option =>
                 option.setName('nom')
                     .setDescription('Nom ou sélection du projet (ex: The Returner\'s Road, Genius Grandson...)')
@@ -840,6 +866,7 @@ async function registerCommands() {
         new SlashCommandBuilder()
             .setName('config-staff')
             .setDescription('Assigne les membres du staff et met à jour les liens (Drive, VA, etc.) d\'un projet')
+            .setDefaultMemberPermissions(PermissionFlagsBits.Administrator)
             .addStringOption(option =>
                 option.setName('manga')
                     .setDescription('Projet concerné')
@@ -906,6 +933,7 @@ async function registerCommands() {
         new SlashCommandBuilder()
             .setName('set-chapitre')
             .setDescription('Modifie manuellement le numéro de chapitre d\'une étape')
+            .setDefaultMemberPermissions(PermissionFlagsBits.Administrator)
             .addStringOption(option =>
                 option.setName('manga')
                     .setDescription('Projet concerné')
@@ -933,6 +961,7 @@ async function registerCommands() {
         new SlashCommandBuilder()
             .setName('rush')
             .setDescription('Active ou désactive le mode Rush pour un projet prioritaire')
+            .setDefaultMemberPermissions(PermissionFlagsBits.Administrator)
             .addStringOption(option =>
                 option.setName('manga')
                     .setDescription('Nom du projet')
@@ -942,6 +971,7 @@ async function registerCommands() {
         new SlashCommandBuilder()
             .setName('role-projet')
             .setDescription('Associe un rôle Discord de notification à une œuvre')
+            .setDefaultMemberPermissions(PermissionFlagsBits.Administrator)
             .addStringOption(option =>
                 option.setName('manga')
                     .setDescription('Nom de l\'œuvre')
@@ -961,10 +991,12 @@ async function registerCommands() {
             .setDescription('Affiche la liste des projets en retard ou en mode rush'),
         new SlashCommandBuilder()
             .setName('sync-roles')
-            .setDescription('Vérifie et crée automatiquement les rôles Discord manquants pour tous les mangas'),
+            .setDescription('Vérifie et crée automatiquement les rôles Discord manquants pour tous les mangas')
+            .setDefaultMemberPermissions(PermissionFlagsBits.Administrator),
         new SlashCommandBuilder()
             .setName('panneau-roles')
             .setDescription('Déploie ou met à jour le panneau interactif de sélection des rôles de séries')
+            .setDefaultMemberPermissions(PermissionFlagsBits.Administrator)
             .addChannelOption(option =>
                 option.setName('salon')
                     .setDescription('Salon où envoyer le panneau (défaut: rôles-séries)')
@@ -1080,6 +1112,27 @@ client.on('interactionCreate', async interaction => {
     if (!interaction.isChatInputCommand()) return;
 
     const { commandName } = interaction;
+
+    // Commandes de configuration strictement réservées aux administrateurs
+    const ADMIN_COMMANDS = [
+        'creer-fiche',
+        'config-staff',
+        'set-chapitre',
+        'rush',
+        'role-projet',
+        'sync-roles',
+        'panneau-roles',
+    ];
+
+    if (ADMIN_COMMANDS.includes(commandName)) {
+        if (!isUserAdmin(interaction.member, interaction.user, interaction.guild)) {
+            return await interaction.reply({
+                content: '❌ **Accès refusé** : Cette commande est strictement réservée aux administrateurs du serveur.',
+                ephemeral: true,
+            });
+        }
+    }
+
     let projects = loadProjects();
 
     try {
@@ -1370,10 +1423,11 @@ client.on('interactionCreate', async interaction => {
 
             if (!projects[slug]) {
                 return await interaction.reply({
-                    content: `❌ Projet « ${rawManga} » non trouvé. Utilisez d'abord \`/creer-fiche\` pour l'ajouter !`,
+                    content: `❌ Projet « ${rawManga} » non trouvé. Demandez à un administrateur d'initialiser sa fiche avec \`/creer-fiche\` !`,
                     ephemeral: true,
                 });
             }
+
 
             const project = projects[slug];
             const coverInfo = resolveProjectCover(project);
@@ -1628,8 +1682,15 @@ client.on('interactionCreate', async interaction => {
             });
         }
 
-        // Bouton Rush
+        // Bouton Rush (Réservé aux administrateurs)
         else if (customId.startsWith('toggle_rush_')) {
+            if (!isUserAdmin(interaction.member, interaction.user, interaction.guild)) {
+                return await interaction.reply({
+                    content: '❌ **Action refusée** : Seuls les administrateurs peuvent activer ou désactiver le mode Rush.',
+                    ephemeral: true,
+                });
+            }
+
             const slug = customId.replace('toggle_rush_', '');
             if (!projects[slug]) return;
 

@@ -265,9 +265,9 @@
     "discord_role_id": "1535265321328447550",
     "is_external": false,
     "staff": {
-      "trad": null,
-      "check": null,
-      "clean": null,
+      "trad": "<@1163161538652291074>",
+      "check": "<@1501270135959195829>",
+      "clean": "<@1163161538652291074>",
       "edit": null,
       "qc": null
     },
@@ -277,7 +277,14 @@
       "clean": 0,
       "edit": 0,
       "qc": 0
-    }
+    },
+    "drive_url": "https://drive.google.com/drive/folders/1V9pd65xTqe1jmiOT1y-l92-eXu3M3toW?usp=drive_link",
+    "va_url": "https://qimanga.com/series/4190634673-my-passive-skills-are-invincible",
+    "va_chapter": 204,
+    "cover_url": "https://media.qimanhwa.com/file/qiscans/upload/upload/series/4190634673-my-passive-skills-are-invincible/wp-featured-62920/featured.webp",
+    "cover_image": null,
+    "is_rush": false,
+    "team_name": null
   },
   "all-football-talents-are-mine": {
     "slug": "all-football-talents-are-mine",
