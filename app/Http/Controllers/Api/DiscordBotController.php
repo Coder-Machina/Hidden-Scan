@@ -28,10 +28,16 @@ class DiscordBotController extends Controller
             return response()->json(['error' => 'Non autorisé'], 401);
         }
 
+        $latestChapters = \App\Models\Chapter::query()
+            ->published()
+            ->selectRaw('manga_id, MAX(number) as max_number')
+            ->groupBy('manga_id')
+            ->pluck('max_number', 'manga_id');
+
         $mangas = Manga::query()
             ->orderBy('title')
             ->get()
-            ->map(function ($manga) {
+            ->map(function ($manga) use ($latestChapters) {
                 $coverUrl = null;
                 if ($manga->cover_image) {
                     $coverUrl = str_starts_with($manga->cover_image, 'http')
@@ -43,6 +49,7 @@ class DiscordBotController extends Controller
                     'id' => $manga->id,
                     'title' => $manga->title,
                     'slug' => $manga->slug,
+                    'latest_fr_chapter' => (float)($latestChapters[$manga->id] ?? 0),
                     'is_external' => (bool)$manga->is_external,
                     'team_name' => $manga->team_name,
                     'discord_role_id' => $manga->discord_role_id,

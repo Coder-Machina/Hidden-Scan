@@ -451,12 +451,13 @@ async function doSyncProjectsWithSite() {
                 qc: manga.staff?.qc || existing.staff?.qc || null,
             };
 
+            const autoBase = (manga.latest_fr_chapter && manga.latest_fr_chapter > 0) ? manga.latest_fr_chapter : 0;
             const mergedSteps = {
-                trad: manga.steps?.trad !== undefined ? manga.steps.trad : (existing.steps?.trad || 0),
-                check: manga.steps?.check !== undefined ? manga.steps.check : (existing.steps?.check || 0),
-                clean: manga.steps?.clean !== undefined ? manga.steps.clean : (existing.steps?.clean || 0),
-                edit: manga.steps?.edit !== undefined ? manga.steps.edit : (existing.steps?.edit || 0),
-                qc: manga.steps?.qc !== undefined ? manga.steps.qc : (existing.steps?.qc || 0),
+                trad: (manga.steps?.trad !== undefined && manga.steps.trad > 0) ? manga.steps.trad : (existing.steps?.trad ?? autoBase),
+                check: (manga.steps?.check !== undefined && manga.steps.check > 0) ? manga.steps.check : (existing.steps?.check ?? autoBase),
+                clean: (manga.steps?.clean !== undefined && manga.steps.clean > 0) ? manga.steps.clean : (existing.steps?.clean ?? autoBase),
+                edit: (manga.steps?.edit !== undefined && manga.steps.edit > 0) ? manga.steps.edit : (existing.steps?.edit ?? autoBase),
+                qc: (manga.steps?.qc !== undefined && manga.steps.qc > 0) ? manga.steps.qc : (existing.steps?.qc ?? autoBase),
             };
 
             currentProjects[slug] = {
@@ -842,6 +843,11 @@ async function registerCommands() {
                     .setDescription('Dernier numéro de chapitre disponible en VA')
                     .setRequired(false)
             )
+            .addNumberOption(option =>
+                option.setName('chapitre_actuel')
+                    .setDescription('Dernier chapitre déjà fait / point de reprise (ex: 19 pour reprendre au 20)')
+                    .setRequired(false)
+            )
             .addStringOption(option =>
                 option.setName('image')
                     .setDescription('Lien de l\'affiche/couverture du projet')
@@ -881,6 +887,11 @@ async function registerCommands() {
                     .setDescription('Projet concerné')
                     .setRequired(true)
                     .setAutocomplete(true)
+            )
+            .addNumberOption(option =>
+                option.setName('chapitre_actuel')
+                    .setDescription('Point de reprise global pour toutes les étapes (ex: 19 pour repartir au 20)')
+                    .setRequired(false)
             )
             .addUserOption(option =>
                 option.setName('trad')
@@ -941,7 +952,7 @@ async function registerCommands() {
             ),
         new SlashCommandBuilder()
             .setName('set-chapitre')
-            .setDescription('Modifie manuellement le numéro de chapitre d\'une étape')
+            .setDescription('Modifie le numéro de chapitre d\'une étape ou de toutes les étapes (reprise)')
             .setDefaultMemberPermissions(PermissionFlagsBits.Administrator)
             .addStringOption(option =>
                 option.setName('manga')
@@ -954,17 +965,18 @@ async function registerCommands() {
                     .setDescription('Étape')
                     .setRequired(true)
                     .addChoices(
-                        { name: 'Trad', value: 'trad' },
-                        { name: 'Check', value: 'check' },
-                        { name: 'Clean', value: 'clean' },
-                        { name: 'Edit', value: 'edit' },
-                        { name: 'QC', value: 'qc' },
-                        { name: 'Dernier VA', value: 'va' },
+                        { name: '🌐 Toutes les étapes (Reprise globale)', value: 'all' },
+                        { name: '✏️ Trad', value: 'trad' },
+                        { name: '✅ Check', value: 'check' },
+                        { name: '🧹 Clean', value: 'clean' },
+                        { name: '📝 Edit', value: 'edit' },
+                        { name: '🔍 QC', value: 'qc' },
+                        { name: '🇬🇧 Dernier VA', value: 'va' },
                     )
             )
             .addNumberOption(option =>
                 option.setName('numero')
-                    .setDescription('Nouveau numéro de chapitre')
+                    .setDescription('Dernier chapitre fait (ex: 19 pour que le prochain clic valide le 20)')
                     .setRequired(true)
             ),
         new SlashCommandBuilder()
@@ -1180,13 +1192,24 @@ client.on('interactionCreate', async interaction => {
                 qc: qcUser ? `<@${qcUser.id}>` : (existing.staff?.qc || null),
             };
 
-            const steps = existing.steps || {
-                trad: 0,
-                check: 0,
-                clean: 0,
-                edit: 0,
-                qc: 0,
+            const chapActuel = interaction.options.getNumber('chapitre_actuel');
+            const defaultCh = (chapActuel !== null && chapActuel !== undefined && chapActuel >= 0) ? chapActuel : 0;
+
+            const steps = existing.steps ? { ...existing.steps } : {
+                trad: defaultCh,
+                check: defaultCh,
+                clean: defaultCh,
+                edit: defaultCh,
+                qc: defaultCh,
             };
+
+            if (chapActuel !== null && chapActuel !== undefined && chapActuel >= 0) {
+                steps.trad = chapActuel;
+                steps.check = chapActuel;
+                steps.clean = chapActuel;
+                steps.edit = chapActuel;
+                steps.qc = chapActuel;
+            }
 
             projects[slug] = {
                 ...existing,
@@ -1213,8 +1236,13 @@ client.on('interactionCreate', async interaction => {
             const components = buildFicheComponents(projects[slug]);
             const files = (coverInfo && coverInfo.isAttachment) ? [coverInfo.attachment] : [];
 
+            let repriseNotice = '';
+            if (chapActuel !== null && chapActuel !== undefined && chapActuel >= 0) {
+                repriseNotice = `\n🔄 **Reprise configurée :** Les étapes partent du chapitre **${chapActuel}** (le prochain clic validera le chapitre **${chapActuel + 1}**).`;
+            }
+
             await interaction.editReply({
-                content: `🎉 **Fiche enregistrée avec succès pour « ${projects[slug].title} » !**\nToutes les informations (Drive, VA, Staff) sont synchronisées. Vous pouvez continuer d'assigner ou modifier le staff avec \`/config-staff\`.`,
+                content: `🎉 **Fiche enregistrée avec succès pour « ${projects[slug].title} » !**${repriseNotice}\nToutes les informations sont synchronisées avec le site et le Drive.`,
                 embeds: [embed],
                 components,
                 files,
@@ -1254,10 +1282,22 @@ client.on('interactionCreate', async interaction => {
             const drive = interaction.options.getString('drive');
             const va = interaction.options.getString('va');
             const vaChap = interaction.options.getNumber('va_chapitre');
+            const chapActuel = interaction.options.getNumber('chapitre_actuel');
 
             if (drive && drive.trim()) project.drive_url = drive.trim();
             if (va && va.trim()) project.va_url = va.trim();
             if (vaChap !== null && vaChap !== undefined && vaChap >= 0) project.va_chapter = vaChap;
+
+            if (chapActuel !== null && chapActuel !== undefined && chapActuel >= 0) {
+                if (!project.steps) {
+                    project.steps = { trad: 0, check: 0, clean: 0, edit: 0, qc: 0 };
+                }
+                project.steps.trad = chapActuel;
+                project.steps.check = chapActuel;
+                project.steps.clean = chapActuel;
+                project.steps.edit = chapActuel;
+                project.steps.qc = chapActuel;
+            }
 
             const assignments = {};
             if (tradUser) assignments.trad = `<@${tradUser.id}>`;
@@ -1267,11 +1307,11 @@ client.on('interactionCreate', async interaction => {
             if (qcUser) assignments.qc = `<@${qcUser.id}>`;
             if (singleRole && singleMember) assignments[singleRole] = `<@${singleMember.id}>`;
 
-            const hasLinkUpdate = Boolean((drive && drive.trim()) || (va && va.trim()) || (vaChap !== null && vaChap !== undefined));
+            const hasLinkUpdate = Boolean((drive && drive.trim()) || (va && va.trim()) || (vaChap !== null && vaChap !== undefined) || (chapActuel !== null && chapActuel !== undefined));
 
             if (Object.keys(assignments).length === 0 && !hasLinkUpdate) {
                 return await interaction.editReply({
-                    content: '⚠️ Veuillez renseigner au moins un membre ou un lien à mettre à jour (ex: `trad: @Membre`, `check: @Membre`, `drive: https://...`, etc.).',
+                    content: '⚠️ Veuillez renseigner au moins un membre, un lien ou un chapitre de reprise (ex: `trad: @Membre`, `chapitre_actuel: 19`, `drive: https://...`, etc.).',
                 });
             }
 
@@ -1299,6 +1339,9 @@ client.on('interactionCreate', async interaction => {
             const files = (coverInfo && coverInfo.isAttachment) ? [coverInfo.attachment] : [];
 
             let replyMsg = `✅ **Configuration mise à jour pour « ${project.title} » !**`;
+            if (chapActuel !== null && chapActuel !== undefined && chapActuel >= 0) {
+                replyMsg += `\n🔄 **Point de reprise défini :** Chapitre **${chapActuel}** (le prochain clic validera le chapitre **${chapActuel + 1}**).`;
+            }
             if (summaryList) replyMsg += `\n${summaryList}`;
 
             await interaction.editReply({
@@ -1397,7 +1440,15 @@ client.on('interactionCreate', async interaction => {
                 projects[slug].steps = { trad: 0, check: 0, clean: 0, edit: 0, qc: 0 };
             }
 
-            if (role === 'va') {
+            if (role === 'all') {
+                projects[slug].steps = {
+                    trad: numero,
+                    check: numero,
+                    clean: numero,
+                    edit: numero,
+                    qc: numero,
+                };
+            } else if (role === 'va') {
                 projects[slug].va_chapter = numero;
             } else {
                 projects[slug].steps[role] = numero;
@@ -1410,8 +1461,12 @@ client.on('interactionCreate', async interaction => {
             const components = buildFicheComponents(projects[slug]);
             const files = (coverInfo && coverInfo.isAttachment) ? [coverInfo.attachment] : [];
 
+            const labelMsg = role === 'all'
+                ? `🌐 **Toutes les étapes** configurées au chapitre **${numero}** sur **${projects[slug].title}** !\n👉 **Reprise :** Le prochain clic sur n'importe quel bouton validera le chapitre **${numero + 1}**.`
+                : `✅ Chapitre pour **${role.toUpperCase()}** mis à jour à **${numero}** sur **${projects[slug].title}**.\n👉 Le prochain clic validera le chapitre **${numero + 1}**.`;
+
             await interaction.editReply({
-                content: `✅ Chapitre pour **${role.toUpperCase()}** mis à jour à **${numero}** sur **${projects[slug].title}**.`,
+                content: labelMsg,
                 embeds: [embed],
                 components,
                 files,
