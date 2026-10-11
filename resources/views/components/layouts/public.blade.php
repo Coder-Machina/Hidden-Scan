@@ -1151,6 +1151,15 @@
                                         <span>Planning des sorties</span>
                                     </a>
 
+                                    {{-- Voie Martiale / Murim Rangs --}}
+                                    <button type="button" @click="$store.murim.toggle(); userMobileMenuOpen = false;" class="w-full flex items-center justify-between px-3 py-2 rounded-lg text-xs font-bold text-amber-300 bg-amber-950/25 hover:bg-amber-900/35 border border-amber-500/25 transition group text-left">
+                                        <span class="flex items-center gap-2.5">
+                                            <span class="text-sm" x-text="$store.murim.status?.current?.badge || '🥋'"></span>
+                                            <span class="truncate" x-text="$store.murim.status?.current?.title || 'Voie Martiale'"></span>
+                                        </span>
+                                        <span class="text-[10px] font-black uppercase px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-300 border border-amber-500/30" x-text="($store.murim.streak || 0) + 'j 🔥'"></span>
+                                    </button>
+
                                     <a href="{{ route('leaderboard') }}" class="flex items-center gap-3 px-3 py-2 rounded-lg text-xs font-semibold {{ request()->routeIs('leaderboard') ? 'text-white bg-[#ff2a55]' : 'text-[#c0c0d8] hover:text-white hover:bg-[#1a1a28]' }} transition group">
                                         <span class="text-sm">🏆</span>
                                         <span>Classement des Lecteurs</span>
@@ -1367,6 +1376,15 @@
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
                         Planning
                     </a>
+
+                    {{-- Bouton Murim Mobile Invité --}}
+                    <button type="button" @click="$store.murim.toggle(); mobileOpen = false;" class="w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-sm font-bold text-amber-300 bg-amber-950/20 border border-amber-500/30 hover:bg-amber-900/30 transition text-left">
+                        <span class="flex items-center gap-3">
+                            <span class="text-base" x-text="$store.murim.status?.current?.badge || '🥋'"></span>
+                            <span class="truncate" x-text="$store.murim.status?.current?.title || 'Voie Martiale (Murim)'"></span>
+                        </span>
+                        <span class="text-[10px] font-black uppercase px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/30" x-text="($store.murim.streak || 0) + 'j 🔥'"></span>
+                    </button>
 
                     <a href="{{ route('manga.random') }}"
                        onclick="if(window.HiddenScan){ const favs = window.HiddenScan.getFavorites().map(f => f.slug).join(','); if(favs) this.href = '{{ route('manga.random') }}?favs=' + encodeURIComponent(favs); }"
@@ -1730,7 +1748,9 @@
 
     @livewireScripts
     <script>
-        if (window.Alpine && typeof setupNotificationsStore === 'function') {
+        if (window.Alpine && typeof initStores === 'function') {
+            initStores();
+        } else if (window.Alpine && typeof setupNotificationsStore === 'function') {
             setupNotificationsStore();
         }
         // Secours résilient : si Livewire tarde ou échoue à charger Alpine, on charge Alpine automatiquement
@@ -1741,7 +1761,9 @@
                     s.src = 'https://cdn.jsdelivr.net/npm/alpinejs@3.14.8/dist/cdn.min.js';
                     s.defer = true;
                     s.onload = function() {
-                        if (typeof setupNotificationsStore === 'function') {
+                        if (typeof initStores === 'function') {
+                            try { initStores(); } catch(e) {}
+                        } else if (typeof setupNotificationsStore === 'function') {
                             try { setupNotificationsStore(); } catch(e) {}
                         }
                     };
