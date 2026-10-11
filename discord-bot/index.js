@@ -15,6 +15,7 @@ const {
     StringSelectMenuBuilder,
     StringSelectMenuOptionBuilder,
     ChannelType,
+    PermissionFlagsBits,
 } = require('discord.js');
 
 const DATA_DIR = path.join(__dirname, 'data');
@@ -75,6 +76,27 @@ function recordContribution(userId, userName, projectKey, step, chapterNumber) {
         timestamp: new Date().toISOString(),
     });
     fs.writeFileSync(STATS_FILE, JSON.stringify(stats, null, 2), 'utf8');
+}
+
+/**
+ * Récupère les mentions des administrateurs du serveur pour la notification de fin de chapitre.
+ * Notifie toujours les 2 administrateurs officiels du staff.
+ */
+async function getAdminMentions(guild) {
+    const defaultAdminIds = ['979449727047323668', '1310979117172391940'];
+    if (!guild) {
+        return defaultAdminIds.map(id => `<@${id}>`).join(' ');
+    }
+    try {
+        const members = await guild.members.fetch();
+        const admins = members.filter(m => !m.user.bot && (m.permissions.has(PermissionFlagsBits.Administrator) || m.id === guild.ownerId || defaultAdminIds.includes(m.id)));
+        if (admins.size > 0) {
+            return admins.map(m => `<@${m.id}>`).join(' ');
+        }
+    } catch (e) {
+        console.warn('Erreur récupération admins guild:', e.message);
+    }
+    return defaultAdminIds.map(id => `<@${id}>`).join(' ');
 }
 
 /**
@@ -1554,8 +1576,10 @@ client.on('interactionCreate', async interaction => {
             // 1. Trad finit  -> ping Check
             // 2. Clean finit -> ping Edit
             // 3. Check finit -> ping Edit
-            // 4. Edit finit  -> ping QC (si assigné)
-            // 5. QC finit    -> Prêt pour la publication
+            // 4. Edit finit  -> Chapitre terminé & prêt à publier (ping des 2 admins du serveur)
+            // 5. QC finit    -> Chapitre validé & prêt à publier (ping des 2 admins du serveur)
+            const adminMentions = await getAdminMentions(interaction.guild);
+
             let nextAction = '';
             let targetMention = null;
 
@@ -1569,11 +1593,11 @@ client.on('interactionCreate', async interaction => {
                 nextAction = 'l\'**Édition (Edit)**';
                 targetMention = projects[slug].staff?.edit || null;
             } else if (step === 'edit') {
-                nextAction = 'le **QC / Contrôle Qualité**';
-                targetMention = projects[slug].staff?.qc || null;
+                nextAction = 'la **Publication**';
+                targetMention = adminMentions;
             } else if (step === 'qc') {
                 nextAction = 'la **Publication**';
-                targetMention = null;
+                targetMention = adminMentions;
             }
 
             const stepLabels = {
@@ -1584,13 +1608,18 @@ client.on('interactionCreate', async interaction => {
                 qc: 'CONTRÔLE QUALITÉ (QC)',
             };
 
-            let followUpMsg = `🎉 <@${interaction.user.id}> vient de terminer la **${stepLabels[step] || step.toUpperCase()}** pour le chapitre **${newVal}** de **${projects[slug].title}** !`;
-            if (targetMention) {
-                followUpMsg += `\n👉 C'est ton tour pour ${nextAction} : ${targetMention}`;
+            let followUpMsg = '';
+            if (step === 'edit') {
+                followUpMsg = `🎉 <@${interaction.user.id}> vient de terminer l'**ÉDITION (Edit)** pour le chapitre **${newVal}** de **${projects[slug].title}** !\n🚀 **Le chapitre est terminé et prêt à être publié !**\n📢 Notification admins : ${adminMentions}`;
             } else if (step === 'qc') {
-                followUpMsg += `\n🚀 Le chapitre est validé et prêt pour la **Publication** !`;
+                followUpMsg = `🎉 <@${interaction.user.id}> vient de valider le **QC** pour le chapitre **${newVal}** de **${projects[slug].title}** !\n🚀 **Le chapitre est validé et prêt à être publié !**\n📢 Notification admins : ${adminMentions}`;
             } else {
-                followUpMsg += `\n👉 Prochaine étape : ${nextAction} *(aucun membre assigné pour le moment)*`;
+                followUpMsg = `🎉 <@${interaction.user.id}> vient de terminer la **${stepLabels[step] || step.toUpperCase()}** pour le chapitre **${newVal}** de **${projects[slug].title}** !`;
+                if (targetMention) {
+                    followUpMsg += `\n👉 C'est ton tour pour ${nextAction} : ${targetMention}`;
+                } else {
+                    followUpMsg += `\n👉 Prochaine étape : ${nextAction} *(aucun membre assigné pour le moment)*`;
+                }
             }
 
             await interaction.followUp({

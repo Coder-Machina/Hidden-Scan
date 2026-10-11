@@ -171,14 +171,16 @@ class DiscordBotController extends Controller
         // - Trad -> Check
         // - Clean -> Edit
         // - Check -> Edit
-        // - Edit -> QC
-        // - QC -> Publication
+        // - Edit -> Prêt pour publication (Notification des 2 admins)
+        // - QC -> Prêt pour publication (Notification des 2 admins)
+        $adminMentions = env('DISCORD_ADMIN_MENTIONS', '<@979449727047323668> <@1310979117172391940>');
+
         $nextStepInfo = match($validated['step']) {
             'trad' => ['next_step' => 'check', 'next_user' => $manga->check_user, 'label' => 'Check'],
             'clean' => ['next_step' => 'edit', 'next_user' => $manga->edit_user, 'label' => 'Édition (Edit)'],
             'check' => ['next_step' => 'edit', 'next_user' => $manga->edit_user, 'label' => 'Édition (Edit)'],
-            'edit' => ['next_step' => 'qc', 'next_user' => $manga->qc_user, 'label' => 'QC'],
-            'qc' => ['next_step' => 'publication', 'next_user' => null, 'label' => 'Publication'],
+            'edit' => ['next_step' => 'publication', 'next_user' => $adminMentions, 'label' => 'Publication (Admins)'],
+            'qc' => ['next_step' => 'publication', 'next_user' => $adminMentions, 'label' => 'Publication (Admins)'],
         };
 
         return response()->json([
