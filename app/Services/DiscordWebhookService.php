@@ -38,7 +38,7 @@ class DiscordWebhookService
     /**
      * Envoie une notification Discord pour la publication d'un chapitre.
      */
-    public function sendChapterNotification(Chapter $chapter): bool
+    public function sendChapterNotification(Chapter $chapter, bool $force = false): bool
     {
         $chapter->loadMissing('manga');
         $manga = $chapter->manga;
@@ -46,6 +46,13 @@ class DiscordWebhookService
         if (!$manga) {
             return false;
         }
+
+        // 1. Protection Anti-Doublon : ne jamais renvoyer de notification pour un chapitre déjà notifié
+        if (!$force && !is_null($chapter->discord_notified_at)) {
+            Log::info("Discord webhook ignoré pour le chapitre {$chapter->id} de {$manga->title} : déjà notifié le {$chapter->discord_notified_at}");
+            return true;
+        }
+
 
         $webhookUrl = $this->resolveWebhookUrl($manga);
         if (empty($webhookUrl)) {
@@ -88,20 +95,16 @@ class DiscordWebhookService
             'timestamp' => now()->toIso8601String(),
         ];
 
-        // Mentions de rôles : Rôle du manga + Rôle global de notification
+        // Mentions de rôles : Rôle du manga (uniquement si série officielle avec ID valide) + Rôle global de notification
         $pings = [];
-        if (!empty($manga->discord_role_id)) {
-            $pings[] = is_numeric($manga->discord_role_id) ? "<@&{$manga->discord_role_id}>" : "@{$manga->discord_role_id}";
-        } else {
-            $pings[] = "@{$manga->title}";
+        if (!$isExternal && !empty($manga->discord_role_id) && is_numeric($manga->discord_role_id)) {
+            $pings[] = "<@&{$manga->discord_role_id}>";
         }
 
-        if (!empty($allProjectsRoleId)) {
-            $pings[] = is_numeric($allProjectsRoleId) ? "<@&{$allProjectsRoleId}>" : "@{$allProjectsRoleId}";
-        } elseif (!empty($roleId) && $roleId !== $manga->discord_role_id) {
-            $pings[] = is_numeric($roleId) ? "<@&{$roleId}>" : "<@&{$roleId}>";
-        } else {
-            $pings[] = $isExternal ? "@Sorties Site" : "@Tous les projets";
+        if (!empty($allProjectsRoleId) && is_numeric($allProjectsRoleId)) {
+            $pings[] = "<@&{$allProjectsRoleId}>";
+        } elseif (!empty($roleId) && is_numeric($roleId) && $roleId !== $manga->discord_role_id) {
+            $pings[] = "<@&{$roleId}>";
         }
 
         $payload = [
@@ -134,6 +137,7 @@ class DiscordWebhookService
             }
 
             if ($response->successful()) {
+                $chapter->updateQuietly(['discord_notified_at' => now()]);
                 Log::info("Webhook Discord envoyé avec succès pour le chapitre {$chapter->id} de {$manga->title}");
                 return true;
             }
@@ -154,7 +158,7 @@ class DiscordWebhookService
      */
     public function sendBatchChaptersNotification(Manga $manga, array|Collection $chapters): bool
     {
-        if (!$this->isConfigured()) {
+        if (!$this->isConfigured($manga)) {
             return false;
         }
 
@@ -163,9 +167,15 @@ class DiscordWebhookService
             return false;
         }
 
-        if ($chaptersCount === 1) {
-            $first = is_array($chapters) ? reset($chapters) : $chapters->first();
-            return $this->sendChapterNotification($first);
+        // Filtre les chapitres qui n'ont pas encore été notifiés sur Discord
+        $unnotified = collect($chapters)->filter(fn($c) => is_null($c->discord_notified_at));
+        if ($unnotified->isEmpty()) {
+            Log::info("Tous les chapitres du lot ont déjà été notifiés sur Discord pour {$manga->title}, lot ignoré.");
+            return true;
+        }
+
+        if ($unnotified->count() === 1) {
+            return $this->sendChapterNotification($unnotified->first());
         }
 
         $webhookUrl = $this->resolveWebhookUrl($manga);
@@ -180,7 +190,7 @@ class DiscordWebhookService
             ? (config('services.discord.site_role_id') ?: config('services.discord.all_projects_role_id'))
             : config('services.discord.all_projects_role_id');
 
-        $numbers = collect($chapters)->pluck('number')->sort()->values();
+        $numbers = $unnotified->pluck('number')->sort()->values();
         $min = $numbers->first();
         $max = $numbers->last();
 
@@ -205,18 +215,14 @@ class DiscordWebhookService
         ];
 
         $pings = [];
-        if (!empty($manga->discord_role_id)) {
-            $pings[] = is_numeric($manga->discord_role_id) ? "<@&{$manga->discord_role_id}>" : "@{$manga->discord_role_id}";
-        } else {
-            $pings[] = "@{$manga->title}";
+        if (!$isExternal && !empty($manga->discord_role_id) && is_numeric($manga->discord_role_id)) {
+            $pings[] = "<@&{$manga->discord_role_id}>";
         }
 
-        if (!empty($allProjectsRoleId)) {
-            $pings[] = is_numeric($allProjectsRoleId) ? "<@&{$allProjectsRoleId}>" : "@{$allProjectsRoleId}";
-        } elseif (!empty($roleId) && $roleId !== $manga->discord_role_id) {
-            $pings[] = is_numeric($roleId) ? "<@&{$roleId}>" : "<@&{$roleId}>";
-        } else {
-            $pings[] = "@Tous les projets";
+        if (!empty($allProjectsRoleId) && is_numeric($allProjectsRoleId)) {
+            $pings[] = "<@&{$allProjectsRoleId}>";
+        } elseif (!empty($roleId) && is_numeric($roleId) && $roleId !== $manga->discord_role_id) {
+            $pings[] = "<@&{$roleId}>";
         }
 
         $payload = [
@@ -247,7 +253,14 @@ class DiscordWebhookService
                 $response = Http::timeout(10)->post($webhookUrl, $payload);
             }
 
-            return $response->successful();
+            if ($response->successful()) {
+                foreach ($unnotified as $c) {
+                    $c->updateQuietly(['discord_notified_at' => now()]);
+                }
+                return true;
+            }
+
+            return false;
         } catch (\Throwable $e) {
             Log::error("Erreur envoi notification Discord en masse : " . $e->getMessage());
             return false;

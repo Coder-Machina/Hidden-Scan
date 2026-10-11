@@ -677,17 +677,42 @@ async function registerCommands() {
             ),
         new SlashCommandBuilder()
             .setName('config-staff')
-            .setDescription('Assigne un membre du staff à une étape sur un projet')
+            .setDescription('Assigne les membres du staff aux étapes d\'un projet (un ou plusieurs à la fois)')
             .addStringOption(option =>
                 option.setName('manga')
                     .setDescription('Projet concerné')
                     .setRequired(true)
                     .setAutocomplete(true)
             )
+            .addUserOption(option =>
+                option.setName('trad')
+                    .setDescription('Traducteur (Trad)')
+                    .setRequired(false)
+            )
+            .addUserOption(option =>
+                option.setName('check')
+                    .setDescription('Correcteur (Check)')
+                    .setRequired(false)
+            )
+            .addUserOption(option =>
+                option.setName('clean')
+                    .setDescription('Cleaneur (Clean)')
+                    .setRequired(false)
+            )
+            .addUserOption(option =>
+                option.setName('edit')
+                    .setDescription('Éditeur / Lettrage (Edit)')
+                    .setRequired(false)
+            )
+            .addUserOption(option =>
+                option.setName('qc')
+                    .setDescription('Contrôle Qualité (QC)')
+                    .setRequired(false)
+            )
             .addStringOption(option =>
                 option.setName('role')
-                    .setDescription('Étape à assigner')
-                    .setRequired(true)
+                    .setDescription('Étape spécifique (optionnel)')
+                    .setRequired(false)
                     .addChoices(
                         { name: 'Traducteur (Trad)', value: 'trad' },
                         { name: 'Correcteur (Check)', value: 'check' },
@@ -698,8 +723,8 @@ async function registerCommands() {
             )
             .addUserOption(option =>
                 option.setName('membre')
-                    .setDescription('Membre Discord assigné')
-                    .setRequired(true)
+                    .setDescription('Membre pour l\'étape spécifique')
+                    .setRequired(false)
             ),
         new SlashCommandBuilder()
             .setName('set-chapitre')
@@ -933,8 +958,13 @@ client.on('interactionCreate', async interaction => {
         // /config-staff
         else if (commandName === 'config-staff') {
             const slug = interaction.options.getString('manga');
-            const role = interaction.options.getString('role');
-            const membre = interaction.options.getUser('membre');
+            const tradUser = interaction.options.getUser('trad');
+            const checkUser = interaction.options.getUser('check');
+            const cleanUser = interaction.options.getUser('clean');
+            const editUser = interaction.options.getUser('edit');
+            const qcUser = interaction.options.getUser('qc');
+            const singleRole = interaction.options.getString('role');
+            const singleMember = interaction.options.getUser('membre');
 
             if (!projects[slug]) {
                 await syncProjectsWithSite();
@@ -949,8 +979,37 @@ client.on('interactionCreate', async interaction => {
                 projects[slug].staff = {};
             }
 
-            projects[slug].staff[role] = `<@${membre.id}>`;
+            const assignments = {};
+            if (tradUser) assignments.trad = `<@${tradUser.id}>`;
+            if (checkUser) assignments.check = `<@${checkUser.id}>`;
+            if (cleanUser) assignments.clean = `<@${cleanUser.id}>`;
+            if (editUser) assignments.edit = `<@${editUser.id}>`;
+            if (qcUser) assignments.qc = `<@${qcUser.id}>`;
+            if (singleRole && singleMember) assignments[singleRole] = `<@${singleMember.id}>`;
+
+            if (Object.keys(assignments).length === 0) {
+                return await interaction.reply({
+                    content: '⚠️ Veuillez renseigner au moins un membre à assigner (ex: `trad: @Membre`, `check: @Membre`, `clean: @Membre`, etc.).',
+                    ephemeral: true,
+                });
+            }
+
+            for (const [stepKey, memberMention] of Object.entries(assignments)) {
+                projects[slug].staff[stepKey] = memberMention;
+            }
             saveProjects(projects);
+
+            const roleLabels = {
+                trad: '✏️ Traduction (Trad)',
+                check: '✅ Correction (Check)',
+                clean: '🧹 Clean',
+                edit: '📝 Édition (Edit)',
+                qc: '🔍 Contrôle Qualité (QC)',
+            };
+
+            const summaryList = Object.entries(assignments)
+                .map(([stepKey, memberMention]) => `• ${roleLabels[stepKey] || stepKey.toUpperCase()} : ${memberMention}`)
+                .join('\n');
 
             const coverInfo = resolveProjectCover(projects[slug]);
             const embed = buildFicheEmbed(projects[slug], coverInfo);
@@ -958,7 +1017,7 @@ client.on('interactionCreate', async interaction => {
             const files = (coverInfo && coverInfo.isAttachment) ? [coverInfo.attachment] : [];
 
             await interaction.reply({
-                content: `✅ <@${membre.id}> a été assigné au rôle **${role.toUpperCase()}** sur **${projects[slug].title}** !`,
+                content: `✅ **Staff mis à jour pour « ${projects[slug].title} » :**\n${summaryList}`,
                 embeds: [embed],
                 components,
                 files,

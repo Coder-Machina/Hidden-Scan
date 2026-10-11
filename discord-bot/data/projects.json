@@ -2,28 +2,28 @@
   "genius-grandson-of-the-loan-shark-king": {
     "slug": "genius-grandson-of-the-loan-shark-king",
     "title": "Genius Grandson of the Loan Shark King",
-    "drive_url": null,
-    "va_url": null,
-    "va_chapter": 0,
-    "cover_url": "http://127.0.0.1:8000/storage/mangas/covers/01M36QM6RK8QGSBYKCT3EENWSZ.png",
-    "cover_image": "mangas/covers/01M36QM6RK8QGSBYKCT3EENWSZ.png",
+    "drive_url": "https://drive.google.com/drive/u/3/folders/1PO59aCTMqJzcUkYTS-fQvUw597chfQhE?hl=fr",
+    "va_url": "https://qimanga.com/series/genius-grandson-of-the-loan-shark-king",
+    "va_chapter": 126,
+    "cover_url": "https://book-pic.webnovel.com/bookcover/31396277800957005?imageMogr2/thumbnail/600x&imageId=1757295165865",
     "is_rush": false,
     "staff": {
-      "trad": null,
-      "check": null,
-      "clean": null,
-      "edit": null,
+      "trad": "<@1163161538652291074>",
+      "check": "<@929297904852697138>",
+      "clean": "<@1086279413278179480>",
+      "edit": "<@993163283865546835>",
       "qc": null
     },
     "steps": {
       "trad": 0,
-      "check": 0,
+      "check": 8,
       "clean": 0,
       "edit": 0,
       "qc": 0
     },
+    "is_external": false,
     "discord_role_id": "1535265318828511234",
-    "is_external": false
+    "cover_image": "mangas/covers/01M36QM6RK8QGSBYKCT3EENWSZ.png"
   },
   "hoegwi-suseonjeon": {
     "slug": "hoegwi-suseonjeon",
@@ -191,10 +191,10 @@
     "cover_image": "mangas/covers/IA3BSgjLkwzCYrHFtR241LkTgii0Zc9J.png",
     "is_rush": false,
     "staff": {
-      "trad": null,
-      "check": null,
-      "clean": null,
-      "edit": null,
+      "trad": "<@540048485563498516>",
+      "check": "<@979449727047323668>",
+      "clean": "<@1086279413278179480>",
+      "edit": "<@1310979117172391940>",
       "qc": null
     },
     "steps": {

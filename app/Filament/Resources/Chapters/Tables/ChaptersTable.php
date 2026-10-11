@@ -128,7 +128,7 @@ class ChaptersTable
                     ->modalDescription('Envoyer immédiatement la fiche d\'annonce de ce chapitre sur Discord.')
                     ->modalSubmitActionLabel('Envoyer maintenant')
                     ->action(function (Chapter $record) {
-                        $sent = app(\App\Services\DiscordWebhookService::class)->sendChapterNotification($record);
+                        $sent = app(\App\Services\DiscordWebhookService::class)->sendChapterNotification($record, force: true);
                         if ($sent) {
                             \Filament\Notifications\Notification::make()
                                 ->title('Annonce Discord envoyée')

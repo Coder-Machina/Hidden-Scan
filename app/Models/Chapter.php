@@ -12,7 +12,7 @@ class Chapter extends Model
 
     protected $fillable = [
         'manga_id', 'number', 'title', 'slug', 'status',
-        'uploaded_by', 'scheduled_at', 'published_at', 'views_count',
+        'uploaded_by', 'scheduled_at', 'published_at', 'discord_notified_at', 'views_count',
     ];
 
     protected $attributes = [
@@ -23,6 +23,7 @@ class Chapter extends Model
         'status' => \App\Enums\ChapterStatus::class,
         'scheduled_at' => 'datetime',
         'published_at' => 'datetime',
+        'discord_notified_at' => 'datetime',
     ];
 
     protected function number(): \Illuminate\Database\Eloquent\Casts\Attribute
@@ -105,7 +106,7 @@ class Chapter extends Model
     {
         static::saved(function (Chapter $chapter) {
             $isPublished = ($chapter->status === \App\Enums\ChapterStatus::PUBLIE || $chapter->status?->value === 'publie');
-            if ($isPublished && !static::$skipDiscordNotification) {
+            if ($isPublished && !static::$skipDiscordNotification && is_null($chapter->discord_notified_at)) {
                 if ($chapter->wasRecentlyCreated || $chapter->wasChanged('status') || $chapter->wasChanged('published_at')) {
                     $chapter->notifyFavoriteUsers();
                     $chapter->notifyDiscord();
