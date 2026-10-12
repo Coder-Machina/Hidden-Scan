@@ -842,6 +842,14 @@
                             body: JSON.stringify({ top_mangas: this.topMangasIds })
                         });
                         const data = await res.json();
+                        if (res.ok && data.success) {
+                            this.showToast('Top 5 Séries mis à jour !');
+                        }
+                    } catch(e) {
+                        this.showToast('Erreur lors de la mise à jour du Top 5.');
+                    }
+                },
+
                 // ═══ Bête Spirituelle & Cadres d'Avatar & Carte de Disciple ═══
                 currentFrame: @json($currentFrame ?? 'novice'),
                 avatarFrames: @json($avatarFrames),
@@ -1134,8 +1142,16 @@
 
                         <circle cx="240" cy="70" r="18" fill="url(#smallPlanetGradApp)" />
                         <circle cx="640" cy="105" r="54" fill="url(#moonGradApp)" />
-                        <circle cx="625" cy="88" r="9" fill="#1e293b" opacity="0.25" />
-                        <circle cx="660" cy="118" r="11" fill="#1e293b" opac            <div class="profile-hero-content">
+                        <circle cx="660" cy="118" r="11" fill="#1e293b" opacity="0.25" />
+                    </svg>
+                </template>
+                <template x-if="bannerPreview">
+                    <img :src="bannerPreview" class="profile-hero-img" alt="Bannière">
+                </template>
+                <div class="profile-hero-overlay"></div>
+            </div>
+
+            <div class="profile-hero-content">
                 <div class="profile-hero-left">
                     <div class="profile-avatar-box relative transition-all duration-300" :class="getFrameClass(currentFrame)">
                         <div class="qi-pulse-ring" :class="currentFrame !== 'novice' ? 'block' : 'hidden'"></div>
