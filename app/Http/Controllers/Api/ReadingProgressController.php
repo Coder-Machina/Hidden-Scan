@@ -7,6 +7,8 @@ use App\Http\Controllers\Controller;
 use App\Models\Chapter;
 use App\Models\Manga;
 use App\Models\ReadingProgress;
+use App\Services\MurimRankService;
+use App\Services\RecommendationService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -25,7 +27,7 @@ class ReadingProgressController extends Controller
         ]);
 
         $user = Auth::user();
-        if (!$user) {
+        if (! $user) {
             return response()->json([
                 'success' => false,
                 'message' => 'Veuillez vous connecter pour enregistrer votre progression.',
@@ -42,7 +44,7 @@ class ReadingProgressController extends Controller
         ]);
 
         $progress->manga_id = $chapter->manga_id;
-        $progress->is_read = !$progress->exists || !$progress->is_read;
+        $progress->is_read = ! $progress->exists || ! $progress->is_read;
         $progress->save();
 
         $stats = $this->getMangaStats($user->id, $chapter->manga);
@@ -66,16 +68,17 @@ class ReadingProgressController extends Controller
      */
     public function getMurimStatus(Request $request): JsonResponse
     {
-        $userId = Auth::id();
-        $readCount = 0;
-        if ($userId) {
-            $readCount = ReadingProgress::where('user_id', $userId)->where('is_read', true)->count();
+        $user = Auth::user();
+        if ($user) {
+            $readCount = ReadingProgress::where('user_id', $user->id)->where('is_read', true)->count();
+            $streak = (int) ($user->streak ?? $request->input('streak', 0));
+            $xp = (int) ($user->xp ?? 0);
+            $status = MurimRankService::calculateStatus($readCount, $streak, $xp > 0 ? $xp : null, $user);
         } else {
             $readCount = (int) $request->input('local_read_count', 0);
+            $streak = (int) $request->input('streak', 0);
+            $status = MurimRankService::calculateStatus($readCount, $streak);
         }
-        $streak = (int) $request->input('streak', 0);
-
-        $status = \App\Services\MurimRankService::calculateStatus($readCount, $streak);
 
         return response()->json([
             'success' => true,
@@ -94,7 +97,7 @@ class ReadingProgressController extends Controller
         ]);
 
         $user = Auth::user();
-        if (!$user) {
+        if (! $user) {
             return response()->json([
                 'success' => false,
                 'message' => 'Veuillez vous connecter pour enregistrer votre progression.',
@@ -148,7 +151,7 @@ class ReadingProgressController extends Controller
             ? Manga::find($manga_id)
             : Manga::where('slug', $manga_id)->first();
 
-        if (!$manga) {
+        if (! $manga) {
             return response()->json([
                 'success' => false,
                 'message' => 'Œuvre non trouvée.',
@@ -177,7 +180,7 @@ class ReadingProgressController extends Controller
     public function getAllProgress(): JsonResponse
     {
         $user = Auth::user();
-        if (!$user) {
+        if (! $user) {
             return response()->json([
                 'success' => true,
                 'progress' => [],
@@ -192,7 +195,9 @@ class ReadingProgressController extends Controller
         $result = [];
         foreach ($readEntries as $mangaId => $entries) {
             $manga = Manga::find($mangaId);
-            if (!$manga) continue;
+            if (! $manga) {
+                continue;
+            }
 
             $readChapterIds = $entries->pluck('chapter_id')->toArray();
             $totalChapters = Chapter::where('manga_id', $mangaId)
@@ -236,7 +241,7 @@ class ReadingProgressController extends Controller
     public function getCatchUp(): JsonResponse
     {
         $user = Auth::user();
-        if (!$user) {
+        if (! $user) {
             return response()->json([
                 'success' => true,
                 'catch_up' => [],
@@ -329,7 +334,7 @@ class ReadingProgressController extends Controller
             ->first();
 
         // Fallback to first chapter if everything or nothing read
-        if (!$nextChapter && $readCount === 0) {
+        if (! $nextChapter && $readCount === 0) {
             $nextChapter = Chapter::where('manga_id', $manga->id)
                 ->where('status', ChapterStatus::PUBLIE)
                 ->orderBy('number', 'asc')
@@ -355,7 +360,7 @@ class ReadingProgressController extends Controller
      * Get recommendations "Si t'as aimé X, lis Y" for user or given slugs.
      * GET /api/recommendations
      */
-    public function getRecommendations(Request $request, \App\Services\RecommendationService $service): JsonResponse
+    public function getRecommendations(Request $request, RecommendationService $service): JsonResponse
     {
         $user = Auth::user();
 

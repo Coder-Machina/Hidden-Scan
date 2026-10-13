@@ -1,4 +1,4 @@
-@props(['title' => 'Hidden Scan', 'description' => null, 'hideNavbar' => false])
+@props(['title' => 'Hidden Scan', 'description' => null, 'hideNavbar' => false, 'showFooter' => null])
 @php
     $authPayload = auth()->check() ? [
         'id' => auth()->id(),
@@ -714,37 +714,40 @@
                     <a href="{{ route('manga.random') }}"
                        onclick="if(window.HiddenScan && !{{ auth()->check() ? 'true' : 'false' }}){ const favs = window.HiddenScan.getFavorites().map(f => f.slug).join(','); if(favs) this.href = '{{ route('manga.random') }}?favs=' + encodeURIComponent(favs); }"
                        title="Lancer un manga aléatoire"
-                       class="px-2.5 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1 bg-white/[0.04] hover:bg-crimson/20 text-chalk border border-white/10 hover:border-crimson/40 hover:scale-105 active:scale-95">
+                       class="px-2.5 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 bg-white/[0.04] hover:bg-crimson/20 text-chalk border border-white/10 hover:border-crimson/40 hover:scale-105 active:scale-95">
                         <span>🎲</span>
                         <span class="hidden xl:inline">Surprends-moi</span>
                     </a>
                 </div>
 
-                {{-- Actions Desktop Équilibrées (Pas de conflit de place) --}}
-                <div class="hidden md:flex items-center gap-2 lg:gap-3">
+                {{-- Actions Desktop Équilibrées & Aérées --}}
+                <div class="hidden md:flex items-center gap-3 lg:gap-3.5 flex-shrink-0">
                     {{-- Search Input Dynamique & Compact --}}
-                    <form action="{{ route('manga.index') }}" method="GET" class="relative">
+                    <form action="{{ route('manga.index') }}" method="GET" class="relative flex items-center">
                         <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-mist pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
                         <input
                             type="text"
                             name="q"
                             placeholder="Rechercher..."
-                            class="input-field !pl-8 !pr-3 !py-1.5 w-36 lg:w-44 focus:!w-56 text-xs !rounded-full !bg-ink-deep/80 !border-white/10 focus:!border-crimson/60 transition-all duration-300"
+                            class="input-field !pl-8 !pr-3 !h-9 w-32 lg:w-40 focus:!w-52 text-xs !rounded-full !bg-ink-deep/80 !border-white/10 focus:!border-crimson/60 transition-all duration-300"
                         >
                     </form>
 
                     {{-- Bouton Discord Officiel --}}
                     <a href="https://discord.gg/sMUeFSks4" target="_blank" rel="noopener noreferrer"
-                       class="p-2 rounded-xl bg-[#5865F2]/10 border border-[#5865F2]/25 text-[#5865F2] hover:bg-[#5865F2] hover:text-white transition-all shadow-sm flex items-center justify-center"
+                       class="h-9 w-9 rounded-xl bg-[#5865F2]/10 border border-[#5865F2]/25 text-[#5865F2] hover:bg-[#5865F2] hover:text-white transition-all shadow-sm flex items-center justify-center flex-shrink-0"
                        title="Rejoindre notre communauté Discord">
-                        <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057 19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028c.462-.63.874-1.295 1.226-1.994.021-.041.001-.09-.041-.106a13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.892.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03zM8.02 15.33c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.956-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.956 2.418-2.157 2.418zm7.975 0c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.955-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.946 2.418-2.157 2.418z"/></svg>
+                        <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057 19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028c.462-.63.874-1.295 1.226-1.994.021-.041.001-.09-.041-.106a13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.892.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.078.078 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03zM8.02 15.33c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.956-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.956 2.418-2.157 2.418zm7.975 0c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.955-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.946 2.418-2.157 2.418z"/></svg>
                     </a>
 
+                    {{-- Séparateur discret --}}
+                    <div class="h-5 w-px bg-white/10 hidden lg:block"></div>
+
                     {{-- Rang Murim & Flamme Martiale : Pilule Compacte & Élégante --}}
-                    <div x-data x-cloak>
+                    <div x-data x-cloak class="flex-shrink-0">
                         <button @click="$store.murim.toggle()"
                                 type="button"
-                                class="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-white/[0.04] border border-white/10 hover:border-amber-400/50 hover:bg-white/[0.08] transition-all cursor-pointer shadow-sm group"
+                                class="h-9 flex items-center gap-1.5 px-2.5 rounded-xl bg-white/[0.04] border border-white/10 hover:border-amber-400/50 hover:bg-white/[0.08] transition-all cursor-pointer shadow-sm group"
                                 :title="'Votre Rang Murim : ' + ($store.murim.status?.current?.title || 'Disciple')">
                             <span class="text-sm leading-none group-hover:scale-125 transition-transform" x-text="$store.murim.status?.current?.badge || '🥉'"></span>
                             <span class="text-[11px] font-black text-chalk hidden xl:inline" x-text="$store.murim.status?.current?.title || 'Disciple Tiers-Rang'"></span>
@@ -760,14 +763,14 @@
                     {{-- Avatar Utilisateur avec Menu Déroulant & Notifications --}}
                     @auth
                         {{-- Centre de notifications (Desktop) --}}
-                        <div class="relative" x-data="{ notifOpen: false }" @click.outside="notifOpen = false">
+                        <div class="relative flex-shrink-0" x-data="{ notifOpen: false }" @click.outside="notifOpen = false">
                             <button 
                                 @click="notifOpen = !notifOpen; if(notifOpen && $store?.notifications) $store.notifications.fetchNotifications()" 
-                                class="relative p-2.5 rounded-xl bg-[#141420] border border-[#222234] text-[#a0a0c0] hover:text-white hover:border-[#ff2a55]/50 hover:bg-[#1a1a28] transition-all cursor-pointer flex items-center justify-center shadow-md focus:outline-none"
+                                class="h-9 w-9 rounded-xl bg-[#141420] border border-[#222234] text-[#a0a0c0] hover:text-white hover:border-[#ff2a55]/50 hover:bg-[#1a1a28] transition-all cursor-pointer flex items-center justify-center shadow-md focus:outline-none"
                                 title="Notifications de vos séries favorites"
                                 aria-label="Notifications"
                             >
-                                <svg class="w-5 h-5 transition-transform active:scale-90" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <svg class="w-4 h-4 transition-transform active:scale-90" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/>
                                 </svg>
 
@@ -873,22 +876,17 @@
                                     </a>
                                     <a href="{{ route('library') }}" class="text-xs text-[#7070a0] hover:text-white transition">
                                         Bibliothèque
-                                    </a>
-                                </div>
-                            </div>
-                        </div>
-
-                        {{-- Menu déroulant du profil utilisateur --}}
-                        <div class="relative" x-data="{ userMenuOpen: false }" @click.outside="userMenuOpen = false">
+                                                            {{-- Menu déroulant du profil utilisateur --}}
+                        <div class="relative flex-shrink-0" x-data="{ userMenuOpen: false }" @click.outside="userMenuOpen = false">
                             <button 
                                 @click="userMenuOpen = !userMenuOpen" 
-                                class="w-10 h-10 rounded-full overflow-hidden ring-2 ring-[#ff2a55]/70 hover:ring-[#ff2a55] transition-all cursor-pointer flex items-center justify-center bg-[#111118] shadow-lg shadow-black/40 focus:outline-none"
+                                class="h-9 w-9 rounded-full overflow-hidden ring-2 ring-[#ff2a55]/70 hover:ring-[#ff2a55] transition-all cursor-pointer flex items-center justify-center bg-[#111118] shadow-lg shadow-black/40 focus:outline-none"
                                 title="{{ Auth::user()->name }}"
                             >
                                 <img src="{{ Auth::user()->avatar_url }}" alt="{{ Auth::user()->name }}" class="w-full h-full object-cover navbar-avatar-img">
                             </button>
 
-                            {{-- Menu déroulant du profil (Solide 100% Opaque & Uniforme) --}}
+                            {{-- Menu déroulant du profil (Épuré & Élégant) --}}
                             <div 
                                 x-show="userMenuOpen" 
                                 x-cloak
@@ -899,19 +897,19 @@
                                 x-transition:leave-start="opacity-100 scale-100 translate-y-0"
                                 x-transition:leave-end="opacity-0 scale-95 -translate-y-1"
                                 style="background-color: #12121c !important; border: 1px solid #262638 !important; box-shadow: 0 16px 48px rgba(0,0,0,0.85);"
-                                class="absolute right-0 mt-2 w-60 rounded-xl p-2 z-50 overflow-hidden"
+                                class="absolute right-0 mt-2 w-56 rounded-xl p-2 z-50 overflow-hidden"
                             >
                                 {{-- En-tête profil --}}
-                                <div style="border-bottom: 1px solid #222234; padding: 10px 12px 12px;">
+                                <div style="border-bottom: 1px solid #222234; padding: 8px 10px 10px;">
                                     <div class="font-bold text-sm text-[#ffffff] truncate flex items-center justify-between gap-2">
                                         <span class="truncate">{{ Auth::user()->name }}</span>
                                         @if(Auth::user()->staff_badge)
-                                            <span class="text-[10px] uppercase font-extrabold px-1.5 py-0.5 rounded border {{ Auth::user()->staff_badge['bg'] }} {{ Auth::user()->staff_badge['text'] }} {{ Auth::user()->staff_badge['border'] }}">
+                                            <span class="text-[9px] uppercase font-extrabold px-1.5 py-0.5 rounded border {{ Auth::user()->staff_badge['bg'] }} {{ Auth::user()->staff_badge['text'] }} {{ Auth::user()->staff_badge['border'] }}">
                                                 {{ Auth::user()->staff_badge['name'] }}
                                             </span>
                                         @endif
                                     </div>
-                                    <div class="text-xs text-[#7070a0] truncate mt-1">
+                                    <div class="text-[11px] text-[#7070a0] truncate mt-0.5">
                                         @if(Auth::user()->email && !str_contains(Auth::user()->email, '@anon.'))
                                             {{ Auth::user()->email }}
                                         @else
@@ -921,71 +919,23 @@
                                             </span>
                                         @endif
                                     </div>
-
-                                    {{-- Statut de Cultivation Murim --}}
-                                    <div class="mt-2.5 p-2.5 rounded-xl bg-[#161624] border border-[#262638]" x-data x-cloak>
-                                        <div class="flex items-center justify-between text-[10px] font-bold text-[#8080a8] mb-1">
-                                            <span class="text-amber-400">⚡ VOIE MARTIALE</span>
-                                            <template x-if="$store.murim.streak > 0">
-                                                <span class="text-amber-300">🔥 <span x-text="$store.murim.streak"></span>j</span>
-                                            </template>
-                                        </div>
-                                        <div class="flex items-center gap-2 mb-1.5">
-                                            <span class="text-base" x-text="$store.murim.status?.current?.badge || '🥉'"></span>
-                                            <div class="min-w-0 flex-1">
-                                                <div class="text-xs font-bold text-white truncate" x-text="$store.murim.status?.current?.title || 'Disciple Tiers-Rang'"></div>
-                                                <div class="text-[10px] text-[#8080a8] truncate" x-text="$store.murim.status?.current?.aura || 'Aura Naissante'"></div>
-                                            </div>
-                                        </div>
-                                        <div class="w-full bg-[#11111a] rounded-full h-1.5 overflow-hidden border border-white/5">
-                                            <div class="bg-gradient-to-r from-amber-500 to-[#ff2a55] h-full rounded-full transition-all duration-500" :style="'width: ' + ($store.murim.status?.percent || 0) + '%'"></div>
-                                        </div>
-                                    </div>
                                 </div>
 
-                                {{-- Liens Écosystème --}}
-                                <div class="py-1.5 space-y-0.5">
-                                    <a href="{{ route('profile.edit', ['tab' => 'overview']) }}" class="flex items-center gap-3 px-3 py-2 rounded-lg text-xs font-semibold text-[#c0c0d8] hover:text-white hover:bg-[#1a1a28] transition group">
+                                {{-- Liens essentiels --}}
+                                <div class="py-1 space-y-0.5">
+                                    <a href="{{ route('profile.edit', ['tab' => 'overview']) }}" class="flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-semibold text-[#c0c0d8] hover:text-white hover:bg-[#1a1a28] transition group">
                                         <svg class="w-4 h-4 text-[#ff2a55] group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
-                                        Mon Profil & Voie Martiale
+                                        <span>Mon Profil</span>
                                     </a>
 
-                                    <a href="{{ route('profile.edit', ['tab' => 'tierlist']) }}" class="flex items-center gap-3 px-3 py-2 rounded-lg text-xs font-semibold text-[#c0c0d8] hover:text-white hover:bg-[#1a1a28] transition group">
-                                        <span class="text-xs">👑</span>
-                                        Ma Tier List Webtoon
-                                    </a>
-
-                                    <a href="{{ route('profile.edit', ['tab' => 'activity']) }}" class="flex items-center gap-3 px-3 py-2 rounded-lg text-xs font-semibold text-[#c0c0d8] hover:text-white hover:bg-[#1a1a28] transition group">
-                                        <span class="text-xs">📅</span>
-                                        Suivi d'Assiduité (Heatmap)
-                                    </a>
-
-                                    <a href="{{ route('leaderboard') }}" class="flex items-center gap-3 px-3 py-2 rounded-lg text-xs font-semibold text-[#c0c0d8] hover:text-white hover:bg-[#1a1a28] transition group">
-                                        <span class="text-xs">🏆</span>
-                                        Classement des Lecteurs
-                                    </a>
-
-                                    <a href="{{ route('library', ['tab' => 'rattrapage']) }}" class="flex items-center justify-between px-3 py-2 rounded-lg text-xs font-semibold text-[#f87171] hover:text-white hover:bg-red-950/40 border border-red-500/20 transition group">
-                                        <span class="flex items-center gap-3">
-                                            <svg class="w-4 h-4 text-[#ff2a55] group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
-                                            Mode Rattrapage
-                                        </span>
-                                        <span class="text-[10px] px-1.5 py-0.5 rounded bg-red-600 text-white font-extrabold">NEW</span>
-                                    </a>
-
-                                    <a href="{{ route('library') }}" class="flex items-center gap-3 px-3 py-2 rounded-lg text-xs font-semibold text-[#c0c0d8] hover:text-white hover:bg-[#1a1a28] transition group">
+                                    <a href="{{ route('library') }}" class="flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-semibold text-[#c0c0d8] hover:text-white hover:bg-[#1a1a28] transition group">
                                         <svg class="w-4 h-4 text-[#ff2a55] group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/></svg>
-                                        Ma Bibliothèque
+                                        <span>Ma Bibliothèque</span>
                                     </a>
 
-                                    <a href="{{ route('profile.edit', ['tab' => 'edit']) }}" class="flex items-center gap-3 px-3 py-2 rounded-lg text-xs font-semibold text-[#c0c0d8] hover:text-white hover:bg-[#1a1a28] transition group">
-                                        <svg class="w-4 h-4 text-[#ff2a55] group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
-                                        Modifier mon profil
-                                    </a>
-
-                                    <a href="{{ route('profile.edit', ['tab' => 'settings']) }}" class="flex items-center gap-3 px-3 py-2 rounded-lg text-xs font-semibold text-[#c0c0d8] hover:text-white hover:bg-[#1a1a28] transition group">
-                                        <svg class="w-4 h-4 text-[#ff2a55] group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
-                                        Paramètres & Sécurité
+                                    <a href="{{ route('profile.edit', ['tab' => 'settings']) }}" class="flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-semibold text-[#c0c0d8] hover:text-white hover:bg-[#1a1a28] transition group">
+                                        <svg class="w-4 h-4 text-[#ff2a55] group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"></circle><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+                                        <span>Paramètres</span>
                                     </a>
 
                                     @if(Auth::user()->canAccessPanel(filament()->getPanel('admin')))
@@ -1005,9 +955,9 @@
                                             };
                                         @endphp
                                         <a href="/admin" target="_blank" class="flex items-center justify-between px-3 py-2 rounded-lg text-xs font-bold transition border {{ $admClass }}">
-                                            <span class="flex items-center gap-3">
+                                            <span class="flex items-center gap-2.5">
                                                 <svg class="w-4 h-4 {{ $iconColor }}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
-                                                Administration
+                                                <span>Administration</span>
                                             </span>
                                             @if($staffBadge)
                                                 <span class="text-[9px] uppercase tracking-wider font-extrabold px-1.5 py-0.5 rounded border {{ $staffBadge['bg'] }} {{ $staffBadge['text'] }} {{ $staffBadge['border'] }}">
@@ -1022,9 +972,9 @@
                                 <div style="border-top: 1px solid #222234; padding-top: 4px; margin-top: 2px;">
                                     <form method="POST" action="{{ route('logout') }}">
                                         @csrf
-                                        <button type="submit" class="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-xs font-semibold text-[#f87171] hover:bg-red-500/10 hover:text-red-400 transition cursor-pointer">
+                                        <button type="submit" class="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-semibold text-[#f87171] hover:bg-red-500/10 hover:text-red-400 transition cursor-pointer">
                                             <svg class="w-4 h-4 text-[#f87171]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
-                                            Se déconnecter
+                                            <span>Se déconnecter</span>
                                         </button>
                                     </form>
                                 </div>
@@ -1194,14 +1144,14 @@
                                         <span>Mon Profil</span>
                                     </a>
 
-                                    <a href="{{ route('profile.edit', ['tab' => 'edit']) }}" class="flex items-center gap-3 px-3 py-2 rounded-lg text-xs font-semibold text-[#c0c0d8] hover:text-white hover:bg-[#1a1a28] transition group">
-                                        <svg class="w-4 h-4 text-[#ff2a55] group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
-                                        <span>Modifier mon profil</span>
+                                    <a href="{{ route('library') }}" class="flex items-center gap-3 px-3 py-2 rounded-lg text-xs font-semibold text-[#c0c0d8] hover:text-white hover:bg-[#1a1a28] transition group">
+                                        <svg class="w-4 h-4 text-[#ff2a55] group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/></svg>
+                                        <span>Ma Bibliothèque</span>
                                     </a>
 
                                     <a href="{{ route('profile.edit', ['tab' => 'settings']) }}" class="flex items-center gap-3 px-3 py-2 rounded-lg text-xs font-semibold text-[#c0c0d8] hover:text-white hover:bg-[#1a1a28] transition group">
-                                        <svg class="w-4 h-4 text-[#ff2a55] group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
-                                        <span>Paramètres & Sécurité</span>
+                                        <svg class="w-4 h-4 text-[#ff2a55] group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"></circle><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+                                        <span>Paramètres</span>
                                     </a>
 
                                     @if(Auth::user()->canAccessPanel(filament()->getPanel('admin')))
@@ -1478,7 +1428,11 @@
         @endif
     </main>
 
-    {{-- ═══ Footer ═══ --}}
+    {{-- ═══ Footer (Affiché uniquement sur Accueil et détails séries / chapitres) ═══ --}}
+    @php
+        $displayFooter = $showFooter ?? request()->routeIs('home', 'manga.show', 'chapter.show');
+    @endphp
+    @if($displayFooter)
     <footer class="border-t border-line/50 bg-ink-deep/50 mt-auto relative z-10">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 py-12">
             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 mb-8">
@@ -1533,6 +1487,7 @@
             </div>
         </div>
     </footer>
+    @endif
 
     {{-- Widget Discord Flottant (Grand écran uniquement) --}}
     @unless($hideNavbar)

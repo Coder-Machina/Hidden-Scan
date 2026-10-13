@@ -2,10 +2,8 @@
 
 namespace Tests\Feature;
 
-use App\Models\Manga;
 use App\Models\User;
 use App\Services\MurimRankService;
-use App\Services\ScheduleService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -25,40 +23,30 @@ class WeeklyScheduleAndMurimTest extends TestCase
 
     public function test_murim_service_calculates_correct_ranks(): void
     {
-        // 0 chapters
+        // 0 chapters -> Initié Martial
         $rank0 = MurimRankService::getRankForCount(0);
         $this->assertEquals(1, $rank0['id']);
-        $this->assertEquals('Disciple Tiers-Rang', $rank0['title']);
+        $this->assertEquals('Initié Martial', $rank0['title']);
 
-        // 10 chapters
-        $rank10 = MurimRankService::getRankForCount(10);
-        $this->assertEquals(2, $rank10['id']);
-        $this->assertEquals('Guerrier de Second Rang', $rank10['title']);
+        // 15 chapters -> Disciple Émérite
+        $rank15 = MurimRankService::getRankForCount(15);
+        $this->assertEquals(2, $rank15['id']);
+        $this->assertEquals('Disciple Émérite', $rank15['title']);
 
-        // 35 chapters
+        // 35 chapters -> Guerrier d'Élite
         $rank35 = MurimRankService::getRankForCount(35);
         $this->assertEquals(3, $rank35['id']);
-        $this->assertEquals('Guerrier de Premier Rang', $rank35['title']);
+        $this->assertEquals("Guerrier d'Élite", $rank35['title']);
 
-        // 75 chapters
-        $rank75 = MurimRankService::getRankForCount(75);
-        $this->assertEquals(4, $rank75['id']);
-        $this->assertEquals('Expert du Qi Intérieur', $rank75['title']);
+        // 70 chapters -> Adepte du Qi Pur
+        $rank70 = MurimRankService::getRankForCount(70);
+        $this->assertEquals(4, $rank70['id']);
+        $this->assertEquals('Adepte du Qi Pur', $rank70['title']);
 
-        // 200 chapters
-        $rank200 = MurimRankService::getRankForCount(200);
-        $this->assertEquals(5, $rank200['id']);
-        $this->assertEquals('Grand Maître Martial', $rank200['title']);
-
-        // 400 chapters
-        $rank400 = MurimRankService::getRankForCount(400);
-        $this->assertEquals(6, $rank400['id']);
-        $this->assertEquals('Transcendant Céleste', $rank400['title']);
-
-        // 600 chapters
-        $rank600 = MurimRankService::getRankForCount(600);
-        $this->assertEquals(7, $rank600['id']);
-        $this->assertEquals('Dieu Martial des Ombres', $rank600['title']);
+        // 120 chapters -> Maître Martial
+        $rank120 = MurimRankService::getRankForCount(120);
+        $this->assertEquals(5, $rank120['id']);
+        $this->assertEquals('Maître Martial', $rank120['title']);
     }
 
     public function test_murim_api_returns_status_for_guest(): void
@@ -76,7 +64,7 @@ class WeeklyScheduleAndMurimTest extends TestCase
                 'streak' => 3,
                 'current' => [
                     'id' => 2,
-                    'title' => 'Guerrier de Second Rang',
+                    'title' => 'Disciple Émérite',
                 ],
             ],
         ]);

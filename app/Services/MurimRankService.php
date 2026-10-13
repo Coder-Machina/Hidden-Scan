@@ -2,148 +2,311 @@
 
 namespace App\Services;
 
+use App\Models\User;
+use Carbon\Carbon;
+
 class MurimRankService
 {
+    /**
+     * Les 10 Royaumes de Cultivation Martiale (100% Français, dynamiques et immersifs)
+     */
     public static function getRanks(): array
     {
         return [
             1 => [
                 'id' => 1,
-                'title' => 'Disciple Tiers-Rang',
-                'hangeul' => '三流武士',
-                'pinyin' => 'Sanryu',
-                'badge' => '🥉',
+                'title' => 'Initié Martial',
+                'hangeul' => '三流',
+                'pinyin' => 'San Liu (3e Rang)',
+                'badge' => '🥋',
+                'min_xp' => 0,
+                'max_xp' => 150,
                 'min_chapters' => 0,
-                'max_chapters' => 5,
-                'color' => '#A0A0C0',
+                'max_chapters' => 9,
+                'color' => '#94A3B8',
                 'aura' => 'Aura Naissante',
-                'description' => "Vos méridiens s'ouvrent à peine. Vous faites vos premiers pas dans les manuscrits secrets du monde martial.",
-                'quote' => 'Le chemin de mille lieues commence par un seul chapitre.',
+                'description' => "L'éveil spirituel commence. Vos méridiens s'ouvrent à l'énergie vitale des récits.",
+                'quote' => 'Un voyage de dix mille lieues commence par un premier chapitre.',
             ],
             2 => [
                 'id' => 2,
-                'title' => 'Guerrier de Second Rang',
-                'hangeul' => '二流武士',
-                'pinyin' => 'Iryu',
-                'badge' => '🥈',
-                'min_chapters' => 6,
-                'max_chapters' => 20,
-                'color' => '#818CF8',
-                'aura' => 'Qi Fluant',
-                'description' => "Votre Qi intérieur commence à circuler sans entrave. Vous surpassez désormais les simples roturiers.",
-                'quote' => 'La lame commence à s\'affûter, le souffle s\'harmonise.',
+                'title' => 'Disciple Émérite',
+                'hangeul' => '二流',
+                'pinyin' => 'Er Liu (2nd Rang)',
+                'badge' => '🥉',
+                'min_xp' => 151,
+                'max_xp' => 450,
+                'min_chapters' => 10,
+                'max_chapters' => 29,
+                'color' => '#60A5FA',
+                'aura' => 'Flux de Qi Naissant',
+                'description' => 'Le Qi circule désormais avec fluidité dans vos méridiens. Vous dépassez le commun des mortels.',
+                'quote' => 'La discipline quotidienne forge l\'esprit et affine la lame.',
             ],
             3 => [
                 'id' => 3,
-                'title' => 'Guerrier de Premier Rang',
-                'hangeul' => '一流武士',
-                'pinyin' => 'Ilryu',
-                'badge' => '🥇',
-                'min_chapters' => 21,
-                'max_chapters' => 50,
+                'title' => 'Guerrier d\'Élite',
+                'hangeul' => '一流',
+                'pinyin' => 'Yi Liu (1er Rang)',
+                'badge' => '🥈',
+                'min_xp' => 451,
+                'max_xp' => 950,
+                'min_chapters' => 30,
+                'max_chapters' => 59,
                 'color' => '#38BDF8',
-                'aura' => 'Maîtrise Élémentaire',
-                'description' => "Maîtrise solide du Dantian. Les techniques fondamentales n'ont plus aucun secret pour votre esprit.",
-                'quote' => 'Une réputation commence à résonner dans les auberges du Jianghu.',
+                'aura' => 'Lame des Ombres',
+                'description' => "Votre volonté est aussi tranchante que l'acier. Vos techniques de lecture s'accélèrent.",
+                'quote' => 'Ni le vent ni l\'ombre ne peuvent troubler la concentration du guerrier.',
             ],
             4 => [
                 'id' => 4,
-                'title' => 'Expert du Qi Intérieur',
+                'title' => 'Adepte du Qi Pur',
                 'hangeul' => '絶頂',
-                'pinyin' => 'Peak Master',
-                'badge' => '⚔️',
-                'min_chapters' => 51,
-                'max_chapters' => 100,
-                'color' => '#F59E0B',
-                'aura' => 'Épée de Qi',
-                'description' => "L'Épée de Qi jaillit de vos doigts. Peu d'experts osent croiser votre regard lors d'une lecture nocturne.",
-                'quote' => 'Couper le vent, fendre les ténèbres sans faire un bruit.',
+                'pinyin' => 'Jueding (Sommet)',
+                'badge' => '🥇',
+                'min_xp' => 951,
+                'max_xp' => 1700,
+                'min_chapters' => 60,
+                'max_chapters' => 109,
+                'color' => '#34D399',
+                'aura' => 'Circulation Céleste',
+                'description' => 'Votre Dantian condense un Qi pur et étincelant. Chaque lecture renforce votre essence.',
+                'quote' => 'Le Qi nourrit l\'âme comme l\'encre sublime le parchemin.',
             ],
             5 => [
                 'id' => 5,
-                'title' => 'Grand Maître Martial',
+                'title' => 'Maître Martial',
                 'hangeul' => '超絶頂',
-                'pinyin' => 'Transcendental Master',
-                'badge' => '🥋',
-                'min_chapters' => 101,
-                'max_chapters' => 250,
-                'color' => '#FF2A55',
-                'aura' => 'Volonté Suprême',
-                'description' => "Fusion absolue de l'aura et du corps. Les grands anciens des clans s'inclinent avec respect à votre passage.",
-                'quote' => 'Le véritable maître ne dégaine pas ; le monde plie sous sa présence.',
+                'pinyin' => 'Chao Jueding (Transcendant)',
+                'badge' => '⚔️',
+                'min_xp' => 1701,
+                'max_xp' => 2800,
+                'min_chapters' => 110,
+                'max_chapters' => 179,
+                'color' => '#F59E0B',
+                'aura' => 'Aura Déchaînée',
+                'description' => 'Une aura écrasante émane de votre présence. Les auberges du Jianghu chantent vos exploits.',
+                'quote' => 'Fendre les cieux et dominer la nuit d\'un simple regard.',
             ],
             6 => [
                 'id' => 6,
-                'title' => 'Transcendant Céleste',
+                'title' => 'Grand Maître Vénérable',
                 'hangeul' => '化境',
-                'pinyin' => 'Profound Realm',
-                'badge' => '⚡',
-                'min_chapters' => 251,
-                'max_chapters' => 500,
-                'color' => '#8B5CF6',
-                'aura' => 'Ascension Divine',
-                'description' => "Vous avez brisé les chaînes de la condition mortelle. Les lois du Qi s'adaptent à vos désirs de lecture.",
-                'quote' => 'Au-delà du ciel se trouve un autre ciel.',
+                'pinyin' => 'Huajing (Transformation)',
+                'badge' => '🌪️',
+                'min_xp' => 2801,
+                'max_xp' => 4300,
+                'min_chapters' => 180,
+                'max_chapters' => 279,
+                'color' => '#FB923C',
+                'aura' => 'Domination Spirituelle',
+                'description' => "Les patriarches des grandes sectes s'inclinent avec déférence. Votre maîtrise approche l'absolu.",
+                'quote' => 'Le maître ne cherche pas le conflit : le monde s\'harmonise autour de lui.',
             ],
             7 => [
                 'id' => 7,
-                'title' => 'Dieu Martial des Ombres',
+                'title' => 'Seigneur des Ombres',
+                'hangeul' => '極境',
+                'pinyin' => 'Jijing (Apex)',
+                'badge' => '🔮',
+                'min_xp' => 4301,
+                'max_xp' => 6500,
+                'min_chapters' => 280,
+                'max_chapters' => 419,
+                'color' => '#EC4899',
+                'aura' => 'Transcendance Mortelle',
+                'description' => 'Vous avez brisé les limites du corps humain. Vous lisez à la vitesse de la pensée.',
+                'quote' => 'Fouler les ténèbres sans jamais être corrompu par elles.',
+            ],
+            8 => [
+                'id' => 8,
+                'title' => 'Transcendant Céleste',
                 'hangeul' => '玄境',
-                'pinyin' => 'Divine Sovereign',
+                'pinyin' => 'Xuanjing (Mystique)',
+                'badge' => '⚡',
+                'min_xp' => 6501,
+                'max_xp' => 9500,
+                'min_chapters' => 420,
+                'max_chapters' => 599,
+                'color' => '#8B5CF6',
+                'aura' => 'Harmonie Primordiale',
+                'description' => 'Harmonie complète avec les lois secrètes du monde martial. Votre nom résonne dans tous les mondes.',
+                'quote' => 'Au-dessus des nuages se trouve la lumière éternelle.',
+            ],
+            9 => [
+                'id' => 9,
+                'title' => 'Souverain Martial',
+                'hangeul' => '生死境',
+                'pinyin' => 'Shengsijing (Vie & Mort)',
                 'badge' => '👑',
-                'min_chapters' => 501,
-                'max_chapters' => 999999,
+                'min_xp' => 9501,
+                'max_xp' => 14000,
+                'min_chapters' => 600,
+                'max_chapters' => 849,
+                'color' => '#E11D48',
+                'aura' => 'Maître des Cieux',
+                'description' => "Le sommet de l'art martial. Vous contrôlez les flux de la destinée et régnez sur l'arène.",
+                'quote' => 'Un seul mot suffit à commander mille légions de disciples.',
+            ],
+            10 => [
+                'id' => 10,
+                'title' => 'Dieu Martial Suprême',
+                'hangeul' => '神境',
+                'pinyin' => 'Shenjing (Divin)',
+                'badge' => '☀️',
+                'min_xp' => 14001,
+                'max_xp' => 999999,
+                'min_chapters' => 850,
+                'max_chapters' => 99999,
                 'color' => '#FFD700',
-                'aura' => 'Souverain Éternel',
-                'description' => "L'incarnation légendaire du Tao Martial. Vous régnez sans partage sur l'ensemble du Murim et des Ombres.",
-                'quote' => 'Le début et la fin. Le Souverain de tous les chapitres.',
+                'aura' => 'L\'Apex Immortel',
+                'description' => "L'Apex Divin du Jianghu. Vous avez atteint l'immortalité spirituelle et transcendé l'univers.",
+                'quote' => 'Je suis le début, la fin et la flamme éternelle des arts martiaux.',
             ],
         ];
     }
 
     /**
-     * Calcule le statut de rang d'un utilisateur à partir de son nombre de chapitres lus
+     * Calcule le statut de rang d'un utilisateur à partir de son Qi (XP) ou de ses lectures
      */
-    public static function calculateStatus(int $readCount, int $streak = 0): array
+    public static function calculateStatus(int $readCount, int $streak = 0, ?int $customXp = null, ?User $user = null): array
     {
         $ranks = self::getRanks();
+
+        // Calcul du Qi (XP) :
+        $xp = $customXp ?? ($user ? ($user->xp ?? 0) : 0);
+        if ($xp <= 0) {
+            $commentsCount = $user ? $user->comments()->count() : 0;
+            $favCount = $user ? $user->favorites()->count() : 0;
+            $xp = ($readCount * 15) + ($streak * 25) + ($commentsCount * 20) + ($favCount * 10);
+        }
+
         $currentRank = $ranks[1];
         $nextRank = null;
 
         foreach ($ranks as $id => $rank) {
-            if ($readCount >= $rank['min_chapters']) {
+            if ($xp >= $rank['min_xp']) {
                 $currentRank = $rank;
                 $nextRank = $ranks[$id + 1] ?? null;
             }
         }
 
         $percent = 100;
+        $xpNeeded = 0;
         $chaptersNeeded = 0;
 
         if ($nextRank) {
-            $range = $nextRank['min_chapters'] - $currentRank['min_chapters'];
-            $progress = max(0, $readCount - $currentRank['min_chapters']);
+            $range = $nextRank['min_xp'] - $currentRank['min_xp'];
+            $progress = max(0, $xp - $currentRank['min_xp']);
             $percent = $range > 0 ? min(100, round(($progress / $range) * 100)) : 100;
-            $chaptersNeeded = max(0, $nextRank['min_chapters'] - $readCount);
+            $xpNeeded = max(0, $nextRank['min_xp'] - $xp);
+            $chaptersNeeded = (int) ceil($xpNeeded / 15);
         }
+
+        // Quêtes quotidiennes de cultivation
+        $quests = self::getDailyQuests($readCount, $streak, $user);
 
         return [
             'read_count' => $readCount,
             'streak' => $streak,
+            'xp' => $xp,
+            'level' => max(1, (int) floor($xp / 50) + 1),
             'current' => $currentRank,
             'next' => $nextRank,
             'percent' => $percent,
+            'xp_needed' => $xpNeeded,
             'chapters_needed' => $chaptersNeeded,
+            'quests' => $quests,
             'all_ranks' => array_values($ranks),
         ];
     }
 
     /**
-     * Retourne directement le rang actuel pour un nombre de chapitres lus
+     * Alias de calculateStatus pour compatibilité
      */
-    public static function getRankForCount(int $readCount): array
+    public static function calculate(int $readCount, int $streak = 0, ?int $xp = null, ?User $user = null): array
     {
-        return self::calculateStatus($readCount)['current'];
+        return self::calculateStatus($readCount, $streak, $xp, $user);
+    }
+
+    /**
+     * Quêtes quotidiennes de cultivation spirituelle
+     */
+    public static function getDailyQuests(int $readCount = 0, int $streak = 0, ?User $user = null): array
+    {
+        $hasReadToday = false;
+        $hasCommentedToday = false;
+        $todayReadChapters = 0;
+
+        if ($user) {
+            $today = Carbon::now('Europe/Paris')->format('Y-m-d');
+            $hasReadToday = $user->last_read_at && Carbon::parse($user->last_read_at)->timezone('Europe/Paris')->format('Y-m-d') === $today;
+
+            $todayReadChapters = $user->readingProgress()
+                ->whereDate('updated_at', Carbon::today('Europe/Paris'))
+                ->count();
+            if ($hasReadToday && $todayReadChapters === 0) {
+                $todayReadChapters = 1;
+            }
+
+            $hasCommentedToday = $user->comments()
+                ->whereDate('created_at', Carbon::today('Europe/Paris'))
+                ->exists();
+        } else {
+            $hasReadToday = $readCount > 0;
+            $todayReadChapters = min($readCount, 3);
+        }
+
+        return [
+            [
+                'id' => 'meditation',
+                'title' => 'Méditation Quotidienne',
+                'icon' => '📜',
+                'description' => 'Lire au moins 1 chapitre aujourd\'hui.',
+                'reward_xp' => 30,
+                'current' => $hasReadToday ? 1 : 0,
+                'target' => 1,
+                'completed' => $hasReadToday,
+            ],
+            [
+                'id' => 'flame_keeper',
+                'title' => 'Gardien de la Flamme',
+                'icon' => '🔥',
+                'description' => 'Maintenir une flamme consécutive active (streak ≥ 1).',
+                'reward_xp' => 40,
+                'current' => $streak > 0 ? 1 : 0,
+                'target' => 1,
+                'completed' => $streak > 0,
+            ],
+            [
+                'id' => 'jianghu_echo',
+                'title' => 'Écho du Jianghu',
+                'icon' => '💬',
+                'description' => 'Partager vos impressions en postant 1 commentaire.',
+                'reward_xp' => 35,
+                'current' => $hasCommentedToday ? 1 : 0,
+                'target' => 1,
+                'completed' => $hasCommentedToday,
+            ],
+            [
+                'id' => 'breakthrough',
+                'title' => 'Percée Intensive',
+                'icon' => '⚡',
+                'description' => 'Dévorer 5 chapitres dans la même journée.',
+                'reward_xp' => 80,
+                'current' => min(5, $todayReadChapters),
+                'target' => 5,
+                'completed' => $todayReadChapters >= 5,
+            ],
+        ];
+    }
+
+    /**
+     * Retourne directement le rang actuel pour un nombre de chapitres lus ou d'XP
+     */
+    public static function getRankForCount(int $readCount, int $streak = 0, ?int $xp = null): array
+    {
+        return self::calculateStatus($readCount, $streak, $xp)['current'];
     }
 
     /**
@@ -200,7 +363,7 @@ class MurimRankService
                 'color' => '#38BDF8',
                 'secondary_color' => '#0284C7',
                 'personality' => 'Fier, loyal et infatigable lecteur nocturne.',
-                'description' => "Protecteur féroce qui puise sa force dans les lectures sous la pleine lune.",
+                'description' => 'Protecteur féroce qui puise sa force dans les lectures sous la pleine lune.',
                 'stages' => [
                     1 => [
                         'stage' => 1,
@@ -240,7 +403,7 @@ class MurimRankService
                 'color' => '#F59E0B',
                 'secondary_color' => '#D97706',
                 'personality' => 'Mystérieux, raffiné et doté d\'une sagesse millénaire.',
-                'description' => "Créature légendaire dont chaque queue débloquée confère une compréhension transcendante des intrigues.",
+                'description' => 'Créature légendaire dont chaque queue débloquée confère une compréhension transcendante des intrigues.',
                 'stages' => [
                     1 => [
                         'stage' => 1,
@@ -280,7 +443,7 @@ class MurimRankService
                 'color' => '#10B981',
                 'secondary_color' => '#059669',
                 'personality' => 'Majestueux, dominateur et assoiffé d\'ascension suprême.',
-                'description' => "Le grand Dragon Oriental des mythes fondateurs, maître des tempêtes et de la foudre bleue.",
+                'description' => 'Le grand Dragon Oriental des mythes fondateurs, maître des tempêtes et de la foudre bleue.',
                 'stages' => [
                     1 => [
                         'stage' => 1,
@@ -429,16 +592,16 @@ class MurimRankService
     /**
      * Traite et met à jour le streak et le bouclier spirituel de l'utilisateur
      */
-    public static function processStreakAndShields(\App\Models\User $user): array
+    public static function processStreakAndShields(User $user): array
     {
-        $today = \Carbon\Carbon::now('Europe/Paris')->format('Y-m-d');
-        $yesterday = \Carbon\Carbon::now('Europe/Paris')->subDay()->format('Y-m-d');
-        $lastReadDate = $user->last_read_at ? \Carbon\Carbon::parse($user->last_read_at)->timezone('Europe/Paris')->format('Y-m-d') : null;
+        $today = Carbon::now('Europe/Paris')->format('Y-m-d');
+        $yesterday = Carbon::now('Europe/Paris')->subDay()->format('Y-m-d');
+        $lastReadDate = $user->last_read_at ? Carbon::parse($user->last_read_at)->timezone('Europe/Paris')->format('Y-m-d') : null;
 
         $shieldUsed = false;
         $shieldEarned = false;
 
-        if (!$lastReadDate) {
+        if (! $lastReadDate) {
             // Première lecture
             $user->streak = 1;
         } elseif ($lastReadDate === $today) {
@@ -476,5 +639,3 @@ class MurimRankService
         ];
     }
 }
-
-

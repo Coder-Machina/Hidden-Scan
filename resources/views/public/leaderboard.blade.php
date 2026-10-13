@@ -197,7 +197,7 @@
                                 {{ $rank['title'] }}
                             </h3>
                             <div class="text-[11px] text-amber-400 font-semibold mb-2">
-                                📖 {{ $rank['min_chapters'] }} {{ $rank['max_chapters'] < 9999 ? 'à ' . $rank['max_chapters'] : '+' }} chapitres
+                                📖 {{ $rank['min_chapters'] }} {{ (isset($rank['max_chapters']) && $rank['max_chapters'] < 9999) ? 'à ' . $rank['max_chapters'] : '+' }} chapitres
                             </div>
                             <p class="text-xs text-mist leading-relaxed mb-4">
                                 {{ $rank['description'] }}

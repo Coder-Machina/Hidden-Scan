@@ -3,15 +3,17 @@
 namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
+use App\Services\MurimRankService;
 use Database\Factories\UserFactory;
+use Filament\Models\Contracts\FilamentUser;
+use Filament\Panel;
+use Illuminate\Auth\Notifications\ResetPassword;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
-
-use Filament\Models\Contracts\FilamentUser;
-use Filament\Panel;
+use Illuminate\Support\Facades\Storage;
 
 #[Fillable([
     'name', 'email', 'password',
@@ -34,10 +36,18 @@ class User extends Authenticatable implements FilamentUser
     {
         $chars = '23456789ABCDEFGHJKLMNPQRSTUVWXYZ';
         do {
-            $p1 = ''; $p2 = ''; $p3 = '';
-            for ($i = 0; $i < 4; $i++) $p1 .= $chars[random_int(0, strlen($chars) - 1)];
-            for ($i = 0; $i < 4; $i++) $p2 .= $chars[random_int(0, strlen($chars) - 1)];
-            for ($i = 0; $i < 4; $i++) $p3 .= $chars[random_int(0, strlen($chars) - 1)];
+            $p1 = '';
+            $p2 = '';
+            $p3 = '';
+            for ($i = 0; $i < 4; $i++) {
+                $p1 .= $chars[random_int(0, strlen($chars) - 1)];
+            }
+            for ($i = 0; $i < 4; $i++) {
+                $p2 .= $chars[random_int(0, strlen($chars) - 1)];
+            }
+            for ($i = 0; $i < 4; $i++) {
+                $p3 .= $chars[random_int(0, strlen($chars) - 1)];
+            }
             $code = "HS-{$p1}-{$p2}-{$p3}";
         } while (static::where('pass_code', $code)->exists());
 
@@ -114,7 +124,7 @@ class User extends Authenticatable implements FilamentUser
         }
 
         return null;
-    }    
+    }
 
     /**
      * Get the attributes that should be cast.
@@ -144,7 +154,8 @@ class User extends Authenticatable implements FilamentUser
     public function getMurimRankAttribute(): array
     {
         $readCount = $this->readingProgress()->where('is_read', true)->count();
-        return \App\Services\MurimRankService::calculate($readCount, $this->streak ?? 0);
+
+        return MurimRankService::calculate($readCount, (int) ($this->streak ?? 0), (int) ($this->xp ?? 0), $this);
     }
 
     public function comments()
@@ -194,12 +205,13 @@ class User extends Authenticatable implements FilamentUser
     public function getTierBadgeAttribute(): string
     {
         $lvl = $this->level;
+
         return match (true) {
             $lvl >= 30 => 'DIAMANT',
             $lvl >= 20 => 'PLATINE',
             $lvl >= 10 => 'OR',
-            $lvl >= 5  => 'ARGENT',
-            default    => 'BRONZE',
+            $lvl >= 5 => 'ARGENT',
+            default => 'BRONZE',
         };
     }
 
@@ -214,12 +226,14 @@ class User extends Authenticatable implements FilamentUser
             }
             if (str_starts_with($this->avatar, 'preset:')) {
                 $presetName = substr($this->avatar, 7);
-                return asset('images/avatars/' . $presetName . '.jpg');
+
+                return asset('images/avatars/'.$presetName.'.jpg');
             }
-            return \Illuminate\Support\Facades\Storage::url($this->avatar);
+
+            return Storage::url($this->avatar);
         }
 
-        return 'https://ui-avatars.com/api/?name=' . urlencode($this->name) . '&background=1c2438&color=60a5fa&size=200&bold=true';
+        return 'https://ui-avatars.com/api/?name='.urlencode($this->name).'&background=1c2438&color=60a5fa&size=200&bold=true';
     }
 
     /**
@@ -231,7 +245,8 @@ class User extends Authenticatable implements FilamentUser
             if (str_starts_with($this->banner, 'http://') || str_starts_with($this->banner, 'https://') || str_starts_with($this->banner, 'data:image/')) {
                 return $this->banner;
             }
-            return \Illuminate\Support\Facades\Storage::url($this->banner);
+
+            return Storage::url($this->banner);
         }
 
         return asset('images/banners/default.jpg');
@@ -247,7 +262,6 @@ class User extends Authenticatable implements FilamentUser
      * In local / dev mode (e.g. MAIL_MAILER=log), store the reset url in session for instant browser testing.
      *
      * @param  string  $token
-     * @return void
      */
     public function sendPasswordResetNotification($token): void
     {
@@ -258,6 +272,6 @@ class User extends Authenticatable implements FilamentUser
             ])]);
         }
 
-        $this->notify(new \Illuminate\Auth\Notifications\ResetPassword($token));
+        $this->notify(new ResetPassword($token));
     }
 }

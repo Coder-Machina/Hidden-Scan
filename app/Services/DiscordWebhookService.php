@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\Chapter;
 use App\Models\Manga;
 use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Http\Client\Response;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
@@ -14,7 +15,8 @@ class DiscordWebhookService
     /**
      * Résout l'URL du webhook selon la source de l'œuvre (interne Hidden Scan ou externe / autre team).
      */
-    public const ACTIVE_WEBHOOK_URL = 'https://discord.com/api/webhooks/1558768915629478018/xip0NUzOWQk1QQ6YM0AZTkVzfCc7c7BCpXm8lPA59_bU8bYkE28SUNmjGnc6enG6WAnq';
+    public const ACTIVE_WEBHOOK_URL = 'https://discord.com/api/webhooks/1559483412274749531/Hh0lIt5H0TCF6gnO2jtBudzazJsnrzsxsesWyuGZK6W-J2Ymh58GBlqsM_AZ03M3fpKx';
+
     public const DEAD_WEBHOOK_ID = '1558548282387468388';
 
     /**
@@ -35,7 +37,7 @@ class DiscordWebhookService
      */
     public static function isMangaExternal(?Manga $manga): bool
     {
-        if (!$manga) {
+        if (! $manga) {
             return false;
         }
 
@@ -47,18 +49,18 @@ class DiscordWebhookService
      */
     public static function resolveMangaRoleId(?Manga $manga): ?string
     {
-        if (!$manga || self::isMangaExternal($manga)) {
+        if (! $manga || self::isMangaExternal($manga)) {
             return null;
         }
 
         // Si l'œuvre fait partie des 4 projets officiels, renvoyer son rôle Discord garanti
-        if (!empty(self::VALID_OFFICIAL_ROLES[$manga->slug])) {
+        if (! empty(self::VALID_OFFICIAL_ROLES[$manga->slug])) {
             return self::VALID_OFFICIAL_ROLES[$manga->slug];
         }
 
         $roleId = $manga->discord_role_id;
         // Filtrer les anciens IDs de rôles créés par erreur qui n'existent plus sur Discord
-        if (!empty($roleId) && is_numeric($roleId) && !str_starts_with($roleId, '155858')) {
+        if (! empty($roleId) && is_numeric($roleId) && ! str_starts_with($roleId, '155858')) {
             return $roleId;
         }
 
@@ -70,7 +72,7 @@ class DiscordWebhookService
      */
     public function resolveWebhookUrl(?Manga $manga = null): ?string
     {
-        if ($manga && !empty($manga->discord_webhook_url)) {
+        if ($manga && ! empty($manga->discord_webhook_url)) {
             $url = $manga->discord_webhook_url;
         } elseif (self::isMangaExternal($manga)) {
             $url = config('services.discord.site_webhook_url') ?: config('services.discord.webhook_url');
@@ -78,7 +80,7 @@ class DiscordWebhookService
             $url = config('services.discord.webhook_url');
         }
 
-        if (!empty($url) && str_contains($url, self::DEAD_WEBHOOK_ID)) {
+        if (! empty($url) && str_contains($url, self::DEAD_WEBHOOK_ID)) {
             $url = self::ACTIVE_WEBHOOK_URL;
         }
 
@@ -90,18 +92,18 @@ class DiscordWebhookService
      */
     public function isConfigured(?Manga $manga = null): bool
     {
-        return !empty($this->resolveWebhookUrl($manga));
+        return ! empty($this->resolveWebhookUrl($manga));
     }
 
     /**
      * Envoie une requête vers un Webhook Discord avec gestion de pièce jointe et auto-secours sur 404.
      */
-    protected function postToWebhook(string $webhookUrl, array $payload, ?string $localFilePath = null): \Illuminate\Http\Client\Response
+    protected function postToWebhook(string $webhookUrl, array $payload, ?string $localFilePath = null): Response
     {
         if ($localFilePath && file_exists($localFilePath)) {
             $ext = pathinfo($localFilePath, PATHINFO_EXTENSION) ?: 'png';
-            $filename = 'cover.' . $ext;
-            $payload['embeds'][0]['image'] = ['url' => 'attachment://' . $filename];
+            $filename = 'cover.'.$ext;
+            $payload['embeds'][0]['image'] = ['url' => 'attachment://'.$filename];
 
             $response = Http::timeout(10)
                 ->attach('files[0]', file_get_contents($localFilePath), $filename)
@@ -114,7 +116,8 @@ class DiscordWebhookService
 
         // Auto-récupération immédiate si le webhook configuré a été supprimé sur Discord (erreur 404)
         if ($response->status() === 404 && $webhookUrl !== self::ACTIVE_WEBHOOK_URL) {
-            Log::warning("Discord Webhook 404 sur {$webhookUrl}, bascule automatique vers le webhook actif : " . self::ACTIVE_WEBHOOK_URL);
+            Log::warning("Discord Webhook 404 sur {$webhookUrl}, bascule automatique vers le webhook actif : ".self::ACTIVE_WEBHOOK_URL);
+
             return $this->postToWebhook(self::ACTIVE_WEBHOOK_URL, $payload, $localFilePath);
         }
 
@@ -129,19 +132,21 @@ class DiscordWebhookService
         $chapter->loadMissing('manga');
         $manga = $chapter->manga;
 
-        if (!$manga) {
+        if (! $manga) {
             return false;
         }
 
         // 1. Protection Anti-Doublon : ne jamais renvoyer de notification pour un chapitre déjà notifié (sauf si forcé)
-        if (!$force && !is_null($chapter->discord_notified_at)) {
+        if (! $force && ! is_null($chapter->discord_notified_at)) {
             Log::info("Discord webhook ignoré pour le chapitre {$chapter->id} de {$manga->title} : déjà notifié le {$chapter->discord_notified_at}");
+
             return true;
         }
 
         $webhookUrl = $this->resolveWebhookUrl($manga);
         if (empty($webhookUrl)) {
-            Log::info('Discord Webhook non configuré, notification ignorée pour le chapitre ' . $chapter->id);
+            Log::info('Discord Webhook non configuré, notification ignorée pour le chapitre '.$chapter->id);
+
             return false;
         }
 
@@ -153,7 +158,7 @@ class DiscordWebhookService
             : config('services.discord.all_projects_role_id');
 
         // URL du chapitre sur le site
-        $chapterUrl = rtrim($baseUrl, '/') . '/manga/' . $manga->slug . '/' . $chapter->slug;
+        $chapterUrl = rtrim($baseUrl, '/').'/manga/'.$manga->slug.'/'.$chapter->slug;
 
         $titleSuffix = $chapter->title ? " : {$chapter->title}" : '';
         $embedTitle = "{$manga->title} - Chapitre {$chapter->number}{$titleSuffix}";
@@ -164,7 +169,7 @@ class DiscordWebhookService
         // Footer selon la source
         $footerPrefix = 'Hidden Scan';
         if ($isExternal) {
-            $footerPrefix = !empty($manga->team_name) ? "{$manga->team_name} • Sortie Site" : 'Sortie Site';
+            $footerPrefix = ! empty($manga->team_name) ? "{$manga->team_name} • Sortie Site" : 'Sortie Site';
         }
 
         // Couleur : Bleu royal pour Hidden Scan (0x2563EB), Ambre pour Sortie Site (0xF59E0B)
@@ -175,23 +180,23 @@ class DiscordWebhookService
             'description' => $description,
             'color' => $embedColor,
             'footer' => [
-                'text' => $footerPrefix . ' • ' . now()->locale('fr')->isoFormat('D MMMM [à] HH:mm'),
+                'text' => $footerPrefix.' • '.now()->locale('fr')->isoFormat('D MMMM [à] HH:mm'),
             ],
             'timestamp' => now()->toIso8601String(),
         ];
 
         // Mentions de rôles : Rôle du manga garanti (uniquement si série officielle) + Rôle global de notification
         $pings = [];
-        if (!$isExternal) {
+        if (! $isExternal) {
             $mangaRoleId = self::resolveMangaRoleId($manga);
-            if (!empty($mangaRoleId)) {
+            if (! empty($mangaRoleId)) {
                 $pings[] = "<@&{$mangaRoleId}>";
             }
         }
 
-        if (!empty($allProjectsRoleId) && is_numeric($allProjectsRoleId)) {
+        if (! empty($allProjectsRoleId) && is_numeric($allProjectsRoleId)) {
             $pings[] = "<@&{$allProjectsRoleId}>";
-        } elseif (!empty($roleId) && is_numeric($roleId) && $roleId !== ($mangaRoleId ?? null)) {
+        } elseif (! empty($roleId) && is_numeric($roleId) && $roleId !== ($mangaRoleId ?? null)) {
             $pings[] = "<@&{$roleId}>";
         }
 
@@ -199,7 +204,7 @@ class DiscordWebhookService
             'embeds' => [$embed],
         ];
 
-        if (!empty($pings)) {
+        if (! empty($pings)) {
             $payload['content'] = implode(' ', $pings);
         }
 
@@ -216,6 +221,7 @@ class DiscordWebhookService
             if ($response->successful()) {
                 $chapter->updateQuietly(['discord_notified_at' => now()]);
                 Log::info("Webhook Discord envoyé avec succès pour le chapitre {$chapter->id} de {$manga->title}");
+
                 return true;
             }
 
@@ -223,9 +229,11 @@ class DiscordWebhookService
                 'status' => $response->status(),
                 'body' => $response->body(),
             ]);
+
             return false;
         } catch (\Throwable $e) {
-            Log::error("Exception lors de l'envoi du webhook Discord : " . $e->getMessage());
+            Log::error("Exception lors de l'envoi du webhook Discord : ".$e->getMessage());
+
             return false;
         }
     }
@@ -235,7 +243,7 @@ class DiscordWebhookService
      */
     public function sendBatchChaptersNotification(Manga $manga, array|Collection $chapters, bool $force = false): bool
     {
-        if (!$this->isConfigured($manga)) {
+        if (! $this->isConfigured($manga)) {
             return false;
         }
 
@@ -246,10 +254,11 @@ class DiscordWebhookService
 
         // Filtre les chapitres qui n'ont pas encore été notifiés sur Discord (sauf si forcé)
         $chaptersToNotify = collect($chapters);
-        if (!$force) {
-            $chaptersToNotify = $chaptersToNotify->filter(fn($c) => is_null($c->discord_notified_at));
+        if (! $force) {
+            $chaptersToNotify = $chaptersToNotify->filter(fn ($c) => is_null($c->discord_notified_at));
             if ($chaptersToNotify->isEmpty()) {
                 Log::info("Tous les chapitres du lot ont déjà été notifiés sur Discord pour {$manga->title}, lot ignoré.");
+
                 return true;
             }
         }
@@ -274,13 +283,13 @@ class DiscordWebhookService
         $min = $numbers->first();
         $max = $numbers->last();
 
-        $mangaUrl = rtrim($baseUrl, '/') . '/manga/' . $manga->slug;
+        $mangaUrl = rtrim($baseUrl, '/').'/manga/'.$manga->slug;
         $embedTitle = "{$manga->title} - Chapitres {$min} à {$max}";
         $description = "➡️ [**Cliquer ici pour lire**]({$mangaUrl})";
 
         $footerPrefix = 'Hidden Scan';
         if ($isExternal) {
-            $footerPrefix = !empty($manga->team_name) ? "{$manga->team_name} • Sortie Site" : 'Sortie Site';
+            $footerPrefix = ! empty($manga->team_name) ? "{$manga->team_name} • Sortie Site" : 'Sortie Site';
         }
         $embedColor = $isExternal ? 0xF59E0B : 0x2563EB;
 
@@ -289,22 +298,22 @@ class DiscordWebhookService
             'description' => $description,
             'color' => $embedColor,
             'footer' => [
-                'text' => $footerPrefix . ' • ' . now()->locale('fr')->isoFormat('D MMMM [à] HH:mm'),
+                'text' => $footerPrefix.' • '.now()->locale('fr')->isoFormat('D MMMM [à] HH:mm'),
             ],
             'timestamp' => now()->toIso8601String(),
         ];
 
         $pings = [];
-        if (!$isExternal) {
+        if (! $isExternal) {
             $mangaRoleId = self::resolveMangaRoleId($manga);
-            if (!empty($mangaRoleId)) {
+            if (! empty($mangaRoleId)) {
                 $pings[] = "<@&{$mangaRoleId}>";
             }
         }
 
-        if (!empty($allProjectsRoleId) && is_numeric($allProjectsRoleId)) {
+        if (! empty($allProjectsRoleId) && is_numeric($allProjectsRoleId)) {
             $pings[] = "<@&{$allProjectsRoleId}>";
-        } elseif (!empty($roleId) && is_numeric($roleId) && $roleId !== ($mangaRoleId ?? null)) {
+        } elseif (! empty($roleId) && is_numeric($roleId) && $roleId !== ($mangaRoleId ?? null)) {
             $pings[] = "<@&{$roleId}>";
         }
 
@@ -312,7 +321,7 @@ class DiscordWebhookService
             'embeds' => [$embed],
         ];
 
-        if (!empty($pings)) {
+        if (! empty($pings)) {
             $payload['content'] = implode(' ', $pings);
         }
 
@@ -329,6 +338,7 @@ class DiscordWebhookService
                 foreach ($chaptersToNotify as $c) {
                     $c->updateQuietly(['discord_notified_at' => now()]);
                 }
+
                 return true;
             }
 
@@ -336,20 +346,21 @@ class DiscordWebhookService
                 'status' => $response->status(),
                 'body' => $response->body(),
             ]);
+
             return false;
         } catch (\Throwable $e) {
-            Log::error("Erreur envoi notification Discord en masse : " . $e->getMessage());
+            Log::error('Erreur envoi notification Discord en masse : '.$e->getMessage());
+
             return false;
         }
     }
-
 
     /**
      * Résout le chemin absolu sur le disque local pour la couverture du manga.
      */
     protected function resolveLocalCoverPath(?string $coverImage): ?string
     {
-        if (!$coverImage || str_starts_with($coverImage, 'http')) {
+        if (! $coverImage || str_starts_with($coverImage, 'http')) {
             return null;
         }
 
@@ -358,7 +369,7 @@ class DiscordWebhookService
             return Storage::disk($disk)->path($coverImage);
         }
 
-        $publicPath = storage_path('app/public/' . ltrim($coverImage, '/'));
+        $publicPath = storage_path('app/public/'.ltrim($coverImage, '/'));
         if (file_exists($publicPath)) {
             return $publicPath;
         }
@@ -371,7 +382,7 @@ class DiscordWebhookService
      */
     public function testWebhook(): array
     {
-        if (!$this->isConfigured()) {
+        if (! $this->isConfigured()) {
             return [
                 'success' => false,
                 'message' => "L'URL du Webhook Discord n'est pas définie dans .env (DISCORD_WEBHOOK_URL).",
@@ -406,12 +417,12 @@ class DiscordWebhookService
 
             return [
                 'success' => false,
-                'message' => 'Erreur Discord (Code ' . $response->status() . ') : ' . $response->body(),
+                'message' => 'Erreur Discord (Code '.$response->status().') : '.$response->body(),
             ];
         } catch (\Throwable $e) {
             return [
                 'success' => false,
-                'message' => "Erreur de connexion : " . $e->getMessage(),
+                'message' => 'Erreur de connexion : '.$e->getMessage(),
             ];
         }
     }
@@ -421,27 +432,27 @@ class DiscordWebhookService
      */
     public function sendSampleReleaseNotification(): array
     {
-        if (!$this->isConfigured()) {
+        if (! $this->isConfigured()) {
             return [
                 'success' => false,
                 'message' => "L'URL du Webhook Discord n'est pas définie dans .env.",
             ];
         }
 
-        $manga = \App\Models\Manga::whereNotNull('cover_image')->first() ?: \App\Models\Manga::first();
-        if (!$manga) {
+        $manga = Manga::whereNotNull('cover_image')->first() ?: Manga::first();
+        if (! $manga) {
             return [
                 'success' => false,
-                'message' => "Aucun manga trouvé en base de données pour générer un exemple.",
+                'message' => 'Aucun manga trouvé en base de données pour générer un exemple.',
             ];
         }
 
         $latestChapter = $manga->chapters()->latest('number')->first();
         $chapterNumber = $latestChapter ? $latestChapter->number : 1;
 
-        $mockChapter = new \App\Models\Chapter([
+        $mockChapter = new Chapter([
             'number' => $chapterNumber,
-            'slug' => 'chapitre-' . $chapterNumber,
+            'slug' => 'chapitre-'.$chapterNumber,
             'title' => null,
             'is_published' => true,
         ]);
