@@ -73,7 +73,7 @@ class ProfileController extends Controller
         $userBeastStatus = \App\Services\MurimRankService::getBeastStatus($user->spiritual_beast ?? 'shadow_crow', $readCount);
         $avatarFrames = \App\Services\MurimRankService::getAvatarFrames($readCount);
 
-        $validTabs = ['overview', 'activity', 'beast', 'tierlist', 'leaderboard', 'library', 'edit', 'settings'];
+        $validTabs = ['overview', 'murim', 'activity', 'beast', 'tierlist', 'leaderboard', 'library', 'edit', 'settings'];
         $reqTab = $request->query('tab');
         $defaultTab = in_array($reqTab, $validTabs) ? $reqTab : 'overview';
 

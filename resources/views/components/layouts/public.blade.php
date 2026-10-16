@@ -876,14 +876,24 @@
                                     </a>
                                     <a href="{{ route('library') }}" class="text-xs text-[#7070a0] hover:text-white transition">
                                         Bibliothèque
-                                                            {{-- Menu déroulant du profil utilisateur --}}
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+
+                        {{-- Menu déroulant du profil utilisateur (Desktop) --}}
                         <div class="relative flex-shrink-0" x-data="{ userMenuOpen: false }" @click.outside="userMenuOpen = false">
                             <button 
                                 @click="userMenuOpen = !userMenuOpen" 
-                                class="h-9 w-9 rounded-full overflow-hidden ring-2 ring-[#ff2a55]/70 hover:ring-[#ff2a55] transition-all cursor-pointer flex items-center justify-center bg-[#111118] shadow-lg shadow-black/40 focus:outline-none"
+                                class="flex items-center gap-2 pl-1 pr-2.5 py-1 rounded-full bg-[#141420] border border-[#262638] hover:border-[#ff2a55]/70 hover:bg-[#1a1a28] transition-all cursor-pointer shadow-md shadow-black/40 focus:outline-none group"
                                 title="{{ Auth::user()->name }}"
+                                aria-label="Menu profil utilisateur"
                             >
-                                <img src="{{ Auth::user()->avatar_url }}" alt="{{ Auth::user()->name }}" class="w-full h-full object-cover navbar-avatar-img">
+                                <div class="h-7 w-7 rounded-full overflow-hidden ring-1.5 ring-[#ff2a55] flex-shrink-0 bg-[#0d0d14]">
+                                    <img src="{{ Auth::user()->avatar_url }}" alt="{{ Auth::user()->name }}" class="w-full h-full object-cover navbar-avatar-img">
+                                </div>
+                                <span class="text-xs font-bold text-white max-w-[100px] truncate hidden xl:inline">{{ Auth::user()->name }}</span>
+                                <svg class="w-3.5 h-3.5 text-[#7070a0] group-hover:text-white transition-transform duration-200" :class="userMenuOpen ? 'rotate-180' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
                             </button>
 
                             {{-- Menu déroulant du profil (Épuré & Élégant) --}}
