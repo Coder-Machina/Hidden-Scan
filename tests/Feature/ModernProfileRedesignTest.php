@@ -47,7 +47,7 @@ class ModernProfileRedesignTest extends TestCase
 
         // Hero Header & Identity
         $response->assertSee('DiscipleCéleste');
-        $response->assertSee('12j');
+        $response->assertSee('12 jours d\'assiduité', false);
         $response->assertSee('Carte Martiale');
         $response->assertSee('Modifier profil');
         $response->assertSee('Paramètres');
@@ -55,7 +55,7 @@ class ModernProfileRedesignTest extends TestCase
         // 5 Metric Cards
         $response->assertSee('Chapitres Lus');
         $response->assertSee('Favoris');
-        $response->assertSee('Flamme Martiale');
+        $response->assertSee('Assiduité');
         $response->assertSee('Commentaires');
 
         // 5 Modern Tabs

@@ -683,7 +683,7 @@
             <div class="flex items-center justify-between h-16">
 
                 {{-- Logo --}}
-                <a href="{{ route('home') }}" class="flex items-center gap-3 px-3 py-1.5 bg-panel border border-white/10 rounded-xl hover:border-crimson/50 hover:bg-panel-hi transition-all group shadow-md">
+                <a href="{{ route('home') }}" class="flex items-center gap-3 px-3 py-1.5 bg-panel border border-white/10 rounded-xl hover:border-crimson/50 hover:bg-panel-hi transition-all group shadow-md flex-shrink-0">
                     <img src="{{ asset('images/logo.png') }}" alt="Hidden Scan Logo" class="h-9 w-9 object-contain rounded-lg group-hover:scale-105 group-hover:drop-shadow-[0_0_8px_rgba(255,42,85,0.6)] transition-all duration-300">
                     <div class="flex flex-col leading-none">
                         <span class="font-display font-black text-xl tracking-tight text-white flex items-center">
@@ -694,7 +694,7 @@
                 </a>
 
                 {{-- Navigation desktop épurée & aérée --}}
-                <div class="hidden md:flex items-center gap-1 lg:gap-2">
+                <div class="hidden lg:flex items-center gap-1 xl:gap-2 flex-shrink-0">
                     <a href="{{ route('home') }}"
                        class="px-3 py-1.5 rounded-xl text-xs sm:text-sm font-bold transition-all {{ request()->routeIs('home') ? 'text-white bg-crimson/15 border border-crimson/40 shadow-[0_0_12px_rgba(255,42,85,0.25)]' : 'text-mist hover:text-white hover:bg-panel-hi' }}">
                         Accueil
@@ -721,7 +721,7 @@
                 </div>
 
                 {{-- Actions Desktop Équilibrées & Aérées --}}
-                <div class="hidden md:flex items-center gap-3 lg:gap-3.5 flex-shrink-0">
+                <div class="hidden md:flex items-center gap-2 sm:gap-2.5 lg:gap-3 flex-shrink-0">
                     {{-- Search Input Dynamique & Compact --}}
                     <form action="{{ route('manga.index') }}" method="GET" class="relative flex items-center">
                         <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-mist pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
@@ -885,15 +885,15 @@
                         <div class="relative flex-shrink-0" x-data="{ userMenuOpen: false }" @click.outside="userMenuOpen = false">
                             <button 
                                 @click="userMenuOpen = !userMenuOpen" 
-                                class="flex items-center gap-2 pl-1 pr-2.5 py-1 rounded-full bg-[#141420] border border-[#262638] hover:border-[#ff2a55]/70 hover:bg-[#1a1a28] transition-all cursor-pointer shadow-md shadow-black/40 focus:outline-none group"
+                                class="flex items-center gap-1.5 sm:gap-2 pl-1 pr-2 sm:pr-2.5 py-1 rounded-full bg-[#141420] border border-[#262638] hover:border-[#ff2a55]/70 hover:bg-[#1a1a28] transition-all cursor-pointer shadow-md shadow-black/40 focus:outline-none group flex-shrink-0"
                                 title="{{ Auth::user()->name }}"
                                 aria-label="Menu profil utilisateur"
                             >
                                 <div class="h-7 w-7 rounded-full overflow-hidden ring-1.5 ring-[#ff2a55] flex-shrink-0 bg-[#0d0d14]">
                                     <img src="{{ Auth::user()->avatar_url }}" alt="{{ Auth::user()->name }}" class="w-full h-full object-cover navbar-avatar-img">
                                 </div>
-                                <span class="text-xs font-bold text-white max-w-[100px] truncate hidden xl:inline">{{ Auth::user()->name }}</span>
-                                <svg class="w-3.5 h-3.5 text-[#7070a0] group-hover:text-white transition-transform duration-200" :class="userMenuOpen ? 'rotate-180' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                                <span class="text-xs font-bold text-white max-w-[85px] truncate hidden xl:inline">{{ Auth::user()->name }}</span>
+                                <svg class="w-3.5 h-3.5 text-[#7070a0] group-hover:text-white transition-transform duration-200 flex-shrink-0" :class="userMenuOpen ? 'rotate-180' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
                             </button>
 
                             {{-- Menu déroulant du profil (Épuré & Élégant) --}}
