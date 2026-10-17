@@ -273,12 +273,12 @@
                                     <span class="hs-user-name">{{ $user->name }}</span>
                                     <span class="hs-user-email">({{ $user->email }})</span>
                                     @if($user->is_banned)
-                                        <span class="hs-badge red">
-                                            🚫 Compte banni
+                                        <span class="hs-badge red flex items-center gap-1">
+                                            <x-lucide name="ban" class="w-3 h-3 inline-block" /> Compte banni
                                         </span>
                                     @elseif($user->is_comment_banned)
-                                        <span class="hs-badge amber">
-                                            ⛔ Banni des comm.
+                                        <span class="hs-badge amber flex items-center gap-1">
+                                            <x-lucide name="shield-alert" class="w-3 h-3 inline-block" /> Banni des comm.
                                         </span>
                                     @endif
                                 </div>
@@ -328,8 +328,12 @@
                             <div class="hs-item-info">
                                 <div class="hs-item-header">
                                     <span class="hs-badge gray">{{ substr($ip->ip_hash, 0, 20) }}...</span>
-                                    <span class="hs-badge {{ $ip->ban_type === 'all' ? 'red' : 'amber' }}">
-                                        {{ $ip->ban_type === 'all' ? '🚫 Accès total bloqué' : '⛔ Commentaires bloqués' }}
+                                    <span class="hs-badge {{ $ip->ban_type === 'all' ? 'red' : 'amber' }} inline-flex items-center gap-1">
+                                        @if($ip->ban_type === 'all')
+                                            <x-lucide name="ban" class="w-3 h-3 inline-block" /> Accès total bloqué
+                                        @else
+                                            <x-lucide name="shield-alert" class="w-3 h-3 inline-block" /> Commentaires bloqués
+                                        @endif
                                     </span>
                                 </div>
                                 <div class="hs-item-meta">

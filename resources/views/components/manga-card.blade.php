@@ -23,7 +23,7 @@
                  loading="lazy">
         @else
             <div class="w-full h-full flex flex-col items-center justify-center p-4 text-center bg-[#141414] text-[var(--text-3)]">
-                <span class="text-3xl mb-1">📖</span>
+                <x-lucide name="book-open" class="w-10 h-10 text-[var(--text-3)] mb-2" />
                 <span class="text-caption line-clamp-2 text-[var(--text-2)]">{{ $manga->title }}</span>
             </div>
         @endif
@@ -42,8 +42,8 @@
                     #{{ $showRank }}
                 </span>
             @elseif($manga->average_rating > 0)
-                <span class="px-1.5 py-0.5 rounded-[4px] bg-black/75 backdrop-blur-sm border border-white/10 text-[10px] font-bold text-amber-400 flex items-center gap-0.5">
-                    <span>★</span>
+                <span class="px-1.5 py-0.5 rounded-[4px] bg-black/75 backdrop-blur-sm border border-white/10 text-[10px] font-bold text-amber-400 flex items-center gap-1">
+                    <x-lucide name="star" class="w-3 h-3 fill-current text-amber-400" />
                     <span>{{ number_format($manga->average_rating, 1) }}</span>
                 </span>
             @endif

@@ -2,7 +2,7 @@
     <div class="mb-5">
         <h3 class="text-h3 font-semibold text-[var(--text-1)] flex items-center gap-2.5">
             <span class="w-8 h-8 rounded-[4px] bg-[var(--bg-raised)] border border-[var(--border)] text-[var(--accent)] flex items-center justify-center">
-                🔑
+                <x-lucide name="key" class="w-4 h-4 text-[var(--accent)]" />
             </span>
             <span>Mon Pass Secret (Connexion Anonyme)</span>
         </h3>
@@ -13,7 +13,7 @@
 
     @if (session('status') === 'pass-regenerated')
         <div class="mb-5 p-3 rounded-[4px] bg-[var(--bg-raised)] border border-[var(--border)] text-caption font-semibold text-emerald-400 flex items-center gap-2">
-            <span>✓</span>
+            <x-lucide name="check" class="w-4 h-4 text-emerald-400 shrink-0 stroke-[3]" />
             <span>Nouveau Pass généré avec succès ! Votre ancien Pass a été révoqué. Pensez à conserver le nouveau en lieu sûr.</span>
         </div>
     @endif
@@ -27,8 +27,14 @@
                 Code Secret (Protégé par Spoiler)
             </span>
             <span class="text-caption text-[var(--text-3)] font-medium">
-                <span x-show="!showPass">🔒 Masqué</span>
-                <span x-show="showPass" x-cloak class="text-emerald-400">🔓 Visible</span>
+                <span x-show="!showPass" class="inline-flex items-center gap-1">
+                    <x-lucide name="lock" class="w-3.5 h-3.5" />
+                    <span>Masqué</span>
+                </span>
+                <span x-show="showPass" x-cloak class="text-emerald-400 inline-flex items-center gap-1">
+                    <x-lucide name="unlock" class="w-3.5 h-3.5" />
+                    <span>Visible</span>
+                </span>
             </span>
         </div>
 
@@ -73,7 +79,10 @@
             <button type="button" 
                     @click="navigator.clipboard.writeText('{{ $user->pass_code }}'); copied = true; setTimeout(() => copied = false, 2500)" 
                     class="btn-primary !text-caption !py-1.5 !px-3">
-                <span x-text="copied ? 'Copié ! ✓' : 'Copier mon Pass'"></span>
+                <span x-show="!copied">Copier mon Pass</span>
+                <span x-show="copied" x-cloak class="inline-flex items-center gap-1 text-white">
+                    <x-lucide name="check" class="w-3.5 h-3.5 inline" /> Copié !
+                </span>
             </button>
         </div>
     </div>

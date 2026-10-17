@@ -33,7 +33,10 @@
         <div class="flex items-center justify-between pt-2">
             <div>
                 @if (session('status') === 'password-updated')
-                    <span class="text-caption font-semibold text-emerald-400">✓ Mot de passe mis à jour !</span>
+                    <span class="text-caption font-semibold text-emerald-400 inline-flex items-center gap-1.5">
+                        <x-lucide name="check" class="w-4 h-4 stroke-[3]" />
+                        <span>Mot de passe mis à jour !</span>
+                    </span>
                 @endif
             </div>
             <button type="submit" class="btn-primary">Mettre à jour le mot de passe</button>

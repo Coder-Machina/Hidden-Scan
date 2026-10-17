@@ -25,8 +25,8 @@
         <div class="absolute -top-24 -left-24 w-48 h-48 bg-red-600/10 rounded-full blur-3xl pointer-events-none"></div>
         <div class="absolute -bottom-24 -right-24 w-48 h-48 bg-red-600/10 rounded-full blur-3xl pointer-events-none"></div>
 
-        <div class="w-20 h-20 mx-auto mb-6 rounded-2xl bg-red-500/10 border border-red-500/20 flex items-center justify-center text-4xl shadow-inner">
-            🚫
+        <div class="w-20 h-20 mx-auto mb-6 rounded-2xl bg-red-500/10 border border-red-500/20 flex items-center justify-center text-red-400 shadow-inner">
+            <x-lucide name="ban" class="w-10 h-10 text-red-400" />
         </div>
 
         <h1 class="text-2xl font-bold text-white mb-2 tracking-tight">Accès Bloqué</h1>
@@ -43,11 +43,13 @@
                 <span class="text-xs uppercase tracking-wider text-gray-400 block mb-0.5 font-medium">Type de sanction</span>
                 @if($bannedUntil)
                     <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded bg-amber-500/10 text-amber-300 font-semibold text-xs border border-amber-500/30">
-                        ⏳ Bannissement Temporaire
+                        <x-lucide name="clock" class="w-3.5 h-3.5" />
+                        <span>Bannissement Temporaire</span>
                     </span>
                 @else
                     <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded bg-red-500/10 text-red-400 font-semibold text-xs border border-red-500/30">
-                        🔒 Bannissement Définitif
+                        <x-lucide name="lock" class="w-3.5 h-3.5" />
+                        <span>Bannissement Définitif</span>
                     </span>
                 @endif
             </div>

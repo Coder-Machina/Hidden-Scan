@@ -285,7 +285,7 @@
                 },
 
                 copyProfileCardLink() {
-                    const text = `🥋 Cultivateur ${this.$el.dataset.name || '{{ $user->name }}'} | Rang : {{ $murimStatus['current']['title'] }} ({{ $readCount }} chapitres lus sur Hidden Scan)`;
+                    const text = `[Hidden Scan] Cultivateur ${this.$el.dataset.name || '{{ $user->name }}'} | Rang : {{ $murimStatus['current']['title'] }} ({{ $readCount }} chapitres lus sur Hidden Scan)`;
                     navigator.clipboard.writeText(text).then(() => {
                         this.showToast('Statut copié dans le presse-papier !');
                     }).catch(() => {
@@ -465,7 +465,7 @@
                                 class="absolute -bottom-1 -right-1 w-8 h-8 rounded-full bg-[var(--bg-surface)] border border-[var(--border)] text-amber-300 hover:text-white hover:border-[var(--accent)] flex items-center justify-center text-xs transition-all duration-200 hover:scale-110 cursor-pointer" 
                                 title="Changer d'Aura Martiale"
                             >
-                                ✨
+                                <x-lucide name="sparkles" class="w-4 h-4" />
                             </button>
                         </div>
 
@@ -478,7 +478,7 @@
 
                                 {{-- Badge de Rang Murim --}}
                                 <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-[4px] text-xs font-black" style="background-color: {{ $murimStatus['current']['color'] }}20; color: {{ $murimStatus['current']['color'] }}; border: 1px solid {{ $murimStatus['current']['color'] }}50;">
-                                    <span>{{ $murimStatus['current']['badge'] }}</span>
+                                    <x-lucide :name="$murimStatus['current']['icon'] ?? 'swords'" class="w-3.5 h-3.5" />
                                     <span class="tracking-wide">{{ $murimStatus['current']['title'] }}</span>
                                 </span>
 
@@ -506,7 +506,7 @@
                             @click="openCardModal()" 
                             class="px-4 py-2 rounded-[4px] bg-[var(--bg-surface)] border border-[var(--border)] hover:border-[var(--accent)] hover:text-white text-[var(--text-1)] text-xs font-bold transition flex items-center gap-2 cursor-pointer"
                         >
-                            <span class="text-sm">🎴</span>
+                            <x-lucide name="id-card" class="w-4 h-4 text-purple-400" />
                             <span>Carte Martiale</span>
                         </button>
 
@@ -534,27 +534,27 @@
                 {{-- Ligne 2 : Puces d'Informations Secondaires --}}
                 <div class="pt-3 border-t border-[var(--border)] flex flex-wrap items-center justify-center sm:justify-start gap-2 text-xs">
                     <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-[4px] bg-[var(--bg-surface)] border border-[var(--border)] text-[var(--text-2)] font-medium">
-                        <span>📅</span>
+                        <x-lucide name="calendar" class="w-3.5 h-3.5 text-[var(--text-3)]" />
                         <span>Membre depuis {{ $user->created_at ? $user->created_at->translatedFormat('M Y') : '2024' }}</span>
                     </span>
 
                     <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-[4px] bg-[var(--bg-surface)] border border-[var(--border)] text-amber-300 font-bold">
-                        <span>🔥</span>
+                        <x-lucide name="flame" class="w-3.5 h-3.5 text-amber-400 fill-current" />
                         <span>{{ $user->streak ?? 0 }} {{ ($user->streak ?? 0) > 1 ? 'jours' : 'jour' }} d'assiduité</span>
                     </span>
 
                     <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-[4px] bg-[var(--bg-surface)] border border-[var(--border)] text-emerald-400 font-bold" title="Boucliers Spirituels anti-perte de streak">
-                        <span>🛡️</span>
+                        <x-lucide name="shield" class="w-3.5 h-3.5 text-emerald-400" />
                         <span>{{ $qiShields }}/2 Bouclier(s)</span>
                     </span>
 
                     <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-[4px] bg-[var(--bg-surface)] border border-[var(--border)] text-[var(--text-1)] font-bold">
-                        <span>⚡</span>
+                        <x-lucide name="zap" class="w-3.5 h-3.5 text-amber-300" />
                         <span>{{ number_format($user->xp ?? ($readCount * 15)) }} Qi (XP)</span>
                     </span>
 
                     <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-[4px] bg-[var(--bg-surface)] border border-[var(--border)] text-amber-300 font-bold">
-                        <span>🥋</span>
+                        <x-lucide name="swords" class="w-3.5 h-3.5 text-amber-400" />
                         <span>{{ $murimStatus['current']['title'] }}</span>
                     </span>
                 </div>
@@ -572,7 +572,7 @@
                 <div class="flex items-center justify-between gap-2 mb-3">
                     <span class="text-[11px] font-bold text-[var(--text-2)] uppercase tracking-wider truncate">Chapitres Lus</span>
                     <div class="w-8 h-8 rounded-[4px] bg-[var(--accent)]/15 border border-[var(--accent)]/30 group-hover:border-[var(--accent)] flex items-center justify-center text-sm text-[var(--accent)] transition-colors">
-                        📖
+                        <x-lucide name="book-open" class="w-4 h-4 text-[var(--accent)]" />
                     </div>
                 </div>
                 <div class="text-2xl sm:text-3xl font-black text-white tracking-tight">{{ number_format($readCount) }}</div>
@@ -584,7 +584,7 @@
                 <div class="flex items-center justify-between gap-2 mb-3">
                     <span class="text-[11px] font-bold text-[var(--text-2)] uppercase tracking-wider truncate">Favoris</span>
                     <div class="w-8 h-8 rounded-[4px] bg-[var(--bg-raised)] border border-[var(--border)] group-hover:border-[var(--accent)]/50 flex items-center justify-center text-sm text-[var(--accent)] transition-colors">
-                        ❤️
+                        <x-lucide name="heart" class="w-4 h-4 text-[var(--accent)] fill-current" />
                     </div>
                 </div>
                 <div class="text-2xl sm:text-3xl font-black text-white tracking-tight" x-text="favorites.length">{{ $favoritesCount }}</div>
@@ -596,7 +596,7 @@
                 <div class="flex items-center justify-between gap-2 mb-3">
                     <span class="text-[11px] font-bold text-[var(--text-2)] uppercase tracking-wider truncate">Rang Jianghu</span>
                     <div class="w-8 h-8 rounded-[4px] bg-[var(--bg-raised)] border border-[var(--border)] group-hover:border-amber-400/50 flex items-center justify-center text-sm text-amber-400 transition-colors">
-                        🥋
+                        <x-lucide name="swords" class="w-4 h-4 text-amber-400" />
                     </div>
                 </div>
                 <div class="text-base sm:text-lg font-black text-amber-300 tracking-tight truncate leading-tight mt-1">
@@ -612,7 +612,7 @@
                 <div class="flex items-center justify-between gap-2 mb-3">
                     <span class="text-[11px] font-bold text-[var(--text-2)] uppercase tracking-wider truncate">Assiduité</span>
                     <div class="w-8 h-8 rounded-[4px] bg-[var(--bg-raised)] border border-[var(--border)] group-hover:border-amber-400/50 flex items-center justify-center text-sm text-amber-400 transition-colors">
-                        🔥
+                        <x-lucide name="flame" class="w-4 h-4 text-amber-400 fill-current" />
                     </div>
                 </div>
                 <div class="text-2xl sm:text-3xl font-black text-white tracking-tight">
@@ -626,11 +626,14 @@
                 <div class="flex items-center justify-between gap-2 mb-3">
                     <span class="text-[11px] font-bold text-[var(--text-2)] uppercase tracking-wider truncate">Commentaires</span>
                     <div class="w-8 h-8 rounded-[4px] bg-[var(--bg-raised)] border border-[var(--border)] group-hover:border-[var(--accent)]/50 flex items-center justify-center text-sm text-[var(--text-1)] transition-colors">
-                        💬
+                        <x-lucide name="message-square" class="w-4 h-4 text-[var(--text-1)]" />
                     </div>
                 </div>
                 <div class="text-2xl sm:text-3xl font-black text-white tracking-tight">{{ $commentsCount }}</div>
-                <div class="text-[11px] text-[var(--text-3)] group-hover:text-[var(--text-2)] mt-1 truncate transition-colors">{{ $likesReceived }} like(s) reçus 👍</div>
+                <div class="text-[11px] text-[var(--text-3)] group-hover:text-[var(--text-2)] mt-1 truncate transition-colors flex items-center gap-1">
+                    <span>{{ $likesReceived }} like(s) reçus</span>
+                    <x-lucide name="thumbs-up" class="w-3 h-3 text-amber-400 inline" />
+                </div>
             </div>
 
         </div>
@@ -648,7 +651,7 @@
                     class="flex items-center gap-2 px-4 py-2 rounded-[4px] text-xs sm:text-sm font-bold transition-all cursor-pointer"
                     :class="currentTab === 'overview' ? 'bg-[var(--accent)] text-white' : 'text-[var(--text-2)] hover:text-white hover:bg-[var(--bg-raised)]'"
                 >
-                    <span>👁️</span>
+                    <x-lucide name="layout-dashboard" class="w-4 h-4" />
                     <span>Vue d'ensemble</span>
                 </button>
 
@@ -659,7 +662,7 @@
                     class="flex items-center gap-2 px-4 py-2 rounded-[4px] text-xs sm:text-sm font-bold transition-all cursor-pointer"
                     :class="currentTab === 'library' ? 'bg-[var(--accent)] text-white' : 'text-[var(--text-2)] hover:text-white hover:bg-[var(--bg-raised)]'"
                 >
-                    <span>⭐</span>
+                    <x-lucide name="star" class="w-4 h-4" />
                     <span>Favoris & Historique</span>
                     <span class="px-2 py-0.5 rounded-[4px] text-[10px] bg-black/40 font-bold" x-text="favorites.length">{{ $favoritesCount }}</span>
                 </button>
@@ -671,7 +674,7 @@
                     class="flex items-center gap-2 px-4 py-2 rounded-[4px] text-xs sm:text-sm font-bold transition-all cursor-pointer"
                     :class="currentTab === 'murim' ? 'bg-[var(--accent)] text-white' : 'text-[var(--text-2)] hover:text-white hover:bg-[var(--bg-raised)]'"
                 >
-                    <span>🥋</span>
+                    <x-lucide name="swords" class="w-4 h-4" />
                     <span>Voie Martiale & Murim</span>
                 </button>
 
@@ -682,7 +685,7 @@
                     class="flex items-center gap-2 px-4 py-2 rounded-[4px] text-xs sm:text-sm font-bold transition-all cursor-pointer"
                     :class="currentTab === 'leaderboard' ? 'bg-[var(--accent)] text-white' : 'text-[var(--text-2)] hover:text-white hover:bg-[var(--bg-raised)]'"
                 >
-                    <span>🏆</span>
+                    <x-lucide name="trophy" class="w-4 h-4" />
                     <span>Classement</span>
                 </button>
             </div>
@@ -712,8 +715,8 @@
             <div class="p-6 sm:p-8 rounded-[6px] bg-[var(--bg-surface)] border border-[var(--border)] relative overflow-hidden">
                 <div class="flex flex-col md:flex-row md:items-center justify-between gap-5 mb-5 relative z-10">
                     <div class="flex items-center gap-4">
-                        <div class="w-14 h-14 rounded-[4px] bg-[var(--bg-base)] border border-[var(--border)] flex items-center justify-center text-2xl flex-shrink-0">
-                            {{ $murimStatus['current']['badge'] }}
+                        <div class="w-14 h-14 rounded-[4px] bg-[var(--bg-base)] border border-[var(--border)] flex items-center justify-center flex-shrink-0">
+                            <x-lucide :name="$murimStatus['current']['icon'] ?? 'swords'" class="w-7 h-7 text-amber-400" />
                         </div>
                         <div>
                             <div class="flex items-center gap-2">
@@ -732,9 +735,9 @@
                         <span class="text-xs text-[var(--text-2)] font-medium">Prochaine Percée :</span>
                         <div class="text-sm font-bold text-amber-400 mt-0.5">
                             @if($murimStatus['next'])
-                                {{ $murimStatus['next']['badge'] }} {{ $murimStatus['next']['title'] }}
+                                <span class="inline-flex items-center gap-1.5"><x-lucide :name="$murimStatus['next']['icon'] ?? 'swords'" class="w-4 h-4 text-amber-400" /> {{ $murimStatus['next']['title'] }}</span>
                             @else
-                                👑 Sommet Absolu du Jianghu
+                                <span class="inline-flex items-center gap-1.5"><x-lucide name="crown" class="w-4 h-4 text-amber-400" /> Sommet Absolu du Jianghu</span>
                             @endif
                         </div>
                         <span class="text-[11px] text-[var(--text-3)] font-medium">
@@ -751,7 +754,8 @@
                 <div class="relative z-10 mb-4">
                     <div class="flex items-center justify-between text-xs font-bold mb-1.5">
                         <span class="text-zinc-200 flex items-center gap-1.5">
-                            <span>⚡ Concentration de Qi</span>
+                            <x-lucide name="zap" class="w-4 h-4 text-amber-400" />
+                            <span>Concentration de Qi</span>
                             <span class="text-amber-400">({{ $murimStatus['percent'] }}%)</span>
                         </span>
                         <span class="text-[var(--text-3)]">{{ number_format($readCount) }} / {{ $murimStatus['next'] ? $murimStatus['next']['min_chapters'] : number_format($readCount) }} chapitres</span>
@@ -765,17 +769,17 @@
                 <div class="pt-4 border-t border-[var(--border)] flex flex-wrap items-center justify-between gap-3 relative z-10">
                     <div class="flex items-center gap-3">
                         <button type="button" @click="switchTab('murim'); murimSubtab = 'guide'" class="flex items-center gap-2 px-3 py-1.5 rounded-[4px] bg-[var(--bg-base)] hover:bg-[var(--bg-raised)] border border-[var(--border)] hover:border-[var(--text-3)] text-xs font-bold text-white transition cursor-pointer">
-                            <span>⛩️</span>
+                            <x-lucide name="landmark" class="w-3.5 h-3.5 text-amber-400" />
                             <span>Guide des 10 Royaumes</span>
                         </button>
                         <button type="button" @click="switchTab('murim'); murimSubtab = 'auras'" class="flex items-center gap-2 px-3 py-1.5 rounded-[4px] bg-[var(--bg-base)] hover:bg-[var(--bg-raised)] border border-[var(--border)] hover:border-[var(--text-3)] text-xs font-bold text-white transition cursor-pointer">
-                            <span>✨</span>
+                            <x-lucide name="sparkles" class="w-3.5 h-3.5 text-purple-400" />
                             <span>Aura : <span class="text-[var(--text-1)]" x-text="avatarFrames[currentFrame]?.name || 'Disciple'"></span></span>
                         </button>
                     </div>
 
                     <button type="button" @click="openCardModal()" class="px-4 py-2 rounded-[4px] btn-primary text-xs flex items-center gap-2 cursor-pointer">
-                        <span>🎴</span>
+                        <x-lucide name="id-card" class="w-4 h-4" />
                         <span>Ouvrir la Carte de Cultivation</span>
                     </button>
                 </div>
@@ -786,7 +790,7 @@
                 <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
                     <div>
                         <h2 class="text-xl font-bold text-white flex items-center gap-2.5">
-                            <span>📅</span>
+                            <x-lucide name="calendar" class="w-5 h-5 text-amber-400" />
                             <span>Suivi d'Assiduité Martiale</span>
                             <span class="text-xs px-2.5 py-0.5 rounded-[4px] bg-[var(--bg-raised)] text-amber-400 border border-[var(--border)] font-bold">
                                 {{ $monthlyHeatmap['month_label'] }}
@@ -799,7 +803,10 @@
 
                     <div class="flex items-center gap-3">
                         <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-[4px] bg-[var(--bg-base)] border border-[var(--border)] text-xs font-bold text-zinc-200">
-                            <span class="text-amber-400">🔥 Flamme active :</span>
+                            <span class="text-amber-400 inline-flex items-center gap-1">
+                                <x-lucide name="flame" class="w-3.5 h-3.5 fill-current" />
+                                <span>Flamme active :</span>
+                            </span>
                             <strong class="text-white">{{ $user->streak ?? 0 }} {{ ($user->streak ?? 0) > 1 ? 'jours' : 'jour' }}</strong>
                         </span>
                     </div>
@@ -866,8 +873,9 @@
 
                                 <div class="text-right">
                                     @if($day['chapters_read'] > 0)
-                                        <span class="text-[10px] font-bold {{ $day['intensity'] === 4 ? 'text-white' : 'text-amber-300' }}">
-                                            ⚡{{ $day['chapters_read'] }}
+                                        <span class="text-[10px] font-bold inline-flex items-center gap-0.5 {{ $day['intensity'] === 4 ? 'text-white' : 'text-amber-300' }}">
+                                            <x-lucide name="zap" class="w-3 h-3" />
+                                            <span>{{ $day['chapters_read'] }}</span>
                                         </span>
                                     @endif
                                 </div>
@@ -896,13 +904,13 @@
                 <div class="flex items-center justify-between mb-5">
                     <div>
                         <h3 class="text-base font-bold text-white flex items-center gap-2">
-                            <span>⭐</span>
+                            <x-lucide name="star" class="w-4 h-4 text-amber-400 fill-amber-400" />
                             <span>Mes 5 Séries Incontournables</span>
                         </h3>
                         <p class="text-xs text-[var(--text-2)]">Vos œuvres de référence affichées publiquement sur votre profil.</p>
                     </div>
                     <button type="button" @click="saveTopMangas()" class="px-3.5 py-1.5 rounded-[4px] btn-primary text-xs flex items-center gap-1.5 cursor-pointer">
-                        <span>💾</span>
+                        <x-lucide name="save" class="w-3.5 h-3.5" />
                         <span>Sauvegarder</span>
                     </button>
                 </div>
@@ -921,7 +929,7 @@
                                         <span class="text-xs font-bold text-white line-clamp-2 leading-tight" x-text="getManga(topMangasIds[{{ $slot }}]).title"></span>
                                     </div>
                                     <button type="button" @click.stop="removeTopSlot({{ $slot }})" class="absolute top-2 right-2 z-20 w-6 h-6 rounded-[4px] bg-[var(--accent)] text-white flex items-center justify-center text-xs opacity-0 group-hover:opacity-100 transition shadow hover:scale-110 cursor-pointer" title="Retirer">
-                                        ✕
+                                        <x-lucide name="x" class="w-3.5 h-3.5" />
                                     </button>
                                 </div>
                             </template>
@@ -943,7 +951,7 @@
             <div class="p-6 sm:p-7 rounded-[6px] bg-[var(--bg-surface)] border border-[var(--border)]" x-show="history.length > 0">
                 <div class="flex items-center justify-between mb-5">
                     <h3 class="text-base font-bold text-white flex items-center gap-2">
-                        <span>⚡</span>
+                        <x-lucide name="play" class="w-4 h-4 text-[var(--accent)] fill-current" />
                         <span>Reprendre la lecture</span>
                     </h3>
                     <button type="button" @click="switchTab('library'); libTab = 'history'" class="text-xs font-bold text-[var(--text-2)] hover:text-white transition cursor-pointer">
@@ -972,7 +980,7 @@
             {{-- 1.E. Mes Derniers Commentaires --}}
             <div class="p-6 sm:p-7 rounded-[6px] bg-[var(--bg-surface)] border border-[var(--border)]">
                 <h3 class="text-base font-bold text-white flex items-center gap-2 mb-4">
-                    <span>💬</span>
+                    <x-lucide name="message-square" class="w-4 h-4 text-amber-400" />
                     <span>Mes derniers commentaires</span>
                 </h3>
 
@@ -995,8 +1003,9 @@
                                 <p class="text-xs text-[var(--text-2)] line-clamp-3 leading-relaxed">
                                     {{ \Illuminate\Support\Str::limit(strip_tags($comment->content), 180) }}
                                 </p>
-                                <div class="mt-2.5 text-[11px] text-[var(--text-3)] flex items-center gap-2">
-                                    <span>👍 {{ $comment->likes_count ?? 0 }} like(s)</span>
+                                <div class="mt-2.5 text-[11px] text-[var(--text-3)] flex items-center gap-1.5">
+                                    <x-lucide name="thumbs-up" class="w-3.5 h-3.5 text-amber-400 inline" />
+                                    <span>{{ $comment->likes_count ?? 0 }} like(s)</span>
                                 </div>
                             </div>
                         @endforeach
@@ -1019,7 +1028,7 @@
             <div class="p-5 rounded-[6px] bg-[var(--bg-surface)] border border-[var(--border)] flex flex-col sm:flex-row items-center justify-between gap-4">
                 <div class="flex items-center gap-3.5">
                     <div class="w-12 h-12 rounded-[4px] bg-[var(--accent)]/10 border border-[var(--accent)]/30 flex items-center justify-center text-2xl text-[var(--accent)] flex-shrink-0">
-                        ⚡
+                        <x-lucide name="zap" class="w-6 h-6 text-[var(--accent)]" />
                     </div>
                     <div>
                         <div class="flex items-center gap-2">
@@ -1062,7 +1071,9 @@
             <div x-show="libTab === 'favorites'">
                 <template x-if="favorites.length === 0">
                     <div class="p-12 text-center rounded-[6px] bg-[var(--bg-surface)] border border-[var(--border)]">
-                        <span class="text-4xl block mb-2">⭐</span>
+                        <div class="w-12 h-12 mx-auto mb-3 rounded-[4px] bg-[var(--bg-raised)] border border-[var(--border)] flex items-center justify-center text-amber-400">
+                            <x-lucide name="star" class="w-6 h-6" />
+                        </div>
                         <h4 class="text-base font-bold text-white mb-1">Aucun favori pour le moment</h4>
                         <p class="text-xs text-[var(--text-2)] max-w-sm mx-auto mb-4">Ajoutez des mangas ou webtoons à vos favoris en cliquant sur le cœur sur leur fiche !</p>
                         <a href="{{ route('manga.index') }}" class="px-4 py-2 rounded-[4px] btn-primary text-xs inline-block">Explorer le Catalogue</a>
@@ -1082,7 +1093,7 @@
                             <div class="p-2.5 flex items-center justify-between gap-1">
                                 <a :href="'/manga/' + fav.slug" class="text-xs font-bold text-white truncate hover:text-[var(--accent)] transition" x-text="fav.title"></a>
                                 <button type="button" @click="removeFavorite(fav.slug)" class="w-6 h-6 rounded-[4px] text-[var(--text-3)] hover:text-[var(--accent)] hover:bg-[var(--bg-raised)] flex items-center justify-center text-xs transition cursor-pointer" title="Retirer des favoris">
-                                    ✕
+                                    <x-lucide name="x" class="w-3.5 h-3.5" />
                                 </button>
                             </div>
                         </div>
@@ -1094,7 +1105,9 @@
             <div x-show="libTab === 'history'">
                 <template x-if="history.length === 0">
                     <div class="p-12 text-center rounded-[6px] bg-[var(--bg-surface)] border border-[var(--border)]">
-                        <span class="text-4xl block mb-2">📜</span>
+                        <div class="w-12 h-12 mx-auto mb-3 rounded-[4px] bg-[var(--bg-raised)] border border-[var(--border)] flex items-center justify-center text-[var(--text-3)]">
+                            <x-lucide name="history" class="w-6 h-6" />
+                        </div>
                         <h4 class="text-base font-bold text-white mb-1">Votre historique est vide</h4>
                         <p class="text-xs text-[var(--text-2)] max-w-sm mx-auto mb-4">Commencez la lecture d'un chapitre pour le voir apparaître ici automatiquement !</p>
                         <a href="{{ route('manga.index') }}" class="px-4 py-2 rounded-[4px] btn-primary text-xs inline-block">Découvrir les Séries</a>
@@ -1135,26 +1148,29 @@
                 <button 
                     type="button" 
                     @click="murimSubtab = 'guide'"
-                    class="px-4 py-2 rounded-[4px] text-xs font-bold transition whitespace-nowrap cursor-pointer"
+                    class="px-4 py-2 rounded-[4px] text-xs font-bold transition whitespace-nowrap cursor-pointer inline-flex items-center gap-1.5"
                     :class="murimSubtab === 'guide' ? 'bg-[var(--accent)] text-white shadow-md shadow-[var(--accent)]/20' : 'text-[var(--text-2)] hover:text-white hover:bg-[var(--bg-raised)]'"
                 >
-                    ⛩️ Guide des 10 Royaumes
+                    <x-lucide name="landmark" class="w-3.5 h-3.5" />
+                    <span>Guide des 10 Royaumes</span>
                 </button>
                 <button 
                     type="button" 
                     @click="murimSubtab = 'auras'"
-                    class="px-4 py-2 rounded-[4px] text-xs font-bold transition whitespace-nowrap cursor-pointer"
+                    class="px-4 py-2 rounded-[4px] text-xs font-bold transition whitespace-nowrap cursor-pointer inline-flex items-center gap-1.5"
                     :class="murimSubtab === 'auras' ? 'bg-[var(--accent)] text-white shadow-md shadow-[var(--accent)]/20' : 'text-[var(--text-2)] hover:text-white hover:bg-[var(--bg-raised)]'"
                 >
-                    ✨ Auras & Cadres d'Avatar
+                    <x-lucide name="sparkles" class="w-3.5 h-3.5" />
+                    <span>Auras & Cadres d'Avatar</span>
                 </button>
                 <button 
                     type="button" 
                     @click="murimSubtab = 'tierlist'"
-                    class="px-4 py-2 rounded-[4px] text-xs font-bold transition whitespace-nowrap cursor-pointer"
+                    class="px-4 py-2 rounded-[4px] text-xs font-bold transition whitespace-nowrap cursor-pointer inline-flex items-center gap-1.5"
                     :class="murimSubtab === 'tierlist' ? 'bg-[var(--accent)] text-white shadow-md shadow-[var(--accent)]/20' : 'text-[var(--text-2)] hover:text-white hover:bg-[var(--bg-raised)]'"
                 >
-                    👑 Tier List S à F
+                    <x-lucide name="crown" class="w-3.5 h-3.5" />
+                    <span>Tier List S à F</span>
                 </button>
             </div>
 
@@ -1162,7 +1178,7 @@
             <div x-show="murimSubtab === 'guide'" class="p-6 sm:p-8 rounded-[6px] bg-[var(--bg-surface)] border border-[var(--border)] space-y-6">
                 <div>
                     <h3 class="text-xl font-bold text-white flex items-center gap-2">
-                        <span>⛩️</span>
+                        <x-lucide name="landmark" class="w-5 h-5 text-amber-400" />
                         <span>Guide des 10 Royaumes de Cultivation du Jianghu</span>
                     </h3>
                     <p class="text-xs text-[var(--text-2)] mt-1">
@@ -1184,17 +1200,21 @@
                             <div>
                                 <div class="flex items-center justify-between gap-3 mb-2.5">
                                     <div class="flex items-center gap-3">
-                                        <span class="text-2xl sm:text-3xl filter drop-shadow">{{ $r['badge'] }}</span>
+                                        <div class="w-10 h-10 rounded-[4px] bg-[var(--bg-base)] border border-[var(--border)] flex items-center justify-center flex-shrink-0">
+                                            <x-lucide :name="$r['icon'] ?? 'swords'" class="w-5 h-5 text-amber-400" />
+                                        </div>
                                         <div>
                                             <h4 class="text-base font-bold text-white flex items-center gap-2">
                                                 <span>{{ $r['title'] }}</span>
                                                 @if($isCurrentRank)
-                                                    <span class="text-[9px] font-black uppercase px-2 py-0.5 rounded-[4px] bg-amber-400 text-black shadow-sm tracking-wider">
-                                                        ★ Votre Rang
+                                                    <span class="text-[9px] font-black uppercase px-2 py-0.5 rounded-[4px] bg-amber-400 text-black shadow-sm tracking-wider inline-flex items-center gap-1">
+                                                        <x-lucide name="star" class="w-2.5 h-2.5 fill-current" />
+                                                        <span>Votre Rang</span>
                                                     </span>
                                                 @elseif($isPassed)
-                                                    <span class="text-[9px] font-bold uppercase px-2 py-0.5 rounded-[4px] bg-emerald-500/15 border border-emerald-500/30 text-emerald-400">
-                                                        ✓ Atteint
+                                                    <span class="text-[9px] font-bold uppercase px-2 py-0.5 rounded-[4px] bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 inline-flex items-center gap-1">
+                                                        <x-lucide name="check" class="w-2.5 h-2.5 stroke-[3]" />
+                                                        <span>Atteint</span>
                                                     </span>
                                                 @endif
                                             </h4>
@@ -1217,7 +1237,7 @@
             <div x-show="murimSubtab === 'auras'" class="p-6 sm:p-8 rounded-[6px] bg-[var(--bg-surface)] border border-[var(--border)] space-y-6">
                 <div>
                     <h3 class="text-xl font-bold text-white flex items-center gap-2">
-                        <span>✨</span>
+                        <x-lucide name="sparkles" class="w-5 h-5 text-amber-400" />
                         <span>Auras de Qi & Cadres d'Avatar</span>
                     </h3>
                     <p class="text-xs text-[var(--text-2)] mt-1">
@@ -1250,13 +1270,15 @@
 
                                 <div class="mb-4">
                                     <template x-if="frame.unlocked">
-                                        <span class="px-2.5 py-0.5 rounded-[4px] bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-[10px] font-bold uppercase tracking-wider">
-                                            ✓ Débloqué
+                                        <span class="px-2.5 py-0.5 rounded-[4px] bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-[10px] font-bold uppercase tracking-wider inline-flex items-center gap-1">
+                                            <x-lucide name="check" class="w-3 h-3 stroke-[3]" />
+                                            <span>Débloqué</span>
                                         </span>
                                     </template>
                                     <template x-if="!frame.unlocked">
-                                        <span class="px-2.5 py-0.5 rounded-[4px] bg-[var(--bg-raised)] text-[var(--text-3)] border border-[var(--border)] text-[10px] font-medium">
-                                            🔒 Requiert <strong class="text-amber-400" x-text="frame.min_chapters"></strong> chapitres
+                                        <span class="px-2.5 py-0.5 rounded-[4px] bg-[var(--bg-raised)] text-[var(--text-3)] border border-[var(--border)] text-[10px] font-medium inline-flex items-center gap-1">
+                                            <x-lucide name="lock" class="w-3 h-3" />
+                                            <span>Requiert <strong class="text-amber-400" x-text="frame.min_chapters"></strong> chapitres</span>
                                         </span>
                                     </template>
                                 </div>
@@ -1270,7 +1292,7 @@
                                 :disabled="!frame.unlocked || currentFrame === fKey"
                             >
                                 <template x-if="currentFrame === fKey">
-                                    <span>✨ Aura Équipée</span>
+                                    <span class="inline-flex items-center gap-1.5"><x-lucide name="sparkles" class="w-3.5 h-3.5 text-amber-300" /> Aura Équipée</span>
                                 </template>
                                 <template x-if="currentFrame !== fKey && frame.unlocked">
                                     <span>Équiper cette Aura</span>
@@ -1289,7 +1311,7 @@
                 <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                     <div>
                         <h3 class="text-xl font-bold text-white flex items-center gap-2">
-                            <span>👑</span>
+                            <x-lucide name="crown" class="w-5 h-5 text-amber-400" />
                             <span>Ma Tier List Webtoons (S à F)</span>
                         </h3>
                         <p class="text-xs text-[var(--text-2)] mt-1">
@@ -1297,7 +1319,7 @@
                         </p>
                     </div>
                     <button type="button" @click="saveTierList()" class="px-4 py-2 rounded-[4px] btn-primary text-xs flex items-center gap-2 flex-shrink-0 cursor-pointer">
-                        <span>💾</span>
+                        <x-lucide name="save" class="w-3.5 h-3.5" />
                         <span>Enregistrer ma Tier List</span>
                     </button>
                 </div>
@@ -1335,7 +1357,7 @@
                                                     <span class="text-[10px] font-bold text-white line-clamp-2 leading-tight" x-text="getManga(mId).title"></span>
                                                 </div>
                                                 <button type="button" @click.stop="removeFromTier('{{ $tierKey }}', mId)" class="absolute top-1 right-1 w-5 h-5 rounded-[4px] bg-[var(--accent)] text-white flex items-center justify-center text-[10px] opacity-0 group-hover/manga:opacity-100 transition shadow hover:scale-110 cursor-pointer" title="Retirer">
-                                                    ✕
+                                                    <x-lucide name="x" class="w-3 h-3" />
                                                 </button>
                                             </div>
                                         </template>
@@ -1360,7 +1382,7 @@
             <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div>
                     <h2 class="text-xl font-bold text-white flex items-center gap-2.5">
-                        <span>🏆</span>
+                        <x-lucide name="trophy" class="w-5 h-5 text-amber-400" />
                         <span>Panthéon des Cultivateurs</span>
                         <span class="text-xs px-2.5 py-0.5 rounded-[4px] bg-[var(--bg-raised)] text-amber-400 border border-[var(--border)] font-bold">
                             Top Jianghu
@@ -1386,14 +1408,14 @@
                         <span class="text-xs text-[var(--text-3)] font-medium">Votre rang actuel</span>
                         <div class="text-sm font-bold text-white flex items-center gap-2">
                             <span>{{ $user->name }}</span>
-                            <span class="text-xs text-amber-400">{{ $murimStatus['current']['badge'] }} {{ $murimStatus['current']['title'] }}</span>
+                            <span class="text-xs text-amber-400 flex items-center gap-1.5"><x-lucide :name="$murimStatus['current']['icon'] ?? 'swords'" class="w-3.5 h-3.5" /> {{ $murimStatus['current']['title'] }}</span>
                         </div>
                     </div>
                 </div>
                 <div class="flex items-center gap-4 text-xs font-bold text-[var(--text-2)]">
-                    <span>📖 <strong class="text-white">{{ number_format($readCount) }}</strong> chap.</span>
-                    <span>⚡ <strong class="text-white">{{ number_format($user->xp ?? ($readCount * 15)) }}</strong> Qi</span>
-                    <span>🔥 <strong class="text-white">{{ $user->streak ?? 0 }} {{ ($user->streak ?? 0) > 1 ? 'jours' : 'jour' }}</strong></span>
+                    <span class="inline-flex items-center gap-1.5"><x-lucide name="book-open" class="w-3.5 h-3.5 text-[var(--accent)]" /> <strong class="text-white">{{ number_format($readCount) }}</strong> chap.</span>
+                    <span class="inline-flex items-center gap-1.5"><x-lucide name="zap" class="w-3.5 h-3.5 text-amber-400" /> <strong class="text-white">{{ number_format($user->xp ?? ($readCount * 15)) }}</strong> Qi</span>
+                    <span class="inline-flex items-center gap-1.5"><x-lucide name="flame" class="w-3.5 h-3.5 text-amber-400 fill-current" /> <strong class="text-white">{{ $user->streak ?? 0 }} {{ ($user->streak ?? 0) > 1 ? 'jours' : 'jour' }}</strong></span>
                 </div>
             </div>
 
@@ -1412,11 +1434,11 @@
                         <div class="grid grid-cols-12 gap-3 p-3.5 items-center transition {{ $isMe ? 'bg-[var(--bg-raised)] border-l-2 border-[var(--accent)]' : 'hover:bg-[var(--bg-surface)]' }}">
                             <div class="col-span-2 sm:col-span-1 text-center font-bold">
                                 @if($rankNum === 0)
-                                    <span class="text-lg">🥇</span>
+                                    <x-lucide name="trophy" class="w-5 h-5 text-amber-300 mx-auto" />
                                 @elseif($rankNum === 1)
-                                    <span class="text-lg">🥈</span>
+                                    <x-lucide name="medal" class="w-5 h-5 text-zinc-300 mx-auto" />
                                 @elseif($rankNum === 2)
-                                    <span class="text-lg">🥉</span>
+                                    <x-lucide name="award" class="w-5 h-5 text-amber-600 mx-auto" />
                                 @else
                                     <span class="text-xs text-[var(--text-3)]">#{{ $rankNum + 1 }}</span>
                                 @endif
@@ -1440,14 +1462,17 @@
 
                             <div class="hidden sm:block sm:col-span-3">
                                 <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-[4px] text-xs font-bold" style="background-color: {{ $cultivator['murim_color'] }}15; color: {{ $cultivator['murim_color'] }}; border: 1px solid {{ $cultivator['murim_color'] }}40;">
-                                    <span>{{ $cultivator['murim_badge'] }}</span>
+                                    <x-lucide :name="$cultivator['murim_icon'] ?? 'swords'" class="w-3.5 h-3.5 flex-shrink-0" />
                                     <span class="truncate">{{ $cultivator['murim_title'] }}</span>
                                 </span>
                             </div>
 
                             <div class="col-span-4 sm:col-span-3 text-right">
                                 <span class="text-xs font-bold text-white block">{{ number_format($cultivator['read_count']) }} chap.</span>
-                                <span class="text-[10px] text-amber-400 font-bold block">⚡ {{ number_format($cultivator['xp'] ?? ($cultivator['read_count'] * 15)) }} XP</span>
+                                <span class="text-[10px] text-amber-400 font-bold block inline-flex items-center gap-1 justify-end">
+                                    <x-lucide name="zap" class="w-3 h-3 text-amber-400 inline" />
+                                    <span>{{ number_format($cultivator['xp'] ?? ($cultivator['read_count'] * 15)) }} XP</span>
+                                </span>
                             </div>
                         </div>
                     @endforeach
@@ -1465,26 +1490,29 @@
                 <button 
                     type="button" 
                     @click="settingsSubtab = 'profile'"
-                    class="px-4 py-2 rounded-[4px] text-xs font-bold transition whitespace-nowrap cursor-pointer"
+                    class="px-4 py-2 rounded-[4px] text-xs font-bold transition whitespace-nowrap cursor-pointer inline-flex items-center gap-1.5"
                     :class="settingsSubtab === 'profile' ? 'bg-[var(--accent)] text-white' : 'text-[var(--text-2)] hover:text-white hover:bg-[var(--bg-raised)]'"
                 >
-                    ✏️ Mon Profil
+                    <x-lucide name="user" class="w-3.5 h-3.5" />
+                    <span>Mon Profil</span>
                 </button>
                 <button 
                     type="button" 
                     @click="settingsSubtab = 'security'"
-                    class="px-4 py-2 rounded-[4px] text-xs font-bold transition whitespace-nowrap cursor-pointer"
+                    class="px-4 py-2 rounded-[4px] text-xs font-bold transition whitespace-nowrap cursor-pointer inline-flex items-center gap-1.5"
                     :class="settingsSubtab === 'security' ? 'bg-[var(--accent)] text-white' : 'text-[var(--text-2)] hover:text-white hover:bg-[var(--bg-raised)]'"
                 >
-                    🔐 Sécurité & Pass
+                    <x-lucide name="lock" class="w-3.5 h-3.5" />
+                    <span>Sécurité & Pass</span>
                 </button>
                 <button 
                     type="button" 
                     @click="settingsSubtab = 'danger'"
-                    class="px-4 py-2 rounded-[4px] text-xs font-bold transition whitespace-nowrap text-red-400 cursor-pointer"
+                    class="px-4 py-2 rounded-[4px] text-xs font-bold transition whitespace-nowrap text-red-400 cursor-pointer inline-flex items-center gap-1.5"
                     :class="settingsSubtab === 'danger' ? 'bg-[var(--accent)] text-white' : 'hover:bg-red-500/10'"
                 >
-                    ⚠️ Zone de danger
+                    <x-lucide name="alert-triangle" class="w-3.5 h-3.5" />
+                    <span>Zone de danger</span>
                 </button>
             </div>
 
@@ -1596,7 +1624,7 @@
                     <div class="flex items-center justify-between pt-4 border-t border-[var(--border)] flex-wrap gap-3">
                         <div>
                             @if (session('status') === 'profile-updated')
-                                <span class="text-xs text-emerald-400 font-bold">✓ Modifications enregistrées avec succès !</span>
+                                <span class="text-xs text-emerald-400 font-bold flex items-center gap-1.5"><x-lucide name="check" class="w-4 h-4 stroke-[3]" /> Modifications enregistrées avec succès !</span>
                             @endif
                         </div>
                         <button type="submit" class="px-6 py-2 rounded-[4px] btn-primary text-xs cursor-pointer">
@@ -1661,13 +1689,13 @@
                 <div class="p-5 border-b border-[var(--border)] flex items-center justify-between">
                     <div>
                         <h3 class="text-base font-bold text-white flex items-center gap-2">
-                            <span>📚</span>
+                            <x-lucide name="library" class="w-4 h-4 text-[var(--accent)]" />
                             <span>Choisir une série</span>
                         </h3>
                         <p class="text-xs text-[var(--text-2)] mt-0.5">Sélectionnez le webtoon à ajouter.</p>
                     </div>
-                    <button type="button" @click="closeSelector()" class="w-8 h-8 rounded-[4px] bg-[var(--bg-raised)] border border-[var(--border)] text-[var(--text-2)] hover:text-white flex items-center justify-center transition cursor-pointer">
-                        ✕
+                    <button type="button" @click="closeSelector()" class="w-8 h-8 rounded-[4px] bg-[var(--bg-raised)] border border-[var(--border)] text-[var(--text-2)] hover:text-white flex items-center justify-center transition cursor-pointer" aria-label="Fermer">
+                        <x-lucide name="x" class="w-4 h-4" />
                     </button>
                 </div>
 
@@ -1721,11 +1749,11 @@
             >
                 <div class="flex items-center justify-between pb-3 mb-4 border-b border-[var(--border)] relative z-10">
                     <div class="flex items-center gap-2">
-                        <span class="text-xl">🎴</span>
+                        <x-lucide name="id-card" class="w-5 h-5 text-purple-400" />
                         <h3 class="text-sm font-bold text-white uppercase tracking-wider">Carte de Cultivation</h3>
                     </div>
-                    <button type="button" @click="closeCardModal()" class="w-7 h-7 rounded-[4px] bg-[var(--bg-raised)] border border-[var(--border)] text-[var(--text-2)] hover:text-white flex items-center justify-center transition cursor-pointer">
-                        ✕
+                    <button type="button" @click="closeCardModal()" class="w-7 h-7 rounded-[4px] bg-[var(--bg-raised)] border border-[var(--border)] text-[var(--text-2)] hover:text-white flex items-center justify-center transition cursor-pointer" aria-label="Fermer">
+                        <x-lucide name="x" class="w-4 h-4" />
                     </button>
                 </div>
 
@@ -1750,33 +1778,35 @@
                     </div>
 
                     <h4 class="text-lg font-bold text-white tracking-wide mb-1">{{ $user->name }}</h4>
-                    <div class="inline-flex items-center gap-1 px-3 py-0.5 rounded-[4px] text-xs font-bold mb-4" style="background-color: {{ $murimStatus['current']['color'] }}25; color: {{ $murimStatus['current']['color'] }}; border: 1px solid {{ $murimStatus['current']['color'] }}60;">
-                        <span>{{ $murimStatus['current']['badge'] }}</span>
+                    <div class="inline-flex items-center gap-1.5 px-3 py-0.5 rounded-[4px] text-xs font-bold mb-4" style="background-color: {{ $murimStatus['current']['color'] }}25; color: {{ $murimStatus['current']['color'] }}; border: 1px solid {{ $murimStatus['current']['color'] }}60;">
+                        <x-lucide :name="$murimStatus['current']['icon'] ?? 'swords'" class="w-3.5 h-3.5" />
                         <span>{{ $murimStatus['current']['title'] }}</span>
                     </div>
 
                     <div class="grid grid-cols-2 gap-2 text-left bg-[var(--bg-surface)] p-3 rounded-[4px] border border-[var(--border)] mb-3">
                         <div class="p-2 rounded-[4px] bg-[var(--bg-base)]">
-                            <span class="text-[10px] text-[var(--text-3)] block">📖 Chapitres Lus</span>
+                            <span class="text-[10px] text-[var(--text-3)] flex items-center gap-1 mb-0.5"><x-lucide name="book-open" class="w-3 h-3 text-[var(--accent)]" /> Chapitres Lus</span>
                             <span class="text-xs font-bold text-white">{{ number_format($readCount) }}</span>
                         </div>
                         <div class="p-2 rounded-[4px] bg-[var(--bg-base)]">
-                            <span class="text-[10px] text-[var(--text-3)] block">🔥 Assiduité</span>
+                            <span class="text-[10px] text-[var(--text-3)] flex items-center gap-1 mb-0.5"><x-lucide name="flame" class="w-3 h-3 text-amber-400" /> Assiduité</span>
                             <span class="text-xs font-bold text-amber-400">{{ $user->streak ?? 0 }} {{ ($user->streak ?? 0) > 1 ? 'jours' : 'jour' }}</span>
                         </div>
                         <div class="p-2 rounded-[4px] bg-[var(--bg-base)]">
-                            <span class="text-[10px] text-[var(--text-3)] block">🛡️ Boucliers Qi</span>
+                            <span class="text-[10px] text-[var(--text-3)] flex items-center gap-1 mb-0.5"><x-lucide name="shield" class="w-3 h-3 text-emerald-400" /> Boucliers Qi</span>
                             <span class="text-xs font-bold text-emerald-400">{{ $qiShields }}/2 Actifs</span>
                         </div>
                         <div class="p-2 rounded-[4px] bg-[var(--bg-base)]">
-                            <span class="text-[10px] text-[var(--text-3)] block">⚡ Réserve Qi</span>
+                            <span class="text-[10px] text-[var(--text-3)] flex items-center gap-1 mb-0.5"><x-lucide name="zap" class="w-3 h-3 text-amber-300" /> Réserve Qi</span>
                             <span class="text-xs font-bold text-[var(--text-1)]">{{ number_format($user->xp ?? ($readCount * 15)) }}</span>
                         </div>
                     </div>
 
                     <div class="p-2.5 rounded-[4px] bg-[var(--bg-surface)] border border-[var(--border)] text-left flex items-center justify-between mb-3">
                         <div class="flex items-center gap-2.5">
-                            <span class="text-2xl">{{ $murimStatus['current']['badge'] }}</span>
+                            <div class="w-8 h-8 rounded-[4px] bg-[var(--bg-base)] border border-[var(--border)] flex items-center justify-center flex-shrink-0">
+                                <x-lucide :name="$murimStatus['current']['icon'] ?? 'swords'" class="w-4 h-4 text-amber-400" />
+                            </div>
                             <div>
                                 <span class="text-[10px] text-[var(--text-3)] font-bold block uppercase tracking-wider">Rang Jianghu</span>
                                 <span class="text-xs font-bold text-white">{{ $murimStatus['current']['title'] }}</span>
@@ -1800,7 +1830,7 @@
                         @click="copyProfileCardLink()" 
                         class="flex-1 py-2 rounded-[4px] btn-primary text-xs flex items-center justify-center gap-1.5 cursor-pointer"
                     >
-                        <span>📋</span>
+                        <x-lucide name="copy" class="w-3.5 h-3.5" />
                         <span>Copier mon Statut</span>
                     </button>
                     <button 
@@ -1821,7 +1851,7 @@
             class="fixed bottom-6 right-6 z-50 px-4 py-3 rounded-[4px] bg-[var(--bg-surface)] border border-[var(--border)] text-white text-xs font-bold shadow-2xl flex items-center gap-2.5 backdrop-blur-md"
             style="display: none;"
         >
-            <span class="text-emerald-400 text-sm">✓</span>
+            <x-lucide name="check" class="w-4 h-4 text-emerald-400 stroke-[3]" />
             <span x-text="toastMessage"></span>
         </div>
 

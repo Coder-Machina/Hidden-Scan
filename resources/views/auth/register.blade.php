@@ -25,15 +25,15 @@
         <div class="space-y-4">
             <div class="p-3.5 rounded-[4px] bg-[var(--bg-base)] border border-[var(--border)] space-y-2 text-caption text-[var(--text-2)]">
                 <div class="flex items-center gap-2">
-                    <span class="text-emerald-400 font-bold">✓</span>
+                    <x-lucide name="check" class="w-3.5 h-3.5 text-emerald-400 shrink-0 stroke-[3]" />
                     <span>Génération instantanée d'un identifiant secret unique</span>
                 </div>
                 <div class="flex items-center gap-2">
-                    <span class="text-emerald-400 font-bold">✓</span>
+                    <x-lucide name="check" class="w-3.5 h-3.5 text-emerald-400 shrink-0 stroke-[3]" />
                     <span>Synchronisation automatique de vos favoris et progression</span>
                 </div>
                 <div class="flex items-center gap-2">
-                    <span class="text-emerald-400 font-bold">✓</span>
+                    <x-lucide name="check" class="w-3.5 h-3.5 text-emerald-400 shrink-0 stroke-[3]" />
                     <span>Connexion multi-appareils sans jamais renseigner d'email</span>
                 </div>
             </div>

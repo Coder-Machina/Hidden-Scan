@@ -1,11 +1,24 @@
 import { animate, createTimeline, stagger } from 'animejs';
 import html2canvas from 'html2canvas';
+import { createIcons, icons } from 'lucide';
 
 // Expose on window for Alpine.js and Blade templates
 window.anime = animate;
 window.createTimeline = createTimeline;
 window.stagger = stagger;
 window.html2canvas = html2canvas;
+window.lucide = { createIcons, icons };
+
+// Auto-initialize Lucide icons on page load & dynamic navigation
+document.addEventListener('DOMContentLoaded', () => {
+    createIcons({ icons });
+});
+document.addEventListener('livewire:navigated', () => {
+    createIcons({ icons });
+});
+window.refreshLucideIcons = () => {
+    createIcons({ icons });
+};
 
 // Helper global function for animating counters with Anime.js
 window.animateCounter = function(el, targetVal, duration = 1200) {

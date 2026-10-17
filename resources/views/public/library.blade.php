@@ -172,7 +172,9 @@
                                             <img :src="item.manga_cover" :alt="item.manga_title" class="w-full h-full object-cover" loading="lazy">
                                         </template>
                                         <template x-if="!item.manga_cover">
-                                            <div class="w-full h-full flex items-center justify-center text-xs text-[var(--text-3)]">📖</div>
+                                            <div class="w-full h-full flex items-center justify-center text-[var(--text-3)]">
+                                                <x-lucide name="book-open" class="w-4 h-4" />
+                                            </div>
                                         </template>
                                     </a>
 
@@ -205,7 +207,7 @@
                                             class="py-1.5 px-3 rounded-[4px] bg-[var(--bg-raised)] hover:bg-[var(--border)] text-[var(--text-2)] hover:text-[var(--text-1)] border border-[var(--border)] transition text-xs font-semibold"
                                             title="Marquer comme lu">
                                         <span class="hidden md:inline">Marquer lu</span>
-                                        <span class="md:hidden">✓</span>
+                                        <span class="md:hidden flex items-center justify-center"><x-lucide name="check" class="w-3.5 h-3.5" /></span>
                                     </button>
 
                                     <a :href="item.url" class="btn-primary text-xs py-1.5 px-4 inline-flex items-center gap-1.5">
@@ -234,7 +236,9 @@
                                                 <img :src="mangaGroup.manga_cover" :alt="mangaGroup.manga_title" class="w-full h-full object-cover">
                                             </template>
                                             <template x-if="!mangaGroup.manga_cover">
-                                                <div class="w-full h-full flex items-center justify-center text-xs text-[var(--text-3)]">📖</div>
+                                                <div class="w-full h-full flex items-center justify-center text-[var(--text-3)]">
+                                                    <x-lucide name="book-open" class="w-4 h-4" />
+                                                </div>
                                             </template>
                                         </a>
                                         <div class="min-w-0">
@@ -276,9 +280,9 @@
                                                     <button @click="markAsRead(ch)"
                                                             type="button"
                                                             :disabled="ch._marking"
-                                                            class="p-1 rounded-[4px] bg-[var(--bg-raised)] hover:bg-[var(--border)] text-[var(--text-2)] hover:text-[var(--text-1)] transition"
+                                                            class="p-1 rounded-[4px] bg-[var(--bg-raised)] hover:bg-[var(--border)] text-[var(--text-2)] hover:text-[var(--text-1)] transition flex items-center justify-center"
                                                             title="Marquer comme lu">
-                                                        <span class="text-xs">✓</span>
+                                                        <x-lucide name="check" class="w-3.5 h-3.5" />
                                                     </button>
                                                     <a :href="ch.url"
                                                        class="px-2 py-0.5 rounded-[4px] bg-[var(--accent)] text-white text-[11px] font-semibold hover:bg-[var(--accent-hover)] transition">
@@ -477,8 +481,8 @@
                                         <img :src="item.cover" class="w-10 aspect-[3/4] object-cover rounded-[4px] flex-shrink-0 border border-[var(--border)]" alt="">
                                     </template>
                                     <template x-if="!item.cover">
-                                        <div class="w-10 aspect-[3/4] bg-[var(--bg-raised)] border border-[var(--border)] rounded-[4px] flex-shrink-0 flex items-center justify-center text-xs text-[var(--text-3)]">
-                                            📖
+                                        <div class="w-10 aspect-[3/4] bg-[var(--bg-raised)] border border-[var(--border)] rounded-[4px] flex-shrink-0 flex items-center justify-center text-[var(--text-3)]">
+                                            <x-lucide name="book-open" class="w-4 h-4" />
                                         </div>
                                     </template>
 
@@ -523,8 +527,9 @@
                     <p class="text-[13px] text-[var(--text-2)] mt-1">Recommandations générées sur-mesure à partir des séries cochées comme lues dans votre bibliothèque.</p>
                 </div>
                 <div class="flex items-center gap-2 flex-shrink-0">
-                    <a href="{{ route('manga.random') }}" class="btn-secondary text-xs py-2 px-3">
-                        <span>🎲 Surprends-moi</span>
+                    <a href="{{ route('manga.random') }}" class="btn-secondary text-xs py-2 px-3 inline-flex items-center gap-1.5">
+                        <x-lucide name="dices" class="w-3.5 h-3.5 text-purple-400" />
+                        <span>Surprends-moi</span>
                     </a>
                 </div>
             </div>
@@ -553,7 +558,9 @@
                                             <img :src="group.source_manga.cover_image" :alt="group.source_manga.title" class="w-full h-full object-cover">
                                         </template>
                                         <template x-if="!group.source_manga.cover_image">
-                                            <div class="w-full h-full flex items-center justify-center text-xs text-[var(--text-3)]">📖</div>
+                                            <div class="w-full h-full flex items-center justify-center text-[var(--text-3)]">
+                                                <x-lucide name="book-open" class="w-4 h-4" />
+                                            </div>
                                         </template>
                                     </a>
                                     <div class="min-w-0">
@@ -574,7 +581,9 @@
                                                     <img :src="item.cover_image" :alt="item.title" class="cover w-full h-full object-cover" loading="lazy">
                                                 </template>
                                                 <template x-if="!item.cover_image">
-                                                    <div class="w-full h-full flex items-center justify-center text-[var(--text-3)] text-xs">📖</div>
+                                                    <div class="w-full h-full flex items-center justify-center text-[var(--text-3)]">
+                                                        <x-lucide name="book-open" class="w-4 h-4" />
+                                                    </div>
                                                 </template>
                                                 <div class="absolute inset-0 card-overlay pointer-events-none"></div>
 
@@ -619,8 +628,9 @@
                         <a href="{{ route('manga.index') }}" class="btn-primary text-xs py-2 px-4">
                             Explorer le catalogue
                         </a>
-                        <a href="{{ route('manga.random') }}" class="btn-secondary text-xs py-2 px-4">
-                            🎲 Surprends-moi
+                        <a href="{{ route('manga.random') }}" class="btn-secondary text-xs py-2 px-4 inline-flex items-center gap-1.5">
+                            <x-lucide name="dices" class="w-3.5 h-3.5 text-purple-400" />
+                            <span>Surprends-moi</span>
                         </a>
                     </div>
                 </div>

@@ -45,6 +45,7 @@ class LeaderboardService
                     'streak' => (int) ($u->streak ?? 0),
                     'murim_title' => $murim['current']['title'],
                     'murim_badge' => $murim['current']['badge'],
+                    'murim_icon' => $murim['current']['icon'] ?? 'swords',
                     'murim_aura' => $murim['current']['aura'],
                     'murim_color' => $murim['current']['color'],
                     'level' => $u->level,

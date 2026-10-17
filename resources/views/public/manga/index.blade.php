@@ -10,8 +10,9 @@
         <div class="flex items-center gap-2">
             <a href="{{ route('manga.random') }}"
                onclick="if(window.HiddenScan && !{{ auth()->check() ? 'true' : 'false' }}){ const favs = window.HiddenScan.getFavorites().map(f => f.slug).join(','); if(favs) this.href = '{{ route('manga.random') }}?favs=' + encodeURIComponent(favs); }"
-               class="btn-secondary !text-caption">
-                <span>🎲 Surprends-moi</span>
+               class="btn-secondary !text-caption inline-flex items-center gap-1.5">
+                <x-lucide name="dices" class="w-4 h-4 text-purple-400" />
+                <span>Surprends-moi</span>
             </a>
         </div>
     </div>
@@ -141,8 +142,8 @@
             @else
                 {{-- Empty State (Composant 10) Minimal icon only, no stock art --}}
                 <div class="py-20 text-center bg-[var(--bg-surface)] border border-[var(--border)] rounded-[6px] p-8">
-                    <div class="w-12 h-12 mx-auto mb-3 rounded-[4px] bg-[var(--bg-raised)] border border-[var(--border)] flex items-center justify-center text-xl text-[var(--text-3)]">
-                        🔍
+                    <div class="w-12 h-12 mx-auto mb-3 rounded-[4px] bg-[var(--bg-raised)] border border-[var(--border)] flex items-center justify-center text-[var(--text-3)]">
+                        <x-lucide name="search" class="w-6 h-6 text-[var(--text-3)]" />
                     </div>
                     <h3 class="text-h3 font-semibold text-[var(--text-1)] mb-1">Aucune série trouvée</h3>
                     <p class="text-caption text-[var(--text-2)] mb-5 max-w-sm mx-auto">

@@ -49,7 +49,7 @@
 
         {{-- Aide Discord --}}
         <div class="mt-5 p-3 rounded-[4px] bg-[var(--bg-raised)] border border-[var(--border)] flex items-center gap-3 text-caption text-[var(--text-2)]">
-            <span class="text-base text-[var(--accent)]">💬</span>
+            <x-lucide name="message-square" class="w-4 h-4 text-[var(--accent)] shrink-0" />
             <div class="text-[12px] leading-snug">
                 <span class="text-[var(--text-1)] font-semibold">Besoin d'aide ?</span> Contactez l'équipe sur <a href="https://discord.gg/sMUeFSks4" target="_blank" rel="noopener noreferrer" class="text-[var(--accent)] hover:underline font-semibold">Discord</a>.
             </div>

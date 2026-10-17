@@ -11,7 +11,7 @@
                     <img src="{{ Storage::url($manga->cover_image) }}" alt="{{ $manga->title }}" class="w-full h-full object-cover">
                 @else
                     <div class="w-full h-full flex flex-col items-center justify-center p-4 text-center text-[var(--text-3)]">
-                        <span class="text-3xl mb-1">📖</span>
+                        <x-lucide name="book-open" class="w-10 h-10 mb-1 text-[var(--text-3)]" />
                         <span class="text-caption">{{ $manga->title }}</span>
                     </div>
                 @endif
@@ -28,7 +28,10 @@
                     <span class="badge-tag">{{ strtoupper($manga->type->value ?? 'MANGA') }}</span>
                     <span class="badge-tag">{{ $manga->status->getLabel() }}</span>
                     @if($manga->average_rating > 0)
-                        <span class="badge-tag text-[var(--accent)] font-bold">★ {{ number_format($manga->average_rating, 1) }}</span>
+                        <span class="badge-tag text-[var(--accent)] font-bold inline-flex items-center gap-1">
+                            <x-lucide name="star" class="w-3.5 h-3.5 fill-current" />
+                            <span>{{ number_format($manga->average_rating, 1) }}</span>
+                        </span>
                     @endif
                 </div>
 
@@ -95,10 +98,11 @@
 
                     <button type="button"
                         @click="if (window.HiddenScan) { isFav = window.HiddenScan.toggleFavorite('{{ $manga->slug }}', '{{ addslashes($manga->title) }}', '{{ $manga->cover_image ? Storage::url($manga->cover_image) : '' }}'); }"
-                        class="btn-secondary"
+                        class="btn-secondary inline-flex items-center gap-2"
                         :class="isFav ? '!border-[var(--accent)] text-[var(--accent)]' : ''"
                     >
-                        <span x-text="isFav ? '❤️ Dans vos favoris' : '🤍 Ajouter aux favoris'">{{ (auth()->check() && auth()->user()->favoriteMangas->contains($manga->id)) ? '❤️ Dans vos favoris' : '🤍 Ajouter aux favoris' }}</span>
+                        <x-lucide name="heart" class="w-4 h-4 shrink-0" ::class="isFav ? 'fill-current text-[var(--accent)]' : 'text-current'" />
+                        <span x-text="isFav ? 'Dans vos favoris' : 'Ajouter aux favoris'">{{ (auth()->check() && auth()->user()->favoriteMangas->contains($manga->id)) ? 'Dans vos favoris' : 'Ajouter aux favoris' }}</span>
                     </button>
                 </div>
 
@@ -143,9 +147,9 @@
                 <div class="flex items-center gap-2 mb-2">
                     <div class="flex items-center gap-1">
                         @for($i = 1; $i <= 5; $i++)
-                            <button type="button" @click="rate({{ $i }})" class="text-base cursor-pointer hover:scale-110 transition-transform"
+                            <button type="button" @click="rate({{ $i }})" class="p-0.5 cursor-pointer hover:scale-110 transition-transform"
                                     :class="hoverScore >= {{ $i }} || (!hoverScore && (userScore || Math.round(average)) >= {{ $i }}) ? 'text-amber-400' : 'text-[var(--text-3)]'">
-                                ★
+                                <x-lucide name="star" class="w-4 h-4" ::class="hoverScore >= {{ $i }} || (!hoverScore && (userScore || Math.round(average)) >= {{ $i }}) ? 'fill-current' : ''" />
                             </button>
                         @endfor
                     </div>
@@ -226,7 +230,7 @@
                                 <button type="button" 
                                         class="chapter-circle-btn w-5 h-5 rounded-[4px] border border-[var(--border)] flex items-center justify-center cursor-pointer transition {{ $isRead ? 'bg-[var(--accent)] border-[var(--accent)] text-white' : 'text-transparent hover:border-[var(--text-3)]' }}"
                                         title="Marquer comme lu">
-                                    <span class="text-xs leading-none">✓</span>
+                                    <x-lucide name="check" class="w-3.5 h-3.5 stroke-[3]" />
                                 </button>
 
                                 <div class="min-w-0">

@@ -558,7 +558,7 @@
                     Classement
                 </a>
                 <a href="{{ route('manga.random') }}" class="hover:text-[var(--accent)] transition flex items-center gap-1.5 text-caption font-semibold">
-                    <span>🎲</span>
+                    <x-lucide name="dices" class="w-4 h-4 text-purple-400" />
                     <span>Surprends-moi</span>
                 </a>
             </div>
@@ -656,26 +656,26 @@
                             {{-- Liens du Menu avec icônes nettes et contrastées --}}
                             <div class="p-1.5 space-y-0.5 text-xs font-medium">
                                 <a href="{{ route('profile.edit', ['tab' => 'overview']) }}" class="flex items-center gap-3 px-3 py-2 rounded-[4px] text-[var(--text-1)] hover:text-white hover:bg-[var(--bg-raised)] transition group">
-                                    <span class="w-5 text-center text-sm">👤</span>
+                                    <span class="w-5 flex items-center justify-center"><x-lucide name="user" class="w-4 h-4 text-[var(--text-2)] group-hover:text-white transition" /></span>
                                     <span class="flex-1">Mon Profil</span>
                                     <span class="text-[10px] text-[var(--text-3)] group-hover:text-white transition">→</span>
                                 </a>
                                 <a href="{{ route('library', ['tab' => 'rattrapage']) }}" class="flex items-center gap-3 px-3 py-2 rounded-[4px] text-[var(--accent)] hover:bg-[var(--bg-raised)] transition group font-semibold">
-                                    <span class="w-5 text-center text-sm">🔥</span>
+                                    <span class="w-5 flex items-center justify-center"><x-lucide name="flame" class="w-4 h-4 text-[var(--accent)]" /></span>
                                     <span class="flex-1">Mode Rattrapage</span>
                                     <span class="text-[9px] px-1.5 py-0.5 rounded-[4px] bg-[var(--accent)]/15 border border-[var(--accent)]/30 text-[var(--accent)] uppercase font-bold tracking-wider">Sync</span>
                                 </a>
                                 <a href="{{ route('library') }}" class="flex items-center gap-3 px-3 py-2 rounded-[4px] text-[var(--text-1)] hover:text-white hover:bg-[var(--bg-raised)] transition group">
-                                    <span class="w-5 text-center text-sm">📚</span>
+                                    <span class="w-5 flex items-center justify-center"><x-lucide name="library" class="w-4 h-4 text-[var(--text-2)] group-hover:text-white transition" /></span>
                                     <span class="flex-1">Ma Bibliothèque</span>
                                 </a>
                                 <a href="{{ route('profile.edit', ['tab' => 'settings']) }}" class="flex items-center gap-3 px-3 py-2 rounded-[4px] text-[var(--text-1)] hover:text-white hover:bg-[var(--bg-raised)] transition group">
-                                    <span class="w-5 text-center text-sm">⚙️</span>
+                                    <span class="w-5 flex items-center justify-center"><x-lucide name="settings" class="w-4 h-4 text-[var(--text-2)] group-hover:text-white transition" /></span>
                                     <span class="flex-1">Paramètres</span>
                                 </a>
                                 @if(Auth::user()->canAccessPanel(filament()->getPanel('admin')))
                                     <a href="/admin" target="_blank" class="flex items-center gap-3 px-3 py-2 rounded-[4px] text-amber-400 hover:bg-[var(--bg-raised)] transition font-semibold">
-                                        <span class="w-5 text-center text-sm">🛡️</span>
+                                        <span class="w-5 flex items-center justify-center"><x-lucide name="shield" class="w-4 h-4 text-amber-400" /></span>
                                         <span class="flex-1">Administration</span>
                                         <span class="text-[9px] px-1 py-0.5 rounded-[4px] bg-amber-400/10 text-amber-300 font-bold">Admin</span>
                                     </a>
@@ -686,7 +686,7 @@
                                 <form method="POST" action="{{ route('logout') }}">
                                     @csrf
                                     <button type="submit" class="w-full flex items-center gap-3 px-3 py-2 rounded-[4px] text-xs font-semibold text-[var(--accent)] hover:bg-[var(--accent)]/10 hover:text-[var(--accent-hover)] transition cursor-pointer">
-                                        <span class="w-5 text-center text-sm">🚪</span>
+                                        <span class="w-5 flex items-center justify-center"><x-lucide name="log-out" class="w-4 h-4 text-[var(--accent)]" /></span>
                                         <span>Se déconnecter</span>
                                     </button>
                                 </form>
@@ -824,8 +824,8 @@
         <div x-data="{ open: true, copied: false }" x-show="open" x-cloak 
              class="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/90 backdrop-blur-md">
             <div class="relative w-full max-w-md bg-[var(--bg-surface)] border border-[var(--border)] rounded-[6px] p-6 text-center shadow-xl">
-                <div class="w-12 h-12 mx-auto mb-3 rounded-[4px] bg-[var(--bg-raised)] border border-[var(--border)] flex items-center justify-center text-xl text-[var(--accent)]">
-                    🔑
+                <div class="w-12 h-12 mx-auto mb-3 rounded-[4px] bg-[var(--bg-raised)] border border-[var(--border)] flex items-center justify-center text-[var(--accent)]">
+                    <x-lucide name="key" class="w-6 h-6 text-[var(--accent)]" />
                 </div>
                 <h3 class="font-heading text-h3 text-[var(--text-1)] mb-2">Bienvenue sur Hidden Scan</h3>
                 <p class="text-caption text-[var(--text-2)] mb-5 leading-relaxed">
@@ -840,12 +840,15 @@
                             @click="navigator.clipboard.writeText('{{ session('new_pass_code') }}'); copied = true; setTimeout(() => copied = false, 2500)"
                             class="px-2.5 py-1 rounded-[4px] bg-[var(--bg-raised)] hover:bg-[var(--border)] text-[var(--text-1)] text-caption font-semibold transition cursor-pointer">
                         <span x-show="!copied">Copier</span>
-                        <span x-show="copied" x-cloak class="text-emerald-400">Copié ✓</span>
+                        <span x-show="copied" x-cloak class="inline-flex items-center gap-1 text-emerald-400">
+                            <x-lucide name="check" class="w-3.5 h-3.5 inline" /> Copié
+                        </span>
                     </button>
                 </div>
 
-                <p class="text-caption text-[var(--text-3)] text-left mb-6">
-                    ⚠️ Conservez ce code précieusement. C'est votre unique identifiant de connexion.
+                <p class="text-caption text-[var(--text-3)] text-left mb-6 flex items-start gap-1.5">
+                    <x-lucide name="alert-triangle" class="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
+                    <span>Conservez ce code précieusement. C'est votre unique identifiant de connexion.</span>
                 </p>
 
                 <button type="button" @click="open = false" class="btn-primary w-full">

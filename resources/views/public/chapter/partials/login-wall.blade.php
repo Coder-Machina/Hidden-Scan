@@ -5,7 +5,8 @@
         <div class="absolute -bottom-20 -left-20 w-48 h-48 bg-orange-600/10 rounded-full blur-3xl pointer-events-none"></div>
 
         <div class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-500/15 border border-amber-500/30 text-amber-300 text-xs font-bold uppercase tracking-wider mb-4">
-            <span>🔒 Aperçu Gratuit Terminé</span>
+            <x-lucide name="lock" class="w-3.5 h-3.5" />
+            <span>Aperçu Gratuit Terminé</span>
         </div>
 
         <h3 class="text-xl sm:text-2xl font-bold text-white mb-2 tracking-tight">
@@ -36,19 +37,19 @@
         {{-- Avantages membre --}}
         <div class="grid grid-cols-2 gap-2 text-left text-[11px] text-gray-400 border-t border-gray-800/80 pt-4">
             <div class="flex items-center gap-1.5">
-                <span class="text-emerald-400 font-bold">✓</span>
+                <x-lucide name="check" class="w-3.5 h-3.5 text-emerald-400 shrink-0 stroke-[3]" />
                 <span>100% Gratuit & Illimité</span>
             </div>
             <div class="flex items-center gap-1.5">
-                <span class="text-emerald-400 font-bold">✓</span>
+                <x-lucide name="check" class="w-3.5 h-3.5 text-emerald-400 shrink-0 stroke-[3]" />
                 <span>Progression sauvegardée</span>
             </div>
             <div class="flex items-center gap-1.5">
-                <span class="text-emerald-400 font-bold">✓</span>
+                <x-lucide name="check" class="w-3.5 h-3.5 text-emerald-400 shrink-0 stroke-[3]" />
                 <span>Système de Rangs & XP</span>
             </div>
             <div class="flex items-center gap-1.5">
-                <span class="text-emerald-400 font-bold">✓</span>
+                <x-lucide name="check" class="w-3.5 h-3.5 text-emerald-400 shrink-0 stroke-[3]" />
                 <span>Favoris & Alertes sorties</span>
             </div>
         </div>

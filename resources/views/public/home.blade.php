@@ -40,8 +40,9 @@
             </p>
             <div class="hero-card__actions">
               <a href="{{ route('manga.read.first', $manga) }}"
-                 class="btn btn--primary">
-                ▶ Lire maintenant
+                 class="btn btn--primary flex items-center justify-center gap-2">
+                <x-lucide name="play" class="w-4 h-4 fill-current shrink-0" />
+                <span>Lire maintenant</span>
               </a>
               <a href="{{ route('manga.show', $manga) }}"
                  class="btn btn--ghost">
@@ -78,7 +79,7 @@
         <div class="bg-[var(--bg-surface)] border border-[var(--border)] rounded-[6px] p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
             <div class="flex items-center gap-3 min-w-0">
                 <div class="w-9 h-9 rounded-[4px] bg-[var(--bg-raised)] border border-[var(--border)] flex items-center justify-center text-base text-[var(--accent)] flex-shrink-0">
-                    📖
+                    <x-lucide name="book-open" class="w-4 h-4 text-[var(--accent)]" />
                 </div>
                 <div class="min-w-0">
                     <div class="flex items-center gap-2">

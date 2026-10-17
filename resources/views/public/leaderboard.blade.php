@@ -10,7 +10,10 @@
             @auth
                 <div class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-[4px] bg-[var(--bg-raised)] border border-[var(--border)] text-caption">
                     @if(auth()->user()->isStaffOrAdmin())
-                        <span class="text-amber-400 font-bold">🛡️ Staff / Admin</span>
+                        <span class="text-amber-400 font-bold inline-flex items-center gap-1.5">
+                            <x-lucide name="shield" class="w-4 h-4 text-amber-400 shrink-0" />
+                            <span>Staff / Admin</span>
+                        </span>
                         <span class="text-[var(--text-3)]">(Hors classement)</span>
                     @elseif($currentUserRank)
                         <span class="text-[var(--text-2)]">Votre rang actuel :</span>
@@ -26,8 +29,8 @@
         @if($leaderboard['total_cultivators'] === 0)
             {{-- État vierge : aucun lecteur n'a encore marqué de points --}}
             <div class="bg-[var(--bg-surface)] border border-[var(--border)] rounded-[6px] p-12 text-center mb-12 shadow-sm">
-                <div class="w-16 h-16 mx-auto mb-4 rounded-full bg-[var(--bg-raised)] border border-[var(--border)] flex items-center justify-center text-3xl">
-                    🥋
+                <div class="w-16 h-16 mx-auto mb-4 rounded-full bg-[var(--bg-raised)] border border-[var(--border)] flex items-center justify-center text-amber-400">
+                    <x-lucide name="swords" class="w-8 h-8 text-amber-400" />
                 </div>
                 <h2 class="text-h2 font-bold text-[var(--text-1)] mb-2">Le Panthéon des Cultivateurs est encore vierge</h2>
                 <p class="text-caption text-[var(--text-2)] max-w-md mx-auto mb-6">
@@ -48,8 +51,9 @@
                         </div>
                         <img src="{{ $podium[1]['avatar_url'] }}" alt="{{ $podium[1]['name'] }}" class="w-16 h-16 mx-auto mb-2 rounded-[4px] object-cover bg-[var(--bg-base)]">
                         <h3 class="font-heading font-semibold text-[15px] text-[var(--text-1)] truncate mb-1">{{ $podium[1]['name'] }}</h3>
-                        <div class="text-[11px] font-semibold text-[var(--text-2)] mb-3">
-                            {{ $podium[1]['murim_badge'] }} {{ $podium[1]['murim_title'] }}
+                        <div class="text-[11px] font-semibold text-[var(--text-2)] mb-3 flex items-center justify-center gap-1.5">
+                            <x-lucide :name="$podium[1]['murim_icon'] ?? 'award'" class="w-3.5 h-3.5 text-slate-400" />
+                            <span>{{ $podium[1]['murim_title'] }}</span>
                         </div>
                         <div class="pt-3 border-t border-[var(--border)] flex justify-around text-caption">
                             <div>
@@ -70,8 +74,9 @@
                         </div>
                         <img src="{{ $podium[0]['avatar_url'] }}" alt="{{ $podium[0]['name'] }}" class="w-20 h-20 mx-auto mb-2 rounded-[4px] object-cover bg-[var(--bg-base)] border border-[var(--accent)]">
                         <h3 class="font-heading font-bold text-[17px] text-[var(--text-1)] truncate mb-1">{{ $podium[0]['name'] }}</h3>
-                        <div class="text-[11px] font-semibold text-[var(--accent)] mb-3">
-                            {{ $podium[0]['murim_badge'] }} {{ $podium[0]['murim_title'] }}
+                        <div class="text-[11px] font-semibold text-[var(--accent)] mb-3 flex items-center justify-center gap-1.5">
+                            <x-lucide :name="$podium[0]['murim_icon'] ?? 'crown'" class="w-3.5 h-3.5 text-amber-400" />
+                            <span>{{ $podium[0]['murim_title'] }}</span>
                         </div>
                         <div class="pt-3 border-t border-[var(--border)] flex justify-around text-caption">
                             <div>
@@ -92,8 +97,9 @@
                         </div>
                         <img src="{{ $podium[2]['avatar_url'] }}" alt="{{ $podium[2]['name'] }}" class="w-16 h-16 mx-auto mb-2 rounded-[4px] object-cover bg-[var(--bg-base)]">
                         <h3 class="font-heading font-semibold text-[15px] text-[var(--text-1)] truncate mb-1">{{ $podium[2]['name'] }}</h3>
-                        <div class="text-[11px] font-semibold text-[var(--text-2)] mb-3">
-                            {{ $podium[2]['murim_badge'] }} {{ $podium[2]['murim_title'] }}
+                        <div class="text-[11px] font-semibold text-[var(--text-2)] mb-3 flex items-center justify-center gap-1.5">
+                            <x-lucide :name="$podium[2]['murim_icon'] ?? 'medal'" class="w-3.5 h-3.5 text-amber-600" />
+                            <span>{{ $podium[2]['murim_title'] }}</span>
                         </div>
                         <div class="pt-3 border-t border-[var(--border)] flex justify-around text-caption">
                             <div>
@@ -120,7 +126,7 @@
                         @auth
                             @if(auth()->user()->isStaffOrAdmin())
                                 <div class="px-3 py-1 rounded-[4px] bg-[var(--bg-raised)] border border-[var(--border)] text-caption text-[var(--text-2)] flex items-center gap-1.5">
-                                    <span>🛡️</span> <span>Staff / Admin</span> <span class="text-[var(--text-3)]">(Hors classement)</span>
+                                    <x-lucide name="shield" class="w-4 h-4 text-amber-400 shrink-0" /> <span>Staff / Admin</span> <span class="text-[var(--text-3)]">(Hors classement)</span>
                                 </div>
                             @elseif($currentUserRank)
                                 <div class="px-3 py-1 rounded-[4px] bg-[var(--bg-raised)] border border-[var(--border)] text-caption font-semibold text-[var(--text-1)]">
@@ -150,7 +156,7 @@
                                 @foreach($cultivators as $c)
                                     <tr class="hover:bg-[var(--bg-raised)] transition {{ $c['is_current_user'] ? 'bg-[var(--bg-raised)]' : '' }}">
                                         <td class="py-3 px-4 font-mono font-semibold text-[var(--text-2)]">
-                                            #{{ $c['rank'] }}
+                                             #{{ $c['rank'] }}
                                         </td>
                                         <td class="py-3 px-4">
                                             <div class="flex items-center gap-2.5">
@@ -159,13 +165,17 @@
                                             </div>
                                         </td>
                                         <td class="py-3 px-4">
-                                            <span class="text-caption text-[var(--text-2)]">
-                                                {{ $c['murim_badge'] }} {{ $c['murim_title'] }}
+                                            <span class="text-caption text-[var(--text-2)] inline-flex items-center gap-1.5">
+                                                <x-lucide :name="$c['murim_icon'] ?? 'swords'" class="w-3.5 h-3.5 text-[var(--accent)]" />
+                                                <span>{{ $c['murim_title'] }}</span>
                                             </span>
                                         </td>
                                         <td class="py-3 px-4 text-center">
                                             @if($c['streak'] > 0)
-                                                <span class="text-[11px] text-amber-400 font-semibold">🔥 {{ $c['streak'] }}j</span>
+                                                <span class="text-[11px] text-amber-400 font-semibold inline-flex items-center gap-1">
+                                                    <x-lucide name="flame" class="w-3.5 h-3.5 fill-current" />
+                                                    <span>{{ $c['streak'] }}j</span>
+                                                </span>
                                             @else
                                                 <span class="text-[var(--text-3)]">—</span>
                                             @endif
@@ -192,7 +202,9 @@
                 @foreach($allRanks as $rank)
                     <div class="p-3.5 bg-[var(--bg-base)] border border-[var(--border)] rounded-[4px] flex flex-col justify-between">
                         <div>
-                            <div class="text-xl mb-1">{{ $rank['badge'] }}</div>
+                            <div class="w-8 h-8 rounded-[4px] bg-[var(--bg-raised)] border border-[var(--border)] flex items-center justify-center mb-2">
+                                <x-lucide :name="$rank['icon'] ?? 'swords'" class="w-4 h-4 text-[var(--accent)]" />
+                            </div>
                             <h3 class="font-heading font-semibold text-[14px] text-[var(--text-1)] mb-1">{{ $rank['title'] }}</h3>
                             <div class="text-caption text-[var(--accent)] font-semibold mb-2">
                                 {{ $rank['min_chapters'] }} {{ (isset($rank['max_chapters']) && $rank['max_chapters'] < 9999) ? 'à ' . $rank['max_chapters'] : '+' }} chapitres
