@@ -26,6 +26,7 @@ class UserForm
                         titleAttribute: 'name',
                         modifyQueryUsing: fn ($query) => $query->whereIn('name', ['admin', 'Admin', 'owner', 'Owner', 'modo', 'Modo', 'uploader', 'Uploader'])
                     )
+                    ->getOptionLabelFromRecordUsing(fn ($record) => strtoupper($record->name))
                     ->multiple()
                     ->preload()
                     ->required()

@@ -37,7 +37,7 @@ class ProductionDataSeeder extends Seeder
   ),
   1 => 
   array (
-    'name' => 'Co-Admin',
+    'name' => 'Klate',
     'email' => 'admin@hiddenscan.com',
     'password' => '$2y$12$The85DvpVAHVkB7JY0gDyObYLJZV3MEqVasRhMtw1zjG8NdTLK.sq',
     'email_verified_at' => NULL,

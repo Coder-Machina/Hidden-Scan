@@ -30,13 +30,14 @@ class UsersTable
                 TextColumn::make('roles.name')
                     ->label('Rôles')
                     ->badge()
+                    ->formatStateUsing(fn (string $state): string => strtoupper($state))
                     ->color(fn (string $state): string => match (strtolower($state)) {
                         'owner', 'admin', 'administrateur' => 'danger', // Rouge
                         'modo', 'modérateur', 'moderateur' => 'purple', // Violet
                         'uploader' => 'info', // Bleu ciel
                         default => 'gray',
                     })
-                    ->placeholder('Lecteur'),
+                    ->placeholder('LECTEUR'),
                 TextColumn::make('email')
                     ->label('Adresse email')
                     ->searchable()

@@ -24,13 +24,14 @@ class UserInfolist
                         TextEntry::make('roles.name')
                             ->label('Rôles')
                             ->badge()
+                            ->formatStateUsing(fn (string $state): string => strtoupper($state))
                             ->color(fn (string $state): string => match (strtolower($state)) {
                                 'owner', 'admin', 'administrateur' => 'danger', // Rouge
                                 'modo', 'modérateur', 'moderateur' => 'purple', // Violet
                                 'uploader' => 'info', // Bleu ciel
                                 default => 'gray',
                             })
-                            ->placeholder('Lecteur'),
+                            ->placeholder('LECTEUR'),
                         TextEntry::make('comments_count')
                             ->label('Commentaires postés')
                             ->state(fn ($record) => $record->comments()->count())

@@ -34,7 +34,14 @@ class DiscordBotController extends Controller
             ->groupBy('manga_id')
             ->pluck('max_number', 'manga_id');
 
-        $mangas = Manga::query()
+        $query = Manga::query();
+
+        // Ne retourner que les œuvres produites/traduites par notre team (is_external = false)
+        if (!$request->boolean('include_external')) {
+            $query->where('is_external', false);
+        }
+
+        $mangas = $query
             ->orderBy('title')
             ->get()
             ->map(function ($manga) use ($latestChapters) {

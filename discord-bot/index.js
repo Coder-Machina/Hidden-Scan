@@ -585,15 +585,28 @@ async function doSyncProjectsWithSite() {
         const currentProjects = loadProjects();
         let changed = false;
 
-        // Nettoyage de l'ancienne clé en doublon
-        if (currentProjects['the-returner-s-road-to-retirement']) {
-            delete currentProjects['the-returner-s-road-to-retirement'];
-            changed = true;
+        // Élagage strict : seules les œuvres officielles traduites par la team (non externes) sont conservées dans le bot staff
+        const siteTeamSlugs = new Set(data.mangas.filter(m => !m.is_external).map(m => m.slug));
+        for (const slug of Object.keys(currentProjects)) {
+            if (!siteTeamSlugs.has(slug) || currentProjects[slug].is_external) {
+                delete currentProjects[slug];
+                changed = true;
+            }
         }
 
         for (const manga of data.mangas) {
             const slug = manga.slug;
             const isExternal = Boolean(manga.is_external);
+
+            // Ignore les projets externes (seules les œuvres produites par la team sont gérées par le staff bot)
+            if (isExternal) {
+                if (currentProjects[slug]) {
+                    delete currentProjects[slug];
+                    changed = true;
+                }
+                continue;
+            }
+
             const existing = currentProjects[slug] || {};
 
             const mergedStaff = {
@@ -1293,7 +1306,7 @@ client.on('guildCreate', async guild => {
     await ensureProjectRoles();
 });
 
-// Autocomplétion dynamique des projets (avec tous les mangas du site)
+// Autocomplétion dynamique des projets (uniquement les œuvres produites/traduites par notre team)
 client.on('interactionCreate', async interaction => {
     if (!interaction.isAutocomplete()) return;
 
@@ -1303,7 +1316,7 @@ client.on('interactionCreate', async interaction => {
         const list = Object.values(projects);
 
         const filtered = list
-            .filter(p => p.title.toLowerCase().includes(focusedValue) || p.slug.toLowerCase().includes(focusedValue))
+            .filter(p => !p.is_external && (p.title.toLowerCase().includes(focusedValue) || p.slug.toLowerCase().includes(focusedValue)))
             .slice(0, 25);
 
         await interaction.respond(
