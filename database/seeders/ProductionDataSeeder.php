@@ -49,7 +49,7 @@ class ProductionDataSeeder extends Seeder
   ),
   2 => 
   array (
-    'name' => 'Modérateur Principal',
+    'name' => 'Modérateur',
     'email' => 'modo@hiddenscan.com',
     'password' => '$2y$12$xbF2grgGFvLCUjiyAMxvB.UQjI8Q/N8atOeKlaanZ/5sw7NX3Q5RS',
     'email_verified_at' => NULL,
@@ -60,7 +60,7 @@ class ProductionDataSeeder extends Seeder
   ),
   3 => 
   array (
-    'name' => 'Uploader Principal',
+    'name' => 'Uploader',
     'email' => 'uploader@hiddenscan.com',
     'password' => '$2y$12$Mb/hWR29p0yGwl/7Yzy8k.IHHqxFd8Yb2cnfdKKBiscV6WPOueFty',
     'email_verified_at' => NULL,
