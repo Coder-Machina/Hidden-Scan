@@ -553,9 +553,9 @@
                         <span>{{ number_format($user->xp ?? ($readCount * 15)) }} Qi (XP)</span>
                     </span>
 
-                    <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-[4px] bg-[var(--bg-surface)] border border-[var(--border)] text-[var(--text-1)] font-bold">
-                        <span x-text="userBeastStatus?.current_stage?.icon || '🦅'">🦅</span>
-                        <span x-text="userBeastStatus?.beast?.name || 'Corbeau des Ombres'"></span>
+                    <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-[4px] bg-[var(--bg-surface)] border border-[var(--border)] text-amber-300 font-bold">
+                        <span>🥋</span>
+                        <span>{{ $murimStatus['current']['title'] }}</span>
                     </span>
                 </div>
 
@@ -563,74 +563,74 @@
         </div>
 
         {{-- ═══════════════════════════════════════════════════════════
-             2. GRILLE DES 5 STATISTIQUES CLÉS
+             2. GRILLE DES 5 STATISTIQUES CLÉS (EMBELLIE & CONTRASTÉE)
              ═══════════════════════════════════════════════════════════ --}}
         <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4 mb-8">
             
             {{-- Stat 1 : Chapitres Lus --}}
-            <div class="relative p-4 sm:p-5 rounded-[6px] bg-[var(--bg-surface)] border border-[var(--border)] hover:border-[var(--text-3)] transition-all duration-200 group">
+            <div class="relative p-4 sm:p-5 rounded-[6px] bg-gradient-to-b from-[#181818] via-[#141414] to-[#101010] border border-[var(--border)] hover:border-[var(--accent)] hover:shadow-lg transition-all duration-300 group overflow-hidden">
                 <div class="flex items-center justify-between gap-2 mb-3">
                     <span class="text-[11px] font-bold text-[var(--text-2)] uppercase tracking-wider truncate">Chapitres Lus</span>
-                    <div class="w-8 h-8 rounded-[4px] bg-[var(--accent)]/10 border border-[var(--accent)]/30 flex items-center justify-center text-sm text-[var(--accent)]">
+                    <div class="w-8 h-8 rounded-[4px] bg-[var(--accent)]/15 border border-[var(--accent)]/30 group-hover:border-[var(--accent)] flex items-center justify-center text-sm text-[var(--accent)] transition-colors">
                         📖
                     </div>
                 </div>
                 <div class="text-2xl sm:text-3xl font-black text-white tracking-tight">{{ number_format($readCount) }}</div>
-                <div class="text-[11px] text-[var(--text-3)] mt-1 truncate">Maîtrise martiale</div>
+                <div class="text-[11px] text-[var(--text-3)] group-hover:text-[var(--text-2)] mt-1 truncate transition-colors">Maîtrise martiale</div>
             </div>
 
             {{-- Stat 2 : Favoris --}}
-            <div class="relative p-4 sm:p-5 rounded-[6px] bg-[var(--bg-surface)] border border-[var(--border)] hover:border-[var(--text-3)] transition-all duration-200 group">
+            <div class="relative p-4 sm:p-5 rounded-[6px] bg-gradient-to-b from-[#181818] via-[#141414] to-[#101010] border border-[var(--border)] hover:border-[var(--accent)] hover:shadow-lg transition-all duration-300 group overflow-hidden">
                 <div class="flex items-center justify-between gap-2 mb-3">
                     <span class="text-[11px] font-bold text-[var(--text-2)] uppercase tracking-wider truncate">Favoris</span>
-                    <div class="w-8 h-8 rounded-[4px] bg-[var(--bg-raised)] border border-[var(--border)] flex items-center justify-center text-sm text-[var(--accent)]">
+                    <div class="w-8 h-8 rounded-[4px] bg-[var(--bg-raised)] border border-[var(--border)] group-hover:border-[var(--accent)]/50 flex items-center justify-center text-sm text-[var(--accent)] transition-colors">
                         ❤️
                     </div>
                 </div>
                 <div class="text-2xl sm:text-3xl font-black text-white tracking-tight" x-text="favorites.length">{{ $favoritesCount }}</div>
-                <div class="text-[11px] text-[var(--text-3)] mt-1 truncate">Séries suivies</div>
+                <div class="text-[11px] text-[var(--text-3)] group-hover:text-[var(--text-2)] mt-1 truncate transition-colors">Séries suivies</div>
             </div>
 
             {{-- Stat 3 : Rang Murim --}}
-            <div class="relative p-4 sm:p-5 rounded-[6px] bg-[var(--bg-surface)] border border-[var(--border)] hover:border-[var(--text-3)] transition-all duration-200 group">
+            <div class="relative p-4 sm:p-5 rounded-[6px] bg-gradient-to-b from-[#181818] via-[#141414] to-[#101010] border border-[var(--border)] hover:border-amber-400/60 hover:shadow-lg transition-all duration-300 group overflow-hidden">
                 <div class="flex items-center justify-between gap-2 mb-3">
                     <span class="text-[11px] font-bold text-[var(--text-2)] uppercase tracking-wider truncate">Rang Jianghu</span>
-                    <div class="w-8 h-8 rounded-[4px] bg-[var(--bg-raised)] border border-[var(--border)] flex items-center justify-center text-sm text-amber-400">
+                    <div class="w-8 h-8 rounded-[4px] bg-[var(--bg-raised)] border border-[var(--border)] group-hover:border-amber-400/50 flex items-center justify-center text-sm text-amber-400 transition-colors">
                         🥋
                     </div>
                 </div>
                 <div class="text-base sm:text-lg font-black text-amber-300 tracking-tight truncate leading-tight mt-1">
                     {{ $murimStatus['current']['title'] }}
                 </div>
-                <div class="text-[11px] text-[var(--text-3)] mt-1 truncate">
+                <div class="text-[11px] text-[var(--text-3)] group-hover:text-[var(--text-2)] mt-1 truncate transition-colors">
                     {{ $murimStatus['percent'] }}% de concentration
                 </div>
             </div>
 
             {{-- Stat 4 : Flamme d'Assiduité --}}
-            <div class="relative p-4 sm:p-5 rounded-[6px] bg-[var(--bg-surface)] border border-[var(--border)] hover:border-[var(--text-3)] transition-all duration-200 group">
+            <div class="relative p-4 sm:p-5 rounded-[6px] bg-gradient-to-b from-[#181818] via-[#141414] to-[#101010] border border-[var(--border)] hover:border-amber-500/60 hover:shadow-lg transition-all duration-300 group overflow-hidden">
                 <div class="flex items-center justify-between gap-2 mb-3">
                     <span class="text-[11px] font-bold text-[var(--text-2)] uppercase tracking-wider truncate">Assiduité</span>
-                    <div class="w-8 h-8 rounded-[4px] bg-[var(--bg-raised)] border border-[var(--border)] flex items-center justify-center text-sm text-amber-400">
+                    <div class="w-8 h-8 rounded-[4px] bg-[var(--bg-raised)] border border-[var(--border)] group-hover:border-amber-400/50 flex items-center justify-center text-sm text-amber-400 transition-colors">
                         🔥
                     </div>
                 </div>
                 <div class="text-2xl sm:text-3xl font-black text-white tracking-tight">
                     {{ $user->streak ?? 0 }} {{ ($user->streak ?? 0) > 1 ? 'jours' : 'jour' }}
                 </div>
-                <div class="text-[11px] text-[var(--text-3)] mt-1 truncate">{{ $qiShields }}/2 bouclier(s) actif(s)</div>
+                <div class="text-[11px] text-[var(--text-3)] group-hover:text-[var(--text-2)] mt-1 truncate transition-colors">{{ $qiShields }}/2 bouclier(s) actif(s)</div>
             </div>
 
             {{-- Stat 5 : Commentaires & Échanges --}}
-            <div class="col-span-2 sm:col-span-1 lg:col-span-1 relative p-4 sm:p-5 rounded-[6px] bg-[var(--bg-surface)] border border-[var(--border)] hover:border-[var(--text-3)] transition-all duration-200 group">
+            <div class="col-span-2 sm:col-span-1 lg:col-span-1 relative p-4 sm:p-5 rounded-[6px] bg-gradient-to-b from-[#181818] via-[#141414] to-[#101010] border border-[var(--border)] hover:border-[var(--accent)] hover:shadow-lg transition-all duration-300 group overflow-hidden">
                 <div class="flex items-center justify-between gap-2 mb-3">
                     <span class="text-[11px] font-bold text-[var(--text-2)] uppercase tracking-wider truncate">Commentaires</span>
-                    <div class="w-8 h-8 rounded-[4px] bg-[var(--bg-raised)] border border-[var(--border)] flex items-center justify-center text-sm text-[var(--text-1)]">
+                    <div class="w-8 h-8 rounded-[4px] bg-[var(--bg-raised)] border border-[var(--border)] group-hover:border-[var(--accent)]/50 flex items-center justify-center text-sm text-[var(--text-1)] transition-colors">
                         💬
                     </div>
                 </div>
                 <div class="text-2xl sm:text-3xl font-black text-white tracking-tight">{{ $commentsCount }}</div>
-                <div class="text-[11px] text-[var(--text-3)] mt-1 truncate">{{ $likesReceived }} like(s) reçus 👍</div>
+                <div class="text-[11px] text-[var(--text-3)] group-hover:text-[var(--text-2)] mt-1 truncate transition-colors">{{ $likesReceived }} like(s) reçus 👍</div>
             </div>
 
         </div>
@@ -756,17 +756,17 @@
                         </span>
                         <span class="text-[var(--text-3)]">{{ number_format($readCount) }} / {{ $murimStatus['next'] ? $murimStatus['next']['min_chapters'] : number_format($readCount) }} chapitres</span>
                     </div>
-                    <div class="w-full h-2 bg-[var(--bg-base)] rounded-[4px] overflow-hidden border border-[var(--border)]">
-                        <div class="h-full bg-[var(--accent)] rounded-[4px] transition-all duration-700" style="width: {{ $murimStatus['percent'] }}%"></div>
+                    <div class="w-full h-2.5 bg-[var(--bg-base)] rounded-[4px] overflow-hidden border border-[var(--border)] p-0.5">
+                        <div class="h-full bg-gradient-to-r from-[var(--accent)] via-red-500 to-amber-400 rounded-[3px] transition-all duration-700 shadow-[0_0_12px_rgba(230,57,70,0.4)]" style="width: {{ $murimStatus['percent'] }}%"></div>
                     </div>
                 </div>
 
                 {{-- Raccourcis internes --}}
                 <div class="pt-4 border-t border-[var(--border)] flex flex-wrap items-center justify-between gap-3 relative z-10">
                     <div class="flex items-center gap-3">
-                        <button type="button" @click="switchTab('murim'); murimSubtab = 'beast'" class="flex items-center gap-2 px-3 py-1.5 rounded-[4px] bg-[var(--bg-base)] hover:bg-[var(--bg-raised)] border border-[var(--border)] hover:border-[var(--text-3)] text-xs font-bold text-white transition cursor-pointer">
-                            <span x-text="userBeastStatus?.current_stage?.icon || '🦅'">🦅</span>
-                            <span>Familier : <span class="text-amber-300" x-text="userBeastStatus?.beast?.name || 'Corbeau'">Corbeau</span></span>
+                        <button type="button" @click="switchTab('murim'); murimSubtab = 'guide'" class="flex items-center gap-2 px-3 py-1.5 rounded-[4px] bg-[var(--bg-base)] hover:bg-[var(--bg-raised)] border border-[var(--border)] hover:border-[var(--text-3)] text-xs font-bold text-white transition cursor-pointer">
+                            <span>⛩️</span>
+                            <span>Guide des 10 Royaumes</span>
                         </button>
                         <button type="button" @click="switchTab('murim'); murimSubtab = 'auras'" class="flex items-center gap-2 px-3 py-1.5 rounded-[4px] bg-[var(--bg-base)] hover:bg-[var(--bg-raised)] border border-[var(--border)] hover:border-[var(--text-3)] text-xs font-bold text-white transition cursor-pointer">
                             <span>✨</span>
@@ -1131,28 +1131,20 @@
         <div x-show="currentTab === 'murim'" x-cloak class="space-y-6">
 
             {{-- Sous-onglets de la Voie Martiale --}}
-            <div class="flex items-center gap-2 p-1 rounded-[6px] bg-[var(--bg-surface)] border border-[var(--border)] overflow-x-auto custom-scrollbar">
+            <div class="flex items-center gap-2 p-1.5 rounded-[6px] bg-[#121212] border border-[var(--border)] overflow-x-auto custom-scrollbar">
                 <button 
                     type="button" 
                     @click="murimSubtab = 'guide'"
                     class="px-4 py-2 rounded-[4px] text-xs font-bold transition whitespace-nowrap cursor-pointer"
-                    :class="murimSubtab === 'guide' ? 'bg-[var(--accent)] text-white' : 'text-[var(--text-2)] hover:text-white hover:bg-[var(--bg-raised)]'"
+                    :class="murimSubtab === 'guide' ? 'bg-[var(--accent)] text-white shadow-md shadow-[var(--accent)]/20' : 'text-[var(--text-2)] hover:text-white hover:bg-[var(--bg-raised)]'"
                 >
                     ⛩️ Guide des 10 Royaumes
                 </button>
                 <button 
                     type="button" 
-                    @click="murimSubtab = 'beast'"
-                    class="px-4 py-2 rounded-[4px] text-xs font-bold transition whitespace-nowrap cursor-pointer"
-                    :class="murimSubtab === 'beast' ? 'bg-[var(--accent)] text-white' : 'text-[var(--text-2)] hover:text-white hover:bg-[var(--bg-raised)]'"
-                >
-                    🐾 Bête Spirituelle de l'Ombre
-                </button>
-                <button 
-                    type="button" 
                     @click="murimSubtab = 'auras'"
                     class="px-4 py-2 rounded-[4px] text-xs font-bold transition whitespace-nowrap cursor-pointer"
-                    :class="murimSubtab === 'auras' ? 'bg-[var(--accent)] text-white' : 'text-[var(--text-2)] hover:text-white hover:bg-[var(--bg-raised)]'"
+                    :class="murimSubtab === 'auras' ? 'bg-[var(--accent)] text-white shadow-md shadow-[var(--accent)]/20' : 'text-[var(--text-2)] hover:text-white hover:bg-[var(--bg-raised)]'"
                 >
                     ✨ Auras & Cadres d'Avatar
                 </button>
@@ -1160,7 +1152,7 @@
                     type="button" 
                     @click="murimSubtab = 'tierlist'"
                     class="px-4 py-2 rounded-[4px] text-xs font-bold transition whitespace-nowrap cursor-pointer"
-                    :class="murimSubtab === 'tierlist' ? 'bg-[var(--accent)] text-white' : 'text-[var(--text-2)] hover:text-white hover:bg-[var(--bg-raised)]'"
+                    :class="murimSubtab === 'tierlist' ? 'bg-[var(--accent)] text-white shadow-md shadow-[var(--accent)]/20' : 'text-[var(--text-2)] hover:text-white hover:bg-[var(--bg-raised)]'"
                 >
                     👑 Tier List S à F
                 </button>
@@ -1188,19 +1180,25 @@
                             $isCurrentRank = ($murimStatus['current']['id'] === $r['id']);
                             $isPassed = ($readCount >= $r['min_chapters']);
                         @endphp
-                        <div class="p-5 rounded-[6px] border transition-all relative flex flex-col justify-between {{ $isCurrentRank ? 'bg-[var(--bg-raised)] border-amber-400' : ($isPassed ? 'bg-[var(--bg-base)] border-[var(--border)]' : 'bg-[var(--bg-base)] border-[var(--border)] opacity-60') }}">
+                        <div class="p-5 rounded-[6px] border transition-all relative flex flex-col justify-between overflow-hidden {{ $isCurrentRank ? 'bg-gradient-to-br from-[#1c1a14] via-[#141414] to-[#0e0e0e] border-amber-400 shadow-[0_0_25px_rgba(245,158,11,0.12)]' : ($isPassed ? 'bg-gradient-to-br from-[#161616] to-[#101010] border-[var(--border)]' : 'bg-[#0d0d0d] border-[#222222] opacity-55') }}">
                             <div>
-                                <div class="flex items-center justify-between gap-3 mb-2">
-                                    <div class="flex items-center gap-2.5">
-                                        <span class="text-2xl">{{ $r['badge'] }}</span>
+                                <div class="flex items-center justify-between gap-3 mb-2.5">
+                                    <div class="flex items-center gap-3">
+                                        <span class="text-2xl sm:text-3xl filter drop-shadow">{{ $r['badge'] }}</span>
                                         <div>
                                             <h4 class="text-base font-bold text-white flex items-center gap-2">
                                                 <span>{{ $r['title'] }}</span>
                                                 @if($isCurrentRank)
-                                                    <span class="text-[9px] font-bold uppercase px-2 py-0.5 rounded-[4px] bg-amber-400 text-black">Votre Rang</span>
+                                                    <span class="text-[9px] font-black uppercase px-2 py-0.5 rounded-[4px] bg-amber-400 text-black shadow-sm tracking-wider">
+                                                        ★ Votre Rang
+                                                    </span>
+                                                @elseif($isPassed)
+                                                    <span class="text-[9px] font-bold uppercase px-2 py-0.5 rounded-[4px] bg-emerald-500/15 border border-emerald-500/30 text-emerald-400">
+                                                        ✓ Atteint
+                                                    </span>
                                                 @endif
                                             </h4>
-                                            <span class="text-[11px] text-[var(--text-3)]">{{ $r['hangeul'] }} • {{ $r['pinyin'] }}</span>
+                                            <span class="text-[11px] text-[var(--text-3)] font-mono">{{ $r['hangeul'] }} • {{ $r['pinyin'] }}</span>
                                         </div>
                                     </div>
                                     <span class="text-xs font-bold px-2.5 py-1 rounded-[4px] bg-[var(--bg-surface)] border border-[var(--border)]" style="color: {{ $r['color'] }}">
@@ -1208,85 +1206,10 @@
                                     </span>
                                 </div>
                                 <p class="text-xs text-[var(--text-2)] leading-relaxed mt-2">{{ $r['description'] }}</p>
-                                <p class="text-[11px] italic text-amber-300/80 mt-1.5">« {{ $r['quote'] }} »</p>
+                                <p class="text-[11px] italic text-amber-300/80 mt-2">« {{ $r['quote'] }} »</p>
                             </div>
                         </div>
                     @endforeach
-                </div>
-            </div>
-
-            {{-- 3.B. Bête Spirituelle de l'Ombre --}}
-            <div x-show="murimSubtab === 'beast'" class="space-y-6">
-                <div class="p-6 sm:p-8 rounded-[6px] bg-[var(--bg-surface)] border border-[var(--border)] relative overflow-hidden">
-                    <div class="flex flex-col md:flex-row items-center gap-8 relative z-10">
-                        <div class="w-28 h-28 md:w-32 md:h-32 rounded-[6px] bg-[var(--bg-base)] border border-[var(--border)] flex items-center justify-center text-6xl md:text-7xl select-none flex-shrink-0">
-                            <span x-text="userBeastStatus?.current_stage?.icon || '🦅'">🦅</span>
-                        </div>
-
-                        <div class="flex-1 text-center md:text-left min-w-0">
-                            <div class="flex flex-wrap items-center justify-center md:justify-start gap-2.5 mb-1.5">
-                                <h3 class="text-2xl font-bold text-white" x-text="userBeastStatus?.beast?.name || 'Corbeau des Ombres'"></h3>
-                                <span class="px-2.5 py-0.5 rounded-[4px] text-xs font-bold bg-[var(--bg-raised)] border border-[var(--border)] text-[var(--text-2)]" x-text="userBeastStatus?.beast?.element || 'Ténèbres'"></span>
-                            </div>
-
-                            <div class="text-sm font-bold text-amber-300 mb-2">
-                                <span class="text-[var(--text-3)] font-normal">Stade Actuel :</span> 
-                                <span x-text="userBeastStatus?.current_stage?.name || 'Éclaireur'"></span>
-                            </div>
-
-                            <p class="text-xs text-[var(--text-2)] leading-relaxed mb-4 max-w-xl" x-text="userBeastStatus?.current_stage?.description || userBeastStatus?.beast?.desc"></p>
-
-                            <div class="max-w-xl bg-black/40 p-4 rounded-[6px] border border-[var(--border)]">
-                                <div class="flex items-center justify-between text-xs mb-2">
-                                    <span class="font-bold text-white">⚡ Éveil Spirituel</span>
-                                    <span class="text-[var(--accent)] font-bold" x-text="(userBeastStatus?.read_count || 0) + ' / ' + (userBeastStatus?.next_stage ? userBeastStatus?.next_stage?.min_chapters + ' ch.' : 'MAX')"></span>
-                                </div>
-                                <div class="w-full h-2 rounded-[4px] bg-[var(--bg-surface)] border border-[var(--border)] overflow-hidden">
-                                    <div class="h-full rounded-[4px] bg-[var(--accent)] transition-all duration-700" :style="'width: ' + (userBeastStatus?.progress_percent || 0) + '%'"></div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                {{-- Les 4 Totems Spirituels --}}
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <template x-for="(beast, bKey) in spiritualBeasts" :key="bKey">
-                        <div 
-                            class="p-5 rounded-[6px] border transition-all duration-200 relative flex flex-col justify-between"
-                            :class="spiritualBeast === bKey ? 'bg-[var(--bg-raised)] border-[var(--accent)]' : 'bg-[var(--bg-surface)] border-[var(--border)] hover:border-[var(--text-3)]'"
-                        >
-                            <div>
-                                <div class="flex items-start justify-between gap-3 mb-3">
-                                    <div class="flex items-center gap-3">
-                                        <div class="w-12 h-12 rounded-[4px] bg-[var(--bg-base)] border border-[var(--border)] flex items-center justify-center text-3xl">
-                                            <span x-text="beast.stages[0]?.icon || '🐾'"></span>
-                                        </div>
-                                        <div>
-                                            <h4 class="text-base font-bold text-white" x-text="beast.name"></h4>
-                                            <span class="text-[11px] text-[var(--accent)] font-bold" x-text="beast.element"></span>
-                                        </div>
-                                    </div>
-                                    <template x-if="spiritualBeast === bKey">
-                                        <span class="px-2.5 py-1 rounded-[4px] bg-[var(--accent)]/15 text-[var(--accent)] border border-[var(--accent)]/30 text-[10px] font-bold uppercase tracking-wider">
-                                            ✓ Scellé
-                                        </span>
-                                    </template>
-                                </div>
-                                <p class="text-xs text-[var(--text-2)] leading-relaxed mb-4" x-text="beast.desc"></p>
-                            </div>
-
-                            <button 
-                                type="button" 
-                                @click="chooseBeast(bKey)"
-                                class="w-full py-2 rounded-[4px] text-xs font-bold transition-all flex items-center justify-center gap-2 cursor-pointer"
-                                :class="spiritualBeast === bKey ? 'bg-[var(--accent)] text-white cursor-default' : 'btn-secondary'"
-                                :disabled="spiritualBeast === bKey"
-                            >
-                                <span x-text="spiritualBeast === bKey ? 'Pacte Actif' : 'Sceller le Pacte'"></span>
-                            </button>
-                        </div>
-                    </template>
                 </div>
             </div>
 
@@ -1852,14 +1775,14 @@
                     </div>
 
                     <div class="p-2.5 rounded-[4px] bg-[var(--bg-surface)] border border-[var(--border)] text-left flex items-center justify-between mb-3">
-                        <div class="flex items-center gap-2">
-                            <span class="text-2xl" x-text="userBeastStatus?.current_stage?.icon || '🦅'">🦅</span>
+                        <div class="flex items-center gap-2.5">
+                            <span class="text-2xl">{{ $murimStatus['current']['badge'] }}</span>
                             <div>
-                                <span class="text-[10px] text-[var(--text-2)] font-bold block uppercase tracking-wider">Familier Spirituel</span>
-                                <span class="text-xs font-bold text-white" x-text="userBeastStatus?.beast?.name || 'Corbeau des Ombres'"></span>
+                                <span class="text-[10px] text-[var(--text-3)] font-bold block uppercase tracking-wider">Rang Jianghu</span>
+                                <span class="text-xs font-bold text-white">{{ $murimStatus['current']['title'] }}</span>
                             </div>
                         </div>
-                        <span class="text-[10px] font-bold text-amber-300 px-2 py-0.5 rounded-[4px] bg-[var(--bg-base)] border border-[var(--border)]" x-text="'Stade ' + (userBeastStatus?.current_stage?.stage || 1)"></span>
+                        <span class="text-[10px] font-bold text-amber-300 px-2.5 py-0.5 rounded-[4px] bg-[var(--bg-base)] border border-amber-400/40">#{{ $leaderboard['current_user_rank'] }} Panthéon</span>
                     </div>
 
                     <p class="text-[10px] italic text-[var(--text-2)] mb-2">

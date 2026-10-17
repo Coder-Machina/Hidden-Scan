@@ -1,4 +1,4 @@
-@props(['title' => 'Hidden Scan', 'description' => null, 'hideNavbar' => false, 'showFooter' => null])
+@props(['title' => 'Hidden Scan', 'description' => null, 'hideNavbar' => false, 'showFooter' => null, 'container' => true])
 @php
     $authPayload = auth()->check() ? [
         'id' => auth()->id(),
@@ -557,7 +557,7 @@
                 <a href="{{ route('leaderboard') }}" class="hover:text-[var(--text-1)] transition {{ request()->routeIs('leaderboard') ? 'text-[var(--text-1)] font-semibold' : '' }}">
                     Classement
                 </a>
-                <a href="{{ route('manga.random') }}" class="hover:text-[var(--accent)] transition flex items-center gap-1.5 text-caption font-semibold" title="Manga aléatoire">
+                <a href="{{ route('manga.random') }}" class="hover:text-[var(--accent)] transition flex items-center gap-1.5 text-caption font-semibold">
                     <span>🎲</span>
                     <span>Surprends-moi</span>
                 </a>
@@ -630,44 +630,60 @@
                         <div x-show="userMobileMenuOpen" 
                              x-cloak 
                              @click.outside="userMobileMenuOpen = false"
-                             class="absolute right-0 mt-2 w-56 bg-[var(--bg-surface)] border border-[var(--border)] rounded-[6px] shadow-lg py-1 z-50">
+                             class="absolute right-0 mt-2 w-64 bg-[var(--bg-surface)] border border-[var(--border)] rounded-[6px] shadow-2xl z-50 overflow-hidden backdrop-blur-xl">
                             
-                            <div class="px-3 py-2 border-b border-[var(--border)] text-caption">
-                                <div class="font-semibold text-[var(--text-1)] truncate">{{ Auth::user()->name }}</div>
-                                <div class="text-[var(--text-3)] truncate">
-                                    @if(Auth::user()->email && !str_contains(Auth::user()->email, '@anon.'))
-                                        {{ Auth::user()->email }}
-                                    @else
-                                        Compte Anonyme
-                                    @endif
+                            {{-- Header Utilisateur avec avatar & informations --}}
+                            <div class="px-4 py-3 border-b border-[var(--border)] bg-[var(--bg-raised)]/60 flex items-center gap-3">
+                                <img src="{{ Auth::user()->avatar_url }}" alt="{{ Auth::user()->name }}" class="w-9 h-9 rounded-[4px] object-cover border border-[var(--border)] bg-[var(--bg-base)] flex-shrink-0">
+                                <div class="min-w-0 flex-1">
+                                    <div class="font-bold text-white text-xs truncate">
+                                        {{ Auth::user()->name }}
+                                    </div>
+                                    <div class="text-[11px] text-[var(--text-3)] truncate mt-0.5">
+                                        @if(Auth::user()->email && !str_contains(Auth::user()->email, '@anon.'))
+                                            {{ Auth::user()->email }}
+                                        @else
+                                            Compte Anonyme
+                                        @endif
+                                    </div>
                                 </div>
                             </div>
 
-                            <div class="py-1">
-                                <a href="{{ route('profile.edit', ['tab' => 'overview']) }}" class="flex items-center gap-2 px-3 py-2 text-caption text-[var(--text-2)] hover:text-[var(--text-1)] hover:bg-[var(--bg-raised)] transition">
-                                    <span>Mon Profil</span>
+                            {{-- Liens du Menu avec icônes nettes et contrastées --}}
+                            <div class="p-1.5 space-y-0.5 text-xs font-medium">
+                                <a href="{{ route('profile.edit', ['tab' => 'overview']) }}" class="flex items-center gap-3 px-3 py-2 rounded-[4px] text-[var(--text-1)] hover:text-white hover:bg-[var(--bg-raised)] transition group">
+                                    <span class="w-5 text-center text-sm">👤</span>
+                                    <span class="flex-1">Mon Profil</span>
+                                    <span class="text-[10px] text-[var(--text-3)] group-hover:text-white transition">→</span>
                                 </a>
-                                <a href="{{ route('library', ['tab' => 'rattrapage']) }}" class="flex items-center gap-2 px-3 py-2 text-caption text-[var(--accent)] hover:bg-[var(--bg-raised)] transition font-medium">
-                                    <span>Mode Rattrapage</span>
+                                <a href="{{ route('library', ['tab' => 'rattrapage']) }}" class="flex items-center gap-3 px-3 py-2 rounded-[4px] text-[var(--accent)] hover:bg-[var(--bg-raised)] transition group font-semibold">
+                                    <span class="w-5 text-center text-sm">🔥</span>
+                                    <span class="flex-1">Mode Rattrapage</span>
+                                    <span class="text-[9px] px-1.5 py-0.5 rounded-[4px] bg-[var(--accent)]/15 border border-[var(--accent)]/30 text-[var(--accent)] uppercase font-bold tracking-wider">Sync</span>
                                 </a>
-                                <a href="{{ route('library') }}" class="flex items-center gap-2 px-3 py-2 text-caption text-[var(--text-2)] hover:text-[var(--text-1)] hover:bg-[var(--bg-raised)] transition">
-                                    <span>Ma Bibliothèque</span>
+                                <a href="{{ route('library') }}" class="flex items-center gap-3 px-3 py-2 rounded-[4px] text-[var(--text-1)] hover:text-white hover:bg-[var(--bg-raised)] transition group">
+                                    <span class="w-5 text-center text-sm">📚</span>
+                                    <span class="flex-1">Ma Bibliothèque</span>
                                 </a>
-                                <a href="{{ route('profile.edit', ['tab' => 'settings']) }}" class="flex items-center gap-2 px-3 py-2 text-caption text-[var(--text-2)] hover:text-[var(--text-1)] hover:bg-[var(--bg-raised)] transition">
-                                    <span>Paramètres</span>
+                                <a href="{{ route('profile.edit', ['tab' => 'settings']) }}" class="flex items-center gap-3 px-3 py-2 rounded-[4px] text-[var(--text-1)] hover:text-white hover:bg-[var(--bg-raised)] transition group">
+                                    <span class="w-5 text-center text-sm">⚙️</span>
+                                    <span class="flex-1">Paramètres</span>
                                 </a>
                                 @if(Auth::user()->canAccessPanel(filament()->getPanel('admin')))
-                                    <a href="/admin" target="_blank" class="flex items-center gap-2 px-3 py-2 text-caption text-[var(--accent)] hover:bg-[var(--bg-raised)] transition font-semibold">
-                                        <span>Administration</span>
+                                    <a href="/admin" target="_blank" class="flex items-center gap-3 px-3 py-2 rounded-[4px] text-amber-400 hover:bg-[var(--bg-raised)] transition font-semibold">
+                                        <span class="w-5 text-center text-sm">🛡️</span>
+                                        <span class="flex-1">Administration</span>
+                                        <span class="text-[9px] px-1 py-0.5 rounded-[4px] bg-amber-400/10 text-amber-300 font-bold">Admin</span>
                                     </a>
                                 @endif
                             </div>
 
-                            <div class="pt-1 border-t border-[var(--border)]">
+                            <div class="p-1.5 pt-1 border-t border-[var(--border)]">
                                 <form method="POST" action="{{ route('logout') }}">
                                     @csrf
-                                    <button type="submit" class="w-full text-left px-3 py-2 text-caption text-[var(--accent)] hover:bg-[var(--bg-raised)] transition cursor-pointer">
-                                        Se déconnecter
+                                    <button type="submit" class="w-full flex items-center gap-3 px-3 py-2 rounded-[4px] text-xs font-semibold text-[var(--accent)] hover:bg-[var(--accent)]/10 hover:text-[var(--accent-hover)] transition cursor-pointer">
+                                        <span class="w-5 text-center text-sm">🚪</span>
+                                        <span>Se déconnecter</span>
                                     </button>
                                 </form>
                             </div>
@@ -789,9 +805,15 @@
         </div>
     </div>
 
-    {{-- ═══ Page Wrapper (Max-width 1280px / Container 1140px) ═══ --}}
-    <main class="flex-1 max-w-[1280px] w-full mx-auto px-4 sm:px-6 {{ $hideNavbar ? '' : 'pt-20' }} pb-16 relative z-10 overflow-x-hidden">
-        {{ $slot }}
+    {{-- ═══ Page Wrapper (1360px container or Full Width) ═══ --}}
+    <main class="flex-1 w-full mx-auto relative z-10 overflow-x-hidden">
+        @if($container)
+            <div class="max-w-[1360px] w-full mx-auto px-4 sm:px-6 lg:px-8 {{ $hideNavbar ? '' : 'pt-20' }} pb-16">
+                {{ $slot }}
+            </div>
+        @else
+            {{ $slot }}
+        @endif
 
         {{-- Modal de remise du Pass Secret --}}
         @if(session('new_pass_code'))

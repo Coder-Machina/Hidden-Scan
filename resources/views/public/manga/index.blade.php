@@ -127,7 +127,7 @@
             @endif
 
             @if($mangas->count())
-                <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4 mb-8">
+                <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-4 mb-8">
                     @foreach($mangas as $index => $manga)
                         <div data-aos="fade-up" data-aos-duration="400" data-aos-easing="ease-out-cubic" data-aos-delay="{{ ($index % 6) * 50 }}">
                             <x-manga-card :manga="$manga" />

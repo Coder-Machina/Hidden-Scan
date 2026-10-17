@@ -15,7 +15,7 @@
 
 <div class="manga-card group" data-aos="fade-up" data-aos-duration="400" data-aos-easing="ease-out-cubic">
     {{-- Container Couverture (Ratio 3:4 Strict) --}}
-    <a href="{{ route('manga.show', $manga->slug) }}" class="cover-container block">
+    <a href="{{ route('manga.show', $manga->slug) }}" class="cover-container block relative">
         @if($manga->cover_image)
             <img src="{{ Storage::url($manga->cover_image) }}" 
                  alt="{{ $manga->title }}" 
@@ -23,42 +23,50 @@
                  loading="lazy">
         @else
             <div class="w-full h-full flex flex-col items-center justify-center p-4 text-center bg-[#141414] text-[var(--text-3)]">
-                <span class="text-2xl mb-1">📖</span>
-                <span class="text-caption line-clamp-2">{{ $manga->title }}</span>
+                <span class="text-3xl mb-1">📖</span>
+                <span class="text-caption line-clamp-2 text-[var(--text-2)]">{{ $manga->title }}</span>
             </div>
         @endif
 
         {{-- Permitted Card Overlay --}}
         <div class="card-overlay"></div>
 
-        {{-- Top Right: Rank Badge si classement --}}
-        @if($showRank)
-            <div class="absolute top-2 right-2 px-2 py-0.5 rounded-[4px] bg-[#0a0a0a]/90 text-[var(--accent)] border border-[var(--border)] text-caption font-bold">
-                #{{ $showRank }}
-            </div>
-        @endif
-
-        {{-- Bottom Left: Genre Tag --}}
-        <div class="absolute bottom-2 left-2 z-10">
-            <span class="inline-block px-2 py-0.5 rounded-[4px] bg-[#0a0a0a]/85 border border-[var(--border)] text-[10px] font-semibold uppercase tracking-wider text-[var(--text-2)]">
-                {{ $primaryGenre }}
+        {{-- Top Badges: Type & Rank/Rating --}}
+        <div class="absolute top-2 inset-x-2 flex items-center justify-between gap-1 z-10 pointer-events-none">
+            <span class="px-2 py-0.5 rounded-[4px] bg-black/75 backdrop-blur-sm border border-white/10 text-[9px] font-bold text-white uppercase tracking-wider">
+                {{ $typeLabel }}
             </span>
+
+            @if($showRank)
+                <span class="px-2 py-0.5 rounded-[4px] text-[11px] font-black {{ $showRank <= 3 ? 'bg-[var(--accent)] text-white shadow-md' : 'bg-black/80 text-[var(--accent)] border border-[var(--accent)]/40' }}">
+                    #{{ $showRank }}
+                </span>
+            @elseif($manga->average_rating > 0)
+                <span class="px-1.5 py-0.5 rounded-[4px] bg-black/75 backdrop-blur-sm border border-white/10 text-[10px] font-bold text-amber-400 flex items-center gap-0.5">
+                    <span>★</span>
+                    <span>{{ number_format($manga->average_rating, 1) }}</span>
+                </span>
+            @endif
         </div>
 
-        {{-- Slide-in Hover Badge (Top Left ou Bottom Right) --}}
-        @if($latestChapter)
-            <div class="card-badge absolute bottom-2 right-2 z-10">
-                <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-[4px] bg-[var(--accent)] text-white text-[11px] font-bold">
-                    <span>Ch. {{ $latestChapter->number }}</span>
+        {{-- Bottom Tags: Genre & Latest Chapter --}}
+        <div class="absolute bottom-2 inset-x-2 flex items-center justify-between gap-1 z-10 pointer-events-none">
+            <span class="px-2 py-0.5 rounded-[4px] bg-black/80 backdrop-blur-sm border border-white/10 text-[10px] font-semibold text-[#dedede] truncate max-w-[55%]">
+                {{ $primaryGenre }}
+            </span>
+
+            @if($latestChapter)
+                <span class="px-2 py-0.5 rounded-[4px] bg-[var(--accent)] text-white text-[10px] font-bold shadow-md tracking-tight flex-shrink-0 group-hover:bg-[var(--accent-hover)] transition-colors">
+                    Ch. {{ $latestChapter->number }}
                 </span>
-            </div>
-        @endif
+            @endif
+        </div>
     </a>
 
     {{-- Informations du Manga --}}
-    <div class="p-3 flex flex-col flex-1 justify-between gap-2">
+    <div class="p-3 flex flex-col flex-1 justify-between gap-2.5">
         <a href="{{ route('manga.show', $manga->slug) }}" 
-           class="font-heading font-semibold text-[14px] text-[var(--text-1)] hover:text-[var(--accent)] transition-colors line-clamp-2 leading-snug"
+           class="font-heading font-bold text-[14px] text-white hover:text-[var(--accent)] transition-colors line-clamp-2 leading-snug"
            title="{{ $manga->title }}">
             {{ $manga->title }}
         </a>
@@ -67,13 +75,13 @@
             @php
                 $recentChapters = $manga->chapters->sortByDesc('number')->take(2);
             @endphp
-            <div class="flex flex-col gap-1 pt-1 border-t border-[var(--border)]">
+            <div class="flex flex-col gap-1.5 pt-2 border-t border-[var(--border)]">
                 @foreach($recentChapters as $ch)
                     <a href="{{ route('chapter.show', [$manga->slug, $ch->slug]) }}"
-                       class="flex items-center justify-between text-caption hover:text-[var(--text-1)] transition-colors py-0.5">
-                        <span class="truncate text-[var(--text-2)] hover:text-[var(--text-1)] font-medium">Ch. {{ $ch->number }}</span>
+                       class="flex items-center justify-between px-2 py-1 rounded-[4px] bg-[var(--bg-base)] hover:bg-[var(--bg-raised)] border border-[var(--border)] hover:border-[var(--text-3)] text-xs transition group/ch">
+                        <span class="truncate text-[var(--text-2)] group-hover/ch:text-white font-medium">Ch. {{ $ch->number }}</span>
                         @if($ch->published_at)
-                            <span class="text-[10px] text-[var(--text-3)]">{{ $ch->published_at->diffForHumans(null, true) }}</span>
+                            <span class="text-[10px] text-[var(--text-3)] flex-shrink-0 ml-1">{{ $ch->published_at->diffForHumans(null, true) }}</span>
                         @endif
                     </a>
                 @endforeach

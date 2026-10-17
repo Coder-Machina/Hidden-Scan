@@ -1,9 +1,9 @@
 @use('Illuminate\Support\Facades\Storage')
-<x-layouts.public title="Hidden Scan — Plateforme de lecture de mangas et manhwas">
+<x-layouts.public :container="false" title="Hidden Scan — Plateforme de lecture de mangas et manhwas">
 
-    {{-- ═══ 1. HERO SECTION CINÉMATIQUE (Composant 2) ═══ --}}
+    {{-- ═══ 1. HERO SECTION CINÉMATIQUE PLEINE LARGEUR (100vw) ═══ --}}
     @if($featured->count())
-    <section class="relative -mx-4 sm:-mx-6 -mt-20 mb-16 overflow-hidden min-h-[580px] h-[85vh] max-h-[780px] flex items-center"
+    <section class="relative w-full overflow-hidden min-h-[580px] md:h-[82vh] max-h-[820px] flex items-center mb-10"
              x-data="{
                  cursorX: 0,
                  cursorY: 0,
@@ -17,7 +17,7 @@
 
         {{-- Desktop-Only Cursor Glow (300x300px, radial gradient 0.06 accent) --}}
         <div class="hidden md:block pointer-events-none absolute z-20 w-[300px] h-[300px] rounded-full transition-transform duration-150 ease-out"
-             :style="'transform: translate3d(' + cursorX + 'px, ' + cursorY + 'px, 0); background: radial-gradient(circle, rgba(230,57,70,0.06) 0%, transparent 70%);'"></div>
+             :style="'transform: translate3d(' + cursorX + 'px, ' + cursorY + 'px, 0); background: radial-gradient(circle, rgba(230,57,70,0.08) 0%, transparent 70%);'"></div>
 
         {{-- Swiper Container --}}
         <div class="swiper hero-swiper w-full h-full">
@@ -34,23 +34,24 @@
                     <div class="hero-parallax-bg absolute inset-0 z-0 pointer-events-none select-none">
                         @if($manga->banner_image)
                             <img src="{{ Storage::url($manga->banner_image) }}" alt="" 
-                                 class="w-full h-full object-cover filter blur-[2px] opacity-40 scale-105">
+                                 class="w-full h-full object-cover filter blur-[2px] opacity-45 scale-105">
                         @elseif($manga->cover_image)
                             <img src="{{ Storage::url($manga->cover_image) }}" alt="" 
-                                 class="w-full h-full object-cover filter blur-[10px] opacity-30 scale-120">
+                                 class="w-full h-full object-cover filter blur-[8px] opacity-35 scale-110">
                         @else
                             <div class="w-full h-full bg-[#141414]"></div>
                         @endif
 
                         {{-- Permitted Hero Overlays (Only specified gradients) --}}
-                        <div class="absolute inset-0 bg-gradient-to-t from-[#0a0a0a] via-[#0a0a0a]/70 to-transparent"></div>
-                        <div class="absolute inset-0 bg-gradient-to-r from-[#0a0a0a] via-[#0a0a0a]/80 to-transparent"></div>
+                        <div class="absolute inset-0 bg-gradient-to-t from-[#0a0a0a] via-[#0a0a0a]/75 to-transparent"></div>
+                        <div class="absolute inset-0 bg-gradient-to-r from-[#0a0a0a] via-[#0a0a0a]/85 to-transparent"></div>
+                        <div class="absolute inset-0 bg-gradient-to-b from-[#0a0a0a]/80 via-transparent to-transparent h-32"></div>
                     </div>
 
-                    {{-- Hero Content Container --}}
-                    <div class="relative z-10 max-w-[1280px] w-full mx-auto px-4 sm:px-6 flex flex-col md:flex-row items-start md:items-end justify-between gap-8 pt-20 pb-16">
+                    {{-- Hero Content Container (Cinématique & Équilibré) --}}
+                    <div class="relative z-10 max-w-[1360px] w-full mx-auto px-4 sm:px-6 lg:px-8 flex flex-col md:flex-row items-center justify-between gap-10 pt-28 pb-16">
                         
-                        <div class="max-w-2xl">
+                        <div class="max-w-2xl w-full">
                             {{-- Genre Pills & Badges --}}
                             <div class="flex flex-wrap items-center gap-2 mb-4" data-aos="fade-in" data-aos-duration="400">
                                 @if(!($manga->is_external ?? false))
@@ -58,45 +59,46 @@
                                 @endif
                                 <span class="badge-tag">{{ strtoupper($manga->type?->value ?? 'MANGA') }}</span>
                                 @if($manga->average_rating > 0)
-                                    <span class="badge-tag text-[var(--accent)] font-bold">★ {{ number_format($manga->average_rating, 1) }}</span>
+                                    <span class="badge-tag text-amber-400 font-bold">★ {{ number_format($manga->average_rating, 1) }}</span>
                                 @endif
                                 @foreach($genresList->take(3) as $g)
-                                    <span class="genre-pill !py-0.5 !px-2 !text-[11px]">{{ $g->name }}</span>
+                                    <span class="genre-pill !py-0.5 !px-2.5 !text-[11px]">{{ $g->name }}</span>
                                 @endforeach
                             </div>
 
-                            {{-- Display Title (48px / Nunito 700 / -0.02em) --}}
-                            <h1 class="text-display line-clamp-2 mb-4">
+                            {{-- Display Title (Nunito Black / Impact) --}}
+                            <h1 class="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-black text-white tracking-tight line-clamp-2 mb-4 leading-[1.1]">
                                 <a href="{{ $mangaUrl }}" class="hover:text-[var(--accent)] transition-colors">
                                     {{ $manga->title }}
                                 </a>
                             </h1>
 
-                            {{-- Synopsis --}}
+                            {{-- Synopsis Haute Lisibilité --}}
                             @if($manga->synopsis)
-                                <p class="text-body text-[var(--text-2)] line-clamp-2 max-w-xl mb-6">
+                                <p class="text-sm sm:text-base text-[#cfcfcf] line-clamp-3 max-w-2xl mb-8 leading-relaxed font-normal">
                                     {{ $manga->synopsis }}
                                 </p>
                             @endif
 
                             {{-- CTA Buttons --}}
-                            <div class="flex items-center gap-3">
+                            <div class="flex flex-wrap items-center gap-3">
                                 @if($firstChapter)
-                                    <a href="{{ route('chapter.show', [$manga->slug, $firstChapter->slug]) }}" class="btn-primary">
+                                    <a href="{{ route('chapter.show', [$manga->slug, $firstChapter->slug]) }}" class="btn-primary !py-3 !px-6 !text-sm font-bold shadow-lg shadow-[var(--accent)]/20">
                                         <span>Lire le Ch. {{ $firstChapter->number }}</span>
                                         <span>→</span>
                                     </a>
                                 @endif
-                                <a href="{{ $mangaUrl }}" class="btn-secondary">
+                                <a href="{{ $mangaUrl }}" class="btn-secondary !py-3 !px-6 !text-sm font-semibold">
                                     <span>Fiche détaillée</span>
                                 </a>
                             </div>
                         </div>
 
                         {{-- Cover 3:4 Preview Desktop --}}
-                        <div class="hidden md:block w-48 lg:w-56 aspect-[3/4] flex-shrink-0 rounded-[6px] overflow-hidden border border-[var(--border)] shadow-md">
+                        <div class="hidden md:block w-52 lg:w-64 aspect-[3/4] flex-shrink-0 rounded-[6px] overflow-hidden border border-white/10 shadow-[0_12px_40px_rgba(0,0,0,0.85)] relative group">
                             @if($manga->cover_image)
                                 <img src="{{ Storage::url($manga->cover_image) }}" alt="{{ $manga->title }}" class="w-full h-full object-cover">
+                                <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
                             @endif
                         </div>
                     </div>
@@ -105,7 +107,7 @@
             </div>
 
             {{-- Slider Pagination --}}
-            <div class="swiper-pagination !bottom-6 max-w-[1280px] mx-auto text-left px-6 pointer-events-auto"></div>
+            <div class="swiper-pagination !bottom-8 max-w-[1360px] mx-auto text-left px-4 sm:px-6 lg:px-8 pointer-events-auto"></div>
         </div>
     </section>
 
@@ -138,6 +140,9 @@
     });
     </script>
     @endif
+
+    {{-- ═══ CONTENEUR DES SECTIONS PRINCIPALES (1360px BREATHE) ═══ --}}
+    <div class="max-w-[1360px] w-full mx-auto px-4 sm:px-6 lg:px-8 space-y-14 pb-16">
 
     {{-- ═══ 2. BANDEAU DE REPRISE DE LECTURE (Local & Sync) ═══ --}}
     <div x-data="readingHistory()" x-init="init()" x-show="history.length > 0" x-cloak class="mb-12" data-aos="fade-in" data-aos-duration="400">
@@ -379,5 +384,7 @@
             </div>
         </div>
     </section>
+
+    </div> {{-- Fin du conteneur 1360px --}}
 
 </x-layouts.public>
