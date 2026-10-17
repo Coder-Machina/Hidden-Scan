@@ -79,5 +79,32 @@
       "edit": 169,
       "qc": 169
     }
+  },
+  "log-into-the-future": {
+    "slug": "log-into-the-future",
+    "title": "Log Into The Future",
+    "is_external": false,
+    "team_name": null,
+    "discord_role_id": "1561061869320675529",
+    "drive_url": null,
+    "va_url": null,
+    "va_chapter": 0,
+    "cover_url": "http://127.0.0.1:8000/storage/mangas/covers/Cog8KJif9uFA2AsOpfDgUc8zwDEoz1DZ.jpg",
+    "cover_image": "mangas/covers/Cog8KJif9uFA2AsOpfDgUc8zwDEoz1DZ.jpg",
+    "is_rush": false,
+    "staff": {
+      "trad": null,
+      "check": null,
+      "clean": null,
+      "edit": null,
+      "qc": null
+    },
+    "steps": {
+      "trad": 5,
+      "check": 5,
+      "clean": 5,
+      "edit": 5,
+      "qc": 5
+    }
   }
 }
