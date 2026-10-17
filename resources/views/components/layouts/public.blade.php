@@ -21,7 +21,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="color-scheme" content="dark">
     <meta name="description" content="{{ $description ?? 'Hidden Scan — Lis tes mangas, manhwas et manhuas en ligne gratuitement et sans inscription.' }}">
-    <meta name="theme-color" content="#07080C">
+    <meta name="theme-color" content="#0a0a0a">
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <meta property="og:title" content="{{ $title ?? 'Hidden Scan' }}">
     <meta property="og:description" content="{{ $description ?? 'Plateforme de lecture de mangas, manhwas et manhuas. Accès libre, sans compte.' }}">
@@ -29,8 +29,29 @@
     <link rel="icon" type="image/png" href="{{ asset('images/logo.png') }}">
     <title>{{ $title ?? 'Hidden Scan' }}</title>
 
+    {{-- Google Fonts (Preload Inter & Nunito Stricts) --}}
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Nunito:wght@600;700;800;900&display=swap" rel="stylesheet">
+
+    {{-- AOS.js (cdnjs.cloudflare.com) --}}
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/aos/2.3.4/aos.css" integrity="sha512-1cK78a1o+ht2JcaW6g8OXYwqpev9+6GqOkz9kcKe9ybVDh8nvm98y01wlPX9h5qv5qObO4Ufa4001lK833SOEg==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/aos/2.3.4/aos.js" integrity="sha512-A7AYk1fGKX6S2SsHyWMPkrnzTZHrgiVT7GcQkLGDe2ev0aWb8zejytzS8wjo7PGEXKqJOrjQ4oORtnimIRZBtw==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+
+    {{-- Swiper.js (Déjà présent dans le projet) --}}
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css" />
+    <script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
+
+    {{-- Tippy.js (cdnjs.cloudflare.com) --}}
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/tippy.js/6.3.7/tippy.css" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/2.11.8/umd/popper.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tippy.js/6.3.7/tippy.umd.min.js"></script>
+
+    @vite(['resources/css/app.css', 'resources/js/app.js'])
+    @livewireStyles
+
     <script>
-    // Système de données locales Hidden Scan
+    // Système de données locales Hidden Scan (Sauvegarde & Sync)
     window.HiddenScan = {
         _getData() {
             try { return JSON.parse(localStorage.getItem('hiddenscan') || '{}'); } catch(e) { return {}; }
@@ -49,7 +70,6 @@
             }
             this._save(data);
 
-            // Sync with backend API
             const token = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
             fetch('/api/favorites/toggle', {
                 method: 'POST',
@@ -139,7 +159,6 @@
             const currentUser = @json($authPayload);
 
             if (currentUser) {
-                // Maintien à jour du localStorage avec les données serveur
                 let updatedLocal = false;
                 if (currentUser.avatar) {
                     local.avatar = currentUser.avatar;
@@ -163,7 +182,6 @@
                     this.saveProfile(local);
                 }
 
-                // Si le serveur a perdu l'avatar ou la bannière mais que le client en a une version enregistrée :
                 const needsPush = (!currentUser.avatar && (local.avatar || local.avatar_url)) || 
                                   (!currentUser.banner && (local.banner || local.banner_url)) || 
                                   (!currentUser.bio && local.bio);
@@ -205,7 +223,7 @@
         window.HiddenScan.syncProfile();
     });
 
-    // ═══ Alpine Store : Notifications des chapitres favoris ═══
+    // ═══ Alpine Store : Notifications ═══
     function setupNotificationsStore() {
         if (!window.Alpine) return;
         try {
@@ -242,26 +260,10 @@
                         if (!res.ok) return;
                         const data = await res.json();
                         if (data && data.success) {
-                            const oldCount = this.unreadCount;
                             this.unreadCount = data.unread_count || 0;
                             this.notifications = data.notifications || [];
-
-                            // Alerte navigateur si nouveau chapitre détecté (vérification sécurisée de Notification)
-                            if (oldCount !== null && data.unread_count > oldCount && oldCount > 0) {
-                                try {
-                                    if (typeof window !== 'undefined' && 'Notification' in window && typeof Notification.permission !== 'undefined' && Notification.permission === 'granted') {
-                                        const latest = this.notifications.find(n => !n.is_read);
-                                        if (latest) {
-                                            new Notification(latest.title, {
-                                                body: latest.message,
-                                                icon: latest.manga_cover || '/images/logo.png',
-                                            });
-                                        }
-                                    }
-                                } catch(e) {}
-                            }
                         }
-                    } catch (e) {}
+                    } catch(e) {}
                 },
 
                 async markAsRead(id) {
@@ -276,7 +278,7 @@
                             notif.is_read = true;
                             this.unreadCount = Math.max(0, this.unreadCount - 1);
                         }
-                    } catch (e) {}
+                    } catch(e) {}
                 },
 
                 async markAllAsRead() {
@@ -288,7 +290,7 @@
                         });
                         this.unreadCount = 0;
                         this.notifications.forEach(n => n.is_read = true);
-                    } catch (e) {}
+                    } catch(e) {}
                 },
 
                 handleClick(item) {
@@ -298,12 +300,10 @@
                     }
                 }
             });
-        } catch(e) {
-            console.warn('Could not register notifications store:', e);
-        }
+        } catch(e) {}
     }
 
-    // ═══ Alpine Store : Voie Martiale & Rangs Murim ═══
+    // ═══ Alpine Store : Murim ═══
     function setupMurimStore() {
         if (!window.Alpine) return;
         try {
@@ -336,11 +336,7 @@
                             const yesterday = new Date();
                             yesterday.setDate(yesterday.getDate() - 1);
                             const yesterdayStr = yesterday.toISOString().split('T')[0];
-                            if (data.lastDate === yesterdayStr) {
-                                this.streak = data.streak || 1;
-                            } else {
-                                this.streak = 0;
-                            }
+                            this.streak = data.lastDate === yesterdayStr ? (data.streak || 1) : 0;
                         } else {
                             this.streak = 0;
                         }
@@ -355,10 +351,7 @@
                             const yesterday = new Date();
                             yesterday.setDate(yesterday.getDate() - 1);
                             const yesterdayStr = yesterday.toISOString().split('T')[0];
-                            let newStreak = 1;
-                            if (data.lastDate === yesterdayStr) {
-                                newStreak = (data.streak || 0) + 1;
-                            }
+                            let newStreak = (data.lastDate === yesterdayStr) ? ((data.streak || 0) + 1) : 1;
                             localStorage.setItem('hs_murim_streak', JSON.stringify({ lastDate: todayStr, streak: newStreak }));
                             this.streak = newStreak;
                         }
@@ -410,9 +403,7 @@
                     }
                 }
             });
-        } catch(e) {
-            console.warn('Could not register murim store:', e);
-        }
+        } catch(e) {}
     }
 
     function initStores() {
@@ -422,1320 +413,492 @@
 
     document.addEventListener('alpine:init', initStores);
     document.addEventListener('livewire:init', initStores);
-    document.addEventListener('DOMContentLoaded', initStores);
+    document.addEventListener('DOMContentLoaded', () => {
+        initStores();
+        if (typeof AOS !== 'undefined') {
+            AOS.init({
+                once: true,
+                duration: 400,
+                easing: 'ease-out-cubic'
+            });
+        }
+        if (typeof tippy !== 'undefined') {
+            tippy('[data-tippy-content]', {
+                theme: 'dark',
+                animation: 'fade',
+                duration: 150
+            });
+        }
+    });
     if (window.Alpine) {
         initStores();
     }
     </script>
-
-    {{-- Google Fonts : Outfit & Plus Jakarta Sans pour la charte graphique Hidden Scan --}}
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800;900&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-
-    {{-- Swiper --}}
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css" />
-    <script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
-
-    @vite(['resources/css/app.css', 'resources/js/app.js'])
-    @livewireStyles
-
-    <style>
-        .site-watermark-bg {
-            position: fixed;
-            inset: 0;
-            pointer-events: none;
-            user-select: none;
-            z-index: 0;
-            overflow: hidden;
-        }
-        .watermark-star {
-            position: absolute;
-            background-image: url('{{ asset("images/filgrane.png") }}');
-            background-repeat: no-repeat;
-            background-size: contain;
-            background-position: center;
-        }
-        .watermark-star-center {
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            width: 620px;
-            height: 880px;
-            max-width: 90vw;
-            max-height: 85vh;
-            opacity: 0.055;
-            filter: drop-shadow(0 0 60px rgba(220, 38, 38, 0.15));
-        }
-        .watermark-star-primary {
-            top: 4%;
-            right: -6%;
-            width: 650px;
-            height: 920px;
-            opacity: 0.045;
-            transform: rotate(6deg);
-            filter: drop-shadow(0 0 50px rgba(220, 38, 38, 0.18));
-        }
-        .watermark-star-secondary {
-            bottom: -8%;
-            left: -5%;
-            width: 520px;
-            height: 750px;
-            opacity: 0.035;
-            transform: rotate(-10deg);
-            filter: drop-shadow(0 0 40px rgba(91, 110, 245, 0.18));
-        }
-        @media (max-width: 768px) {
-            .watermark-star-center {
-                width: 360px;
-                height: 520px;
-                opacity: 0.045;
-            }
-            .watermark-star-primary {
-                top: 2%;
-                right: -25%;
-                width: 320px;
-                height: 480px;
-                opacity: 0.03;
-            }
-            .watermark-star-secondary {
-                display: none;
-            }
-        }
-
-        /* ── Widget Discord Flottant & Scroll to top ── */
-        .discord-float-btn {
-            position: fixed !important;
-            bottom: calc(16px + env(safe-area-inset-bottom, 0px)) !important;
-            left: calc(16px + env(safe-area-inset-left, 0px)) !important;
-            z-index: 40 !important;
-            display: inline-flex !important;
-            align-items: center !important;
-            justify-content: center !important;
-            background: linear-gradient(135deg, #5865F2, #4752C4) !important;
-            color: #ffffff !important;
-            box-shadow: 0 4px 20px rgba(88, 101, 242, 0.45), 0 2px 8px rgba(0, 0, 0, 0.4) !important;
-            border: 1px solid rgba(255, 255, 255, 0.22) !important;
-            border-radius: 9999px !important;
-            text-decoration: none !important;
-            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1) !important;
-            cursor: pointer !important;
-        }
-        .discord-float-btn:hover {
-            background: linear-gradient(135deg, #4752C4, #3b43a0) !important;
-            box-shadow: 0 6px 26px rgba(88, 101, 242, 0.6), 0 4px 12px rgba(0, 0, 0, 0.45) !important;
-            transform: translateY(-2px) !important;
-        }
-        .discord-float-btn:active {
-            transform: scale(0.94) !important;
-        }
-
-        /* Mobile layout: Masqué sur mobile pour ne jamais obstruer la lecture (accessible dans le menu et le footer) */
-        @media (max-width: 639px) {
-            .discord-float-btn {
-                display: none !important;
-            }
-        }
-
-        /* Desktop layout: pill élégante avec texte */
-        @media (min-width: 640px) {
-            .discord-float-btn {
-                bottom: 24px !important;
-                left: 24px !important;
-                height: 44px !important;
-                padding: 0 16px 0 13px !important;
-                gap: 10px !important;
-            }
-            .discord-float-btn svg {
-                width: 22px !important;
-                height: 22px !important;
-                flex-shrink: 0 !important;
-            }
-            .discord-float-btn .discord-label {
-                display: inline-block !important;
-                font-size: 13px !important;
-                font-weight: 700 !important;
-                letter-spacing: -0.01em !important;
-                white-space: nowrap !important;
-                color: #ffffff !important;
-            }
-        }
-
-        /* Harmonisation Scroll-to-top */
-        .scroll-top-btn {
-            position: fixed !important;
-            bottom: calc(14px + env(safe-area-inset-bottom, 0px)) !important;
-            right: calc(14px + env(safe-area-inset-right, 0px)) !important;
-            z-index: 40 !important;
-            width: 44px !important;
-            height: 44px !important;
-            display: inline-flex !important;
-            align-items: center !important;
-            justify-content: center !important;
-            border-radius: 9999px !important;
-            box-shadow: 0 4px 18px rgba(0, 0, 0, 0.45) !important;
-        }
-        @media (min-width: 640px) {
-            .scroll-top-btn {
-                bottom: 24px !important;
-                right: 24px !important;
-                width: 44px !important;
-                height: 44px !important;
-            }
-        }
-    </style>
 </head>
 
-<body class="bg-ink text-chalk min-h-screen font-sans antialiased flex flex-col relative overflow-x-hidden">
+<body class="bg-[var(--bg-base)] text-[var(--text-1)] min-h-screen font-sans antialiased flex flex-col relative overflow-x-hidden"
+      x-data="{
+          searchOverlayOpen: false,
+          searchQuery: '',
+          searchResults: [],
+          searchLoading: false,
+          selectedIndex: -1,
 
-    {{-- ═══ Filigrane Céleste en arrière-plan global ═══ --}}
-    <div class="site-watermark-bg" aria-hidden="true">
-        <div class="watermark-star watermark-star-center"></div>
-        <div class="watermark-star watermark-star-primary"></div>
-        <div class="watermark-star watermark-star-secondary"></div>
-    </div>
+          openSearch() {
+              this.searchOverlayOpen = true;
+              this.$nextTick(() => {
+                  this.$refs.overlayInput?.focus();
+              });
+          },
+
+          closeSearch() {
+              this.searchOverlayOpen = false;
+              this.searchQuery = '';
+              this.searchResults = [];
+              this.selectedIndex = -1;
+          },
+
+          async performSearch() {
+              const q = this.searchQuery.trim();
+              if (q.length < 2) {
+                  this.searchResults = [];
+                  this.selectedIndex = -1;
+                  return;
+              }
+              this.searchLoading = true;
+              try {
+                  const res = await fetch('/api/bot/mangas?q=' + encodeURIComponent(q));
+                  if (res.ok) {
+                      const data = await res.json();
+                      this.searchResults = (data.mangas || data || []).slice(0, 8);
+                  }
+              } catch(e) {
+                  this.searchResults = [];
+              } finally {
+                  this.searchLoading = false;
+                  this.selectedIndex = -1;
+              }
+          },
+
+          selectNext() {
+              if (this.searchResults.length === 0) return;
+              this.selectedIndex = (this.selectedIndex + 1) % this.searchResults.length;
+          },
+
+          selectPrev() {
+              if (this.searchResults.length === 0) return;
+              this.selectedIndex = (this.selectedIndex - 1 + this.searchResults.length) % this.searchResults.length;
+          },
+
+          submitSelected() {
+              if (this.selectedIndex >= 0 && this.searchResults[this.selectedIndex]) {
+                  window.location.href = '/manga/' + this.searchResults[this.selectedIndex].slug;
+              } else if (this.searchQuery.trim()) {
+                  window.location.href = '{{ route('manga.index') }}?q=' + encodeURIComponent(this.searchQuery.trim());
+              }
+          }
+      }"
+      @keydown.window.slash.prevent="if (!['INPUT', 'TEXTAREA'].includes($event.target.tagName)) openSearch()"
+      @keydown.window.cmd.k.prevent="openSearch()"
+      @keydown.window.ctrl.k.prevent="openSearch()"
+      @keydown.escape.window="closeSearch()">
 
     @unless($hideNavbar)
-    {{-- ═══ Navbar ═══ --}}
-    <nav class="fixed top-0 left-0 right-0 z-50 bg-ink/70 backdrop-blur-xl border-b border-line/40 shadow-[0_4px_30px_rgba(0,0,0,0.5)] transition-transform duration-300" 
+    {{-- ═══ Navbar (64px, Transparent -> Dark Blur on scroll) ═══ --}}
+    <nav id="main-navbar" 
+         class="fixed top-0 left-0 right-0 z-50 h-16 transition-all duration-200 border-b border-transparent bg-transparent"
          x-data="{ 
              mobileOpen: false, 
-             searchOpen: false, 
              userMobileMenuOpen: false,
-             notifMobileOpen: false,
-             navHidden: false, 
-             lastScrollY: 0,
-
-             toggleSearch() {
-                 this.searchOpen = !this.searchOpen;
-                 if (this.searchOpen) {
-                     this.mobileOpen = false;
-                     this.notifMobileOpen = false;
-                     this.userMobileMenuOpen = false;
-                 }
-             },
-
-             toggleMobileMenu() {
-                 this.mobileOpen = !this.mobileOpen;
-                 if (this.mobileOpen) {
-                     this.searchOpen = false;
-                     this.notifMobileOpen = false;
-                     this.userMobileMenuOpen = false;
-                 }
-             },
-
-             toggleUserMobileMenu() {
-                 this.userMobileMenuOpen = !this.userMobileMenuOpen;
-                 if (this.userMobileMenuOpen) {
-                     this.mobileOpen = false;
-                     this.searchOpen = false;
-                     this.notifMobileOpen = false;
-                 }
-             },
-
-             toggleNotifMobile() {
-                 this.notifMobileOpen = !this.notifMobileOpen;
-                 if (this.notifMobileOpen) {
-                     this.mobileOpen = false;
-                     this.searchOpen = false;
-                     this.userMobileMenuOpen = false;
-                     try {
-                         if (window.Alpine && Alpine.store && Alpine.store('notifications')) {
-                             Alpine.store('notifications').fetchNotifications();
-                         }
-                     } catch(e) {}
-                 }
-             },
+             notifMenuOpen: false,
 
              closeAll() {
                  this.mobileOpen = false;
-                 this.searchOpen = false;
-                 this.notifMobileOpen = false;
                  this.userMobileMenuOpen = false;
-             },
-
-             handleNotifClick(item) {
-                 try {
-                     if (window.Alpine && Alpine.store && Alpine.store('notifications')) {
-                         Alpine.store('notifications').handleClick(item);
-                     }
-                 } catch(e) {}
-                 this.notifMobileOpen = false;
-             },
-
-             handleScroll() {
-                 if (this.mobileOpen || this.searchOpen || this.notifMobileOpen || this.userMobileMenuOpen) {
-                     this.navHidden = false;
-                     return;
-                 }
-                 const cur = Math.max(0, window.scrollY);
-                 const delta = cur - this.lastScrollY;
-                 if (Math.abs(delta) > 12) {
-                     this.navHidden = cur > 120 && delta > 0;
-                     this.lastScrollY = cur;
-                 }
+                 this.notifMenuOpen = false;
              }
          }"
-         @scroll.window="handleScroll()"
-         @click.outside="closeAll()"
-         :class="navHidden ? '-translate-y-full' : 'translate-y-0'">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6">
-            <div class="flex items-center justify-between h-16">
+         @click.outside="closeAll()">
+        
+        <div class="max-w-[1280px] w-full mx-auto px-4 sm:px-6 h-full flex items-center justify-between gap-4">
+            
+            {{-- Logo Gauche --}}
+            <a href="{{ route('home') }}" class="flex items-center gap-2.5 flex-shrink-0 group py-1">
+                <img src="{{ asset('images/logo.png') }}" alt="Hidden Scan" class="w-8 h-8 rounded-[4px] object-cover">
+                <span class="font-heading font-extrabold text-[19px] tracking-tight text-[var(--text-1)]">
+                    HIDDEN<span class="text-[var(--accent)]">SCAN</span>
+                </span>
+            </a>
 
-                {{-- Logo --}}
-                <a href="{{ route('home') }}" class="flex items-center gap-3 px-3 py-1.5 bg-panel border border-white/10 rounded-xl hover:border-crimson/50 hover:bg-panel-hi transition-all group shadow-md flex-shrink-0">
-                    <img src="{{ asset('images/logo.png') }}" alt="Hidden Scan Logo" class="h-9 w-9 object-contain rounded-lg group-hover:scale-105 group-hover:drop-shadow-[0_0_8px_rgba(255,42,85,0.6)] transition-all duration-300">
-                    <div class="flex flex-col leading-none">
-                        <span class="font-display font-black text-xl tracking-tight text-white flex items-center">
-                            HIDDEN<span class="text-crimson drop-shadow-[0_0_8px_rgba(255,42,85,0.5)]">SCAN</span>
-                        </span>
-                        <span class="text-[9px] font-extrabold uppercase tracking-widest text-mist">Scantrad</span>
-                    </div>
+            {{-- Recherche Centre (Desktop) --}}
+            <div class="hidden md:flex flex-1 max-w-sm mx-4">
+                <button type="button" 
+                        @click="openSearch()"
+                        class="w-full h-9 bg-[var(--bg-surface)] hover:bg-[var(--bg-raised)] border border-[var(--border)] hover:border-[var(--text-3)] rounded-[4px] px-3 text-caption flex items-center justify-between text-[var(--text-2)] transition cursor-pointer">
+                    <span class="flex items-center gap-2">
+                        <svg class="w-3.5 h-3.5 text-[var(--text-3)]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+                        <span>Rechercher une série, un genre...</span>
+                    </span>
+                    <kbd class="px-1.5 py-0.5 bg-[var(--bg-raised)] border border-[var(--border)] rounded-[4px] text-[10px] font-mono text-[var(--text-3)]">/</kbd>
+                </button>
+            </div>
+
+            {{-- Navigation Centrale / Liens Essentiels --}}
+            <div class="hidden lg:flex items-center gap-6 text-[14px] font-medium text-[var(--text-2)]">
+                <a href="{{ route('home') }}" class="hover:text-[var(--text-1)] transition {{ request()->routeIs('home') ? 'text-[var(--text-1)] font-semibold' : '' }}">
+                    Accueil
                 </a>
+                <a href="{{ route('manga.index') }}" class="hover:text-[var(--text-1)] transition {{ request()->routeIs('manga.index') ? 'text-[var(--text-1)] font-semibold' : '' }}">
+                    Catalogue
+                </a>
+                <a href="{{ route('planning') }}" class="hover:text-[var(--text-1)] transition {{ request()->routeIs('planning') ? 'text-[var(--text-1)] font-semibold' : '' }}">
+                    Planning
+                </a>
+                <a href="{{ route('leaderboard') }}" class="hover:text-[var(--text-1)] transition {{ request()->routeIs('leaderboard') ? 'text-[var(--text-1)] font-semibold' : '' }}">
+                    Classement
+                </a>
+                <a href="{{ route('manga.random') }}" class="hover:text-[var(--accent)] transition flex items-center gap-1.5 text-caption font-semibold" title="Manga aléatoire">
+                    <span>🎲</span>
+                    <span>Surprends-moi</span>
+                </a>
+            </div>
 
-                {{-- Navigation desktop épurée & aérée --}}
-                <div class="hidden lg:flex items-center gap-1 xl:gap-2 flex-shrink-0">
-                    <a href="{{ route('home') }}"
-                       class="px-3 py-1.5 rounded-xl text-xs sm:text-sm font-bold transition-all {{ request()->routeIs('home') ? 'text-white bg-crimson/15 border border-crimson/40 shadow-[0_0_12px_rgba(255,42,85,0.25)]' : 'text-mist hover:text-white hover:bg-panel-hi' }}">
-                        Accueil
-                    </a>
-                    <a href="{{ route('manga.index') }}"
-                       class="px-3 py-1.5 rounded-xl text-xs sm:text-sm font-bold transition-all {{ request()->routeIs('manga.index') ? 'text-white bg-crimson/15 border border-crimson/40 shadow-[0_0_12px_rgba(255,42,85,0.25)]' : 'text-mist hover:text-white hover:bg-panel-hi' }}">
-                        Catalogue
-                    </a>
-                    <a href="{{ route('planning') }}"
-                       class="px-3 py-1.5 rounded-xl text-xs sm:text-sm font-bold transition-all {{ request()->routeIs('planning') ? 'text-white bg-crimson/15 border border-crimson/40 shadow-[0_0_12px_rgba(255,42,85,0.25)]' : 'text-mist hover:text-white hover:bg-panel-hi' }}">
-                        Planning
-                    </a>
-                    <a href="{{ route('leaderboard') }}"
-                       class="px-3 py-1.5 rounded-xl text-xs sm:text-sm font-bold transition-all {{ request()->routeIs('leaderboard') ? 'text-white bg-crimson/15 border border-crimson/40 shadow-[0_0_12px_rgba(255,42,85,0.25)]' : 'text-mist hover:text-white hover:bg-panel-hi' }}">
-                        Classement
-                    </a>
-                    <a href="{{ route('manga.random') }}"
-                       onclick="if(window.HiddenScan && !{{ auth()->check() ? 'true' : 'false' }}){ const favs = window.HiddenScan.getFavorites().map(f => f.slug).join(','); if(favs) this.href = '{{ route('manga.random') }}?favs=' + encodeURIComponent(favs); }"
-                       title="Lancer un manga aléatoire"
-                       class="px-2.5 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 bg-white/[0.04] hover:bg-crimson/20 text-chalk border border-white/10 hover:border-crimson/40 hover:scale-105 active:scale-95">
-                        <span>🎲</span>
-                        <span class="hidden xl:inline">Surprends-moi</span>
-                    </a>
-                </div>
+            {{-- Actions Droite (Auth & Menus) --}}
+            <div class="flex items-center gap-3 flex-shrink-0">
+                
+                {{-- Bouton Recherche Mobile --}}
+                <button type="button" @click="openSearch()" class="md:hidden p-2 text-[var(--text-2)] hover:text-[var(--text-1)]" aria-label="Recherche">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+                </button>
 
-                {{-- Actions Desktop Équilibrées & Aérées --}}
-                <div class="hidden md:flex items-center gap-2 sm:gap-2.5 lg:gap-3 flex-shrink-0">
-                    {{-- Search Input Dynamique & Compact --}}
-                    <form action="{{ route('manga.index') }}" method="GET" class="relative flex items-center">
-                        <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-mist pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
-                        <input
-                            type="text"
-                            name="q"
-                            placeholder="Rechercher..."
-                            class="input-field !pl-8 !pr-3 !h-9 w-32 lg:w-40 focus:!w-52 text-xs !rounded-full !bg-ink-deep/80 !border-white/10 focus:!border-crimson/60 transition-all duration-300"
-                        >
-                    </form>
-
-                    {{-- Bouton Discord Officiel --}}
-                    <a href="https://discord.gg/sMUeFSks4" target="_blank" rel="noopener noreferrer"
-                       class="h-9 w-9 rounded-xl bg-[#5865F2]/10 border border-[#5865F2]/25 text-[#5865F2] hover:bg-[#5865F2] hover:text-white transition-all shadow-sm flex items-center justify-center flex-shrink-0"
-                       title="Rejoindre notre communauté Discord">
-                        <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057 19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028c.462-.63.874-1.295 1.226-1.994.021-.041.001-.09-.041-.106a13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.892.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.078.078 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03zM8.02 15.33c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.956-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.956 2.418-2.157 2.418zm7.975 0c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.955-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.946 2.418-2.157 2.418z"/></svg>
-                    </a>
-
-                    {{-- Séparateur discret --}}
-                    <div class="h-5 w-px bg-white/10 hidden lg:block"></div>
-
-                    {{-- Rang Murim & Flamme Martiale : Pilule Compacte & Élégante --}}
-                    <div x-data x-cloak class="flex-shrink-0">
-                        <button @click="$store.murim.toggle()"
-                                type="button"
-                                class="h-9 flex items-center gap-1.5 px-2.5 rounded-xl bg-white/[0.04] border border-white/10 hover:border-amber-400/50 hover:bg-white/[0.08] transition-all cursor-pointer shadow-sm group"
-                                :title="'Votre Rang Murim : ' + ($store.murim.status?.current?.title || 'Disciple')">
-                            <span class="text-sm leading-none group-hover:scale-125 transition-transform" x-text="$store.murim.status?.current?.badge || '🥉'"></span>
-                            <span class="text-[11px] font-black text-chalk hidden xl:inline" x-text="$store.murim.status?.current?.title || 'Disciple Tiers-Rang'"></span>
-                            <template x-if="$store.murim.streak > 0">
-                                <span class="flex items-center gap-0.5 text-[10px] font-black text-amber-400 bg-amber-500/15 border border-amber-500/30 px-1 py-0.2 rounded">
-                                    <span>🔥</span>
-                                    <span x-text="$store.murim.streak + 'j'"></span>
-                                </span>
-                            </template>
-                        </button>
-                    </div>
-                    
-                    {{-- Avatar Utilisateur avec Menu Déroulant & Notifications --}}
-                    @auth
-                        {{-- Centre de notifications (Desktop) --}}
-                        <div class="relative flex-shrink-0" x-data="{ notifOpen: false }" @click.outside="notifOpen = false">
-                            <button 
-                                @click="notifOpen = !notifOpen; if(notifOpen && $store?.notifications) $store.notifications.fetchNotifications()" 
-                                class="h-9 w-9 rounded-xl bg-[#141420] border border-[#222234] text-[#a0a0c0] hover:text-white hover:border-[#ff2a55]/50 hover:bg-[#1a1a28] transition-all cursor-pointer flex items-center justify-center shadow-md focus:outline-none"
-                                title="Notifications de vos séries favorites"
-                                aria-label="Notifications"
-                            >
-                                <svg class="w-4 h-4 transition-transform active:scale-90" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/>
-                                </svg>
-
-                                {{-- Badge non lu --}}
-                                <template x-if="$store?.notifications && $store.notifications.unreadCount > 0">
-                                    <span class="absolute -top-1 -right-1 flex h-4 min-w-[16px] px-1 items-center justify-center rounded-full bg-[#ff2a55] text-[10px] font-extrabold text-white ring-2 ring-[#0e0e15] shadow-lg animate-pulse"
-                                          x-text="$store.notifications.unreadCount > 99 ? '99+' : $store.notifications.unreadCount">
-                                    </span>
-                                </template>
-                            </button>
-
-                            {{-- Menu déroulant Notifications --}}
-                            <div 
-                                x-show="notifOpen" 
-                                x-cloak
-                                x-transition:enter="transition ease-out duration-150"
-                                x-transition:enter-start="opacity-0 scale-95 -translate-y-1"
-                                x-transition:enter-end="opacity-100 scale-100 translate-y-0"
-                                x-transition:leave="transition ease-in duration-100"
-                                x-transition:leave-start="opacity-100 scale-100 translate-y-0"
-                                x-transition:leave-end="opacity-0 scale-95 -translate-y-1"
-                                style="background-color: #12121c !important; border: 1px solid #262638 !important; box-shadow: 0 20px 50px rgba(0,0,0,0.85);"
-                                class="absolute right-0 mt-2 w-80 sm:w-96 rounded-2xl z-50 overflow-hidden"
-                            >
-                                {{-- En-tête notifications --}}
-                                <div class="p-3.5 border-b border-[#222234] flex items-center justify-between gap-2 bg-[#161624]">
-                                    <div class="flex items-center gap-2">
-                                        <span class="font-bold text-sm text-white">Notifications</span>
-                                        <template x-if="$store?.notifications && $store.notifications.unreadCount > 0">
-                                            <span class="text-[10px] font-extrabold px-1.5 py-0.5 rounded-full bg-red-600/30 text-red-400 border border-red-500/40"
-                                                  x-text="$store.notifications.unreadCount + ' non lue(s)'"></span>
-                                        </template>
-                                    </div>
-                                    <template x-if="$store?.notifications && $store.notifications.unreadCount > 0">
-                                        <button 
-                                            type="button" 
-                                            @click="$store.notifications.markAllAsRead()"
-                                            class="text-[11px] text-[#8ea1ff] hover:text-white transition font-medium cursor-pointer"
-                                        >
-                                            Tout marquer comme lu
-                                        </button>
-                                    </template>
-                                </div>
-
-                                {{-- Liste des notifications --}}
-                                <div class="max-h-80 overflow-y-auto divide-y divide-[#1e1e2c]">
-                                    <template x-if="!$store?.notifications || !$store.notifications.notifications || $store.notifications.notifications.length === 0">
-                                        <div class="p-8 text-center">
-                                            <div class="w-12 h-12 rounded-full bg-[#181826] border border-[#262638] flex items-center justify-center mx-auto mb-3 text-[#60608a]">
-                                                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/></svg>
-                                            </div>
-                                            <p class="text-xs font-bold text-white mb-1">Aucune nouvelle notification</p>
-                                            <p class="text-[11px] text-[#7070a0] max-w-[220px] mx-auto leading-relaxed">
-                                                Ajoutez des séries à vos favoris : dès qu'un chapitre sort, il apparaîtra directement ici !
-                                            </p>
-                                        </div>
-                                    </template>
-
-                                    <template x-for="item in ($store?.notifications?.notifications || [])" :key="item.id">
-                                        <div 
-                                            @click="$store.notifications.handleClick(item)"
-                                            :class="item.is_read ? 'bg-[#12121c] opacity-80' : 'bg-[#181828] border-l-2 border-[#ff2a55]'"
-                                            class="p-3 flex items-start gap-3 hover:bg-[#1e1e30] transition cursor-pointer group"
-                                        >
-                                            {{-- Cover miniature --}}
-                                            <div class="w-10 h-14 rounded-md overflow-hidden bg-[#1f1f2e] border border-white/10 flex-shrink-0">
-                                                <template x-if="item.manga_cover">
-                                                    <img :src="item.manga_cover" class="w-full h-full object-cover" alt="">
-                                                </template>
-                                                <template x-if="!item.manga_cover">
-                                                    <div class="w-full h-full flex items-center justify-center text-xs text-mist font-bold">📖</div>
-                                                </template>
-                                            </div>
-
-                                            {{-- Contenu --}}
-                                            <div class="flex-1 min-w-0">
-                                                <div class="flex items-center justify-between gap-1 mb-0.5">
-                                                    <span class="text-xs font-bold text-white truncate group-hover:text-[#f87171] transition" x-text="item.manga_title"></span>
-                                                    <span class="text-[10px] text-[#7070a0] flex-shrink-0" x-text="item.created_at_human"></span>
-                                                </div>
-                                                <p class="text-[11px] text-[#c0c0d8] leading-snug line-clamp-2">
-                                                    <span class="font-semibold text-red-400" x-text="'Chapitre ' + item.chapter_number"></span>
-                                                    <span x-text="item.chapter_title ? ' : ' + item.chapter_title : ' disponible'"></span>
-                                                </p>
-                                                <div class="mt-1.5 flex items-center gap-2">
-                                                    <span class="text-[10px] font-bold px-2 py-0.5 rounded bg-red-600/30 text-red-300 border border-red-500/30 group-hover:bg-red-600 group-hover:text-white transition">
-                                                        Lire maintenant →
-                                                    </span>
-                                                    <template x-if="!item.is_read">
-                                                        <span class="w-1.5 h-1.5 rounded-full bg-[#ff2a55]"></span>
-                                                    </template>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </template>
-                                </div>
-
-                                {{-- Pied du menu --}}
-                                <div class="p-2.5 bg-[#141422] border-t border-[#222234] flex items-center justify-between">
-                                    <a href="{{ route('library', ['tab' => 'rattrapage']) }}" class="text-xs font-semibold text-[#f87171] hover:text-white transition flex items-center gap-1.5">
-                                        <svg class="w-3.5 h-3.5 text-[#ff2a55]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
-                                        Mode Rattrapage complet
-                                    </a>
-                                    <a href="{{ route('library') }}" class="text-xs text-[#7070a0] hover:text-white transition">
-                                        Bibliothèque
-                                    </a>
-                                </div>
-                            </div>
-                        </div>
-
-                        {{-- Menu déroulant du profil utilisateur (Desktop) --}}
-                        <div class="relative flex-shrink-0" x-data="{ userMenuOpen: false }" @click.outside="userMenuOpen = false">
-                            <button 
-                                @click="userMenuOpen = !userMenuOpen" 
-                                class="flex items-center gap-1.5 sm:gap-2 pl-1 pr-2 sm:pr-2.5 py-1 rounded-full bg-[#141420] border border-[#262638] hover:border-[#ff2a55]/70 hover:bg-[#1a1a28] transition-all cursor-pointer shadow-md shadow-black/40 focus:outline-none group flex-shrink-0"
-                                title="{{ Auth::user()->name }}"
-                                aria-label="Menu profil utilisateur"
-                            >
-                                <div class="h-7 w-7 rounded-full overflow-hidden ring-1.5 ring-[#ff2a55] flex-shrink-0 bg-[#0d0d14]">
-                                    <img src="{{ Auth::user()->avatar_url }}" alt="{{ Auth::user()->name }}" class="w-full h-full object-cover navbar-avatar-img">
-                                </div>
-                                <span class="text-xs font-bold text-white max-w-[85px] truncate hidden xl:inline">{{ Auth::user()->name }}</span>
-                                <svg class="w-3.5 h-3.5 text-[#7070a0] group-hover:text-white transition-transform duration-200 flex-shrink-0" :class="userMenuOpen ? 'rotate-180' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
-                            </button>
-
-                            {{-- Menu déroulant du profil (Épuré & Élégant) --}}
-                            <div 
-                                x-show="userMenuOpen" 
-                                x-cloak
-                                x-transition:enter="transition ease-out duration-150"
-                                x-transition:enter-start="opacity-0 scale-95 -translate-y-1"
-                                x-transition:enter-end="opacity-100 scale-100 translate-y-0"
-                                x-transition:leave="transition ease-in duration-100"
-                                x-transition:leave-start="opacity-100 scale-100 translate-y-0"
-                                x-transition:leave-end="opacity-0 scale-95 -translate-y-1"
-                                style="background-color: #12121c !important; border: 1px solid #262638 !important; box-shadow: 0 16px 48px rgba(0,0,0,0.85);"
-                                class="absolute right-0 mt-2 w-56 rounded-xl p-2 z-50 overflow-hidden"
-                            >
-                                {{-- En-tête profil --}}
-                                <div style="border-bottom: 1px solid #222234; padding: 8px 10px 10px;">
-                                    <div class="font-bold text-sm text-[#ffffff] truncate flex items-center justify-between gap-2">
-                                        <span class="truncate">{{ Auth::user()->name }}</span>
-                                        @if(Auth::user()->staff_badge)
-                                            <span class="text-[9px] uppercase font-extrabold px-1.5 py-0.5 rounded border {{ Auth::user()->staff_badge['bg'] }} {{ Auth::user()->staff_badge['text'] }} {{ Auth::user()->staff_badge['border'] }}">
-                                                {{ Auth::user()->staff_badge['name'] }}
-                                            </span>
-                                        @endif
-                                    </div>
-                                    <div class="text-[11px] text-[#7070a0] truncate mt-0.5">
-                                        @if(Auth::user()->email && !str_contains(Auth::user()->email, '@anon.'))
-                                            {{ Auth::user()->email }}
-                                        @else
-                                            <span class="inline-flex items-center gap-1.5 text-[#8080a8]">
-                                                <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
-                                                Compte Anonyme
-                                            </span>
-                                        @endif
-                                    </div>
-                                </div>
-
-                                {{-- Liens essentiels --}}
-                                <div class="py-1 space-y-0.5">
-                                    <a href="{{ route('profile.edit', ['tab' => 'overview']) }}" class="flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-semibold text-[#c0c0d8] hover:text-white hover:bg-[#1a1a28] transition group">
-                                        <svg class="w-4 h-4 text-[#ff2a55] group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
-                                        <span>Mon Profil</span>
-                                    </a>
-
-                                    <a href="{{ route('library') }}" class="flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-semibold text-[#c0c0d8] hover:text-white hover:bg-[#1a1a28] transition group">
-                                        <svg class="w-4 h-4 text-[#ff2a55] group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/></svg>
-                                        <span>Ma Bibliothèque</span>
-                                    </a>
-
-                                    <a href="{{ route('profile.edit', ['tab' => 'settings']) }}" class="flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-semibold text-[#c0c0d8] hover:text-white hover:bg-[#1a1a28] transition group">
-                                        <svg class="w-4 h-4 text-[#ff2a55] group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"></circle><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
-                                        <span>Paramètres</span>
-                                    </a>
-
-                                    @if(Auth::user()->canAccessPanel(filament()->getPanel('admin')))
-                                        @php
-                                            $staffBadge = Auth::user()->staff_badge;
-                                            $admClass = match($staffBadge['color'] ?? '') {
-                                                'red' => 'text-red-400 hover:bg-red-600/20 border-red-500/25',
-                                                'purple' => 'text-purple-300 hover:bg-purple-600/20 border-purple-500/25',
-                                                'sky' => 'text-sky-300 hover:bg-sky-500/20 border-sky-400/25',
-                                                default => 'text-purple-300 hover:bg-purple-600/20 border-purple-500/25',
-                                            };
-                                            $iconColor = match($staffBadge['color'] ?? '') {
-                                                'red' => 'text-red-400',
-                                                'purple' => 'text-purple-400',
-                                                'sky' => 'text-sky-400',
-                                                default => 'text-purple-400',
-                                            };
-                                        @endphp
-                                        <a href="/admin" target="_blank" class="flex items-center justify-between px-3 py-2 rounded-lg text-xs font-bold transition border {{ $admClass }}">
-                                            <span class="flex items-center gap-2.5">
-                                                <svg class="w-4 h-4 {{ $iconColor }}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
-                                                <span>Administration</span>
-                                            </span>
-                                            @if($staffBadge)
-                                                <span class="text-[9px] uppercase tracking-wider font-extrabold px-1.5 py-0.5 rounded border {{ $staffBadge['bg'] }} {{ $staffBadge['text'] }} {{ $staffBadge['border'] }}">
-                                                    {{ $staffBadge['name'] }}
-                                                </span>
-                                            @endif
-                                        </a>
-                                    @endif
-                                </div>
-
-                                {{-- Déconnexion --}}
-                                <div style="border-top: 1px solid #222234; padding-top: 4px; margin-top: 2px;">
-                                    <form method="POST" action="{{ route('logout') }}">
-                                        @csrf
-                                        <button type="submit" class="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-semibold text-[#f87171] hover:bg-red-500/10 hover:text-red-400 transition cursor-pointer">
-                                            <svg class="w-4 h-4 text-[#f87171]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
-                                            <span>Se déconnecter</span>
-                                        </button>
-                                    </form>
-                                </div>
-                            </div>
-                        </div>
-                    @else
-                        <a href="{{ route('login') }}" class="btn-primary !py-2 !px-4 !text-sm">
-                            Se connecter
-                        </a>
-                    @endauth
-                </div>
-
-                {{-- Boutons mobile --}}
-                <div class="flex md:hidden items-center gap-1 sm:gap-2">
-                    {{-- Bouton Rang Murim Mobile --}}
-                    <button 
-                        type="button"
-                        @click.stop="$store.murim.toggle()" 
-                        class="flex items-center gap-1 px-2 py-1.5 rounded-xl bg-white/[0.05] border border-white/10 hover:border-crimson/50 text-xs font-bold text-chalk active:scale-95 transition cursor-pointer"
-                        title="Votre Rang Murim & Voie Martiale"
-                        aria-label="Rang Murim"
-                    >
-                        <span class="text-sm" x-text="$store.murim.status?.current?.badge || '🥉'"></span>
-                        <template x-if="$store.murim.streak > 0">
-                            <span class="text-[10px] text-amber-400 font-black flex items-center leading-none">
-                                🔥<span x-text="$store.murim.streak"></span>
-                            </span>
-                        </template>
-                    </button>
-
-                    {{-- Bouton Recherche Mobile --}}
-                    <button 
-                        type="button"
-                        @click.stop="toggleSearch()" 
-                        class="p-2 sm:p-2.5 rounded-xl text-mist hover:text-chalk hover:bg-panel-hi active:scale-95 transition cursor-pointer flex items-center justify-center"
-                        title="Recherche"
-                        aria-label="Ouvrir la recherche"
-                    >
-                        <svg x-show="!searchOpen" class="w-5 h-5 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
-                        <svg x-show="searchOpen" x-cloak class="w-5 h-5 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
-                    </button>
-
-                    @auth
-                        {{-- Bouton Cloche Notifications Mobile --}}
-                        <button 
-                            type="button"
-                            @click.stop="toggleNotifMobile()" 
-                            class="relative p-2 sm:p-2.5 rounded-xl text-[#a0a0c0] hover:text-white hover:bg-panel-hi active:scale-95 transition cursor-pointer flex items-center justify-center"
-                            title="Notifications"
-                            aria-label="Notifications"
-                        >
-                            <svg class="w-5 h-5 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                @auth
+                    {{-- Notifications Bell --}}
+                    <div class="relative" x-data="{ notifOpen: false }">
+                        <button type="button" 
+                                @click="notifOpen = !notifOpen" 
+                                class="relative p-2 rounded-[4px] text-[var(--text-2)] hover:text-[var(--text-1)] hover:bg-[var(--bg-raised)] transition cursor-pointer"
+                                aria-label="Notifications">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/>
                             </svg>
                             <template x-if="$store?.notifications && $store.notifications.unreadCount > 0">
-                                <span class="absolute top-1 right-1 flex h-4 min-w-[16px] px-1 items-center justify-center rounded-full bg-[#ff2a55] text-[9px] font-extrabold text-white ring-2 ring-[#0e0e15] pointer-events-none"
-                                      x-text="$store.notifications.unreadCount > 99 ? '99+' : $store.notifications.unreadCount">
-                                </span>
+                                <span class="absolute top-1 right-1 w-2 h-2 rounded-full bg-[var(--accent)]"></span>
                             </template>
                         </button>
 
-                        {{-- Avatar Utilisateur Mobile avec Menu Déroulant --}}
-                        <div class="relative">
-                            <button 
-                                type="button"
-                                @click.stop="toggleUserMobileMenu()" 
-                                class="w-9 h-9 rounded-full overflow-hidden ring-2 ring-[#ff2a55]/80 hover:ring-[#ff2a55] active:scale-95 transition-all cursor-pointer flex items-center justify-center bg-[#111118] shadow-md shadow-black/40 focus:outline-none"
-                                title="{{ Auth::user()->name }}"
-                                aria-label="Menu profil utilisateur"
-                            >
-                                <img src="{{ Auth::user()->avatar_url }}" alt="{{ Auth::user()->name }}" class="w-full h-full object-cover pointer-events-none navbar-avatar-img">
-                            </button>
-
-                            {{-- Menu Déroulant Profil & Navigation Mobile --}}
-                            <div 
-                                x-show="userMobileMenuOpen" 
-                                x-cloak
-                                @click.stop
-                                x-transition:enter="transition ease-out duration-150"
-                                x-transition:enter-start="opacity-0 scale-95 -translate-y-1"
-                                x-transition:enter-end="opacity-100 scale-100 translate-y-0"
-                                x-transition:leave="transition ease-in duration-100"
-                                x-transition:leave-start="opacity-100 scale-100 translate-y-0"
-                                x-transition:leave-end="opacity-0 scale-95 -translate-y-1"
-                                style="background-color: #12121c !important; border: 1px solid #262638 !important; box-shadow: 0 16px 48px rgba(0,0,0,0.85);"
-                                class="absolute right-0 mt-2.5 w-72 max-w-[calc(100vw-24px)] rounded-2xl p-2.5 z-50 overflow-hidden max-h-[85vh] overflow-y-auto"
-                            >
-                                {{-- En-tête profil --}}
-                                <div style="border-bottom: 1px solid #222234; padding: 6px 8px 10px;">
-                                    <div class="font-bold text-sm text-[#ffffff] truncate flex items-center justify-between gap-2">
-                                        <span class="truncate">{{ Auth::user()->name }}</span>
-                                        @if(Auth::user()->staff_badge)
-                                            <span class="text-[10px] uppercase font-extrabold px-1.5 py-0.5 rounded border {{ Auth::user()->staff_badge['bg'] }} {{ Auth::user()->staff_badge['text'] }} {{ Auth::user()->staff_badge['border'] }}">
-                                                {{ Auth::user()->staff_badge['name'] }}
-                                            </span>
-                                        @endif
+                        {{-- Dropdown Notifications --}}
+                        <div x-show="notifOpen" 
+                             x-cloak
+                             @click.outside="notifOpen = false"
+                             class="absolute right-0 mt-2 w-80 bg-[var(--bg-surface)] border border-[var(--border)] rounded-[6px] shadow-lg py-2 z-50">
+                            <div class="px-3 py-2 border-b border-[var(--border)] flex items-center justify-between text-caption">
+                                <span class="font-semibold text-[var(--text-1)]">Notifications</span>
+                                <template x-if="$store?.notifications && $store.notifications.unreadCount > 0">
+                                    <button @click="$store.notifications.markAllAsRead()" class="text-[var(--accent)] hover:underline">Tout marquer comme lu</button>
+                                </template>
+                            </div>
+                            <div class="max-h-64 overflow-y-auto">
+                                <template x-if="!$store?.notifications?.notifications || $store.notifications.notifications.length === 0">
+                                    <div class="p-6 text-center text-caption text-[var(--text-3)]">
+                                        Aucune notification pour le moment.
                                     </div>
-                                    <div class="text-xs text-[#7070a0] truncate mt-1">
-                                        @if(Auth::user()->email && !str_contains(Auth::user()->email, '@anon.'))
-                                            {{ Auth::user()->email }}
-                                        @else
-                                            <span class="inline-flex items-center gap-1.5 text-[#8080a8]">
-                                                <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
-                                                Compte Anonyme
-                                            </span>
-                                        @endif
+                                </template>
+                                <template x-for="item in ($store?.notifications?.notifications || [])" :key="item.id">
+                                    <div @click="$store.notifications.handleClick(item); notifOpen = false"
+                                         class="px-3 py-2 border-b border-[var(--border)] hover:bg-[var(--bg-raised)] cursor-pointer text-caption flex items-center gap-2.5">
+                                        <div class="flex-1 min-w-0">
+                                            <div class="font-semibold text-[var(--text-1)] truncate" x-text="item.manga_title"></div>
+                                            <div class="text-[var(--text-2)]" x-text="'Ch. ' + item.chapter_number"></div>
+                                        </div>
                                     </div>
-                                </div>
+                                </template>
+                            </div>
+                        </div>
+                    </div>
 
-                                {{-- Navigation Principale Mobile --}}
-                                <div class="py-1.5 space-y-0.5 border-b border-[#222234]">
-                                    <a href="{{ route('home') }}" class="flex items-center gap-3 px-3 py-2 rounded-lg text-xs font-semibold {{ request()->routeIs('home') ? 'text-white bg-[#ff2a55]' : 'text-[#c0c0d8] hover:text-white hover:bg-[#1a1a28]' }} transition group">
-                                        <svg class="w-4 h-4 text-[#ff2a55] group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
-                                        <span>Accueil</span>
-                                    </a>
+                    {{-- Profil Utilisateur & Menu Déroulant --}}
+                    <div class="relative">
+                        <button type="button" 
+                                @click="userMobileMenuOpen = !userMobileMenuOpen" 
+                                class="flex items-center gap-2 py-1 px-2 rounded-[4px] hover:bg-[var(--bg-raised)] border border-transparent hover:border-[var(--border)] transition cursor-pointer"
+                                aria-label="Menu profil utilisateur">
+                            <img src="{{ Auth::user()->avatar_url }}" alt="{{ Auth::user()->name }}" class="w-6 h-6 rounded-[4px] object-cover bg-[var(--bg-raised)] navbar-avatar-img">
+                            <span class="text-caption font-semibold text-[var(--text-1)] max-w-[90px] truncate hidden sm:inline">{{ Auth::user()->name }}</span>
+                            <svg class="w-3.5 h-3.5 text-[var(--text-3)]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                        </button>
 
-                                    <a href="{{ route('manga.index') }}" class="flex items-center gap-3 px-3 py-2 rounded-lg text-xs font-semibold {{ request()->routeIs('manga.index') ? 'text-white bg-[#ff2a55]' : 'text-[#c0c0d8] hover:text-white hover:bg-[#1a1a28]' }} transition group">
-                                        <svg class="w-4 h-4 text-[#ff2a55] group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16"/></svg>
-                                        <span>Catalogue</span>
-                                    </a>
-
-                                    <a href="{{ route('planning') }}" class="flex items-center gap-3 px-3 py-2 rounded-lg text-xs font-semibold {{ request()->routeIs('planning') ? 'text-white bg-[#ff2a55]' : 'text-[#c0c0d8] hover:text-white hover:bg-[#1a1a28]' }} transition group">
-                                        <svg class="w-4 h-4 text-[#ff2a55] group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
-                                        <span>Planning des sorties</span>
-                                    </a>
-
-                                    {{-- Voie Martiale / Murim Rangs --}}
-                                    <button type="button" @click="$store.murim.toggle(); userMobileMenuOpen = false;" class="w-full flex items-center justify-between px-3 py-2 rounded-lg text-xs font-bold text-amber-300 bg-amber-950/25 hover:bg-amber-900/35 border border-amber-500/25 transition group text-left">
-                                        <span class="flex items-center gap-2.5">
-                                            <span class="text-sm" x-text="$store.murim.status?.current?.badge || '🥋'"></span>
-                                            <span class="truncate" x-text="$store.murim.status?.current?.title || 'Voie Martiale'"></span>
-                                        </span>
-                                        <span class="text-[10px] font-black uppercase px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-300 border border-amber-500/30" x-text="($store.murim.streak || 0) + 'j 🔥'"></span>
-                                    </button>
-
-                                    <a href="{{ route('leaderboard') }}" class="flex items-center gap-3 px-3 py-2 rounded-lg text-xs font-semibold {{ request()->routeIs('leaderboard') ? 'text-white bg-[#ff2a55]' : 'text-[#c0c0d8] hover:text-white hover:bg-[#1a1a28]' }} transition group">
-                                        <span class="text-sm">🏆</span>
-                                        <span>Classement des Lecteurs</span>
-                                    </a>
-
-                                    <a href="{{ route('manga.random') }}" class="flex items-center justify-between px-3 py-2 rounded-lg text-xs font-semibold text-amber-400 hover:text-white hover:bg-amber-950/30 border border-amber-500/20 transition group">
-                                        <span class="flex items-center gap-3">
-                                            <span class="text-sm group-hover:rotate-12 transition-transform">🎲</span>
-                                            <span>Surprends-moi</span>
-                                        </span>
-                                        <span class="text-[10px] px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-300 font-extrabold border border-amber-500/30">CIBLÉ</span>
-                                    </a>
-
-                                    <a href="{{ route('library', ['tab' => 'rattrapage']) }}" class="flex items-center justify-between px-3 py-2 rounded-lg text-xs font-semibold text-[#f87171] hover:text-white hover:bg-red-950/40 border border-red-500/20 transition group">
-                                        <span class="flex items-center gap-3">
-                                            <svg class="w-4 h-4 text-[#ff2a55] group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
-                                            <span>Mode Rattrapage</span>
-                                        </span>
-                                        <span class="text-[10px] px-1.5 py-0.5 rounded bg-red-600 text-white font-extrabold">NON LUS</span>
-                                    </a>
-
-                                    <a href="{{ route('library') }}" class="flex items-center gap-3 px-3 py-2 rounded-lg text-xs font-semibold {{ request()->routeIs('library') && request('tab') !== 'rattrapage' ? 'text-white bg-[#ff2a55]' : 'text-[#c0c0d8] hover:text-white hover:bg-[#1a1a28]' }} transition group">
-                                        <svg class="w-4 h-4 text-[#ff2a55] group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/></svg>
-                                        <span>Ma Bibliothèque</span>
-                                    </a>
-                                </div>
-
-                                {{-- Liens du profil --}}
-                                <div class="py-1.5 space-y-0.5">
-                                    <a href="{{ route('profile.edit', ['tab' => 'overview']) }}" class="flex items-center gap-3 px-3 py-2 rounded-lg text-xs font-semibold text-[#c0c0d8] hover:text-white hover:bg-[#1a1a28] transition group">
-                                        <svg class="w-4 h-4 text-[#ff2a55] group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
-                                        <span>Mon Profil</span>
-                                    </a>
-
-                                    <a href="{{ route('library') }}" class="flex items-center gap-3 px-3 py-2 rounded-lg text-xs font-semibold text-[#c0c0d8] hover:text-white hover:bg-[#1a1a28] transition group">
-                                        <svg class="w-4 h-4 text-[#ff2a55] group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/></svg>
-                                        <span>Ma Bibliothèque</span>
-                                    </a>
-
-                                    <a href="{{ route('profile.edit', ['tab' => 'settings']) }}" class="flex items-center gap-3 px-3 py-2 rounded-lg text-xs font-semibold text-[#c0c0d8] hover:text-white hover:bg-[#1a1a28] transition group">
-                                        <svg class="w-4 h-4 text-[#ff2a55] group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"></circle><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
-                                        <span>Paramètres</span>
-                                    </a>
-
-                                    @if(Auth::user()->canAccessPanel(filament()->getPanel('admin')))
-                                        @php
-                                            $staffBadge = Auth::user()->staff_badge;
-                                            $admClass = match($staffBadge['color'] ?? '') {
-                                                'red' => 'text-red-400 hover:bg-red-600/20 border-red-500/25',
-                                                'purple' => 'text-purple-300 hover:bg-purple-600/20 border-purple-500/25',
-                                                'sky' => 'text-sky-300 hover:bg-sky-500/20 border-sky-400/25',
-                                                default => 'text-purple-300 hover:bg-purple-600/20 border-purple-500/25',
-                                            };
-                                            $iconColor = match($staffBadge['color'] ?? '') {
-                                                'red' => 'text-red-400',
-                                                'purple' => 'text-purple-400',
-                                                'sky' => 'text-sky-400',
-                                                default => 'text-purple-400',
-                                            };
-                                        @endphp
-                                        <a href="/admin" target="_blank" class="flex items-center justify-between px-3 py-2 rounded-lg text-xs font-bold transition border {{ $admClass }}">
-                                            <span class="flex items-center gap-3">
-                                                <svg class="w-4 h-4 {{ $iconColor }} flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
-                                                <span>Administration</span>
-                                            </span>
-                                            @if($staffBadge)
-                                                <span class="text-[9px] uppercase tracking-wider font-extrabold px-1.5 py-0.5 rounded border {{ $staffBadge['bg'] }} {{ $staffBadge['text'] }} {{ $staffBadge['border'] }}">
-                                                    {{ $staffBadge['name'] }}
-                                                </span>
-                                            @endif
-                                        </a>
+                        <div x-show="userMobileMenuOpen" 
+                             x-cloak 
+                             @click.outside="userMobileMenuOpen = false"
+                             class="absolute right-0 mt-2 w-56 bg-[var(--bg-surface)] border border-[var(--border)] rounded-[6px] shadow-lg py-1 z-50">
+                            
+                            <div class="px-3 py-2 border-b border-[var(--border)] text-caption">
+                                <div class="font-semibold text-[var(--text-1)] truncate">{{ Auth::user()->name }}</div>
+                                <div class="text-[var(--text-3)] truncate">
+                                    @if(Auth::user()->email && !str_contains(Auth::user()->email, '@anon.'))
+                                        {{ Auth::user()->email }}
+                                    @else
+                                        Compte Anonyme
                                     @endif
                                 </div>
+                            </div>
 
-                                {{-- Discord tout en bas --}}
-                                <div class="pt-1.5 border-t border-[#222234]">
-                                    <a href="https://discord.gg/sMUeFSks4" target="_blank" rel="noopener noreferrer" class="flex items-center justify-between px-3 py-2 rounded-lg text-xs font-semibold text-[#8ea1ff] bg-[#5865F2]/10 border border-[#5865F2]/25 hover:bg-[#5865F2]/20 transition">
-                                        <span class="flex items-center gap-2.5">
-                                            <svg class="w-4 h-4 text-[#5865F2]" viewBox="0 0 127.14 96.36" fill="currentColor"><path d="M107.7,8.07A105.15,105.15,0,0,0,81.47,0a72.06,72.06,0,0,0-3.36,6.83A97.68,97.68,0,0,0,49,6.83,72.37,72.37,0,0,0,45.64,0,105.89,105.89,0,0,0,19.39,8.09C2.79,32.65-1.71,56.6.54,80.21h0A105.73,105.73,0,0,0,32.71,96.36,77.7,77.7,0,0,0,39.6,85.25a68.42,68.42,0,0,1-10.85-5.18c.91-.66,1.8-1.34,2.66-2a75.57,75.57,0,0,0,64.32,0c.87.71,1.76,1.39,2.66,2a68.68,68.68,0,0,1-10.87,5.19,77,77,0,0,0,6.89,11.1A105.25,105.25,0,0,0,126.6,80.22h0C129.24,52.84,122.09,29.11,107.7,8.07ZM42.45,65.69C36.18,65.69,31,60,31,53s5-12.74,11.43-12.74S54,46,53.89,53,48.84,65.69,42.45,65.69Zm42.24,0C78.41,65.69,73.31,60,73.31,53s5-12.74,11.43-12.74S96.2,46,96.12,53,91.08,65.69,84.69,65.69Z"/></svg>
-                                            <span>Discord</span>
-                                        </span>
-                                        <span class="text-[9px] font-extrabold uppercase px-1.5 py-0.5 rounded-full bg-[#5865F2]/20 text-[#8ea1ff] border border-[#5865F2]/30">Communauté</span>
+                            <div class="py-1">
+                                <a href="{{ route('profile.edit', ['tab' => 'overview']) }}" class="flex items-center gap-2 px-3 py-2 text-caption text-[var(--text-2)] hover:text-[var(--text-1)] hover:bg-[var(--bg-raised)] transition">
+                                    <span>Mon Profil</span>
+                                </a>
+                                <a href="{{ route('library', ['tab' => 'rattrapage']) }}" class="flex items-center gap-2 px-3 py-2 text-caption text-[var(--accent)] hover:bg-[var(--bg-raised)] transition font-medium">
+                                    <span>Mode Rattrapage</span>
+                                </a>
+                                <a href="{{ route('library') }}" class="flex items-center gap-2 px-3 py-2 text-caption text-[var(--text-2)] hover:text-[var(--text-1)] hover:bg-[var(--bg-raised)] transition">
+                                    <span>Ma Bibliothèque</span>
+                                </a>
+                                <a href="{{ route('profile.edit', ['tab' => 'settings']) }}" class="flex items-center gap-2 px-3 py-2 text-caption text-[var(--text-2)] hover:text-[var(--text-1)] hover:bg-[var(--bg-raised)] transition">
+                                    <span>Paramètres</span>
+                                </a>
+                                @if(Auth::user()->canAccessPanel(filament()->getPanel('admin')))
+                                    <a href="/admin" target="_blank" class="flex items-center gap-2 px-3 py-2 text-caption text-[var(--accent)] hover:bg-[var(--bg-raised)] transition font-semibold">
+                                        <span>Administration</span>
                                     </a>
-                                </div>
+                                @endif
+                            </div>
 
-                                {{-- Déconnexion --}}
-                                <div style="border-top: 1px solid #222234; padding-top: 4px; margin-top: 6px;">
-                                    <form method="POST" action="{{ route('logout') }}">
-                                        @csrf
-                                        <button type="submit" class="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-xs font-semibold text-[#f87171] hover:bg-red-500/10 hover:text-red-400 transition cursor-pointer">
-                                            <svg class="w-4 h-4 text-[#f87171]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
-                                            <span>Se déconnecter</span>
-                                        </button>
-                                    </form>
-                                </div>
+                            <div class="pt-1 border-t border-[var(--border)]">
+                                <form method="POST" action="{{ route('logout') }}">
+                                    @csrf
+                                    <button type="submit" class="w-full text-left px-3 py-2 text-caption text-[var(--accent)] hover:bg-[var(--bg-raised)] transition cursor-pointer">
+                                        Se déconnecter
+                                    </button>
+                                </form>
                             </div>
                         </div>
-                    @else
-                        {{-- Bouton Se connecter Mobile (Visiteur) --}}
-                        <a href="{{ route('login') }}" 
-                           class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-gradient-to-r from-[#ff2a55] to-[#b91c1c] hover:from-[#ef4444] hover:to-[#ff2a55] text-white text-xs font-bold transition shadow-md shadow-red-950/50 flex-shrink-0 active:scale-95">
-                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1"/></svg>
-                            <span>Se connecter</span>
+                    </div>
+                @else
+                    {{-- Visiteur : Connexion & Inscription --}}
+                    <div class="flex items-center gap-2">
+                        <a href="{{ route('login') }}" class="btn-primary">
+                            Se connecter
                         </a>
-
-                        {{-- Bouton Menu Hamburger Mobile (Visiteur uniquement) --}}
-                        <button 
-                            type="button"
-                            @click.stop="toggleMobileMenu()" 
-                            class="p-2 rounded-lg text-mist hover:text-chalk hover:bg-panel-hi transition cursor-pointer"
-                            title="Menu principal"
-                            aria-label="Ouvrir le menu"
-                        >
-                            <svg x-show="!mobileOpen" class="w-5 h-5 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
-                            <svg x-show="mobileOpen" x-cloak class="w-5 h-5 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
-                        </button>
-                    @endauth
-                </div>
-            </div>
-
-            {{-- Recherche mobile --}}
-            <div x-show="searchOpen" x-cloak @click.stop x-transition:enter="transition ease-out duration-150"
-                 x-transition:enter-start="opacity-0 -translate-y-1" x-transition:enter-end="opacity-100 translate-y-0"
-                 x-transition:leave="transition ease-in duration-100"
-                 x-transition:leave-start="opacity-100 translate-y-0" x-transition:leave-end="opacity-0 -translate-y-1"
-                 class="md:hidden pt-1 pb-3 px-1">
-                <form action="{{ route('manga.index') }}" method="GET" class="relative flex items-center">
-                    <svg class="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-mist pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
-                    <input type="text" name="q" placeholder="Rechercher une série..."
-                        class="input-field w-full text-sm !pl-10 !pr-10 !py-2.5 !rounded-xl !bg-[#12121c] !border-[#262638] focus:!border-[#ff2a55] shadow-inner text-white placeholder-[#7070a0]" autofocus>
-                    <button type="submit" class="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 text-mist hover:text-white" aria-label="Rechercher">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
-                    </button>
-                </form>
-            </div>
-
-            {{-- Panneau Notifications Mobile --}}
-            @auth
-            <div x-show="notifMobileOpen" x-cloak @click.stop x-transition class="md:hidden pb-3">
-                <div style="background-color: #12121c; border: 1px solid #262638; border-radius: 14px; overflow: hidden; box-shadow: 0 16px 40px rgba(0,0,0,0.85);">
-                    <div class="p-3 border-b border-[#222234] flex items-center justify-between bg-[#161624]">
-                        <div class="flex items-center gap-2">
-                            <span class="font-bold text-xs text-white">Notifications des chapitres</span>
-                            <template x-if="$store?.notifications && $store.notifications.unreadCount > 0">
-                                <span class="text-[9px] font-extrabold px-1.5 py-0.5 rounded-full bg-red-600/30 text-red-400 border border-red-500/40"
-                                      x-text="$store.notifications.unreadCount"></span>
-                            </template>
-                        </div>
-                        <template x-if="$store?.notifications && $store.notifications.unreadCount > 0">
-                            <button @click="$store.notifications.markAllAsRead()" class="text-[10px] text-[#8ea1ff] font-medium">Tout lire</button>
-                        </template>
-                    </div>
-
-                    <div class="max-h-72 overflow-y-auto divide-y divide-[#1e1e2c]">
-                        <template x-if="!$store?.notifications || !$store.notifications.notifications || $store.notifications.notifications.length === 0">
-                            <div class="p-6 text-center text-xs text-[#7070a0]">
-                                Aucune notification pour le moment.
-                            </div>
-                        </template>
-
-                        <template x-for="item in ($store?.notifications?.notifications || [])" :key="item.id">
-                            <div @click="handleNotifClick(item)"
-                                 :class="item.is_read ? 'bg-[#12121c] opacity-80' : 'bg-[#181828] border-l-2 border-[#ff2a55]'"
-                                 class="p-2.5 flex items-start gap-2.5 hover:bg-[#1e1e30] transition cursor-pointer">
-                                <div class="w-9 h-12 rounded bg-[#1f1f2e] overflow-hidden flex-shrink-0">
-                                    <template x-if="item.manga_cover">
-                                        <img :src="item.manga_cover" class="w-full h-full object-cover" alt="">
-                                    </template>
-                                </div>
-                                <div class="flex-1 min-w-0">
-                                    <div class="flex items-center justify-between gap-1 mb-0.5">
-                                        <span class="text-xs font-bold text-white truncate" x-text="item.manga_title"></span>
-                                        <span class="text-[9px] text-[#7070a0]" x-text="item.created_at_human"></span>
-                                    </div>
-                                    <p class="text-[11px] text-[#c0c0d8]">
-                                        <span class="font-bold text-red-400" x-text="'Ch. ' + item.chapter_number"></span>
-                                        <span x-text="item.chapter_title ? ' - ' + item.chapter_title : ''"></span>
-                                    </p>
-                                </div>
-                            </div>
-                        </template>
-                    </div>
-
-                    <div class="p-2 bg-[#141422] border-t border-[#222234] text-center">
-                        <a href="{{ route('library', ['tab' => 'rattrapage']) }}" class="text-xs font-bold text-[#f87171] hover:text-white transition inline-flex items-center gap-1.5">
-                            ⚡ Accéder au Mode Rattrapage →
+                        <a href="{{ route('register') }}" class="btn-secondary hidden sm:inline-flex">
+                            S'inscrire
                         </a>
                     </div>
-                </div>
-            </div>
-            @endauth
-        </div>
+                @endauth
 
-        {{-- Menu mobile (Visiteurs uniquement) --}}
-        @guest
-        <div x-show="mobileOpen" x-cloak @click.stop x-transition:enter="transition ease-out duration-200"
-             x-transition:enter-start="opacity-0 -translate-y-2" x-transition:enter-end="opacity-100 translate-y-0"
-             x-transition:leave="transition ease-in duration-150"
-             x-transition:leave-start="opacity-100 translate-y-0" x-transition:leave-end="opacity-0 -translate-y-2"
-             style="background-color: #0e0e15; border-top: 1px solid #1e1e2e; box-shadow: 0 16px 36px rgba(0,0,0,0.85);"
-             class="md:hidden max-h-[calc(100vh-4.5rem)] overflow-y-auto">
-            <div class="px-4 py-3 space-y-2">
-                {{-- Liens de navigation principale --}}
-                <div class="space-y-1">
-                    <a href="{{ route('home') }}" class="flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-semibold {{ request()->routeIs('home') ? 'text-white bg-[#ff2a55]' : 'text-[#a0a0c0] hover:text-white hover:bg-[#161622]' }} transition">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
-                        Accueil
-                    </a>
-                    <a href="{{ route('manga.index') }}" class="flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-semibold {{ request()->routeIs('manga.index') ? 'text-white bg-[#ff2a55]' : 'text-[#a0a0c0] hover:text-white hover:bg-[#161622]' }} transition">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16"/></svg>
-                        Catalogue
-                    </a>
-                    <a href="{{ route('planning') }}" class="flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-semibold {{ request()->routeIs('planning') ? 'text-white bg-[#ff2a55]' : 'text-[#a0a0c0] hover:text-white hover:bg-[#161622]' }} transition">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
-                        Planning
-                    </a>
-
-                    {{-- Bouton Murim Mobile Invité --}}
-                    <button type="button" @click="$store.murim.toggle(); mobileOpen = false;" class="w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-sm font-bold text-amber-300 bg-amber-950/20 border border-amber-500/30 hover:bg-amber-900/30 transition text-left">
-                        <span class="flex items-center gap-3">
-                            <span class="text-base" x-text="$store.murim.status?.current?.badge || '🥋'"></span>
-                            <span class="truncate" x-text="$store.murim.status?.current?.title || 'Voie Martiale (Murim)'"></span>
-                        </span>
-                        <span class="text-[10px] font-black uppercase px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/30" x-text="($store.murim.streak || 0) + 'j 🔥'"></span>
-                    </button>
-
-                    <a href="{{ route('manga.random') }}"
-                       onclick="if(window.HiddenScan){ const favs = window.HiddenScan.getFavorites().map(f => f.slug).join(','); if(favs) this.href = '{{ route('manga.random') }}?favs=' + encodeURIComponent(favs); }"
-                       class="flex items-center justify-between px-3.5 py-2.5 rounded-xl text-sm font-bold text-amber-400 bg-amber-950/20 border border-amber-500/30 hover:bg-amber-900/30 transition">
-                        <span class="flex items-center gap-3">
-                            <span class="text-base">🎲</span>
-                            <span>Surprends-moi</span>
-                        </span>
-                        <span class="text-[10px] px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 font-extrabold uppercase border border-amber-500/30">Ciblé</span>
-                    </a>
-                    <a href="{{ route('library', ['tab' => 'rattrapage']) }}" class="flex items-center justify-between px-3.5 py-2.5 rounded-xl text-sm font-bold text-[#f87171] bg-red-950/30 border border-red-500/30 hover:bg-red-900/40 transition">
-                        <span class="flex items-center gap-3">
-                            <svg class="w-4 h-4 text-[#ff2a55]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
-                            Mode Rattrapage
-                        </span>
-                        <span class="text-[10px] px-2 py-0.5 rounded-full bg-red-600 text-white font-extrabold uppercase">Non lus</span>
-                    </a>
-                    <a href="{{ route('library') }}" class="flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-semibold {{ request()->routeIs('library') && request('tab') !== 'rattrapage' ? 'text-white bg-[#ff2a55]' : 'text-[#a0a0c0] hover:text-white hover:bg-[#161622]' }} transition">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/></svg>
-                        Bibliothèque
-                    </a>
-                </div>
-
-                {{-- Connexion / Inscription pour invité --}}
-                <div class="pt-2 border-t border-[#1e1e2e] grid grid-cols-2 gap-2">
-                    <a href="{{ route('login') }}" class="flex items-center justify-center gap-1.5 py-2.5 px-3 rounded-xl bg-gradient-to-r from-[#ff2a55] to-[#b91c1c] hover:from-[#ef4444] hover:to-[#ff2a55] text-white text-xs font-bold transition text-center shadow-md">
-                        Se connecter
-                    </a>
-                    <a href="{{ route('register') }}" class="flex items-center justify-center gap-1.5 py-2.5 px-3 rounded-xl bg-[#181826] hover:bg-[#202032] text-white text-xs font-semibold border border-[#2a2a3e] transition text-center">
-                        S'inscrire
-                    </a>
-                </div>
-
-                {{-- Discord Tout en bas --}}
-                <div class="pt-2 border-t border-[#1e1e2e]">
-                    <a href="https://discord.gg/sMUeFSks4" target="_blank" rel="noopener noreferrer" class="flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-semibold text-[#8ea1ff] bg-[#5865F2]/10 border border-[#5865F2]/25 hover:bg-[#5865F2]/20 transition">
-                        <span class="flex items-center gap-3">
-                            <svg class="w-4 h-4 text-[#5865F2]" viewBox="0 0 127.14 96.36" fill="currentColor"><path d="M107.7,8.07A105.15,105.15,0,0,0,81.47,0a72.06,72.06,0,0,0-3.36,6.83A97.68,97.68,0,0,0,49,6.83,72.37,72.37,0,0,0,45.64,0,105.89,105.89,0,0,0,19.39,8.09C2.79,32.65-1.71,56.6.54,80.21h0A105.73,105.73,0,0,0,32.71,96.36,77.7,77.7,0,0,0,39.6,85.25a68.42,68.42,0,0,1-10.85-5.18c.91-.66,1.8-1.34,2.66-2a75.57,75.57,0,0,0,64.32,0c.87.71,1.76,1.39,2.66,2a68.68,68.68,0,0,1-10.87,5.19,77,77,0,0,0,6.89,11.1A105.25,105.25,0,0,0,126.6,80.22h0C129.24,52.84,122.09,29.11,107.7,8.07ZM42.45,65.69C36.18,65.69,31,60,31,53s5-12.74,11.43-12.74S54,46,53.89,53,48.84,65.69,42.45,65.69Zm42.24,0C78.41,65.69,73.31,60,73.31,53s5-12.74,11.43-12.74S96.2,46,96.12,53,91.08,65.69,84.69,65.69Z"/></svg>
-                            <span>Rejoindre notre Discord</span>
-                        </span>
-                        <span class="text-[10px] font-extrabold uppercase px-2 py-0.5 rounded-full bg-[#5865F2]/20 text-[#8ea1ff] border border-[#5865F2]/30">Communauté</span>
-                    </a>
-                </div>
-
+                @guest
+                {{-- Mobile Hamburger --}}
+                <button type="button" @click="mobileOpen = !mobileOpen" class="lg:hidden p-2 text-[var(--text-2)] hover:text-[var(--text-1)]" aria-label="Menu mobile" title="Menu principal">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
+                </button>
+                @endguest
             </div>
         </div>
-        @endguest
+
+        {{-- Mobile Drawer --}}
+        <div x-show="mobileOpen" x-cloak class="lg:hidden bg-[var(--bg-surface)] border-b border-[var(--border)] px-4 py-4 space-y-2">
+            <a href="{{ route('home') }}" class="block px-3 py-2 rounded-[4px] text-body text-[var(--text-2)] hover:text-[var(--text-1)] hover:bg-[var(--bg-raised)]">
+                Accueil
+            </a>
+            <a href="{{ route('manga.index') }}" class="block px-3 py-2 rounded-[4px] text-body text-[var(--text-2)] hover:text-[var(--text-1)] hover:bg-[var(--bg-raised)]">
+                Catalogue
+            </a>
+            <a href="{{ route('planning') }}" class="block px-3 py-2 rounded-[4px] text-body text-[var(--text-2)] hover:text-[var(--text-1)] hover:bg-[var(--bg-raised)]">
+                Planning
+            </a>
+            <a href="{{ route('leaderboard') }}" class="block px-3 py-2 rounded-[4px] text-body text-[var(--text-2)] hover:text-[var(--text-1)] hover:bg-[var(--bg-raised)]">
+                Classement
+            </a>
+            <a href="{{ route('library') }}" class="block px-3 py-2 rounded-[4px] text-body text-[var(--text-2)] hover:text-[var(--text-1)] hover:bg-[var(--bg-raised)]">
+                Bibliothèque
+            </a>
+        </div>
     </nav>
     @endunless
 
-    <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 {{ $hideNavbar ? '' : 'pt-20' }} pb-24 sm:pb-12 relative z-10 overflow-x-hidden">
+    {{-- ═══ Search Overlay Plein Écran (Composant 9) ═══ --}}
+    <div x-show="searchOverlayOpen" 
+         x-cloak
+         x-transition:enter="transition ease-out duration-200"
+         x-transition:enter-start="opacity-0"
+         x-transition:enter-end="opacity-100"
+         x-transition:leave="transition ease-in duration-150"
+         x-transition:leave-start="opacity-100"
+         x-transition:leave-end="opacity-0"
+         class="fixed inset-0 z-[100] bg-[rgba(10,10,10,0.96)] backdrop-blur-[12px] flex flex-col p-4 sm:p-8"
+         @click.self="closeSearch()">
+        
+        <div class="max-w-2xl w-full mx-auto flex flex-col h-full pt-8 sm:pt-16">
+            {{-- Entrée Recherche --}}
+            <div class="relative flex items-center border-b border-[var(--border)] pb-4 mb-6">
+                <svg class="w-6 h-6 text-[var(--text-3)] mr-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+                <input type="text" 
+                       x-ref="overlayInput"
+                       x-model="searchQuery" 
+                       @input.debounce.250ms="performSearch()"
+                       @keydown.down.prevent="selectNext()"
+                       @keydown.up.prevent="selectPrev()"
+                       @keydown.enter.prevent="submitSelected()"
+                       placeholder="Rechercher une série, un auteur..." 
+                       class="w-full bg-transparent text-[22px] sm:text-[28px] font-heading font-semibold text-[var(--text-1)] placeholder-[var(--text-3)] outline-none border-none">
+                
+                <button type="button" @click="closeSearch()" class="px-2.5 py-1 rounded-[4px] bg-[var(--bg-raised)] border border-[var(--border)] text-caption text-[var(--text-3)] hover:text-[var(--text-1)] transition cursor-pointer">
+                    Échap
+                </button>
+            </div>
+
+            {{-- Résultats Instantanés --}}
+            <div class="flex-1 overflow-y-auto space-y-2 pr-2">
+                <template x-if="searchLoading">
+                    <div class="py-8 text-center text-caption text-[var(--text-3)]">
+                        Recherche en cours...
+                    </div>
+                </template>
+
+                <template x-if="!searchLoading && searchResults.length > 0">
+                    <div class="space-y-1">
+                        <template x-for="(item, idx) in searchResults" :key="item.id || item.slug">
+                            <a :href="'/manga/' + item.slug" 
+                               :class="selectedIndex === idx ? 'bg-[var(--bg-raised)] border-[var(--accent)]' : 'bg-[var(--bg-surface)] border-[var(--border)]'"
+                               class="flex items-center gap-4 p-3 rounded-[6px] border hover:border-[var(--accent)] hover:bg-[var(--bg-raised)] transition text-decoration-none group">
+                                <div class="w-10 h-14 bg-[var(--bg-base)] rounded-[4px] overflow-hidden flex-shrink-0">
+                                    <template x-if="item.cover_image">
+                                        <img :src="item.cover_image.startsWith('http') ? item.cover_image : '/storage/' + item.cover_image" class="w-full h-full object-cover">
+                                    </template>
+                                </div>
+                                <div class="flex-1 min-w-0">
+                                    <div class="font-heading font-semibold text-[15px] text-[var(--text-1)] group-hover:text-[var(--accent)] truncate" x-text="item.title"></div>
+                                    <div class="text-caption text-[var(--text-3)]" x-text="item.type ? item.type.toUpperCase() : 'MANGA'"></div>
+                                </div>
+                                <div class="text-caption text-[var(--text-3)]">
+                                    →
+                                </div>
+                            </a>
+                        </template>
+                    </div>
+                </template>
+
+                <template x-if="!searchLoading && searchQuery.trim().length >= 2 && searchResults.length === 0">
+                    <div class="py-12 text-center">
+                        <p class="text-[15px] text-[var(--text-2)] mb-3">Aucun résultat pour « <span class="text-[var(--text-1)]" x-text="searchQuery"></span> »</p>
+                        <a :href="'{{ route('manga.index') }}?q=' + encodeURIComponent(searchQuery)" class="btn-secondary !text-caption">
+                            Rechercher dans tout le catalogue
+                        </a>
+                    </div>
+                </template>
+            </div>
+        </div>
+    </div>
+
+    {{-- ═══ Page Wrapper (Max-width 1280px / Container 1140px) ═══ --}}
+    <main class="flex-1 max-w-[1280px] w-full mx-auto px-4 sm:px-6 {{ $hideNavbar ? '' : 'pt-20' }} pb-16 relative z-10 overflow-x-hidden">
         {{ $slot }}
 
         {{-- Modal de remise du Pass Secret --}}
         @if(session('new_pass_code'))
         <div x-data="{ open: true, copied: false }" x-show="open" x-cloak 
-             class="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/85 backdrop-blur-md animate-fade-in">
-            <div class="relative w-full max-w-md bg-[#13141d] border-2 border-red-500/40 rounded-3xl p-6 sm:p-8 shadow-2xl shadow-red-950/70 text-center animate-fade-in-up">
-                <div class="w-16 h-16 mx-auto mb-4 rounded-2xl bg-gradient-to-tr from-red-600 to-amber-600 flex items-center justify-center text-3xl shadow-lg shadow-red-600/40 animate-pulse">
-                    🎉
+             class="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/90 backdrop-blur-md">
+            <div class="relative w-full max-w-md bg-[var(--bg-surface)] border border-[var(--border)] rounded-[6px] p-6 text-center shadow-xl">
+                <div class="w-12 h-12 mx-auto mb-3 rounded-[4px] bg-[var(--bg-raised)] border border-[var(--border)] flex items-center justify-center text-xl text-[var(--accent)]">
+                    🔑
                 </div>
-                <h3 class="font-display text-xl sm:text-2xl font-extrabold text-white mb-2">Bienvenue sur Hidden Scan !</h3>
-                <p class="text-xs sm:text-sm text-gray-300 mb-6 leading-relaxed">
+                <h3 class="font-heading text-h3 text-[var(--text-1)] mb-2">Bienvenue sur Hidden Scan</h3>
+                <p class="text-caption text-[var(--text-2)] mb-5 leading-relaxed">
                     Votre compte anonyme est prêt. Voici votre <strong>Pass Secret</strong> unique, il remplace votre email et votre mot de passe :
                 </p>
 
-                {{-- Le Pass Code affiché en grand --}}
-                <div class="p-4 rounded-2xl bg-[#0c0d12] border border-red-500/40 mb-4 flex items-center justify-between gap-3 shadow-inner">
-                    <span class="font-mono font-bold text-base sm:text-lg text-red-400 tracking-wider select-all">
+                <div class="p-3 rounded-[4px] bg-[var(--bg-base)] border border-[var(--border)] mb-4 flex items-center justify-between gap-3">
+                    <span class="font-mono font-bold text-sm text-[var(--accent)] tracking-wider select-all">
                         {{ session('new_pass_code') }}
                     </span>
                     <button type="button" 
                             @click="navigator.clipboard.writeText('{{ session('new_pass_code') }}'); copied = true; setTimeout(() => copied = false, 2500)"
-                            class="px-3 py-1.5 rounded-xl bg-red-600/20 hover:bg-red-600/30 text-white text-xs font-bold border border-red-500/30 transition flex items-center gap-1.5 flex-shrink-0 cursor-pointer">
-                        <span x-show="!copied">Copier 📋</span>
-                        <span x-show="copied" x-cloak class="text-green-400">Copié ! ✓</span>
+                            class="px-2.5 py-1 rounded-[4px] bg-[var(--bg-raised)] hover:bg-[var(--border)] text-[var(--text-1)] text-caption font-semibold transition cursor-pointer">
+                        <span x-show="!copied">Copier</span>
+                        <span x-show="copied" x-cloak class="text-emerald-400">Copié ✓</span>
                     </button>
                 </div>
 
-                <div class="p-3.5 rounded-xl bg-amber-500/10 border border-amber-500/25 text-[11px] text-amber-200/90 leading-relaxed mb-6 text-left flex items-start gap-2.5">
-                    <span class="text-sm">⚠️</span>
-                    <span><strong>Conservez ce code précieusement</strong> (dans vos notes ou gestionnaire). C'est le seul moyen de vous reconnecter sur votre téléphone ou un autre navigateur.</span>
-                </div>
+                <p class="text-caption text-[var(--text-3)] text-left mb-6">
+                    ⚠️ Conservez ce code précieusement. C'est votre unique identifiant de connexion.
+                </p>
 
-                <button type="button" @click="open = false" 
-                        class="w-full py-3.5 bg-gradient-to-r from-red-600 to-red-700 hover:from-red-500 hover:to-red-600 text-white font-extrabold text-sm rounded-xl transition shadow-lg shadow-red-600/30 cursor-pointer hover:scale-[1.01] active:scale-[0.99]">
-                    C'est noté, commencer à lire ! 🚀
+                <button type="button" @click="open = false" class="btn-primary w-full">
+                    Commencer à lire
                 </button>
             </div>
         </div>
         @endif
     </main>
 
-    {{-- ═══ Footer (Affiché uniquement sur Accueil et détails séries / chapitres) ═══ --}}
+    {{-- ═══ Footer 3 Colonnes Strict (Composant 11) ═══ --}}
     @php
         $displayFooter = $showFooter ?? request()->routeIs('home', 'manga.show', 'chapter.show');
     @endphp
     @if($displayFooter)
-    <footer class="border-t border-line/50 bg-ink-deep/50 mt-auto relative z-10">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 py-12">
-            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 mb-8">
-                {{-- Marque --}}
-                <div class="sm:col-span-2 lg:col-span-1">
-                    <a href="{{ route('home') }}" class="flex items-center gap-3 mb-4">
-                        <img src="{{ asset('images/logo.png') }}" alt="Hidden Scan" class="h-8 w-8 rounded-lg">
-                        <span class="font-display font-extrabold text-lg text-chalk">Hidden<span class="text-violet">Scan</span></span>
+    <footer class="border-t border-[var(--border)] bg-[var(--bg-base)] mt-auto relative z-10">
+        <div class="max-w-[1280px] mx-auto px-4 sm:px-6 py-12">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8 mb-8">
+                
+                {{-- Colonne 1 : À Propos & Marque --}}
+                <div>
+                    <a href="{{ route('home') }}" class="inline-flex items-center gap-2 mb-3">
+                        <img src="{{ asset('images/logo.png') }}" alt="Hidden Scan" class="w-6 h-6 rounded-[4px]">
+                        <span class="font-heading font-bold text-h3 text-[var(--text-1)]">Hidden<span class="text-[var(--accent)]">Scan</span></span>
                     </a>
-                    <p class="text-mist text-sm leading-relaxed">Plateforme de lecture de mangas, manhwas et manhuas. Accès libre, sans compte.</p>
+                    <p class="text-caption text-[var(--text-2)] leading-relaxed max-w-sm mb-4">
+                        Plateforme de scantrad et de lecture de mangas, manhwas et manhuas en français. Conçue pour une lecture fluide, sans publicité intrusive.
+                    </p>
+                    <p class="text-caption text-[var(--text-3)]">
+                        © {{ date('Y') }} Hidden Scan. Tous droits réservés.
+                    </p>
                 </div>
 
-                {{-- Navigation --}}
+                {{-- Colonne 2 : Navigation --}}
                 <div>
-                    <h4 class="font-display font-bold text-sm text-chalk mb-3 uppercase tracking-wider">Navigation</h4>
-                    <ul class="space-y-2">
-                        <li><a href="{{ route('home') }}" class="text-sm text-mist hover:text-violet transition">Accueil</a></li>
-                        <li><a href="{{ route('manga.index') }}" class="text-sm text-mist hover:text-violet transition">Catalogue</a></li>
-                        <li><a href="{{ route('library') }}" class="text-sm text-mist hover:text-violet transition">Bibliothèque</a></li>
+                    <h4 class="text-label text-[var(--text-1)] mb-3">Navigation</h4>
+                    <ul class="space-y-2 text-caption">
+                        <li><a href="{{ route('home') }}" class="text-[var(--text-2)] hover:text-[var(--text-1)] transition">Accueil</a></li>
+                        <li><a href="{{ route('manga.index') }}" class="text-[var(--text-2)] hover:text-[var(--text-1)] transition">Catalogue</a></li>
+                        <li><a href="{{ route('planning') }}" class="text-[var(--text-2)] hover:text-[var(--text-1)] transition">Planning des Sorties</a></li>
+                        <li><a href="{{ route('leaderboard') }}" class="text-[var(--text-2)] hover:text-[var(--text-1)] transition">Classement des Lecteurs</a></li>
+                        <li><a href="{{ route('library') }}" class="text-[var(--text-2)] hover:text-[var(--text-1)] transition">Ma Bibliothèque</a></li>
                     </ul>
                 </div>
 
-                {{-- Légal --}}
+                {{-- Colonne 3 : Légal & Communauté --}}
                 <div>
-                    <h4 class="font-display font-bold text-sm text-chalk mb-3 uppercase tracking-wider">Légal</h4>
-                    <ul class="space-y-2">
-                        <li><a href="{{ route('legal.mentions') }}" class="text-sm text-mist hover:text-violet transition">Mentions légales</a></li>
-                        <li><a href="{{ route('legal.cgu') }}" class="text-sm text-mist hover:text-violet transition">CGU</a></li>
-                        <li><a href="{{ route('legal.privacy') }}" class="text-sm text-mist hover:text-violet transition">Confidentialité</a></li>
-                        <li><a href="{{ route('legal.dmca') }}" class="text-sm text-mist hover:text-violet transition">DMCA</a></li>
-                    </ul>
-                </div>
-
-                {{-- Communauté --}}
-                <div>
-                    <h4 class="font-display font-bold text-sm text-chalk mb-3 uppercase tracking-wider">Communauté</h4>
-                    <ul class="space-y-2">
+                    <h4 class="text-label text-[var(--text-1)] mb-3">Légal & Communauté</h4>
+                    <ul class="space-y-2 text-caption">
+                        <li><a href="{{ route('legal.cgu') }}" class="text-[var(--text-2)] hover:text-[var(--text-1)] transition">Conditions Générales d'Utilisation</a></li>
+                        <li><a href="{{ route('legal.mentions') }}" class="text-[var(--text-2)] hover:text-[var(--text-1)] transition">Mentions Légales</a></li>
+                        <li><a href="{{ route('legal.privacy') }}" class="text-[var(--text-2)] hover:text-[var(--text-1)] transition">Politique de Confidentialité</a></li>
+                        <li><a href="{{ route('legal.dmca') }}" class="text-[var(--text-2)] hover:text-[var(--text-1)] transition">Notice DMCA</a></li>
                         <li>
-                            <a href="https://discord.gg/sMUeFSks4" target="_blank" class="text-sm text-mist hover:text-violet transition inline-flex items-center gap-2">
-                                <svg class="w-4 h-4" viewBox="0 0 127.14 96.36" fill="currentColor"><path d="M107.7,8.07A105.15,105.15,0,0,0,81.47,0a72.06,72.06,0,0,0-3.36,6.83A97.68,97.68,0,0,0,49,6.83,72.37,72.37,0,0,0,45.64,0,105.89,105.89,0,0,0,19.39,8.09C2.79,32.65-1.71,56.6.54,80.21h0A105.73,105.73,0,0,0,32.71,96.36,77.7,77.7,0,0,0,39.6,85.25a68.42,68.42,0,0,1-10.85-5.18c.91-.66,1.8-1.34,2.66-2a75.57,75.57,0,0,0,64.32,0c.87.71,1.76,1.39,2.66,2a68.68,68.68,0,0,1-10.87,5.19,77,77,0,0,0,6.89,11.1A105.25,105.25,0,0,0,126.6,80.22h0C129.24,52.84,122.09,29.11,107.7,8.07ZM42.45,65.69C36.18,65.69,31,60,31,53s5-12.74,11.43-12.74S54,46,53.89,53,48.84,65.69,42.45,65.69Zm42.24,0C78.41,65.69,73.31,60,73.31,53s5-12.74,11.43-12.74S96.2,46,96.12,53,91.08,65.69,84.69,65.69Z"/></svg>
-                                Discord
+                            <a href="https://discord.gg/sMUeFSks4" target="_blank" rel="noopener noreferrer" class="text-[var(--accent)] hover:underline font-semibold inline-flex items-center gap-1.5">
+                                <span>Rejoindre notre Discord</span>
+                                <span>→</span>
                             </a>
                         </li>
                     </ul>
                 </div>
             </div>
-
-            {{-- Copyright --}}
-            <div class="pt-6 border-t border-line/30 flex flex-col sm:flex-row items-center justify-between gap-3">
-                <p class="text-mist text-xs">© {{ date('Y') }} Hidden Scan — Tous droits réservés</p>
-                <p class="text-mist/60 text-xs">Fait avec ♥ pour la communauté</p>
-            </div>
         </div>
     </footer>
     @endif
 
-    {{-- Widget Discord Flottant (Grand écran uniquement) --}}
-    @unless($hideNavbar)
-    <a href="https://discord.gg/sMUeFSks4"
-       target="_blank"
-       rel="noopener noreferrer"
-       class="discord-float-btn hidden sm:inline-flex group"
-       title="Rejoindre notre Discord"
-       aria-label="Rejoindre notre communauté Discord">
-        <span class="relative flex items-center justify-center">
-            <svg viewBox="0 0 127.14 96.36" fill="currentColor">
-                <path d="M107.7,8.07A105.15,105.15,0,0,0,81.47,0a72.06,72.06,0,0,0-3.36,6.83A97.68,97.68,0,0,0,49,6.83,72.37,72.37,0,0,0,45.64,0,105.89,105.89,0,0,0,19.39,8.09C2.79,32.65-1.71,56.6.54,80.21h0A105.73,105.73,0,0,0,32.71,96.36,77.7,77.7,0,0,0,39.6,85.25a68.42,68.42,0,0,1-10.85-5.18c.91-.66,1.8-1.34,2.66-2a75.57,75.57,0,0,0,64.32,0c.87.71,1.76,1.39,2.66,2a68.68,68.68,0,0,1-10.87,5.19,77,77,0,0,0,6.89,11.1A105.25,105.25,0,0,0,126.6,80.22h0C129.24,52.84,122.09,29.11,107.7,8.07ZM42.45,65.69C36.18,65.69,31,60,31,53s5-12.74,11.43-12.74S54,46,53.89,53,48.84,65.69,42.45,65.69Zm42.24,0C78.41,65.69,73.31,60,73.31,53s5-12.74,11.43-12.74S96.2,46,96.12,53,91.08,65.69,84.69,65.69Z"/>
-            </svg>
-            {{-- Point vert indicateur de présence --}}
-            <span class="absolute -top-1 -right-1 w-2.5 h-2.5 bg-emerald-400 border-2 border-[#5865F2] rounded-full shadow-sm"></span>
-        </span>
-        <span class="discord-label">
-            Rejoindre Discord
-        </span>
-    </a>
-    @endunless
-
-    {{-- Bouton retour en haut --}}
-    <button
-        x-data="{ show: false }"
-        x-init="window.addEventListener('scroll', () => show = window.scrollY > 400)"
-        x-show="show"
-        x-cloak
-        x-transition:enter="transition ease-out duration-200"
-        x-transition:enter-start="opacity-0 translate-y-2 scale-90"
-        x-transition:enter-end="opacity-100 translate-y-0 scale-100"
-        x-transition:leave="transition ease-in duration-150"
-        x-transition:leave-start="opacity-100 translate-y-0 scale-100"
-        x-transition:leave-end="opacity-0 translate-y-2 scale-90"
-        @click="window.scrollTo({ top: 0, behavior: 'smooth' })"
-        class="scroll-top-btn bg-panel-hi/90 hover:bg-[#ff2a55] text-white border border-line/50 hover:border-[#ff2a55]/50 backdrop-blur-md cursor-pointer transition-all hover:scale-105"
-        title="Retour en haut"
-        aria-label="Retour en haut de page"
-    >
-        <svg class="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 15l7-7 7 7"/></svg>
-    </button>
-
-    {{-- ═══ Toast Alerte Percée Martiale (Murim Breakthrough) ═══ --}}
-    <div x-show="$store?.murim?.breakthroughAlert"
-         x-cloak
-         x-transition:enter="transition ease-out duration-300"
-         x-transition:enter-start="opacity-0 translate-y-4 scale-95"
-         x-transition:enter-end="opacity-100 translate-y-0 scale-100"
-         x-transition:leave="transition ease-in duration-200"
-         x-transition:leave-start="opacity-100 translate-y-0 scale-100"
-         x-transition:leave-end="opacity-0 translate-y-4 scale-95"
-         class="fixed bottom-6 right-6 z-[120] max-w-sm w-full p-4 rounded-2xl bg-gradient-to-br from-[#1c1218] via-[#12121c] to-[#0a0a12] border-2 border-amber-500/70 shadow-[0_0_35px_rgba(245,158,11,0.4)] flex items-start gap-3.5">
-        <div class="w-12 h-12 rounded-xl bg-amber-500/20 border border-amber-500/40 flex items-center justify-center text-2xl flex-shrink-0 animate-pulse">
-            ⚡
-        </div>
-        <div class="flex-1 min-w-0">
-            <div class="flex items-center justify-between">
-                <span class="text-[10px] font-black uppercase tracking-widest text-amber-400">Percée Martiale Réussie !</span>
-                <button @click="$store.murim.breakthroughAlert = false" class="text-mist hover:text-white text-xs">✕</button>
-            </div>
-            <h4 class="text-sm font-black text-white mt-0.5" x-text="'Rang atteint : ' + ($store.murim.status?.current?.title || '')"></h4>
-            <p class="text-xs text-amber-200/90 mt-1 leading-relaxed">
-                Votre Qi a atteint un niveau supérieur ! Poursuivez votre entraînement pour défier le ciel.
-            </p>
-            <button @click="$store.murim.open = true; $store.murim.breakthroughAlert = false" class="mt-2 text-[11px] font-bold text-amber-400 hover:text-amber-300 underline">
-                Voir mon statut martial →
-            </button>
-        </div>
-    </div>
-
-    {{-- ═══ Modal Sanctuaire Murim (Voie Martiale & Paliers de Cultivation) ═══ --}}
-    <div x-show="$store?.murim?.open"
-         x-cloak
-         class="fixed inset-0 z-[110] flex items-center justify-center p-3 sm:p-5 bg-black/85 backdrop-blur-md animate-fade-in"
-         @keydown.escape.window="$store.murim.open = false">
-        
-        {{-- Backdrop click --}}
-        <div class="fixed inset-0" @click="$store.murim.open = false"></div>
-
-        <div class="relative w-full max-w-2xl bg-gradient-to-b from-[#161424] via-[#10101b] to-[#0b0b12] border border-amber-500/30 rounded-3xl p-5 sm:p-8 shadow-[0_0_60px_rgba(0,0,0,0.9),0_0_25px_rgba(245,158,11,0.15)] z-10 max-h-[92vh] overflow-y-auto">
-            
-            {{-- Close button --}}
-            <button @click="$store.murim.open = false"
-                    class="absolute top-4 right-4 sm:top-6 sm:right-6 w-9 h-9 rounded-full bg-white/[0.06] hover:bg-white/[0.15] border border-white/10 text-mist hover:text-white flex items-center justify-center transition cursor-pointer"
-                    aria-label="Fermer le sanctuaire">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
-            </button>
-
-            {{-- En-tête Murim avec sceau martial --}}
-            <div class="text-center mb-6">
-                <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-500/15 border border-amber-500/30 text-amber-400 text-xs font-black uppercase tracking-wider mb-2">
-                    <span>⛩️</span>
-                    <span>Voie Martiale de Hidden Scan</span>
-                    <span>⛩️</span>
-                </div>
-                <h3 class="font-display text-2xl sm:text-3xl font-black text-white tracking-tight">
-                    Sanctuaire de <span class="bg-gradient-to-r from-amber-400 via-crimson to-red-500 bg-clip-text text-transparent">Cultivation Murim</span>
-                </h3>
-                <p class="text-xs sm:text-sm text-mist max-w-md mx-auto mt-1">
-                    Lisez des chapitres pour forger votre Danjeon, condenser votre Qi et gravir les 7 Paliers légendaires du monde des arts martiaux.
-                </p>
-            </div>
-
-            {{-- Carte de Statut Actuel --}}
-            <div class="relative overflow-hidden rounded-2xl p-5 sm:p-6 bg-gradient-to-br from-amber-500/10 via-crimson/10 to-transparent border border-amber-500/30 mb-6 shadow-inner">
-                <div class="flex flex-col sm:flex-row items-center sm:items-start gap-4 sm:gap-5 text-center sm:text-left">
-                    <div class="w-20 h-20 sm:w-24 sm:h-24 rounded-2xl bg-gradient-to-tr from-amber-600/30 via-crimson/30 to-violet-600/30 border-2 border-amber-500/50 flex items-center justify-center text-4xl sm:text-5xl shadow-[0_0_20px_rgba(245,158,11,0.25)] flex-shrink-0 animate-pulse">
-                        <span x-text="$store.murim.status?.current?.badge || '🥉'"></span>
-                    </div>
-                    <div class="flex-1 min-w-0">
-                        <div class="flex flex-wrap items-center justify-center sm:justify-start gap-2 mb-1">
-                            <span class="text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full bg-crimson/20 border border-crimson/40 text-crimson"
-                                  x-text="'Palier ' + ($store.murim.status?.current?.level || '1') + ' / 7'"></span>
-                            <span class="text-[10px] font-bold text-amber-300/80" x-text="$store.murim.status?.current?.aura || ''"></span>
-                        </div>
-                        <h4 class="text-xl sm:text-2xl font-black text-white" x-text="$store.murim.status?.current?.title || 'Disciple Tiers-Rang'"></h4>
-                        
-                        {{-- Proverbe / Citation Murim --}}
-                        <p class="text-xs italic text-mist/90 mt-1 mb-3" x-text="'« ' + ($store.murim.status?.current?.quote || 'L\'entraînement commence par le premier pas.') + ' »'"></p>
-
-                        {{-- Stats Clés --}}
-                        <div class="grid grid-cols-2 sm:grid-cols-3 gap-2 text-left">
-                            <div class="p-2.5 rounded-xl bg-ink-deep/60 border border-white/5">
-                                <span class="text-[10px] uppercase font-bold text-mist block">Chapitres Digestés</span>
-                                <span class="text-base font-black text-white" x-text="($store.murim.status?.read_count || 0) + ' chapitres'"></span>
-                            </div>
-                            <div class="p-2.5 rounded-xl bg-ink-deep/60 border border-white/5">
-                                <span class="text-[10px] uppercase font-bold text-mist block">Flamme Martiale</span>
-                                <span class="text-base font-black text-amber-400 flex items-center gap-1">
-                                    🔥 <span x-text="($store.murim.streak || 0) + ' jours'"></span>
-                                </span>
-                            </div>
-                            <div class="col-span-2 sm:col-span-1 p-2.5 rounded-xl bg-ink-deep/60 border border-white/5">
-                                <span class="text-[10px] uppercase font-bold text-mist block">Prochaine Percée</span>
-                                <span class="text-base font-black text-crimson" x-text="$store.murim.status?.next ? ($store.murim.status.chapters_needed + ' ch.') : 'Apex Céleste'"></span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                {{-- Jauge de Progression vers la Percée --}}
-                <template x-if="$store.murim.status?.next">
-                    <div class="mt-5 pt-4 border-t border-white/10">
-                        <div class="flex items-center justify-between text-xs font-bold mb-1.5">
-                            <span class="text-mist flex items-center gap-1.5">
-                                <span>Percée vers :</span>
-                                <span class="text-white" x-text="$store.murim.status.next.title"></span>
-                            </span>
-                            <span class="text-amber-400" x-text="($store.murim.status?.progress_percent || 0) + '%'"></span>
-                        </div>
-                        <div class="h-2.5 w-full bg-ink-deep rounded-full overflow-hidden border border-white/10">
-                            <div class="h-full bg-gradient-to-r from-amber-500 via-crimson to-red-500 rounded-full transition-all duration-500 shadow-[0_0_10px_rgba(255,42,85,0.5)]"
-                                 :style="'width: ' + ($store.murim.status?.progress_percent || 0) + '%'"></div>
-                        </div>
-                        <p class="text-[11px] text-mist/80 mt-1.5 text-right">
-                            Encore <span class="text-amber-400 font-bold" x-text="$store.murim.status.chapters_needed"></span> chapitres à lire pour accomplir la percée.
-                        </p>
-                    </div>
-                </template>
-                <template x-if="!$store.murim.status?.next">
-                    <div class="mt-4 pt-3 border-t border-white/10 text-center text-xs font-bold text-amber-400">
-                        👑 Vous avez atteint le pinacle du Murim ! Votre nom résonne à travers tous les cieux martiaux.
-                    </div>
-                </template>
-            </div>
-
-            {{-- Échelle des 7 Rangs Murim --}}
-            <div class="mb-6">
-                <h5 class="text-xs uppercase font-black tracking-wider text-mist mb-3 flex items-center gap-2">
-                    <span>📜</span>
-                    <span>Les 7 Paliers de la Voie Martiale</span>
-                </h5>
-                <div class="space-y-2">
-                    <template x-for="r in ($store.murim.status?.all_ranks || [])" :key="r.id">
-                        <div :class="r.is_unlocked ? (r.is_current ? 'bg-amber-500/15 border-amber-500/60 shadow-md shadow-amber-500/10' : 'bg-white/[0.04] border-white/10') : 'bg-white/[0.01] border-white/5 opacity-50'"
-                             class="p-3 rounded-xl border flex items-center justify-between gap-3 transition">
-                            <div class="flex items-center gap-3 min-w-0">
-                                <span class="text-2xl flex-shrink-0" x-text="r.badge"></span>
-                                <div class="min-w-0">
-                                    <div class="flex items-center gap-2">
-                                        <span class="text-xs sm:text-sm font-black text-white truncate" x-text="r.title"></span>
-                                        <template x-if="r.is_current">
-                                            <span class="text-[9px] font-black uppercase px-1.5 py-0.5 rounded bg-amber-500 text-black">Actuel</span>
-                                        </template>
-                                    </div>
-                                    <span class="text-[10px] text-mist truncate block" x-text="r.aura"></span>
-                                </div>
-                            </div>
-                            <div class="text-right flex-shrink-0">
-                                <span class="text-xs font-bold" :class="r.is_unlocked ? 'text-amber-400' : 'text-mist'" x-text="r.min_chapters + (r.max_chapters ? '-' + r.max_chapters : '+') + ' ch.'"></span>
-                                <span class="block text-[9px] uppercase font-bold" :class="r.is_unlocked ? 'text-emerald-400' : 'text-mist/60'" x-text="r.is_unlocked ? 'Atteint ✓' : 'Verrouillé 🔒'"></span>
-                            </div>
-                        </div>
-                    </template>
-                </div>
-            </div>
-
-            {{-- Actions & Bouton Discord --}}
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-4 border-t border-white/10">
-                <a href="{{ route('manga.index') }}" @click="$store.murim.open = false"
-                   class="py-3 px-4 rounded-xl bg-gradient-to-r from-crimson to-red-600 hover:from-crimson-hi hover:to-red-500 text-white font-extrabold text-xs sm:text-sm transition text-center shadow-lg shadow-crimson/30 flex items-center justify-center gap-2">
-                    <span>📖</span>
-                    <span>Méditer & S'entraîner (Lire)</span>
-                </a>
-                <a href="https://discord.gg/sMUeFSks4" target="_blank" rel="noopener noreferrer"
-                   class="py-3 px-4 rounded-xl bg-[#5865F2]/20 hover:bg-[#5865F2]/30 text-[#8ea1ff] border border-[#5865F2]/40 font-extrabold text-xs sm:text-sm transition text-center flex items-center justify-center gap-2">
-                    <svg class="w-4 h-4 fill-current" viewBox="0 0 127.14 96.36"><path d="M107.7,8.07A105.15,105.15,0,0,0,81.47,0a72.06,72.06,0,0,0-3.36,6.83A97.68,97.68,0,0,0,49,6.83,72.37,72.37,0,0,0,45.64,0,105.89,105.89,0,0,0,19.39,8.09C2.79,32.65-1.71,56.6.54,80.21h0A105.73,105.73,0,0,0,32.71,96.36,77.7,77.7,0,0,0,39.6,85.25a68.42,68.42,0,0,1-10.85-5.18c.91-.66,1.8-1.34,2.66-2a75.57,75.57,0,0,0,64.32,0c.87.71,1.76,1.39,2.66,2a68.68,68.68,0,0,1-10.87,5.19,77,77,0,0,0,6.89,11.1A105.25,105.25,0,0,0,126.6,80.22h0C129.24,52.84,122.09,29.11,107.7,8.07ZM42.45,65.69C36.18,65.69,31,60,31,53s5-12.74,11.43-12.74S54,46,53.89,53,48.84,65.69,42.45,65.69Zm42.24,0C78.41,65.69,73.31,60,73.31,53s5-12.74,11.43-12.74S96.2,46,96.12,53,91.08,65.69,84.69,65.69Z"/></svg>
-                    <span>Pavillon Martial sur Discord</span>
-                </a>
-            </div>
-        </div>
-    </div>
+    {{-- ═══ Script Navbar Scroll Transparent / Dark Blur ═══ --}}
+    <script>
+    window.addEventListener('scroll', () => {
+        const navbar = document.getElementById('main-navbar');
+        if (!navbar) return;
+        const scrolled = window.scrollY > 60;
+        navbar.style.background = scrolled ? 'rgba(10,10,10,0.95)' : 'transparent';
+        navbar.style.backdropFilter = scrolled ? 'blur(12px)' : 'none';
+        navbar.style.borderBottomColor = scrolled ? 'var(--border)' : 'transparent';
+        navbar.style.transition = 'all 250ms ease';
+    });
+    </script>
 
     @livewireScripts
-    <script>
-        if (window.Alpine && typeof initStores === 'function') {
-            initStores();
-        } else if (window.Alpine && typeof setupNotificationsStore === 'function') {
-            setupNotificationsStore();
-        }
-        // Secours résilient : si Livewire tarde ou échoue à charger Alpine, on charge Alpine automatiquement
-        document.addEventListener('DOMContentLoaded', function() {
-            setTimeout(function() {
-                if (!window.Alpine) {
-                    var s = document.createElement('script');
-                    s.src = 'https://cdn.jsdelivr.net/npm/alpinejs@3.14.8/dist/cdn.min.js';
-                    s.defer = true;
-                    s.onload = function() {
-                        if (typeof initStores === 'function') {
-                            try { initStores(); } catch(e) {}
-                        } else if (typeof setupNotificationsStore === 'function') {
-                            try { setupNotificationsStore(); } catch(e) {}
-                        }
-                    };
-                    document.head.appendChild(s);
-                }
-            }, 300);
-        });
-    </script>
 </body>
 </html>

@@ -1,161 +1,161 @@
 @use('Illuminate\Support\Facades\Storage')
 <x-layouts.public title="Bibliothèque & Mode Rattrapage — Hidden Scan">
 
-    <div class="max-w-6xl mx-auto animate-fade-in" x-data="library()">
+    <div class="max-w-[1140px] mx-auto px-4 py-8" x-data="library()">
 
         {{-- ═══ Header ═══ --}}
-        <div class="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 mb-6 sm:mb-8">
+        <div class="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 mb-8 pb-6 border-b border-[var(--bg-raised)]">
             <div>
-                <h1 class="font-display font-extrabold text-3xl sm:text-4xl tracking-tight flex items-center gap-3 text-white">
-                    <svg class="w-8 h-8 text-[#ff2a55]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <h1 class="font-display text-[32px] font-semibold text-[var(--text-1)] tracking-tight flex items-center gap-3">
+                    <svg class="w-7 h-7 text-[var(--accent)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/>
                     </svg>
                     Bibliothèque
                 </h1>
-                <p class="text-[#7070a0] mt-1 text-sm">Suivez vos lectures, retrouvez vos favoris et rattrapez tous vos chapitres en retard</p>
+                <p class="text-[15px] text-[var(--text-2)] mt-1">Suivez vos lectures, retrouvez vos favoris et rattrapez tous vos chapitres en retard</p>
             </div>
         </div>
 
         {{-- ═══ Onglets de Navigation ═══ --}}
-        <div class="flex gap-1.5 sm:gap-2 p-1.5 bg-[#0d1018] border border-[#1e1e2e] rounded-xl mb-6 sm:mb-8 overflow-x-auto hide-scrollbar">
+        <div class="flex gap-2 p-1 bg-[var(--bg-surface)] border border-[var(--border)] rounded-[6px] mb-8 overflow-x-auto no-scrollbar">
             {{-- Onglet : Mode Rattrapage --}}
             <button @click="setTab('rattrapage')"
-                    class="flex-1 min-w-max py-2 sm:py-2.5 px-3 sm:px-4 rounded-lg text-xs sm:text-sm font-semibold transition-all whitespace-nowrap flex items-center justify-center gap-1.5 sm:gap-2 group"
-                    :class="activeTab === 'rattrapage' ? 'bg-[#ff2a55] text-white shadow-lg shadow-[#ff2a55]/30' : 'text-[#7070a0] hover:text-[#e8e8f0] hover:bg-white/5'">
-                <svg class="w-3.5 h-3.5 sm:w-4 sm:h-4 flex-shrink-0 text-amber-400 group-hover:scale-110 transition-transform" fill="currentColor" viewBox="0 0 20 20">
-                    <path fill-rule="evenodd" d="M11.3 1.046A1 1 0 0112 2v5h4a1 1 0 01.82 1.573l-7 10A1 1 0 018 18v-5H4a1 1 0 01-.82-1.573l7-10a1 1 0 011.12-.38z" clip-rule="evenodd"/>
+                    type="button"
+                    class="flex-1 min-w-max py-2.5 px-4 rounded-[4px] text-[13px] font-semibold transition-colors whitespace-nowrap flex items-center justify-center gap-2"
+                    :class="activeTab === 'rattrapage' ? 'bg-[var(--accent)] text-white' : 'text-[var(--text-2)] hover:text-[var(--text-1)] hover:bg-[var(--bg-raised)]'">
+                <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
                 </svg>
                 <span>Rattrapage</span>
                 <span x-show="catchUpCount > 0"
                       x-text="catchUpCount"
-                      class="px-1.5 py-0.5 rounded-full text-[10px] font-extrabold leading-none transition-colors"
-                      :class="activeTab === 'rattrapage' ? 'bg-white text-[#ff2a55]' : 'bg-[#ff2a55] text-white animate-pulse'"></span>
+                      class="px-1.5 py-0.5 rounded-[4px] text-[10px] font-bold leading-none"
+                      :class="activeTab === 'rattrapage' ? 'bg-white text-[var(--accent)]' : 'bg-[var(--accent)] text-white'"></span>
             </button>
 
             {{-- Onglet : En cours --}}
             <button @click="setTab('progress')"
-                    class="flex-1 min-w-max py-2 sm:py-2.5 px-3 sm:px-4 rounded-lg text-xs sm:text-sm font-semibold transition-all whitespace-nowrap flex items-center justify-center gap-1.5 sm:gap-2"
-                    :class="activeTab === 'progress' ? 'bg-[#ff2a55] text-white shadow-lg shadow-[#ff2a55]/30' : 'text-[#7070a0] hover:text-[#e8e8f0] hover:bg-white/5'">
-                <svg class="w-3.5 h-3.5 sm:w-4 sm:h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/></svg>
+                    type="button"
+                    class="flex-1 min-w-max py-2.5 px-4 rounded-[4px] text-[13px] font-semibold transition-colors whitespace-nowrap flex items-center justify-center gap-2"
+                    :class="activeTab === 'progress' ? 'bg-[var(--accent)] text-white' : 'text-[var(--text-2)] hover:text-[var(--text-1)] hover:bg-[var(--bg-raised)]'">
+                <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/></svg>
                 <span>En cours ({{ count($mangasWithProgress) }})</span>
             </button>
 
             {{-- Onglet : Favoris --}}
             <button @click="setTab('favorites')"
-                    class="flex-1 min-w-max py-2 sm:py-2.5 px-3 sm:px-4 rounded-lg text-xs sm:text-sm font-semibold transition-all whitespace-nowrap flex items-center justify-center gap-1.5 sm:gap-2"
-                    :class="activeTab === 'favorites' ? 'bg-[#ff2a55] text-white shadow-lg shadow-[#ff2a55]/30' : 'text-[#7070a0] hover:text-[#e8e8f0] hover:bg-white/5'">
-                <svg class="w-3.5 h-3.5 sm:w-4 sm:h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/></svg>
+                    type="button"
+                    class="flex-1 min-w-max py-2.5 px-4 rounded-[4px] text-[13px] font-semibold transition-colors whitespace-nowrap flex items-center justify-center gap-2"
+                    :class="activeTab === 'favorites' ? 'bg-[var(--accent)] text-white' : 'text-[var(--text-2)] hover:text-[var(--text-1)] hover:bg-[var(--bg-raised)]'">
+                <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/></svg>
                 <span>Favoris (<span x-text="favorites.length">0</span>)</span>
             </button>
 
             {{-- Onglet : Historique --}}
             <button @click="setTab('history')"
-                    class="flex-1 min-w-max py-2 sm:py-2.5 px-3 sm:px-4 rounded-lg text-xs sm:text-sm font-semibold transition-all whitespace-nowrap flex items-center justify-center gap-1.5 sm:gap-2"
-                    :class="activeTab === 'history' ? 'bg-[#ff2a55] text-white shadow-lg shadow-[#ff2a55]/30' : 'text-[#7070a0] hover:text-[#e8e8f0] hover:bg-white/5'">
-                <svg class="w-3.5 h-3.5 sm:w-4 sm:h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                    type="button"
+                    class="flex-1 min-w-max py-2.5 px-4 rounded-[4px] text-[13px] font-semibold transition-colors whitespace-nowrap flex items-center justify-center gap-2"
+                    :class="activeTab === 'history' ? 'bg-[var(--accent)] text-white' : 'text-[var(--text-2)] hover:text-[var(--text-1)] hover:bg-[var(--bg-raised)]'">
+                <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
                 <span>Historique (<span x-text="history.length">0</span>)</span>
             </button>
 
-            {{-- Onglet : Recommandations "Si t'as aimé..." --}}
+            {{-- Onglet : Recommandations --}}
             <button @click="setTab('recommendations')"
-                    class="flex-1 min-w-max py-2 sm:py-2.5 px-3 sm:px-4 rounded-lg text-xs sm:text-sm font-semibold transition-all whitespace-nowrap flex items-center justify-center gap-1.5 sm:gap-2 group"
-                    :class="activeTab === 'recommendations' ? 'bg-[#ff2a55] text-white shadow-lg shadow-[#ff2a55]/30' : 'text-[#7070a0] hover:text-[#e8e8f0] hover:bg-white/5'">
-                <svg class="w-3.5 h-3.5 sm:w-4 sm:h-4 flex-shrink-0 text-amber-400 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    type="button"
+                    class="flex-1 min-w-max py-2.5 px-4 rounded-[4px] text-[13px] font-semibold transition-colors whitespace-nowrap flex items-center justify-center gap-2"
+                    :class="activeTab === 'recommendations' ? 'bg-[var(--accent)] text-white' : 'text-[var(--text-2)] hover:text-[var(--text-1)] hover:bg-[var(--bg-raised)]'">
+                <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
                 </svg>
-                <span>Si t'as aimé...</span>
-                <span class="text-[10px] px-1.5 py-0.5 rounded-full bg-amber-500/20 text-amber-300 font-extrabold border border-amber-500/30">POUR TOI</span>
+                <span>Recommandations</span>
             </button>
         </div>
 
         {{-- ══════════════════════════════════════════════════════════════ --}}
         {{-- ═══ Onglet 0 : MODE RATTRAPAGE                           ═══ --}}
         {{-- ══════════════════════════════════════════════════════════════ --}}
-        <div x-show="activeTab === 'rattrapage'" x-cloak class="animate-fade-in-up">
+        <div x-show="activeTab === 'rattrapage'" x-cloak>
 
             @guest
                 {{-- Invitation de connexion pour les visiteurs non connectés --}}
-                <div class="mb-6 bg-gradient-to-r from-[#1c1830] to-[#12121a] border border-[#3b3260] rounded-2xl p-4 sm:p-6 flex flex-col sm:flex-row items-center justify-between gap-4 shadow-xl">
-                    <div class="flex items-center gap-3.5">
-                        <div class="w-11 h-11 rounded-xl bg-[#ff2a55]/20 border border-[#ff2a55]/30 flex items-center justify-center text-amber-400 flex-shrink-0">
-                            <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                                <path fill-rule="evenodd" d="M11.3 1.046A1 1 0 0112 2v5h4a1 1 0 01.82 1.573l-7 10A1 1 0 018 18v-5H4a1 1 0 01-.82-1.573l7-10a1 1 0 011.12-.38z" clip-rule="evenodd"/>
+                <div class="mb-8 bg-[var(--bg-surface)] border border-[var(--border)] rounded-[6px] p-6 flex flex-col sm:flex-row items-center justify-between gap-4">
+                    <div class="flex items-center gap-4">
+                        <div class="w-10 h-10 rounded-[4px] bg-[var(--bg-raised)] border border-[var(--border)] flex items-center justify-center text-[var(--accent)] flex-shrink-0">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
                             </svg>
                         </div>
                         <div>
-                            <h3 class="text-white font-bold text-sm sm:text-base">Synchronisez votre Mode Rattrapage</h3>
-                            <p class="text-xs text-[#9090b8] mt-0.5">Connectez-vous pour enregistrer votre progression en ligne et rattraper vos chapitres d'un coup sur tous vos appareils.</p>
+                            <h3 class="text-[var(--text-1)] font-semibold text-[15px]">Synchronisez votre progression</h3>
+                            <p class="text-[13px] text-[var(--text-2)] mt-0.5">Connectez-vous pour enregistrer vos lectures et rattraper vos chapitres sur tous vos appareils.</p>
                         </div>
                     </div>
-                    <div class="flex items-center gap-2 w-full sm:w-auto flex-shrink-0">
+                    <div class="flex items-center gap-3 w-full sm:w-auto flex-shrink-0">
                         <a href="{{ route('login') }}" class="btn-primary text-xs py-2 px-4 w-full sm:w-auto text-center">Se connecter</a>
-                        <a href="{{ route('register') }}" class="px-3.5 py-2 rounded-xl bg-white/10 hover:bg-white/15 text-white text-xs font-semibold transition text-center w-full sm:w-auto">Créer un compte</a>
+                        <a href="{{ route('register') }}" class="btn-secondary text-xs py-2 px-4 w-full sm:w-auto text-center">Créer un compte</a>
                     </div>
                 </div>
             @endguest
 
             <template x-if="catchUpCount > 0">
-                <div class="space-y-4 sm:space-y-5">
+                <div class="space-y-6">
                     {{-- ── Barre d'outils Rattrapage ── --}}
-                    <div class="bg-[#0d1018] border border-[#1e1e2e] rounded-2xl p-3.5 sm:p-4 flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3 sm:gap-4 shadow-xl">
+                    <div class="bg-[var(--bg-surface)] border border-[var(--border)] rounded-[6px] p-4 flex flex-col md:flex-row items-stretch md:items-center justify-between gap-4">
                         {{-- Compteur & Résumé --}}
                         <div class="flex items-center gap-3">
-                            <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-[#ff2a55]/20 to-[#f59e0b]/20 border border-[#ff2a55]/30 flex items-center justify-center text-amber-400 flex-shrink-0 shadow-inner">
-                                <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                                    <path fill-rule="evenodd" d="M11.3 1.046A1 1 0 0112 2v5h4a1 1 0 01.82 1.573l-7 10A1 1 0 018 18v-5H4a1 1 0 01-.82-1.573l7-10a1 1 0 011.12-.38z" clip-rule="evenodd"/>
+                            <div class="w-10 h-10 rounded-[4px] bg-[var(--bg-raised)] border border-[var(--border)] flex items-center justify-center text-[var(--accent)] flex-shrink-0">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
                                 </svg>
                             </div>
                             <div>
-                                <div class="flex items-center gap-2 flex-wrap">
-                                    <h2 class="text-white font-bold text-base sm:text-lg">Chapitres non lus</h2>
-                                    <span class="px-2 py-0.5 rounded-full text-xs font-extrabold bg-[#ff2a55] text-white" x-text="catchUpCount"></span>
+                                <div class="flex items-center gap-2">
+                                    <h2 class="text-[var(--text-1)] font-semibold text-[16px]">Chapitres non lus</h2>
+                                    <span class="px-2 py-0.5 rounded-[4px] text-xs font-bold bg-[var(--accent)] text-white" x-text="catchUpCount"></span>
                                 </div>
-                                <p class="text-xs text-[#7070a0]">
-                                    Sur <span class="text-white font-semibold" x-text="seriesWithUnreadCount"></span> manga(s) en cours de lecture
+                                <p class="text-xs text-[var(--text-3)] mt-0.5">
+                                    Sur <span class="text-[var(--text-1)] font-medium" x-text="seriesWithUnreadCount"></span> série(s) en cours de lecture
                                 </p>
                             </div>
                         </div>
 
                         {{-- Contrôles : Recherche, Tri, Vue --}}
-                        <div class="flex flex-wrap items-center gap-2 sm:gap-3">
+                        <div class="flex flex-wrap items-center gap-2">
                             {{-- Champ de recherche par série --}}
                             <div class="relative flex-1 sm:w-48 md:w-56">
-                                <svg class="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-[#7070a0]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <svg class="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-3)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
                                 </svg>
                                 <input type="text"
                                        x-model="filterText"
                                        placeholder="Filtrer une série..."
-                                       class="w-full bg-[#161622] border border-[#1e1e2e] focus:border-[#ff2a55] rounded-xl pl-9 pr-3 py-1.5 text-xs text-white placeholder-[#7070a0] outline-none transition">
+                                       class="w-full bg-[var(--bg-base)] border border-[var(--border)] focus:border-[var(--accent)] rounded-[4px] pl-9 pr-3 py-1.5 text-xs text-[var(--text-1)] placeholder-[var(--text-3)] outline-none transition">
                             </div>
 
                             {{-- Tri chronologique --}}
                             <button @click="sortOrder = (sortOrder === 'desc' ? 'asc' : 'desc')"
-                                    class="px-3 py-1.5 rounded-xl bg-[#161622] border border-[#1e1e2e] hover:border-white/20 text-[#a0a6b8] hover:text-white text-xs font-medium flex items-center gap-1.5 transition"
-                                    :title="sortOrder === 'desc' ? 'Trié du plus récent au plus ancien' : 'Trié du plus ancien au plus récent'">
-                                <svg class="w-3.5 h-3.5 text-[#ff2a55]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    type="button"
+                                    class="px-3 py-1.5 rounded-[4px] bg-[var(--bg-raised)] border border-[var(--border)] hover:border-[var(--text-3)] text-[var(--text-2)] hover:text-[var(--text-1)] text-xs font-medium flex items-center gap-1.5 transition">
+                                <svg class="w-3.5 h-3.5 text-[var(--accent)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4h13M3 8h9m-9 4h6m4 0l4-4m0 0l4 4m-4-4v12"/>
                                 </svg>
                                 <span class="hidden sm:inline" x-text="sortOrder === 'desc' ? 'Récents' : 'Anciens'"></span>
                             </button>
 
                             {{-- Toggle d'affichage (Flux vs Par Série) --}}
-                            <div class="flex bg-[#161622] border border-[#1e1e2e] rounded-xl p-0.5">
+                            <div class="flex bg-[var(--bg-base)] border border-[var(--border)] rounded-[4px] p-0.5">
                                 <button @click="catchUpView = 'feed'"
-                                        class="px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-semibold transition flex items-center gap-1.5"
-                                        :class="catchUpView === 'feed' ? 'bg-[#ff2a55] text-white shadow' : 'text-[#7070a0] hover:text-white'">
-                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16"/>
-                                    </svg>
-                                    <span class="hidden sm:inline">Flux</span>
+                                        type="button"
+                                        class="px-3 py-1 rounded-[4px] text-xs font-semibold transition"
+                                        :class="catchUpView === 'feed' ? 'bg-[var(--accent)] text-white' : 'text-[var(--text-2)] hover:text-[var(--text-1)]'">
+                                    Flux
                                 </button>
                                 <button @click="catchUpView = 'series'"
-                                        class="px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-semibold transition flex items-center gap-1.5"
-                                        :class="catchUpView === 'series' ? 'bg-[#ff2a55] text-white shadow' : 'text-[#7070a0] hover:text-white'">
-                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/>
-                                    </svg>
-                                    <span class="hidden sm:inline">Par série</span>
+                                        type="button"
+                                        class="px-3 py-1 rounded-[4px] text-xs font-semibold transition"
+                                        :class="catchUpView === 'series' ? 'bg-[var(--accent)] text-white' : 'text-[var(--text-2)] hover:text-[var(--text-1)]'">
+                                    Par série
                                 </button>
                             </div>
                         </div>
@@ -164,47 +164,35 @@
                     {{-- ── VUE 1 : FLUX CHRONOLOGIQUE DES CHAPITRES ── --}}
                     <div x-show="catchUpView === 'feed'" class="space-y-3">
                         <template x-for="item in filteredCatchUpChapters" :key="item.chapter_id">
-                            <div class="bg-[#0d1018] border border-[#1e1e2e] hover:border-[#ff2a55]/40 rounded-2xl p-3 sm:p-4 flex items-center justify-between gap-3 sm:gap-4 transition-all duration-200 shadow-md group">
+                            <div class="bg-[var(--bg-surface)] border border-[var(--border)] hover:border-[var(--accent)] rounded-[6px] p-4 flex items-center justify-between gap-4 transition-colors">
                                 {{-- Thumbnail + Titre Manga + Détails Chapitre --}}
-                                <div class="flex items-center gap-3 sm:gap-4 min-w-0">
-                                    <a :href="item.url" class="relative w-12 sm:w-14 aspect-[2/3] rounded-xl overflow-hidden bg-[#16161f] border border-white/5 flex-shrink-0 group-hover:scale-105 transition-transform duration-300">
+                                <div class="flex items-center gap-4 min-w-0">
+                                    <a :href="item.url" class="relative w-12 aspect-[3/4] rounded-[4px] overflow-hidden bg-[var(--bg-raised)] border border-[var(--border)] flex-shrink-0">
                                         <template x-if="item.manga_cover">
                                             <img :src="item.manga_cover" :alt="item.manga_title" class="w-full h-full object-cover" loading="lazy">
                                         </template>
                                         <template x-if="!item.manga_cover">
-                                            <div class="w-full h-full flex items-center justify-center p-1 text-[10px] text-[#7070a0] text-center">
-                                                📖
-                                            </div>
+                                            <div class="w-full h-full flex items-center justify-center text-xs text-[var(--text-3)]">📖</div>
                                         </template>
                                     </a>
 
                                     <div class="min-w-0">
-                                        {{-- Titre de l'œuvre & Badges --}}
+                                        {{-- Titre & Type --}}
                                         <div class="flex items-center gap-2 flex-wrap">
-                                            <a :href="'/manga/' + item.manga_slug" class="font-bold text-white hover:text-[#ff2a55] transition text-sm sm:text-base truncate" x-text="item.manga_title"></a>
-                                            <span class="text-[10px] font-bold uppercase tracking-wider text-[#a78bfa] bg-[#2a1a4a]/60 border border-[#4a2a8a]/40 px-1.5 py-0.5 rounded" x-text="item.manga_type"></span>
-                                            <template x-if="item.is_recent">
-                                                <span class="px-1.5 py-0.5 rounded text-[9px] font-extrabold uppercase bg-amber-500/20 text-amber-300 border border-amber-500/30">Nouveau</span>
-                                            </template>
+                                            <a :href="'/manga/' + item.manga_slug" class="font-display font-semibold text-[var(--text-1)] hover:text-[var(--accent)] transition text-[15px] truncate" x-text="item.manga_title"></a>
+                                            <span class="text-[11px] font-semibold uppercase tracking-wider text-[var(--text-3)] bg-[var(--bg-raised)] px-1.5 py-0.5 rounded-[4px]" x-text="item.manga_type"></span>
                                         </div>
 
                                         {{-- Chapitre --}}
-                                        <div class="mt-1 flex items-center gap-2 flex-wrap">
-                                            <a :href="item.url" class="text-xs sm:text-sm font-extrabold text-red-400 hover:text-white transition flex items-center gap-1 font-mono">
-                                                <span>Chapitre</span>
-                                                <span x-text="item.chapter_number"></span>
+                                        <div class="mt-1 flex items-center gap-2 flex-wrap text-xs">
+                                            <a :href="item.url" class="font-medium text-[var(--accent)] hover:underline">
+                                                <span>Chapitre</span> <span x-text="item.chapter_number"></span>
                                             </a>
                                             <template x-if="item.chapter_title">
-                                                <span class="text-xs text-[#8080a8] truncate max-w-[180px] sm:max-w-xs" x-text="'— ' + item.chapter_title"></span>
+                                                <span class="text-[var(--text-3)] truncate max-w-[200px] sm:max-w-xs" x-text="'— ' + item.chapter_title"></span>
                                             </template>
-                                        </div>
-
-                                        {{-- Date de publication --}}
-                                        <div class="mt-1 text-[11px] text-[#7070a0] flex items-center gap-1.5">
-                                            <svg class="w-3.5 h-3.5 text-[#50507a]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                                            </svg>
-                                            <span x-text="item.published_at_human || item.published_at_formatted"></span>
+                                            <span class="text-[var(--text-3)]">•</span>
+                                            <span class="text-[var(--text-3)]" x-text="item.published_at_human || item.published_at_formatted"></span>
                                         </div>
                                     </div>
                                 </div>
@@ -212,21 +200,15 @@
                                 {{-- Boutons d'action : Marquer lu & Lire --}}
                                 <div class="flex items-center gap-2 flex-shrink-0">
                                     <button @click="markAsRead(item)"
+                                            type="button"
                                             :disabled="item._marking"
-                                            class="p-2 sm:px-3 sm:py-2 rounded-xl bg-white/5 hover:bg-emerald-500/20 text-[#7070a0] hover:text-emerald-400 border border-white/5 hover:border-emerald-500/30 transition text-xs font-semibold flex items-center gap-1.5"
+                                            class="py-1.5 px-3 rounded-[4px] bg-[var(--bg-raised)] hover:bg-[var(--border)] text-[var(--text-2)] hover:text-[var(--text-1)] border border-[var(--border)] transition text-xs font-semibold"
                                             title="Marquer comme lu">
-                                        <svg class="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/>
-                                        </svg>
                                         <span class="hidden md:inline">Marquer lu</span>
+                                        <span class="md:hidden">✓</span>
                                     </button>
 
-                                    <a :href="item.url"
-                                       class="py-2 px-3 sm:px-4 rounded-xl bg-[#ff2a55] hover:bg-[#e01640] text-white text-xs sm:text-sm font-bold flex items-center gap-1.5 shadow-md shadow-[#ff2a55]/20 transition-all active:scale-95">
-                                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/>
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                                        </svg>
+                                    <a :href="item.url" class="btn-primary text-xs py-1.5 px-4 inline-flex items-center gap-1.5">
                                         <span>Lire</span>
                                     </a>
                                 </div>
@@ -234,7 +216,7 @@
                         </template>
 
                         <template x-if="filteredCatchUpChapters.length === 0">
-                            <div class="text-center py-12 text-[#7070a0] text-sm bg-[#0d1018] border border-[#1e1e2e] rounded-2xl">
+                            <div class="text-center py-12 text-[var(--text-3)] text-[14px] bg-[var(--bg-surface)] border border-[var(--border)] rounded-[6px]">
                                 Aucun chapitre ne correspond à votre recherche.
                             </div>
                         </template>
@@ -243,23 +225,23 @@
                     {{-- ── VUE 2 : PAR SÉRIE ── --}}
                     <div x-show="catchUpView === 'series'" class="space-y-4">
                         <template x-for="mangaGroup in filteredCatchUpByManga" :key="mangaGroup.manga_id">
-                            <div class="bg-[#0d1018] border border-[#1e1e2e] rounded-2xl p-4 sm:p-5 hover:border-[#ff2a55]/30 transition shadow-lg">
+                            <div class="bg-[var(--bg-surface)] border border-[var(--border)] rounded-[6px] p-6">
                                 {{-- Manga Header --}}
-                                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-[#1e1e2e]">
-                                    <div class="flex items-center gap-3.5 min-w-0">
-                                        <a :href="'/manga/' + mangaGroup.manga_slug" class="w-12 h-16 sm:w-14 sm:h-20 rounded-xl overflow-hidden bg-[#16161f] border border-white/5 flex-shrink-0">
+                                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-[var(--bg-raised)]">
+                                    <div class="flex items-center gap-4 min-w-0">
+                                        <a :href="'/manga/' + mangaGroup.manga_slug" class="w-12 aspect-[3/4] rounded-[4px] overflow-hidden bg-[var(--bg-raised)] border border-[var(--border)] flex-shrink-0">
                                             <template x-if="mangaGroup.manga_cover">
                                                 <img :src="mangaGroup.manga_cover" :alt="mangaGroup.manga_title" class="w-full h-full object-cover">
                                             </template>
                                             <template x-if="!mangaGroup.manga_cover">
-                                                <div class="w-full h-full flex items-center justify-center text-xs text-[#7070a0]">📖</div>
+                                                <div class="w-full h-full flex items-center justify-center text-xs text-[var(--text-3)]">📖</div>
                                             </template>
                                         </a>
                                         <div class="min-w-0">
-                                            <a :href="'/manga/' + mangaGroup.manga_slug" class="block font-bold text-white hover:text-[#ff2a55] transition text-base sm:text-lg truncate" x-text="mangaGroup.manga_title"></a>
+                                            <a :href="'/manga/' + mangaGroup.manga_slug" class="block font-display font-semibold text-[var(--text-1)] hover:text-[var(--accent)] transition text-[16px] truncate" x-text="mangaGroup.manga_title"></a>
                                             <div class="flex items-center gap-2 mt-1">
-                                                <span class="text-[10px] font-bold uppercase tracking-wider text-[#a78bfa] bg-[#2a1a4a]/60 border border-[#4a2a8a]/40 px-1.5 py-0.5 rounded" x-text="mangaGroup.manga_type"></span>
-                                                <span class="text-xs font-extrabold text-[#ef4444] bg-[#ff2a55]/15 border border-[#ff2a55]/30 px-2 py-0.5 rounded-full" x-text="mangaGroup.unread_count + ' non lu(s)'"></span>
+                                                <span class="text-[11px] font-semibold uppercase tracking-wider text-[var(--text-3)] bg-[var(--bg-raised)] px-1.5 py-0.5 rounded-[4px]" x-text="mangaGroup.manga_type"></span>
+                                                <span class="text-xs font-medium text-[var(--accent)]" x-text="mangaGroup.unread_count + ' non lu(s)'"></span>
                                             </div>
                                         </div>
                                     </div>
@@ -267,15 +249,13 @@
                                     {{-- Actions par série --}}
                                     <div class="flex items-center gap-2 self-end sm:self-center">
                                         <button @click="markSeriesAllRead(mangaGroup)"
-                                                class="px-3 py-1.5 rounded-xl bg-white/5 hover:bg-emerald-500/20 text-[#a0a6b8] hover:text-emerald-300 border border-white/5 hover:border-emerald-500/30 text-xs font-semibold transition flex items-center gap-1.5">
-                                            <svg class="w-3.5 h-3.5 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                                                type="button"
+                                                class="px-3 py-1.5 rounded-[4px] bg-[var(--bg-raised)] hover:bg-[var(--border)] text-[var(--text-2)] hover:text-[var(--text-1)] border border-[var(--border)] text-xs font-semibold transition">
                                             <span>Tout marquer lu</span>
                                         </button>
 
                                         <template x-if="mangaGroup.earliest_unread">
-                                            <a :href="mangaGroup.earliest_unread.url"
-                                               class="py-1.5 px-3.5 rounded-xl bg-[#ff2a55] hover:bg-[#e01640] text-white text-xs font-bold transition flex items-center gap-1.5 shadow-md shadow-[#ff2a55]/20">
-                                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/></svg>
+                                            <a :href="mangaGroup.earliest_unread.url" class="btn-primary text-xs py-1.5 px-3">
                                                 <span>Reprendre (Ch. <span x-text="mangaGroup.earliest_unread.chapter_number"></span>)</span>
                                             </a>
                                         </template>
@@ -283,24 +263,25 @@
                                 </div>
 
                                 {{-- Liste des chapitres en attente pour cette série --}}
-                                <div class="mt-3.5">
-                                    <div class="text-[11px] font-semibold uppercase tracking-wider text-[#7070a0] mb-2">Chapitres en attente :</div>
+                                <div class="mt-4">
+                                    <div class="text-[11px] font-semibold uppercase tracking-wider text-[var(--text-3)] mb-2">Chapitres en attente :</div>
                                     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
                                         <template x-for="ch in mangaGroup.unread_chapters" :key="ch.chapter_id">
-                                            <div class="bg-[#161622] border border-[#1e1e2e] hover:border-white/20 rounded-xl p-2.5 flex items-center justify-between gap-2 transition group/ch">
+                                            <div class="bg-[var(--bg-base)] border border-[var(--border)] hover:border-[var(--accent)] rounded-[4px] p-2.5 flex items-center justify-between gap-2 transition">
                                                 <a :href="ch.url" class="min-w-0 flex-1 flex items-center gap-2">
-                                                    <span class="text-xs font-bold text-red-400 font-mono group-hover/ch:text-white transition">Ch. <span x-text="ch.chapter_number"></span></span>
-                                                    <span class="text-[11px] text-[#7070a0] truncate" x-text="ch.published_at_human || ch.published_at_formatted"></span>
+                                                    <span class="text-xs font-semibold text-[var(--accent)]">Ch. <span x-text="ch.chapter_number"></span></span>
+                                                    <span class="text-[11px] text-[var(--text-3)] truncate" x-text="ch.published_at_human || ch.published_at_formatted"></span>
                                                 </a>
                                                 <div class="flex items-center gap-1.5 flex-shrink-0">
                                                     <button @click="markAsRead(ch)"
+                                                            type="button"
                                                             :disabled="ch._marking"
-                                                            class="p-1 rounded-lg bg-white/5 hover:bg-emerald-500/20 text-[#7070a0] hover:text-emerald-400 transition"
+                                                            class="p-1 rounded-[4px] bg-[var(--bg-raised)] hover:bg-[var(--border)] text-[var(--text-2)] hover:text-[var(--text-1)] transition"
                                                             title="Marquer comme lu">
-                                                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>
+                                                        <span class="text-xs">✓</span>
                                                     </button>
                                                     <a :href="ch.url"
-                                                       class="px-2 py-1 rounded-lg bg-[#ff2a55]/20 hover:bg-[#ff2a55] text-[#ef4444] hover:text-white text-[11px] font-bold transition">
+                                                       class="px-2 py-0.5 rounded-[4px] bg-[var(--accent)] text-white text-[11px] font-semibold hover:bg-[var(--accent-hover)] transition">
                                                         Lire
                                                     </a>
                                                 </div>
@@ -316,21 +297,21 @@
 
             {{-- ── État vide : quand 100% à jour ── --}}
             <template x-if="catchUpCount === 0">
-                <div class="text-center py-16 sm:py-20 bg-[#0d1018] border border-[#1e1e2e] rounded-2xl p-6 sm:p-10 relative overflow-hidden">
-                    <div class="w-16 h-16 sm:w-20 sm:h-20 mx-auto rounded-2xl bg-emerald-500/10 border border-emerald-500/25 flex items-center justify-center mb-4 text-emerald-400 shadow-lg shadow-emerald-500/10">
-                        <svg class="w-8 h-8 sm:w-10 sm:h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                <div class="text-center py-16 bg-[var(--bg-surface)] border border-[var(--border)] rounded-[6px] p-8">
+                    <div class="w-12 h-12 mx-auto rounded-[4px] bg-[var(--bg-raised)] border border-[var(--border)] flex items-center justify-center mb-4 text-[var(--text-1)]">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
                         </svg>
                     </div>
-                    <h3 class="text-xl sm:text-2xl font-bold text-white mb-2">Vous êtes à jour !</h3>
-                    <p class="text-[#7070a0] mb-6 max-w-md mx-auto text-xs sm:text-sm">
-                        Aucun chapitre non lu sur vos séries en cours. Dès qu'un nouveau chapitre sortira, vous le retrouverez directement ici sans avoir à fouiller manga par manga.
+                    <h3 class="text-lg font-semibold text-[var(--text-1)] mb-2">Vous êtes à jour</h3>
+                    <p class="text-[var(--text-2)] mb-6 max-w-md mx-auto text-sm">
+                        Aucun chapitre non lu sur vos séries en cours. Dès qu'un nouveau chapitre sortira, vous le retrouverez directement ici.
                     </p>
                     <div class="flex flex-wrap items-center justify-center gap-3">
-                        <button @click="setTab('progress')" class="px-4 py-2.5 rounded-xl bg-white/10 hover:bg-white/15 text-white text-xs sm:text-sm font-semibold transition">
+                        <button @click="setTab('progress')" type="button" class="btn-secondary text-xs py-2 px-4">
                             Voir mes lectures en cours
                         </button>
-                        <a href="{{ route('manga.index') }}" class="btn-primary inline-flex items-center gap-2 text-xs sm:text-sm">
+                        <a href="{{ route('manga.index') }}" class="btn-primary text-xs py-2 px-4">
                             Explorer le catalogue
                         </a>
                     </div>
@@ -341,9 +322,9 @@
         {{-- ══════════════════════════════════════════════════════════════ --}}
         {{-- ═══ Onglet 1 : PROGRESSION EN COURS                     ═══ --}}
         {{-- ══════════════════════════════════════════════════════════════ --}}
-        <div x-show="activeTab === 'progress'" x-cloak class="animate-fade-in-up">
+        <div x-show="activeTab === 'progress'" x-cloak>
             @if(count($mangasWithProgress) > 0)
-                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                     @foreach($mangasWithProgress as $item)
                         @php
                             $manga = $item['manga'];
@@ -352,13 +333,13 @@
                             $percent = $item['percent'];
                             $resumeChapter = $item['resume_chapter'];
                         @endphp
-                        <div class="bg-[#0d1018] border border-[#1e1e2e] rounded-2xl p-3 sm:p-4 flex gap-3 sm:gap-4 hover:border-[#ff2a55]/40 transition-all duration-300 shadow-xl group">
+                        <div class="bg-[var(--bg-surface)] border border-[var(--border)] hover:border-[var(--accent)] rounded-[6px] p-4 flex gap-4 transition-colors">
                             {{-- Cover --}}
-                            <a href="{{ route('manga.show', $manga->slug) }}" class="flex-shrink-0 w-20 sm:w-28 rounded-xl overflow-hidden aspect-[2/3] bg-[#16161f] relative border border-white/5 shadow-md">
+                            <a href="{{ route('manga.show', $manga->slug) }}" class="flex-shrink-0 w-20 aspect-[3/4] rounded-[4px] overflow-hidden bg-[var(--bg-raised)] border border-[var(--border)]">
                                 @if($manga->cover_image)
-                                    <img src="{{ Storage::url($manga->cover_image) }}" alt="{{ $manga->title }}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" loading="lazy">
+                                    <img src="{{ Storage::url($manga->cover_image) }}" alt="{{ $manga->title }}" class="w-full h-full object-cover" loading="lazy">
                                 @else
-                                    <div class="w-full h-full flex items-center justify-center p-2 text-center text-xs text-[#7070a0]">
+                                    <div class="w-full h-full flex items-center justify-center p-2 text-center text-xs text-[var(--text-3)]">
                                         {{ $manga->title }}
                                     </div>
                                 @endif
@@ -367,38 +348,37 @@
                             {{-- Info & Actions --}}
                             <div class="flex-1 flex flex-col justify-between min-w-0">
                                 <div>
-                                    <a href="{{ route('manga.show', $manga->slug) }}" class="block font-bold text-white text-base truncate group-hover:text-[#ff2a55] transition">
+                                    <a href="{{ route('manga.show', $manga->slug) }}" class="block font-display font-semibold text-[var(--text-1)] hover:text-[var(--accent)] transition text-[15px] truncate">
                                         {{ $manga->title }}
                                     </a>
                                     
                                     {{-- Type badge --}}
-                                    <span class="inline-block mt-1 text-[11px] font-semibold uppercase tracking-wider text-[#7070a0]">
+                                    <span class="inline-block mt-1 text-[11px] font-semibold uppercase tracking-wider text-[var(--text-3)]">
                                         {{ $manga->type?->getLabel() ?? 'Œuvre' }}
                                     </span>
 
                                     {{-- Barre de progression --}}
                                     <div class="mt-3">
-                                        <div class="flex items-center justify-between text-xs font-medium text-[#a0a6b8] mb-1.5">
-                                            <span>{{ $readCount }}/{{ $totalChapters }} chapitres lus</span>
-                                            <span class="text-white font-bold">{{ $percent }}%</span>
+                                        <div class="flex items-center justify-between text-xs text-[var(--text-2)] mb-1">
+                                            <span>{{ $readCount }}/{{ $totalChapters }} lus</span>
+                                            <span class="text-[var(--text-1)] font-semibold">{{ $percent }}%</span>
                                         </div>
-                                        <div class="w-full bg-[#1b1c28] rounded-full h-2 overflow-hidden border border-white/5">
-                                            <div class="bg-gradient-to-r from-[#ff2a55] to-[#ef4444] h-2 rounded-full transition-all duration-300" style="width: {{ $percent }}%"></div>
+                                        <div class="w-full bg-[var(--bg-raised)] rounded-[4px] h-1.5 overflow-hidden">
+                                            <div class="bg-[var(--accent)] h-1.5 rounded-[4px] transition-all" style="width: {{ $percent }}%"></div>
                                         </div>
                                     </div>
                                 </div>
 
                                 {{-- Bouton Reprendre --}}
-                                <div class="mt-4 flex items-center gap-2">
+                                <div class="mt-4">
                                     @if($resumeChapter)
                                         <a href="{{ route('chapter.show', [$manga->slug, $resumeChapter->slug]) }}"
-                                           class="flex-1 py-2 px-3 rounded-xl bg-[#ff2a55] hover:bg-[#e01640] text-white text-xs font-bold text-center transition-all shadow-md shadow-[#ff2a55]/25 flex items-center justify-center gap-1.5">
-                                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                                            <span>{{ $percent >= 100 ? 'Relire' : 'Reprendre (Ch. ' . $resumeChapter->number . ')' }}</span>
+                                           class="btn-primary w-full text-xs py-2 text-center block">
+                                            {{ $percent >= 100 ? 'Relire' : 'Reprendre (Ch. ' . $resumeChapter->number . ')' }}
                                         </a>
                                     @else
                                         <a href="{{ route('manga.show', $manga->slug) }}"
-                                           class="flex-1 py-2 px-3 rounded-xl bg-white/10 hover:bg-white/15 text-white text-xs font-semibold text-center transition">
+                                           class="btn-secondary w-full text-xs py-2 text-center block">
                                             Voir la fiche
                                         </a>
                                     @endif
@@ -408,13 +388,10 @@
                     @endforeach
                 </div>
             @else
-                <div class="text-center py-20 bg-[#0d1018] border border-[#1e1e2e] rounded-2xl p-8">
-                    <svg class="w-16 h-16 mx-auto text-[#7070a0]/30 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/>
-                    </svg>
-                    <p class="text-lg text-white font-bold mb-2">Aucune lecture en cours</p>
-                    <p class="text-[#7070a0] mb-6 max-w-md mx-auto text-sm">Cochez les chapitres que vous lisez sur la page d'une œuvre pour suivre automatiquement votre progression ici.</p>
-                    <a href="{{ route('manga.index') }}" class="btn-primary inline-flex items-center gap-2">
+                <div class="text-center py-16 bg-[var(--bg-surface)] border border-[var(--border)] rounded-[6px] p-8">
+                    <p class="text-base text-[var(--text-1)] font-semibold mb-2">Aucune lecture en cours</p>
+                    <p class="text-[var(--text-2)] mb-6 max-w-md mx-auto text-xs">Cochez les chapitres que vous lisez sur la page d'une œuvre pour suivre votre progression ici.</p>
+                    <a href="{{ route('manga.index') }}" class="btn-primary text-xs py-2 px-4">
                         Parcourir le catalogue
                     </a>
                 </div>
@@ -424,71 +401,57 @@
         {{-- ══════════════════════════════════════════════════════════════ --}}
         {{-- ═══ Onglet 2 : FAVORIS                                  ═══ --}}
         {{-- ══════════════════════════════════════════════════════════════ --}}
-        <div x-show="activeTab === 'favorites'" x-cloak class="animate-fade-in-up">
+        <div x-show="activeTab === 'favorites'" x-cloak>
             <template x-if="favorites.length > 0">
-                <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+                <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
                     <template x-for="manga in favorites" :key="manga.slug">
-                        <div class="bg-[#0d1018] border border-[#1e1e2e] rounded-2xl overflow-hidden group relative hover:border-[#ff2a55]/40 transition-all flex flex-col justify-between">
+                        <div class="manga-card bg-[var(--bg-surface)] border border-[var(--border)] rounded-[6px] overflow-hidden flex flex-col justify-between relative group">
                             <a :href="'/manga/' + manga.slug" class="block">
-                                <div class="relative overflow-hidden aspect-[2/3] bg-[#16161f]">
+                                <div class="relative aspect-[3/4] bg-[var(--bg-raised)] overflow-hidden">
                                     <template x-if="manga.cover">
-                                        <img :src="manga.cover" :alt="manga.title" class="w-full h-full object-cover group-hover:scale-105 transition duration-300" loading="lazy">
+                                        <img :src="manga.cover" :alt="manga.title" class="cover w-full h-full object-cover" loading="lazy">
                                     </template>
                                     <template x-if="!manga.cover">
-                                        <div class="w-full h-full flex items-center justify-center p-2 text-center text-xs text-[#7070a0]">
+                                        <div class="w-full h-full flex items-center justify-center p-2 text-center text-xs text-[var(--text-3)]">
                                             <span x-text="manga.title"></span>
                                         </div>
                                     </template>
+                                    <div class="absolute inset-0 card-overlay pointer-events-none"></div>
                                 </div>
                                 <div class="p-3">
-                                    <p class="text-sm font-semibold text-[#e8e8f0] truncate group-hover:text-[#ff2a55] transition" x-text="manga.title"></p>
+                                    <h3 class="font-display font-semibold text-[13px] text-[var(--text-1)] group-hover:text-[var(--accent)] transition-colors line-clamp-2" x-text="manga.title"></h3>
                                     
                                     {{-- Progression si chargée --}}
                                     <template x-if="serverProgress[manga.slug]">
                                         <div class="mt-2">
-                                            <div class="flex items-center justify-between text-[10px] text-[#7070a0] mb-1 font-medium">
+                                            <div class="flex items-center justify-between text-[10px] text-[var(--text-3)] mb-1">
                                                 <span x-text="serverProgress[manga.slug].read_count + '/' + serverProgress[manga.slug].total_chapters + ' lus'"></span>
                                                 <span x-text="serverProgress[manga.slug].percent + '%'"></span>
                                             </div>
-                                            <div class="w-full bg-[#1b1c28] rounded-full h-1.5 overflow-hidden">
-                                                <div class="bg-[#ff2a55] h-1.5 rounded-full" :style="'width: ' + serverProgress[manga.slug].percent + '%'"></div>
+                                            <div class="w-full bg-[var(--bg-raised)] rounded-[4px] h-1 overflow-hidden">
+                                                <div class="bg-[var(--accent)] h-1 rounded-[4px]" :style="'width: ' + serverProgress[manga.slug].percent + '%'"></div>
                                             </div>
                                         </div>
                                     </template>
                                 </div>
                             </a>
 
-                            {{-- Bouton Reprendre & Supprimer --}}
-                            <div class="p-3 pt-0 flex gap-2">
-                                <template x-if="serverProgress[manga.slug] && serverProgress[manga.slug].next_chapter">
-                                    <a :href="serverProgress[manga.slug].next_chapter.url"
-                                       class="flex-1 py-1.5 rounded-lg bg-[#ff2a55] hover:bg-[#e01640] text-white text-[11px] font-bold text-center transition">
-                                        Reprendre
-                                    </a>
-                                </template>
-                                <template x-if="!serverProgress[manga.slug] || !serverProgress[manga.slug].next_chapter">
-                                    <a :href="'/manga/' + manga.slug"
-                                       class="flex-1 py-1.5 rounded-lg bg-white/10 hover:bg-white/15 text-white text-[11px] font-semibold text-center transition">
-                                        Lire
-                                    </a>
-                                </template>
-                            </div>
-
+                            {{-- Bouton Supprimer --}}
                             <button @click.prevent="removeFavorite(manga.slug)"
-                                    class="absolute top-2 right-2 p-1.5 rounded-md bg-[#08080d]/80 text-[#7070a0] hover:text-[#ef4444] hover:bg-[#ef4444]/20 backdrop-blur-sm transition opacity-0 group-hover:opacity-100"
+                                    type="button"
+                                    class="absolute top-2 right-2 p-1.5 rounded-[4px] bg-[rgba(10,10,10,0.85)] text-[var(--text-3)] hover:text-white hover:bg-[var(--accent)] transition opacity-0 group-hover:opacity-100"
                                     title="Retirer des favoris">
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
                             </button>
                         </div>
                     </template>
                 </div>
             </template>
             <template x-if="favorites.length === 0">
-                <div class="text-center py-20 bg-[#0d1018] border border-[#1e1e2e] rounded-2xl p-8">
-                    <svg class="w-16 h-16 mx-auto text-[#7070a0]/30 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/></svg>
-                    <p class="text-lg text-white font-bold mb-2">Aucun favori pour le moment</p>
-                    <p class="text-[#7070a0] mb-6 text-sm">Ajoutez des séries à vos favoris pour les retrouver facilement ici.</p>
-                    <a href="{{ route('manga.index') }}" class="btn-primary">Parcourir le catalogue</a>
+                <div class="text-center py-16 bg-[var(--bg-surface)] border border-[var(--border)] rounded-[6px] p-8">
+                    <p class="text-base text-[var(--text-1)] font-semibold mb-2">Aucun favori pour le moment</p>
+                    <p class="text-[var(--text-2)] mb-6 text-xs">Ajoutez des séries à vos favoris pour les retrouver facilement ici.</p>
+                    <a href="{{ route('manga.index') }}" class="btn-primary text-xs py-2 px-4">Parcourir le catalogue</a>
                 </div>
             </template>
         </div>
@@ -496,42 +459,43 @@
         {{-- ══════════════════════════════════════════════════════════════ --}}
         {{-- ═══ Onglet 3 : HISTORIQUE                                ═══ --}}
         {{-- ══════════════════════════════════════════════════════════════ --}}
-        <div x-show="activeTab === 'history'" x-cloak class="animate-fade-in-up">
+        <div x-show="activeTab === 'history'" x-cloak>
             <template x-if="history.length > 0">
-                <div class="space-y-3">
-                    <div class="flex justify-end mb-2">
-                        <button @click="clearHistory()" class="text-xs text-[#7070a0] hover:text-[#ef4444] transition flex items-center gap-1 font-medium">
+                <div class="space-y-4">
+                    <div class="flex justify-end">
+                        <button @click="clearHistory()" type="button" class="text-xs text-[var(--text-3)] hover:text-[var(--accent)] transition flex items-center gap-1">
                             <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
                             Effacer l'historique
                         </button>
                     </div>
 
-                    <div class="bg-[#0d1018] border border-[#1e1e2e] rounded-2xl overflow-hidden divide-y divide-[#1e1e2e]">
+                    <div class="bg-[var(--bg-surface)] border border-[var(--border)] rounded-[6px] overflow-hidden divide-y divide-[var(--border)]">
                         <template x-for="item in historyDetails" :key="item.slug + item.chapter">
-                            <div class="p-4 flex items-center justify-between gap-4 hover:bg-[#16161f] transition">
+                            <div class="p-4 flex items-center justify-between gap-4 hover:bg-[var(--bg-raised)] transition-colors">
                                 <div class="flex items-center gap-4 min-w-0">
                                     <template x-if="item.cover">
-                                        <img :src="item.cover" class="w-12 h-16 object-cover rounded-xl flex-shrink-0 border border-white/5" alt="">
+                                        <img :src="item.cover" class="w-10 aspect-[3/4] object-cover rounded-[4px] flex-shrink-0 border border-[var(--border)]" alt="">
                                     </template>
                                     <template x-if="!item.cover">
-                                        <div class="w-12 h-16 bg-[#16161f] border border-[#1e1e2e] rounded-xl flex-shrink-0 flex items-center justify-center text-xs text-[#7070a0]">
+                                        <div class="w-10 aspect-[3/4] bg-[var(--bg-raised)] border border-[var(--border)] rounded-[4px] flex-shrink-0 flex items-center justify-center text-xs text-[var(--text-3)]">
                                             📖
                                         </div>
                                     </template>
 
                                     <div class="min-w-0">
-                                        <a :href="'/manga/' + item.slug" class="block font-bold text-white hover:text-[#ff2a55] transition truncate text-sm" x-text="item.title || item.slug"></a>
-                                        <div class="flex items-center gap-2 mt-1">
-                                            <a :href="'/manga/' + item.slug + '/chapter/' + item.chapterSlug" class="text-xs text-[#a0a6b8] hover:text-white transition font-medium">
+                                        <a :href="'/manga/' + item.slug" class="block font-display font-semibold text-[var(--text-1)] hover:text-[var(--accent)] transition truncate text-[14px]" x-text="item.title || item.slug"></a>
+                                        <div class="flex items-center gap-2 mt-0.5 text-xs">
+                                            <a :href="'/manga/' + item.slug + '/chapter/' + item.chapterSlug" class="text-[var(--accent)] hover:underline font-medium">
                                                 Chapitre <span x-text="item.chapter"></span>
                                             </a>
-                                            <span class="text-xs text-[#7070a0]" x-text="formatDate(item.readAt)"></span>
+                                            <span class="text-[var(--text-3)]">•</span>
+                                            <span class="text-[var(--text-3)]" x-text="formatDate(item.readAt)"></span>
                                         </div>
                                     </div>
                                 </div>
 
                                 <a :href="'/manga/' + item.slug + '/chapter/' + item.chapterSlug"
-                                   class="px-3 py-1.5 rounded-lg bg-white/5 hover:bg-[#ff2a55] hover:text-white text-[#a0a6b8] text-xs font-semibold transition flex-shrink-0">
+                                   class="btn-secondary text-xs py-1.5 px-3 flex-shrink-0">
                                     Relire
                                 </a>
                             </div>
@@ -540,145 +504,99 @@
                 </div>
             </template>
             <template x-if="history.length === 0">
-                <div class="text-center py-20 bg-[#0d1018] border border-[#1e1e2e] rounded-2xl p-8">
-                    <svg class="w-16 h-16 mx-auto text-[#7070a0]/30 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                    <p class="text-lg text-white font-bold mb-2">Aucun historique de lecture</p>
-                    <p class="text-[#7070a0] mb-6 text-sm">Vos dernières lectures apparaîtront ici.</p>
+                <div class="text-center py-16 bg-[var(--bg-surface)] border border-[var(--border)] rounded-[6px] p-8">
+                    <p class="text-base text-[var(--text-1)] font-semibold mb-2">Aucun historique de lecture</p>
+                    <p class="text-[var(--text-2)] text-xs">Vos dernières lectures apparaîtront ici.</p>
                 </div>
             </template>
         </div>
 
         {{-- ══════════════════════════════════════════════════════════════ --}}
-        {{-- ═══ Onglet 4 : RECOMMANDATIONS "SI T'AS AIMÉ..."         ═══ --}}
+        {{-- ═══ Onglet 4 : RECOMMANDATIONS                            ═══ --}}
         {{-- ══════════════════════════════════════════════════════════════ --}}
-        <div x-show="activeTab === 'recommendations'" x-cloak class="animate-fade-in-up">
+        <div x-show="activeTab === 'recommendations'" x-cloak>
 
             {{-- Bannière explicative --}}
-            <div class="mb-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-gradient-to-r from-[#1c162b] via-[#12111c] to-[#1a1215] border border-amber-500/20 rounded-2xl p-4 sm:p-5 shadow-xl">
-                <div class="flex items-center gap-3.5">
-                    <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-amber-500/20 to-[#ff2a55]/20 border border-amber-500/30 flex items-center justify-center text-amber-400 flex-shrink-0 shadow-inner">
-                        <svg class="w-6 h-6 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
-                        </svg>
-                    </div>
-                    <div>
-                        <div class="flex items-center gap-2 flex-wrap">
-                            <h2 class="text-white font-display font-extrabold text-lg sm:text-xl">Si t'as aimé X, lis Y</h2>
-                            <span class="text-[10px] px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 font-extrabold border border-amber-500/30 tracking-wider uppercase">Algorithme d'affinité</span>
-                        </div>
-                        <p class="text-xs sm:text-sm text-[#9090b8] mt-0.5">Recommandations générées sur-mesure à partir des séries cochées comme lues dans votre bibliothèque.</p>
-                    </div>
+            <div class="mb-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-[var(--bg-surface)] border border-[var(--border)] rounded-[6px] p-6">
+                <div>
+                    <h2 class="font-display font-semibold text-[18px] text-[var(--text-1)]">Si t'as aimé X, lis Y</h2>
+                    <p class="text-[13px] text-[var(--text-2)] mt-1">Recommandations générées sur-mesure à partir des séries cochées comme lues dans votre bibliothèque.</p>
                 </div>
                 <div class="flex items-center gap-2 flex-shrink-0">
-                    <a href="{{ route('manga.random') }}" class="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl bg-[#ff2a55]/10 hover:bg-[#ff2a55]/20 border border-[#ff2a55]/30 text-white text-xs font-semibold transition group">
-                        <span class="group-hover:rotate-12 transition-transform">🎲</span>
-                        <span>Surprends-moi</span>
+                    <a href="{{ route('manga.random') }}" class="btn-secondary text-xs py-2 px-3">
+                        <span>🎲 Surprends-moi</span>
                     </a>
                 </div>
             </div>
 
-            {{-- Chargement dynamique (notamment pour les invités) --}}
+            {{-- Skeleton loading --}}
             <template x-if="loadingRecommendations">
-                <div class="bg-[#0d1018] border border-[#1e1e2e] rounded-2xl p-12 text-center">
-                    <div class="inline-block w-8 h-8 border-2 border-amber-400 border-t-transparent rounded-full animate-spin mb-3"></div>
-                    <p class="text-white font-bold text-sm">Calcul de vos affinités personnalisées...</p>
-                    <p class="text-xs text-[#7070a0] mt-1">Analyse des auteurs, illustrateurs et genres en cours</p>
+                <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                    <div class="skeleton aspect-[3/4]"></div>
+                    <div class="skeleton aspect-[3/4]"></div>
+                    <div class="skeleton aspect-[3/4]"></div>
+                    <div class="skeleton aspect-[3/4]"></div>
                 </div>
             </template>
 
             {{-- Liste des groupes de recommandations --}}
             <template x-if="!loadingRecommendations && recommendations.length > 0">
-                <div class="space-y-6 sm:space-y-8">
+                <div class="space-y-6">
                     <template x-for="group in recommendations" :key="group.source_manga.id">
-                        <div class="bg-[#0d1018] border border-[#1e1e2e] hover:border-amber-500/30 rounded-2xl p-4 sm:p-6 shadow-xl transition-all duration-300">
+                        <div class="bg-[var(--bg-surface)] border border-[var(--border)] rounded-[6px] p-6">
                             
                             {{-- En-tête de la source --}}
-                            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 mb-5 border-b border-[#1e1e2e]">
-                                <div class="flex items-center gap-3.5 min-w-0">
-                                    <a :href="group.source_manga.url" class="relative w-12 sm:w-14 aspect-[2/3] rounded-xl overflow-hidden bg-[#16161f] border border-white/10 flex-shrink-0 hover:scale-105 transition-transform duration-300 shadow-md">
+                            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 mb-4 border-b border-[var(--bg-raised)]">
+                                <div class="flex items-center gap-3 min-w-0">
+                                    <a :href="group.source_manga.url" class="relative w-10 aspect-[3/4] rounded-[4px] overflow-hidden bg-[var(--bg-raised)] border border-[var(--border)] flex-shrink-0">
                                         <template x-if="group.source_manga.cover_image">
                                             <img :src="group.source_manga.cover_image" :alt="group.source_manga.title" class="w-full h-full object-cover">
                                         </template>
                                         <template x-if="!group.source_manga.cover_image">
-                                            <div class="w-full h-full flex items-center justify-center text-xs text-[#7070a0]">📖</div>
+                                            <div class="w-full h-full flex items-center justify-center text-xs text-[var(--text-3)]">📖</div>
                                         </template>
                                     </a>
                                     <div class="min-w-0">
-                                        <div class="flex items-center gap-2 flex-wrap">
-                                            <span class="text-[10px] font-extrabold uppercase tracking-wider text-amber-400 bg-amber-400/10 border border-amber-400/20 px-2 py-0.5 rounded-full flex items-center gap-1">
-                                                <span>🎯</span> Lu dans ta bibliothèque
-                                            </span>
-                                            <span class="text-[10px] font-bold uppercase tracking-wider text-[#a78bfa] bg-[#2a1a4a]/60 border border-[#4a2a8a]/40 px-1.5 py-0.5 rounded" x-text="group.source_manga.type"></span>
-                                        </div>
-                                        <a :href="group.source_manga.url" class="font-display font-extrabold text-white hover:text-[#ff2a55] transition text-base sm:text-xl block mt-1 truncate">
-                                            <span class="text-[#7070a0] font-normal text-sm sm:text-base">Si t'as aimé</span> <span class="text-white" x-text="group.source_manga.title"></span>...
-                                        </a>
+                                        <div class="text-[11px] font-semibold uppercase tracking-wider text-[var(--accent)]">Parce que vous avez lu</div>
+                                        <a :href="group.source_manga.url" class="font-display font-semibold text-[var(--text-1)] hover:text-[var(--accent)] transition text-[16px] block truncate" x-text="group.source_manga.title"></a>
                                     </div>
-                                </div>
-
-                                <div class="flex items-center gap-2 self-start sm:self-center flex-shrink-0">
-                                    <span class="text-xs text-[#9090b8] bg-[#161622] px-3 py-1.5 rounded-xl border border-white/5 flex items-center gap-1.5 font-medium">
-                                        <span>👉</span> Tu devrais adorer :
-                                    </span>
                                 </div>
                             </div>
 
-                            {{-- Grille des mangas recommandés Y --}}
-                            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                            {{-- Grille des mangas recommandés --}}
+                            <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
                                 <template x-for="item in group.recommendations" :key="item.id">
-                                    <div class="bg-[#151520] border border-[#1e1e2e] hover:border-[#ff2a55]/50 rounded-xl p-3 flex flex-col justify-between transition-all duration-300 hover:-translate-y-1 hover:shadow-2xl hover:shadow-[#ff2a55]/10 group/card relative">
+                                    <div class="manga-card bg-[var(--bg-base)] border border-[var(--border)] rounded-[6px] p-3 flex flex-col justify-between">
                                         <div>
-                                            {{-- Cover + Badges --}}
-                                            <div class="relative w-full aspect-[3/4] rounded-lg overflow-hidden bg-[#1a1a26] border border-white/5 mb-3 group/cover">
+                                            {{-- Cover --}}
+                                            <div class="relative w-full aspect-[3/4] rounded-[4px] overflow-hidden bg-[var(--bg-raised)] mb-2.5">
                                                 <template x-if="item.cover_image">
-                                                    <img :src="item.cover_image" :alt="item.title" class="w-full h-full object-cover group-hover/card:scale-105 transition-transform duration-500" loading="lazy">
+                                                    <img :src="item.cover_image" :alt="item.title" class="cover w-full h-full object-cover" loading="lazy">
                                                 </template>
                                                 <template x-if="!item.cover_image">
-                                                    <div class="w-full h-full flex items-center justify-center text-[#7070a0] text-sm">📖</div>
+                                                    <div class="w-full h-full flex items-center justify-center text-[var(--text-3)] text-xs">📖</div>
                                                 </template>
+                                                <div class="absolute inset-0 card-overlay pointer-events-none"></div>
 
-                                                <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-black/30 pointer-events-none"></div>
-
-                                                {{-- Badges flottants --}}
-                                                <div class="absolute top-2 left-2 right-2 flex items-center justify-between gap-1 pointer-events-none">
-                                                    <span class="text-[9px] font-black uppercase tracking-wider text-white bg-black/70 backdrop-blur-md border border-white/10 px-1.5 py-0.5 rounded shadow" x-text="item.type"></span>
-                                                    <span class="text-[9px] font-black tracking-wide text-emerald-300 bg-emerald-950/80 backdrop-blur-md border border-emerald-500/40 px-2 py-0.5 rounded-full shadow flex items-center gap-1">
-                                                        <span>⚡</span> <span x-text="item.match_percent + '%'"></span>
-                                                    </span>
-                                                </div>
-
-                                                {{-- Infos bas de jaquette --}}
-                                                <div class="absolute bottom-2 left-2 right-2 flex items-center justify-between text-[10px] text-white/90 pointer-events-none">
-                                                    <span class="font-medium bg-black/60 backdrop-blur-sm px-1.5 py-0.5 rounded border border-white/10" x-text="item.chapters_count + ' ch.'"></span>
-                                                    <template x-if="item.rating">
-                                                        <span class="flex items-center gap-0.5 font-bold text-amber-400 bg-black/60 backdrop-blur-sm px-1.5 py-0.5 rounded border border-white/10">
-                                                            ★ <span x-text="item.rating"></span>
-                                                        </span>
-                                                    </template>
-                                                </div>
+                                                {{-- Match badge --}}
+                                                <span class="card-badge absolute top-2 right-2 text-[10px] font-bold text-white bg-[var(--accent)] px-1.5 py-0.5 rounded-[4px]" x-text="item.match_percent + '%'"></span>
                                             </div>
 
                                             {{-- Titre --}}
-                                            <h4 class="font-bold text-white group-hover/card:text-[#ff2a55] transition text-sm line-clamp-1 mb-1.5" :title="item.title">
-                                                <a :href="item.url" x-text="item.title"></a>
+                                            <h4 class="font-display font-semibold text-[var(--text-1)] text-xs line-clamp-1 mb-1" :title="item.title">
+                                                <a :href="item.url" class="hover:text-[var(--accent)] transition-colors" x-text="item.title"></a>
                                             </h4>
 
-                                            {{-- Raison de la reco --}}
-                                            <div class="min-h-[38px] mb-3">
-                                                <p class="text-[11px] text-amber-300/90 font-medium leading-snug line-clamp-2 bg-amber-500/10 border border-amber-500/20 rounded-md px-2 py-1 flex items-start gap-1">
-                                                    <span class="text-amber-400 text-xs mt-0.5 flex-shrink-0">💡</span>
-                                                    <span x-text="item.reason"></span>
-                                                </p>
-                                            </div>
+                                            {{-- Raison --}}
+                                            <p class="text-[11px] text-[var(--text-3)] line-clamp-2 mb-3" x-text="item.reason"></p>
                                         </div>
 
                                         {{-- Actions --}}
-                                        <div class="pt-2 border-t border-[#1e1e2e] flex items-center gap-2">
-                                            <a :href="item.first_chapter_url" class="flex-1 py-2 px-2.5 rounded-lg bg-[#ff2a55] hover:bg-[#e01640] text-white text-xs font-bold transition flex items-center justify-center gap-1 text-center shadow-md shadow-[#ff2a55]/20">
-                                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
-                                                <span>Lire Ch. 1</span>
+                                        <div class="pt-2 border-t border-[var(--border)] flex items-center gap-2">
+                                            <a :href="item.first_chapter_url" class="btn-primary flex-1 text-center text-xs py-1.5">
+                                                Lire Ch. 1
                                             </a>
-                                            <a :href="item.url" class="p-2 rounded-lg bg-white/5 hover:bg-white/10 text-[#a0a6b8] hover:text-white transition" title="Fiche de la série">
+                                            <a :href="item.url" class="btn-secondary p-1.5 rounded-[4px]" title="Fiche de la série">
                                                 <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
                                             </a>
                                         </div>
@@ -692,22 +610,17 @@
 
             {{-- État vide --}}
             <template x-if="!loadingRecommendations && recommendations.length === 0">
-                <div class="text-center py-16 sm:py-20 bg-[#0d1018] border border-[#1e1e2e] rounded-2xl p-6 sm:p-8">
-                    <div class="w-16 h-16 mx-auto rounded-2xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-400 mb-4 shadow-inner">
-                        <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
-                        </svg>
-                    </div>
-                    <h3 class="text-lg text-white font-bold mb-2">Aucune recommandation disponible pour le moment</h3>
-                    <p class="text-[#7070a0] max-w-lg mx-auto mb-6 text-xs sm:text-sm">
-                        Pour que l'algorithme "Si t'as aimé X, lis Y" puisse analyser vos préférences, commencez par cocher des chapitres comme lus dans le lecteur ou ajoutez des mangas à vos favoris !
+                <div class="text-center py-16 bg-[var(--bg-surface)] border border-[var(--border)] rounded-[6px] p-8">
+                    <h3 class="text-base text-[var(--text-1)] font-semibold mb-2">Aucune recommandation disponible</h3>
+                    <p class="text-[var(--text-2)] max-w-lg mx-auto mb-6 text-xs">
+                        Pour que l'algorithme puisse vous proposer des suggestions, cochez des chapitres comme lus dans le lecteur ou ajoutez des œuvres à vos favoris.
                     </p>
                     <div class="flex flex-wrap items-center justify-center gap-3">
-                        <a href="{{ route('manga.index') }}" class="btn-primary text-xs py-2 px-5">
+                        <a href="{{ route('manga.index') }}" class="btn-primary text-xs py-2 px-4">
                             Explorer le catalogue
                         </a>
-                        <a href="{{ route('manga.random') }}" class="px-4 py-2 rounded-xl bg-white/10 hover:bg-white/15 text-white text-xs font-semibold transition flex items-center gap-2">
-                            <span>🎲</span> Surprends-moi
+                        <a href="{{ route('manga.random') }}" class="btn-secondary text-xs py-2 px-4">
+                            🎲 Surprends-moi
                         </a>
                     </div>
                 </div>
@@ -807,10 +720,8 @@
                     });
                     const data = await res.json();
                     if (data.success && data.is_read) {
-                        // Optimistically remove from catchUpChapters
                         this.catchUpChapters = this.catchUpChapters.filter(c => c.chapter_id !== item.chapter_id);
 
-                        // Also update catchUpByManga
                         const mangaGroup = this.catchUpByManga.find(m => m.manga_id === item.manga_id);
                         if (mangaGroup) {
                             mangaGroup.unread_chapters = mangaGroup.unread_chapters.filter(c => c.chapter_id !== item.chapter_id);

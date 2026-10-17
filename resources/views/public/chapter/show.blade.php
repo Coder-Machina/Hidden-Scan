@@ -1,599 +1,271 @@
 @use('Illuminate\Support\Facades\Storage')
-<x-layouts.public :title="$manga->title . ' — Ch. ' . $chapter->number . ' | Hidden Scan'" :hide-navbar="true">
+<x-layouts.public :title="$manga->title . ' — Ch. ' . $chapter->number . ' | Hidden Scan'" :hide-navbar="true" :show-footer="false">
 
-    <div x-data="chapterReader()" x-init="init()" class="animate-fade-in pt-14">        {{-- ═══ Barre de navigation ═══ --}}
-        <div class="fixed top-0 left-0 right-0 z-50 px-4 sm:px-6 py-2.5 bg-[#07080C]/90 backdrop-blur-md border-b border-white/[0.08] transition-all duration-300 shadow-lg"
-             :class="navHidden && !showSettings ? '-translate-y-full opacity-0 pointer-events-none' : 'translate-y-0 opacity-100'"
-             @mouseenter="navHidden = false">
-
-            <div class="max-w-4xl mx-auto flex items-center justify-between gap-3">
-                {{-- Retour --}}
-                <a href="{{ route('manga.show', $manga->slug) }}" class="flex items-center gap-2 text-crimson hover:text-white transition text-sm font-bold flex-shrink-0">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 19l-7-7 7-7"/></svg>
-                    <span class="hidden sm:inline font-display">{{ Str::limit($manga->title, 25) }}</span>
+    <div x-data="chapterReader()" x-init="init()" 
+         @mousemove="handleActivity()" 
+         @touchstart="handleActivity()" 
+         @scroll.window="handleActivity()"
+         class="min-h-screen bg-[#000000] text-[var(--text-1)] select-none">
+        
+        {{-- ═══ Reader Header Controls (Auto-hide après 2s d'inactivité) ═══ --}}
+        <div class="fixed top-0 left-0 right-0 z-50 h-14 bg-[#000000]/95 border-b border-[#1a1a1a] px-4 transition-all duration-200 flex items-center justify-between"
+             :class="controlsVisible ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-full pointer-events-none'">
+            
+            {{-- Back Arrow + Title --}}
+            <div class="flex items-center gap-3">
+                <a href="{{ route('manga.show', $manga->slug) }}" 
+                   class="p-2 rounded-[4px] text-[var(--text-2)] hover:text-white hover:bg-[#1a1a1a] transition"
+                   title="Retour à la fiche">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
                 </a>
+                <span class="font-heading font-semibold text-[15px] text-white truncate max-w-[180px] sm:max-w-xs">
+                    {{ $manga->title }}
+                </span>
+            </div>
 
-                {{-- Sélecteur de chapitre --}}
-                <select @change="window.location.href=$event.target.value"
-                    class="bg-[#0D1018] border border-white/15 text-chalk !w-auto !py-1 px-3 text-xs sm:text-sm font-semibold text-center !rounded-full max-w-[140px] sm:max-w-[220px] focus:border-crimson">
+            {{-- Chapter Selector & Prev/Next Nav --}}
+            <div class="flex items-center gap-2">
+                @if($prev)
+                    <a href="{{ route('chapter.show', [$manga->slug, $prev->slug]) }}"
+                       class="p-2 rounded-[4px] text-[var(--text-2)] hover:text-white hover:bg-[#1a1a1a] transition"
+                       title="Chapitre précédent">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+                    </a>
+                @endif
+
+                <select @change="window.location.href = $event.target.value"
+                        class="bg-[#141414] border border-[#2a2a2a] text-white text-caption font-semibold rounded-[4px] px-2.5 py-1.5 focus:border-[var(--accent)] outline-none cursor-pointer">
                     @foreach($manga->chapters as $c)
-                        <option value="{{ route('chapter.show', [$manga->slug, $c->slug]) }}"
-                            {{ $c->id === $chapter->id ? 'selected' : '' }}>
-                            Ch. {{ $c->number }} {{ $c->title ? '— ' . Str::limit($c->title, 20) : '' }}
+                        <option value="{{ route('chapter.show', [$manga->slug, $c->slug]) }}" {{ $c->id === $chapter->id ? 'selected' : '' }}>
+                            Ch. {{ $c->number }} {{ $c->title ? '— ' . Str::limit($c->title, 18) : '' }}
                         </option>
                     @endforeach
                 </select>
 
-                {{-- Actions --}}
-                <div class="flex items-center gap-1">
-                    @if($prev)
-                        <a href="{{ route('chapter.show', [$manga->slug, $prev->slug]) }}"
-                           class="p-2 rounded-xl text-mist hover:text-chalk hover:bg-white/5 transition" title="Chapitre précédent">
-                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
-                        </a>
-                    @endif
-                    @if($next)
-                        <a href="{{ route('chapter.show', [$manga->slug, $next->slug]) }}"
-                           class="p-2 rounded-xl text-mist hover:text-chalk hover:bg-white/5 transition" title="Chapitre suivant">
-                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
-                        </a>
-                    @endif
+                @if($next)
+                    <a href="{{ route('chapter.show', [$manga->slug, $next->slug]) }}"
+                       class="p-2 rounded-[4px] text-[var(--text-2)] hover:text-white hover:bg-[#1a1a1a] transition"
+                       title="Chapitre suivant">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+                    </a>
+                @endif
+            </div>
 
-                    {{-- Réglages --}}
-                    <button @click="showSettings = !showSettings"
-                            class="p-2 rounded-xl transition"
-                            :class="showSettings ? 'text-crimson bg-crimson/15 ring-1 ring-crimson/30' : 'text-mist hover:text-chalk hover:bg-white/5'"
-                            title="Paramètres de lecture">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+            {{-- Page Counter & Settings Toggle --}}
+            <div class="flex items-center gap-3">
+                <span class="text-caption text-[var(--text-2)] font-mono">
+                    <span x-text="currentPage"></span> / <span x-text="totalPages"></span>
+                </span>
+
+                <button type="button" @click="showSettings = !showSettings"
+                        class="p-2 rounded-[4px] text-[var(--text-2)] hover:text-white hover:bg-[#1a1a1a] transition cursor-pointer"
+                        title="Réglages du lecteur">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+                </button>
+            </div>
+        </div>
+
+        {{-- Panneau Réglages --}}
+        <div x-show="showSettings" x-cloak 
+             @click.outside="showSettings = false"
+             class="fixed top-16 right-4 z-50 w-72 bg-[#141414] border border-[#2a2a2a] rounded-[6px] p-4 shadow-xl space-y-4">
+            <div>
+                <label class="text-caption text-[var(--text-3)] block mb-1.5 font-semibold">Mode de lecture</label>
+                <div class="grid grid-cols-2 gap-2">
+                    <button type="button" @click="readMode = 'vertical'; saveSettings()"
+                            :class="readMode === 'vertical' ? 'bg-[var(--accent)] text-white' : 'bg-[#1e1e1e] text-[var(--text-2)]'"
+                            class="py-1.5 rounded-[4px] text-caption font-semibold cursor-pointer">
+                        Vertical
                     </button>
-
-                    {{-- Signaler un problème --}}
-                    <button @click="openReportModal()"
-                            class="p-2 rounded-xl text-mist hover:text-crimson hover:bg-crimson/10 transition"
-                            title="Signaler un problème sur ce chapitre">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 21v-4m0 0V5a2 2 0 012-2h6.5l1 1H21l-3 6 3 6h-8.5l-1-1H5a2 2 0 00-2 2zm9-13.5V9"/></svg>
+                    <button type="button" @click="readMode = 'page'; saveSettings()"
+                            :class="readMode === 'page' ? 'bg-[var(--accent)] text-white' : 'bg-[#1e1e1e] text-[var(--text-2)]'"
+                            class="py-1.5 rounded-[4px] text-caption font-semibold cursor-pointer">
+                        Page par page
                     </button>
                 </div>
             </div>
 
-            {{-- Panneau réglages --}}
-            <div x-show="showSettings" x-cloak x-transition class="max-w-4xl mx-auto mt-3 p-5 bg-[#0D1018] rounded-2xl border border-white/10 shadow-2xl">
-                <div class="grid grid-cols-1 sm:grid-cols-3 gap-5">
-                    {{-- Mode de lecture --}}
-                    <div>
-                        <label class="block text-xs font-bold text-mist mb-2 uppercase tracking-wider">Mode de lecture</label>
-                        <div class="flex gap-2">
-                            <button @click="readMode = 'vertical'" class="flex-1 py-2 px-3 rounded-xl text-xs font-bold transition-all"
-                                    :class="readMode === 'vertical' ? 'bg-crimson text-white shadow-md shadow-crimson/25' : 'bg-[#07080C] text-mist hover:text-chalk border border-white/10'">
-                                ↕ Vertical
-                            </button>
-                            <button @click="readMode = 'page'" class="flex-1 py-2 px-3 rounded-xl text-xs font-bold transition-all"
-                                    :class="readMode === 'page' ? 'bg-crimson text-white shadow-md shadow-crimson/25' : 'bg-[#07080C] text-mist hover:text-chalk border border-white/10'">
-                                ⬜ Page
-                            </button>
-                        </div>
-                    </div>
+            <div>
+                <label class="text-caption text-[var(--text-3)] block mb-1.5 font-semibold">Largeur du lecteur : <span class="text-white" x-text="readerWidth + '%'"></span></label>
+                <input type="range" min="50" max="100" x-model="readerWidth" @input="saveSettings()" class="w-full accent-[var(--accent)] cursor-pointer">
+            </div>
 
-                    {{-- Largeur --}}
-                    <div x-show="!isMobile">
-                        <label class="block text-xs font-bold text-mist mb-2 uppercase tracking-wider">
-                            Largeur : <span class="text-chalk" x-text="readerWidth + '%'"></span>
-                        </label>
-                        <input type="range" min="50" max="100" x-model="readerWidth"
-                                @input="saveSettings()"
-                                class="w-full accent-crimson cursor-pointer">
-                    </div>
-
-                    {{-- Espacement --}}
-                    <div>
-                        <label class="block text-xs font-bold text-mist mb-2 uppercase tracking-wider">
-                            Espacement : <span class="text-chalk" x-text="pageGap + 'px'"></span>
-                        </label>
-                        <input type="range" min="0" max="16" x-model="pageGap"
-                                @input="saveSettings()"
-                                class="w-full accent-crimson cursor-pointer">
-                    </div>
-                </div>
+            <div>
+                <label class="text-caption text-[var(--text-3)] block mb-1.5 font-semibold">Espacement des pages : <span class="text-white" x-text="pageGap + 'px'"></span></label>
+                <input type="range" min="0" max="24" step="4" x-model="pageGap" @input="saveSettings()" class="w-full accent-[var(--accent)] cursor-pointer">
             </div>
         </div>
 
-        {{-- ═══ Barre de progression ═══ --}}
-        <div class="fixed top-0 left-0 right-0 z-50 h-1 bg-black/50">
-            <div class="h-full bg-gradient-to-r from-crimson to-purple transition-all duration-200 ease-out shadow-sm shadow-crimson/50"
-                 :style="'width:' + progressPercent + '%'"></div>
+        {{-- Barre de progression discrète en haut --}}
+        <div class="fixed top-0 left-0 right-0 z-50 h-[2px] bg-transparent">
+            <div class="h-full bg-[var(--accent)] transition-all duration-150" :style="'width: ' + progressPercent + '%'"></div>
         </div>
 
-        {{-- ═══ Pages du chapitre ═══ --}}
-        <div class="py-2 sm:py-6">
-            {{-- Mode vertical (100% pleine largeur sur mobile) --}}
-            <div x-show="readMode === 'vertical'" class="flex flex-col items-center mx-auto transition-all w-full"
-                 :style="(isMobile ? 'width: 100% !important; max-width: 100% !important;' : 'max-width: ' + readerWidth + '%;') + ' gap:' + pageGap + 'px;'"
-                 id="reader-vertical">
-                @forelse($chapter->pages as $pageIndex => $page)
+        {{-- ═══ Pages du Chapitre (Pure Black #000000 Background) ═══ --}}
+        <div class="pt-14 pb-16">
+            
+            {{-- Mode Vertical (Webtoon) --}}
+            <div x-show="readMode === 'vertical'" 
+                 class="flex flex-col items-center mx-auto transition-all w-full"
+                 :style="'max-width: ' + (isMobile ? '100%' : readerWidth + '%') + '; gap: ' + pageGap + 'px;'">
+                @forelse($chapter->pages as $index => $page)
                     <div class="w-full relative" data-page="{{ $page->page_number }}">
-                        <img
-                            src="{{ Storage::url($page->image_path) }}"
-                            alt="Page {{ $page->page_number }}"
-                            loading="{{ $pageIndex < 3 ? 'eager' : 'lazy' }}"
-                            class="w-full block"
-                            x-on:error="handleImageError($event)"
-                            @load="handleImageLoad({{ $page->page_number }})"
-                        >
+                        <img src="{{ Storage::url($page->image_path) }}" 
+                             alt="Page {{ $page->page_number }}" 
+                             loading="{{ $index < 3 ? 'eager' : 'lazy' }}" 
+                             class="w-full block"
+                             @load="onImageLoad({{ $page->page_number }})">
                     </div>
                 @empty
-                    <div class="text-center py-24 text-mist">
-                        <svg class="w-16 h-16 mx-auto text-mist/20 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
-                        <p class="text-lg">Aucune page disponible pour ce chapitre.</p>
+                    <div class="py-24 text-center text-caption text-[var(--text-3)]">
+                        Aucune image disponible pour ce chapitre.
                     </div>
                 @endforelse
             </div>
 
-            {{-- Mode page par page --}}
-            <div x-show="readMode === 'page'" x-cloak class="flex flex-col items-center mx-auto transition-all w-full"
-                 :style="isMobile ? 'width: 100% !important; max-width: 100% !important;' : 'max-width: ' + readerWidth + '%;'">
+            {{-- Mode Page par Page --}}
+            <div x-show="readMode === 'page'" x-cloak 
+                 class="flex flex-col items-center mx-auto transition-all w-full"
+                 :style="'max-width: ' + (isMobile ? '100%' : readerWidth + '%')">
                 @if($chapter->pages->count())
-                    <div class="w-full relative">
-                        <img
-                            :src="pages[currentPage - 1]?.src || ''"
-                            :alt="'Page ' + currentPage"
-                            class="w-full block cursor-pointer"
-                            @click="nextPage()"
-                            x-on:error="handleImageError($event)"
-                        >
+                    <div class="w-full relative cursor-pointer" @click="nextPage()">
+                        <img :src="pages[currentPage - 1]?.src || ''" 
+                             :alt="'Page ' + currentPage" 
+                             class="w-full block">
                     </div>
 
-                    {{-- Navigation page --}}
-                    <div class="flex items-center justify-center gap-4 mt-4">
-                        <button @click="prevPage()" :disabled="currentPage <= 1"
-                                class="btn-secondary !py-2 !px-4 !text-sm disabled:opacity-30 disabled:cursor-not-allowed">
+                    <div class="flex items-center justify-center gap-4 mt-6">
+                        <button type="button" @click="prevPage()" :disabled="currentPage <= 1" class="btn-secondary !text-caption disabled:opacity-30">
                             ← Précédente
                         </button>
-                        <span class="text-sm text-mist font-medium">
+                        <span class="text-caption font-mono text-[var(--text-2)]">
                             <span x-text="currentPage"></span> / <span x-text="totalPages"></span>
                         </span>
-                        <button @click="nextPage()" :disabled="currentPage >= totalPages"
-                                class="btn-primary !py-2 !px-4 !text-sm disabled:opacity-30 disabled:cursor-not-allowed">
+                        <button type="button" @click="nextPage()" :disabled="currentPage >= totalPages" class="btn-primary !text-caption disabled:opacity-30">
                             Suivante →
                         </button>
                     </div>
                 @endif
             </div>
+
         </div>
 
-        {{-- ═══ Navigation fin de chapitre ═══ --}}
-        <div class="flex flex-col sm:flex-row items-center justify-center gap-4 py-8 border-t border-line/30">
+        {{-- ═══ Pied de Chapitre : Navigation Suivant / Précédent ═══ --}}
+        <div class="max-w-2xl mx-auto px-4 py-8 border-t border-[#1a1a1a] flex items-center justify-between gap-4">
             @if($prev)
-                <a href="{{ route('chapter.show', [$manga->slug, $prev->slug]) }}" class="btn-secondary w-full sm:w-auto justify-center">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
-                    Chapitre précédent
+                <a href="{{ route('chapter.show', [$manga->slug, $prev->slug]) }}" class="btn-secondary !text-caption">
+                    ← Chapitre précédent
                 </a>
+            @else
+                <div></div>
             @endif
-            <a href="{{ route('manga.show', $manga->slug) }}" class="btn-secondary w-full sm:w-auto justify-center !border-white/10 !text-chalk hover:!border-crimson/50 hover:!text-crimson">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16"/></svg>
-                Tous les chapitres
+
+            <a href="{{ route('manga.show', $manga->slug) }}" class="text-caption text-[var(--text-2)] hover:text-white transition">
+                Fiche de la série
             </a>
+
             @if($next)
-                <a href="{{ route('chapter.show', [$manga->slug, $next->slug]) }}" class="btn-primary w-full sm:w-auto justify-center">
-                    Chapitre suivant
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+                <a href="{{ route('chapter.show', [$manga->slug, $next->slug]) }}" class="btn-primary !text-caption">
+                    Chapitre suivant →
                 </a>
+            @else
+                <div></div>
             @endif
         </div>
 
-        {{-- ═══ Réactions au chapitre (style Raijin) ═══ --}}
-        <div class="max-w-3xl mx-auto mt-6 mb-4" x-data="chapterReactions()" x-init="init()">
-            <div class="bg-[#0D1018] border border-white/[0.08] rounded-2xl p-6 text-center shadow-xl">
-                <p class="text-mist text-sm mb-4 font-bold uppercase tracking-wider">Qu'avez-vous pensé de ce chapitre ?</p>
-                <div class="flex items-center justify-center gap-3 flex-wrap">
-                    <template x-for="r in reactions" :key="r.emoji">
-                        <button @click="react(r.emoji)"
-                                class="flex flex-col items-center gap-1 px-3.5 py-2.5 rounded-xl transition-all hover:scale-110 cursor-pointer"
-                                :class="userReaction === r.emoji ? 'bg-crimson/15 ring-2 ring-crimson scale-105' : 'hover:bg-white/5'">
-                            <span class="text-2xl" x-text="r.emoji"></span>
-                            <span class="text-xs font-bold" :class="userReaction === r.emoji ? 'text-chalk' : 'text-mist'" x-text="r.count"></span>
-                            <span class="text-[10px] text-mist" x-text="r.label"></span>
-                        </button>
-                    </template>
-                </div>
+        {{-- ═══ Section Commentaires ═══ --}}
+        <div class="max-w-3xl mx-auto px-4 pb-20">
+            <div class="bg-[#141414] border border-[#2a2a2a] rounded-[6px] p-6">
+                <h3 class="text-h3 text-white mb-4">Commentaires sur le chapitre {{ $chapter->number }}</h3>
+                <livewire:public.comment-section
+                    type="App\Models\Chapter"
+                    :id="$chapter->id"
+                />
             </div>
         </div>
 
-        <script>
-        function chapterReactions() {
-            return {
-                reactions: [
-                    { emoji: '🔥', label: 'Incroyable', count: 0 },
-                    { emoji: '😍', label: 'Adoré', count: 0 },
-                    { emoji: '😢', label: 'Triste', count: 0 },
-                    { emoji: '😡', label: 'Énervé', count: 0 },
-                    { emoji: '🤯', label: 'Choqué', count: 0 },
-                    { emoji: '😂', label: 'Drôle', count: 0 },
-                    { emoji: '💤', label: 'Ennuyeux', count: 0 },
-                ],
-                userReaction: null,
-                storageKey: 'hs_reactions_chapter_{{ $chapter->id }}',
-                globalKey: 'hs_reactions_counts_chapter_{{ $chapter->id }}',
-
-                init() {
-                    // Load user's reaction
-                    this.userReaction = localStorage.getItem(this.storageKey) || null;
-                    // Load global counts
-                    try {
-                        const counts = JSON.parse(localStorage.getItem(this.globalKey) || '{}');
-                        this.reactions.forEach(r => {
-                            r.count = counts[r.emoji] || 0;
-                        });
-                    } catch(e) {}
-                },
-
-                react(emoji) {
-                    const counts = {};
-                    this.reactions.forEach(r => { counts[r.emoji] = r.count; });
-
-                    // If already reacted with same emoji, toggle off
-                    if (this.userReaction === emoji) {
-                        counts[emoji] = Math.max(0, (counts[emoji] || 1) - 1);
-                        this.userReaction = null;
-                        localStorage.removeItem(this.storageKey);
-                    } else {
-                        // Remove previous reaction
-                        if (this.userReaction) {
-                            counts[this.userReaction] = Math.max(0, (counts[this.userReaction] || 1) - 1);
-                        }
-                        // Add new reaction
-                        counts[emoji] = (counts[emoji] || 0) + 1;
-                        this.userReaction = emoji;
-                        localStorage.setItem(this.storageKey, emoji);
-                    }
-
-                    // Update counts
-                    this.reactions.forEach(r => { r.count = counts[r.emoji] || 0; });
-                    localStorage.setItem(this.globalKey, JSON.stringify(counts));
-                }
-            };
-        }
-        </script>
-
-        {{-- ═══ Modal Signaler un problème ═══ --}}
-        <div x-show="showReportModal" x-cloak class="fixed inset-0 z-50 overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
-            <div class="fixed inset-0 bg-black/80 backdrop-blur-sm transition-opacity" @click="showReportModal = false"></div>
-
-            <div class="flex min-h-full items-center justify-center p-4 text-center">
-                <div class="relative transform overflow-hidden rounded-2xl bg-[#14141c] border border-white/10 text-left shadow-2xl transition-all sm:my-8 sm:w-full sm:max-w-lg p-5 sm:p-6"
-                     @click.stop>
-                    {{-- En-tête --}}
-                    <div class="flex items-center justify-between pb-4 border-b border-white/10">
-                        <div class="flex items-center gap-3">
-                            <div class="w-10 h-10 rounded-xl bg-crimson/15 border border-crimson/30 flex items-center justify-center text-crimson">
-                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 21v-4m0 0V5a2 2 0 012-2h6.5l1 1H21l-3 6 3 6h-8.5l-1-1H5a2 2 0 00-2 2zm9-13.5V9"/></svg>
-                            </div>
-                            <div>
-                                <h3 class="text-base sm:text-lg font-bold text-white leading-tight">Signaler un problème</h3>
-                                <p class="text-xs text-mist mt-0.5">{{ $manga->title }} • Ch. {{ $chapter->number }}</p>
-                            </div>
-                        </div>
-                        <button @click="showReportModal = false" class="text-mist hover:text-white p-1 rounded-lg hover:bg-white/5 transition">
-                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
-                        </button>
-                    </div>
-
-                    {{-- Formulaire --}}
-                    <form @submit.prevent="submitReport()" class="mt-5 space-y-4">
-                        {{-- Type d'erreur --}}
-                        <div>
-                            <label class="block text-xs font-semibold text-mist uppercase tracking-wider mb-2">Type d'anomalie</label>
-                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                                <label class="flex items-center gap-2.5 p-3 rounded-xl border cursor-pointer transition text-xs sm:text-sm"
-                                       :class="reportType === 'page_manquante' ? 'bg-crimson/15 border-crimson text-white' : 'bg-white/[0.03] border-white/10 text-mist hover:border-white/20'">
-                                    <input type="radio" value="page_manquante" x-model="reportType" class="hidden">
-                                    <span>📄 Page manquante</span>
-                                </label>
-                                <label class="flex items-center gap-2.5 p-3 rounded-xl border cursor-pointer transition text-xs sm:text-sm"
-                                       :class="reportType === 'image_corrompue' ? 'bg-crimson/15 border-crimson text-white' : 'bg-white/[0.03] border-white/10 text-mist hover:border-white/20'">
-                                    <input type="radio" value="image_corrompue" x-model="reportType" class="hidden">
-                                    <span>⚠️ Image illisible / blanche</span>
-                                </label>
-                                <label class="flex items-center gap-2.5 p-3 rounded-xl border cursor-pointer transition text-xs sm:text-sm"
-                                       :class="reportType === 'ordre_inverse' ? 'bg-crimson/15 border-crimson text-white' : 'bg-white/[0.03] border-white/10 text-mist hover:border-white/20'">
-                                    <input type="radio" value="ordre_inverse" x-model="reportType" class="hidden">
-                                    <span>🔄 Pages inversées</span>
-                                </label>
-                                <label class="flex items-center gap-2.5 p-3 rounded-xl border cursor-pointer transition text-xs sm:text-sm"
-                                       :class="reportType === 'mauvaise_traduction' ? 'bg-crimson/15 border-crimson text-white' : 'bg-white/[0.03] border-white/10 text-mist hover:border-white/20'">
-                                    <input type="radio" value="mauvaise_traduction" x-model="reportType" class="hidden">
-                                    <span>✏️ Traduction / Coquille</span>
-                                </label>
-                                <label class="flex items-center gap-2.5 p-3 rounded-xl border cursor-pointer transition text-xs sm:text-sm sm:col-span-2"
-                                       :class="reportType === 'autre' ? 'bg-crimson/15 border-crimson text-white' : 'bg-white/[0.03] border-white/10 text-mist hover:border-white/20'">
-                                    <input type="radio" value="autre" x-model="reportType" class="hidden">
-                                    <span>❓ Autre souci technique</span>
-                                </label>
-                            </div>
-                        </div>
-
-                        {{-- Page concernée --}}
-                        <div>
-                            <div class="flex items-center justify-between mb-1.5">
-                                <label class="text-xs font-semibold text-mist uppercase tracking-wider">Page concernée</label>
-                                <span class="text-xs text-mist/60">(optionnel)</span>
-                            </div>
-                            <input type="number" min="1" max="{{ $chapter->pages->count() }}" x-model="reportPage"
-                                   placeholder="Numéro de la page"
-                                   class="input-field !py-2 w-full text-sm">
-                        </div>
-
-                        {{-- Précisions --}}
-                        <div>
-                            <div class="flex items-center justify-between mb-1.5">
-                                <label class="text-xs font-semibold text-mist uppercase tracking-wider">Précisions</label>
-                                <span class="text-xs text-mist/60">(optionnel)</span>
-                            </div>
-                            <textarea x-model="reportMessage" rows="3"
-                                      placeholder="Ex: La bulle en haut à droite est illisible, la page 14 est en double..."
-                                      class="input-field !py-2.5 w-full text-sm resize-none"></textarea>
-                        </div>
-
-                        {{-- Message d'erreur ou succès --}}
-                        <div x-show="reportError" x-cloak class="p-3 rounded-xl bg-crimson/20 border border-crimson/40 text-crimson text-sm" x-text="reportError"></div>
-                        <div x-show="reportSuccess" x-cloak class="p-3 rounded-xl bg-emerald-500/20 border border-emerald-500/40 text-emerald-400 text-sm flex items-center gap-2">
-                            <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
-                            <span>Signalement envoyé ! Merci de votre aide.</span>
-                        </div>
-
-                        {{-- Actions du modal --}}
-                        <div class="flex items-center justify-end gap-3 pt-3 border-t border-white/10">
-                            <button type="button" @click="showReportModal = false" class="btn-ghost !py-2 !px-4 text-sm">
-                                Annuler
-                            </button>
-                            <button type="submit" :disabled="reportSubmitting || reportSuccess"
-                                    class="btn-primary !bg-crimson hover:!bg-crimson/90 !py-2 !px-5 text-sm font-semibold flex items-center gap-2">
-                                <span x-show="!reportSubmitting">Envoyer le signalement</span>
-                                <span x-show="reportSubmitting" x-cloak>Envoi...</span>
-                            </button>
-                        </div>
-                    </form>
-                </div>
-            </div>
-        </div>
-
-        {{-- ═══ Commentaires ═══ --}}
-        <div class="max-w-3xl mx-auto mt-6 bg-[#0D1018] rounded-2xl p-5 sm:p-8 border border-white/[0.08] shadow-2xl relative overflow-hidden">
-            <div class="absolute -right-16 -bottom-16 w-48 h-48 bg-crimson/5 rounded-full blur-3xl pointer-events-none"></div>
-            <livewire:public.comment-section
-                type="App\Models\Chapter"
-                :id="$chapter->id"
-            />
-        </div>
     </div>
 
+    {{-- Script Reader (Auto-hide controls after 2s idle) --}}
     <script>
     function chapterReader() {
         return {
-            // State
-            readMode: 'vertical',
-            readerWidth: 85,
-            pageGap: 0,
-            isMobile: window.innerWidth < 768,
+            controlsVisible: true,
+            idleTimer: null,
             showSettings: false,
-            navHidden: false,
-            lastScrollY: 0,
-            progressPercent: 0,
+            readMode: localStorage.getItem('hs_read_mode') || 'vertical',
+            readerWidth: parseInt(localStorage.getItem('hs_reader_width') || '75'),
+            pageGap: parseInt(localStorage.getItem('hs_page_gap') || '0'),
             currentPage: 1,
             totalPages: {{ $chapter->pages->count() }},
-            viewTracked: false,
-
-            async trackReadingView() {
-                if (this.viewTracked) return;
-                this.viewTracked = true;
-                try {
-                    const token = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '{{ csrf_token() }}';
-                    await fetch("{{ route('chapter.track_view', $chapter->id) }}", {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'X-CSRF-TOKEN': token,
-                            'Accept': 'application/json'
-                        }
-                    });
-                    // Déclenchement de la progression Murim & Flamme Martiale
-                    window.dispatchEvent(new CustomEvent('chapter-read', { 
-                        detail: { chapterId: {{ $chapter->id }}, mangaSlug: '{{ $manga->slug }}' } 
-                    }));
-                } catch(e) {}
-            },
-
-            // Signalement state
-            showReportModal: false,
-            reportType: 'page_manquante',
-            reportPage: 1,
-            reportMessage: '',
-            reportSubmitting: false,
-            reportSuccess: false,
-            reportError: '',
-
-            openReportModal() {
-                this.reportPage = this.currentPage || 1;
-                this.reportError = '';
-                this.reportSuccess = false;
-                this.showReportModal = true;
-            },
-
-            async submitReport() {
-                this.reportSubmitting = true;
-                this.reportError = '';
-                try {
-                    const token = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '{{ csrf_token() }}';
-                    const res = await fetch("{{ route('chapter.report', $chapter->id) }}", {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'X-CSRF-TOKEN': token,
-                            'Accept': 'application/json'
-                        },
-                        body: JSON.stringify({
-                            type: this.reportType,
-                            page_number: this.reportPage ? parseInt(this.reportPage) : null,
-                            message: this.reportMessage
-                        })
-                    });
-                    const data = await res.json();
-                    if (res.ok && data.success) {
-                        this.reportSuccess = true;
-                        setTimeout(() => {
-                            this.showReportModal = false;
-                            this.reportSuccess = false;
-                            this.reportMessage = '';
-                        }, 2000);
-                    } else {
-                        this.reportError = data.message || 'Une erreur est survenue lors du signalement.';
-                    }
-                } catch(e) {
-                    this.reportError = 'Erreur réseau, veuillez réessayer.';
-                } finally {
-                    this.reportSubmitting = false;
-                }
-            },
+            progressPercent: 0,
+            isMobile: window.innerWidth < 768,
             pages: [
-                @foreach($chapter->pages as $page)
-                { page: {{ $page->page_number }}, src: "{{ Storage::url($page->image_path) }}" },
+                @foreach($chapter->pages as $p)
+                    { page: {{ $p->page_number }}, src: "{{ Storage::url($p->image_path) }}" },
                 @endforeach
             ],
 
-            preloadQueue: new Set(),
-
-            preloadAhead(startIndex, count = 4) {
-                if (!this.pages || !this.pages.length) return;
-                for (let i = startIndex; i < Math.min(this.pages.length, startIndex + count); i++) {
-                    const page = this.pages[i];
-                    if (page && page.src && !this.preloadQueue.has(page.src)) {
-                        this.preloadQueue.add(page.src);
-                        const img = new Image();
-                        img.decoding = 'async';
-                        img.src = page.src;
-                    }
-                }
-            },
-
             init() {
-                this.isMobile = window.innerWidth < 768;
+                this.resetIdleTimer();
                 window.addEventListener('resize', () => {
                     this.isMobile = window.innerWidth < 768;
                 });
-
-                // Charger les réglages
-                try {
-                    const settings = JSON.parse(localStorage.getItem('hiddenscan_reader') || '{}');
-                    if (settings.readMode) this.readMode = settings.readMode;
-                    if (settings.readerWidth) this.readerWidth = settings.readerWidth;
-                    if (settings.pageGap !== undefined) this.pageGap = settings.pageGap;
-                } catch(e) {}
-
-                // Écouter le scroll
-                window.addEventListener('scroll', () => this.onScroll(), { passive: true });
-
-                // Navigation au clavier pour confort desktop
-                window.addEventListener('keydown', (e) => {
-                    const tag = document.activeElement ? document.activeElement.tagName.toLowerCase() : '';
-                    if (tag === 'input' || tag === 'textarea' || tag === 'select' || this.showReportModal) return;
-
-                    if (this.readMode === 'page') {
-                        if (e.key === 'ArrowRight' || e.key === 'PageDown') {
-                            this.nextPage();
-                        } else if (e.key === 'ArrowLeft' || e.key === 'PageUp') {
-                            this.prevPage();
-                        }
-                    }
+                window.addEventListener('scroll', () => {
+                    this.updateScrollProgress();
                 });
 
-                // Sauvegarder la progression
-                this.saveProgress();
-
-                // Préchargement anticipé des premières pages du chapitre
-                this.preloadAhead(0, 5);
-
-                // Déclencher le comptage réaliste si le lecteur reste actif au moins 10 secondes
-                setTimeout(() => {
-                    this.trackReadingView();
-                }, 10000);
-            },
-
-            onScroll() {
-                const y = window.scrollY;
-
-                // Auto-hide nav
-                if (y > this.lastScrollY && y > 200) {
-                    this.navHidden = true;
-                } else {
-                    this.navHidden = false;
-                }
-                this.lastScrollY = y;
-
-                // Progress
-                const docHeight = document.documentElement.scrollHeight - window.innerHeight;
-                this.progressPercent = docHeight > 0 ? Math.min(100, (y / docHeight) * 100) : 0;
-
-                // Comptage de vue réaliste dès 15% de défilement (lecture active)
-                if (this.progressPercent > 15) {
-                    this.trackReadingView();
-                }
-
-                // Preload ahead dynamically as user scrolls
-                const currentScrollPage = Math.floor((this.progressPercent / 100) * this.totalPages);
-                this.preloadAhead(currentScrollPage, 4);
-
-                // Save progress periodically
-                if (this.progressPercent > 5) {
-                    this.saveProgress();
-                }
-            },
-
-            saveSettings() {
-                try {
-                    localStorage.setItem('hiddenscan_reader', JSON.stringify({
-                        readMode: this.readMode,
-                        readerWidth: this.readerWidth,
-                        pageGap: this.pageGap,
-                    }));
-                } catch(e) {}
-            },
-
-            saveProgress() {
-                try {
-                    const data = JSON.parse(localStorage.getItem('hiddenscan') || '{}');
+                // Enregistrement lecture
+                if (window.HiddenScan) {
+                    const data = window.HiddenScan._getData();
                     if (!data.progress) data.progress = {};
-                    data.progress["{{ $manga->slug }}"] = {
-                        chapter: {{ $chapter->number }},
-                        slug: "{{ $chapter->slug }}",
-                        title: "{{ addslashes($manga->title) }}",
-                        cover: "{{ $manga->cover_image ? Storage::url($manga->cover_image) : '' }}",
-                        chapterTitle: "{{ addslashes($chapter->title ?? 'Chapitre ' . $chapter->number) }}",
-                        page: this.currentPage,
-                        percent: Math.round(this.progressPercent),
+                    data.progress['{{ $manga->slug }}'] = {
+                        mangaTitle: '{{ addslashes($manga->title) }}',
+                        mangaSlug: '{{ $manga->slug }}',
+                        chapter: '{{ $chapter->number }}',
+                        slug: '{{ $chapter->slug }}',
                         updatedAt: new Date().toISOString()
                     };
-                    if (!data.history) data.history = [];
-                    data.history = data.history.filter(h => !(h.manga === "{{ $manga->slug }}" && (h.chapter === {{ $chapter->number }} || h.chapterSlug === "{{ $chapter->slug }}")));
-                    data.history.unshift({
-                        manga: "{{ $manga->slug }}",
-                        mangaSlug: "{{ $manga->slug }}",
-                        mangaTitle: "{{ addslashes($manga->title) }}",
-                        chapter: {{ $chapter->number }},
-                        chapterSlug: "{{ $chapter->slug }}",
-                        chapterTitle: "{{ addslashes($chapter->title ?? 'Chapitre ' . $chapter->number) }}",
-                        cover: "{{ $manga->cover_image ? Storage::url($manga->cover_image) : '' }}",
-                        readAt: new Date().toISOString()
-                    });
-                    data.history = data.history.slice(0, 50);
-                    localStorage.setItem('hiddenscan', JSON.stringify(data));
-                } catch(e) {}
+                    window.HiddenScan._save(data);
+                }
+
+                // API view track
+                const token = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+                fetch('/chapitre/{{ $chapter->id }}/vue', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': token || '' }
+                }).catch(() => {});
+            },
+
+            handleActivity() {
+                this.controlsVisible = true;
+                this.resetIdleTimer();
+            },
+
+            resetIdleTimer() {
+                clearTimeout(this.idleTimer);
+                this.idleTimer = setTimeout(() => {
+                    if (!this.showSettings) {
+                        this.controlsVisible = false;
+                    }
+                }, 2000);
+            },
+
+            updateScrollProgress() {
+                const totalHeight = document.documentElement.scrollHeight - window.innerHeight;
+                if (totalHeight > 0) {
+                    this.progressPercent = Math.min(100, Math.round((window.scrollY / totalHeight) * 100));
+                }
+            },
+
+            onImageLoad(pageNum) {
+                // Auto calculation
             },
 
             nextPage() {
                 if (this.currentPage < this.totalPages) {
                     this.currentPage++;
-                    this.preloadAhead(this.currentPage, 4);
-                    this.trackReadingView();
-                    this.saveProgress();
+                    this.progressPercent = Math.round((this.currentPage / this.totalPages) * 100);
                     window.scrollTo({ top: 0, behavior: 'smooth' });
                 }
             },
@@ -601,29 +273,15 @@
             prevPage() {
                 if (this.currentPage > 1) {
                     this.currentPage--;
-                    this.saveProgress();
+                    this.progressPercent = Math.round((this.currentPage / this.totalPages) * 100);
                     window.scrollTo({ top: 0, behavior: 'smooth' });
                 }
             },
 
-            handleImageError(event) {
-                const img = event.target;
-                const wrapper = img.parentElement;
-                if (!wrapper.querySelector('.retry-btn')) {
-                    const div = document.createElement('div');
-                    div.className = 'absolute inset-0 flex flex-col items-center justify-center bg-panel rounded-lg';
-                    div.innerHTML = `
-                        <svg class="w-10 h-10 text-mist/30 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
-                        <p class="text-mist text-sm mb-2">Image non chargée</p>
-                        <button class="retry-btn btn-secondary !py-1.5 !px-4 !text-xs" onclick="this.closest('div').previousElementSibling.src=this.closest('div').previousElementSibling.src+'?r='+Date.now();this.closest('div').remove();">Réessayer</button>
-                    `;
-                    wrapper.appendChild(div);
-                }
-            },
-
-            handleImageLoad(pageNum) {
-                // Préchargement intelligent des 4 prochaines pages dès qu'une page est chargée
-                this.preloadAhead(pageNum, 4);
+            saveSettings() {
+                localStorage.setItem('hs_read_mode', this.readMode);
+                localStorage.setItem('hs_reader_width', this.readerWidth);
+                localStorage.setItem('hs_page_gap', this.pageGap);
             }
         };
     }

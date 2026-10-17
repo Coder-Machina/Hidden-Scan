@@ -1,10 +1,9 @@
-<section style="margin-top: 24px;">
-    <div style="margin-bottom: 16px;">
-        <h3 style="font-size: 15px; font-weight: 600; color: #f87171; display: flex; align-items: center; gap: 8px;">
-            <svg style="width: 16px; height: 16px; stroke: #f87171; fill: none;" viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+<section class="mt-6 pt-6 border-t border-[var(--border)]">
+    <div class="mb-4">
+        <h3 class="text-h3 font-semibold text-[var(--accent)] flex items-center gap-2">
             Supprimer définitivement le compte
         </h3>
-        <p style="font-size: 12px; color: #7070a0; margin-top: 4px;">
+        <p class="text-caption text-[var(--text-2)] mt-1">
             Une fois votre compte supprimé, toutes vos données (profil, progression, favoris et commentaires) seront définitivement effacées.
         </p>
     </div>
@@ -13,25 +12,21 @@
         type="button"
         x-data=""
         x-on:click.prevent="$dispatch('open-modal', 'confirm-user-deletion')"
-        style="background: rgba(220, 38, 38, 0.15); border: 1px solid rgba(220, 38, 38, 0.3); color: #f87171; font-size: 13px; font-weight: 600; padding: 8px 16px; border-radius: 6px; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; transition: all 0.2s;"
-        onmouseover="this.style.background='rgba(220, 38, 38, 0.25)'"
-        onmouseout="this.style.background='rgba(220, 38, 38, 0.15)'"
+        class="btn-secondary !text-[var(--accent)] !border-[var(--accent)] hover:!bg-[var(--accent)] hover:!text-white"
     >
-        <svg style="width: 14px; height: 14px; stroke: currentColor; fill: none;" viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
         Supprimer mon compte
     </button>
 
     <x-modal name="confirm-user-deletion" :show="$errors->userDeletion->isNotEmpty()" focusable>
-        <form method="post" action="{{ route('profile.destroy') }}" style="padding: 24px; background: #111118; border: 1px solid #1e1e2e; border-radius: 12px; display: flex; flex-direction: column; gap: 16px; color: #e8e8f0;">
+        <form method="post" action="{{ route('profile.destroy') }}" class="p-6 bg-[var(--bg-surface)] border border-[var(--border)] rounded-[6px] flex flex-col gap-4 text-[var(--text-1)]">
             @csrf
             @method('delete')
 
             <div>
-                <h3 style="font-size: 16px; font-weight: bold; color: #f87171; display: flex; align-items: center; gap: 8px;">
-                    <svg style="width: 18px; height: 18px; stroke: #f87171; fill: none;" viewBox="0 0 24 24" stroke-width="2"><path d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+                <h3 class="text-h3 font-bold text-[var(--accent)] flex items-center gap-2">
                     Êtes-vous sûr de vouloir supprimer votre compte ?
                 </h3>
-                <p style="font-size: 13px; color: #7070a0; margin-top: 6px; line-height: 1.5;">
+                <p class="text-caption text-[var(--text-2)] mt-1.5 leading-relaxed">
                     @if(Auth::user()->pass_code)
                         Cette action est irréversible. Vos favoris, votre historique de lecture et votre Pass Secret seront immédiatement effacés.
                     @else
@@ -42,30 +37,29 @@
 
             @if(!Auth::user()->pass_code)
                 <div>
-                    <label style="font-size: 12px; color: #7070a0; display: block; margin-bottom: 6px;">Mot de passe de confirmation</label>
+                    <label class="text-label text-[var(--text-2)] block mb-1.5">Mot de passe de confirmation</label>
                     <input
                         type="password"
                         name="password"
-                        class="input-dark"
+                        class="input-field text-caption"
                         placeholder="Entrez votre mot de passe"
                     />
-                    <x-input-error :messages="$errors->userDeletion->get('password')" class="mt-2" />
+                    <x-input-error :messages="$errors->userDeletion->get('password')" class="mt-1" />
                 </div>
             @endif
 
-            <div style="display: flex; align-items: center; justify-content: flex-end; gap: 10px; margin-top: 8px;">
+            <div class="flex items-center justify-flex-end gap-3 pt-2">
                 <button
                     type="button"
                     x-on:click="$dispatch('close')"
-                    class="btn-ghost"
+                    class="btn-secondary"
                 >
                     Annuler
                 </button>
 
                 <button
                     type="submit"
-                    class="btn-save-red"
-                    style="background-color: #dc2626;"
+                    class="btn-primary !bg-[var(--accent)] hover:!bg-[var(--accent-hover)]"
                 >
                     Confirmer la suppression
                 </button>

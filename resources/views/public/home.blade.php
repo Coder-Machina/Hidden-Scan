@@ -1,188 +1,169 @@
 @use('Illuminate\Support\Facades\Storage')
-<x-layouts.public title="Hidden Scan — Lecture de mangas & manhwas en ligne">
+<x-layouts.public title="Hidden Scan — Plateforme de lecture de mangas et manhwas">
 
-    {{-- ═══ Hero Slider Cinématique ("The Shadow Cinema") ═══ --}}
+    {{-- ═══ 1. HERO SECTION CINÉMATIQUE (Composant 2) ═══ --}}
     @if($featured->count())
-    <style>
-        .hero-swiper .swiper-slide {
-            pointer-events: none !important;
-            opacity: 0 !important;
-            visibility: hidden !important;
-            z-index: 1 !important;
-            transition: opacity 0.4s ease, visibility 0.4s ease;
-        }
-        .hero-swiper .swiper-slide.swiper-slide-active {
-            pointer-events: auto !important;
-            opacity: 1 !important;
-            visibility: visible !important;
-            z-index: 10 !important;
-        }
-    </style>
-    <section class="relative mb-12 animate-fade-in -mx-4 sm:-mx-6 mt-[-1.5rem] overflow-hidden">
-        <div class="swiper hero-swiper h-[60vh] min-h-[460px] max-h-[640px] w-full overflow-hidden">
+    <section class="relative -mx-4 sm:-mx-6 -mt-20 mb-16 overflow-hidden min-h-[580px] h-[85vh] max-h-[780px] flex items-center"
+             x-data="{
+                 cursorX: 0,
+                 cursorY: 0,
+                 handleMouseMove(e) {
+                     const rect = this.$el.getBoundingClientRect();
+                     this.cursorX = e.clientX - rect.left - 150;
+                     this.cursorY = e.clientY - rect.top - 150;
+                 }
+             }"
+             @mousemove="handleMouseMove($event)">
+
+        {{-- Desktop-Only Cursor Glow (300x300px, radial gradient 0.06 accent) --}}
+        <div class="hidden md:block pointer-events-none absolute z-20 w-[300px] h-[300px] rounded-full transition-transform duration-150 ease-out"
+             :style="'transform: translate3d(' + cursorX + 'px, ' + cursorY + 'px, 0); background: radial-gradient(circle, rgba(230,57,70,0.06) 0%, transparent 70%);'"></div>
+
+        {{-- Swiper Container --}}
+        <div class="swiper hero-swiper w-full h-full">
             <div class="swiper-wrapper">
-                @foreach($featured as $manga)
+                @foreach($featured as $index => $manga)
                 @php
                     $mangaUrl = route('manga.show', $manga->slug);
                     $firstChapter = $manga->chapters->first();
-                    $isOfficial = !($manga->is_external ?? false);
+                    $genresList = $manga->genres ?? collect();
                 @endphp
-                <div class="swiper-slide relative overflow-hidden" data-url="{{ $mangaUrl }}">
-                    {{-- Backdrop Wallpaper avec Blur Atmosphérique --}}
-                    <div class="absolute inset-0 z-0 select-none pointer-events-none">
-                        @if($manga->banner_image)
-                            <img src="{{ Storage::url($manga->banner_image) }}" alt="" class="w-full h-full object-cover opacity-35 scale-105 filter blur-[2px]">
-                        @elseif($manga->cover_image)
-                            <img src="{{ Storage::url($manga->cover_image) }}" alt="" class="w-full h-full object-cover opacity-25 scale-125 filter blur-lg">
-                        @else
-                            <div class="w-full h-full bg-gradient-to-r from-panel via-ink to-ink-deep"></div>
-                        @endif
-                        
-                        {{-- Gradients de profondeur néon --}}
-                        <div class="absolute inset-0 bg-gradient-to-t from-[#07080c] via-[#07080c]/60 to-transparent"></div>
-                        <div class="absolute inset-0 bg-gradient-to-r from-[#07080c] via-[#07080c]/70 to-transparent"></div>
-                        <div class="absolute -bottom-24 left-1/4 w-96 h-96 bg-crimson/10 rounded-full blur-[120px] pointer-events-none"></div>
-                    </div>
+                <div class="swiper-slide relative w-full h-full overflow-hidden flex items-center">
                     
-                    {{-- Contenu du Hero --}}
-                    <div class="absolute inset-0 flex items-center pointer-events-none">
-                        <div class="max-w-7xl mx-auto px-4 sm:px-8 lg:px-10 w-full flex gap-10 items-center pointer-events-none">
-                            <div class="flex-1 max-w-2xl pointer-events-auto">
-                                
-                                {{-- Badges & Catégorie --}}
-                                <div class="flex flex-wrap items-center gap-2 mb-3 sm:mb-4">
-                                    @if($isOfficial)
-                                        <span class="badge-official-hs">
-                                            <span>👑</span>
-                                            <span>PROJET OFFICIEL HIDDEN SCAN</span>
-                                        </span>
-                                    @else
-                                        <span class="badge-type badge-{{ $manga->type->value }}">
-                                            {{ $manga->type->getLabel() }}
-                                        </span>
-                                    @endif
+                    {{-- Parallax Background Cover (Desktop 0.4x scroll, Disabled on mobile) --}}
+                    <div class="hero-parallax-bg absolute inset-0 z-0 pointer-events-none select-none">
+                        @if($manga->banner_image)
+                            <img src="{{ Storage::url($manga->banner_image) }}" alt="" 
+                                 class="w-full h-full object-cover filter blur-[2px] opacity-40 scale-105">
+                        @elseif($manga->cover_image)
+                            <img src="{{ Storage::url($manga->cover_image) }}" alt="" 
+                                 class="w-full h-full object-cover filter blur-[10px] opacity-30 scale-120">
+                        @else
+                            <div class="w-full h-full bg-[#141414]"></div>
+                        @endif
 
-                                    <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-amber-500/20 text-amber-300 text-xs font-black backdrop-blur-md border border-amber-500/40 shadow-sm">
-                                        ★ {{ $manga->average_rating > 0 ? number_format($manga->average_rating, 1) : '4.9' }}
-                                    </span>
+                        {{-- Permitted Hero Overlays (Only specified gradients) --}}
+                        <div class="absolute inset-0 bg-gradient-to-t from-[#0a0a0a] via-[#0a0a0a]/70 to-transparent"></div>
+                        <div class="absolute inset-0 bg-gradient-to-r from-[#0a0a0a] via-[#0a0a0a]/80 to-transparent"></div>
+                    </div>
 
-                                    <span class="hidden sm:inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-white/10 text-mist text-xs font-semibold backdrop-blur-md border border-white/10">
-                                        🔥 Tendance n°1
-                                    </span>
-                                </div>
-
-                                {{-- Titre du Manga --}}
-                                <h1 class="font-display font-black text-3xl sm:text-5xl lg:text-6xl tracking-tight text-white leading-[1.08] drop-shadow-xl mb-3 sm:mb-4 line-clamp-2 sm:line-clamp-none">
-                                    <a href="{{ $mangaUrl }}" class="hover:text-crimson transition-colors">
-                                        {{ $manga->title }}
-                                    </a>
-                                </h1>
-
-                                {{-- Synopsis condensé --}}
-                                @if($manga->synopsis)
-                                    <p class="text-mist text-xs sm:text-sm md:text-base mb-6 sm:mb-8 line-clamp-2 sm:line-clamp-3 leading-relaxed drop-shadow-md max-w-xl">
-                                        {{ $manga->synopsis }}
-                                    </p>
+                    {{-- Hero Content Container --}}
+                    <div class="relative z-10 max-w-[1280px] w-full mx-auto px-4 sm:px-6 flex flex-col md:flex-row items-start md:items-end justify-between gap-8 pt-20 pb-16">
+                        
+                        <div class="max-w-2xl">
+                            {{-- Genre Pills & Badges --}}
+                            <div class="flex flex-wrap items-center gap-2 mb-4" data-aos="fade-in" data-aos-duration="400">
+                                @if(!($manga->is_external ?? false))
+                                    <span class="badge-official-hs">Projet Officiel</span>
                                 @endif
-
-                                {{-- Actions Call-to-Action --}}
-                                <div class="flex flex-wrap items-center gap-3">
-                                    @if($firstChapter)
-                                        <a href="{{ route('chapter.show', [$manga->slug, $firstChapter->slug]) }}" 
-                                           class="btn-primary !py-3 !px-6 !text-sm sm:!text-base">
-                                            <span>⚡ Lire le Ch. {{ $firstChapter->number }}</span>
-                                        </a>
-                                    @endif
-                                    
-                                    <a href="{{ $mangaUrl }}" class="btn-secondary !py-3 !px-5 !text-sm sm:!text-base">
-                                        <span>📚 Fiche complète</span>
-                                    </a>
-                                </div>
+                                <span class="badge-tag">{{ strtoupper($manga->type?->value ?? 'MANGA') }}</span>
+                                @if($manga->average_rating > 0)
+                                    <span class="badge-tag text-[var(--accent)] font-bold">★ {{ number_format($manga->average_rating, 1) }}</span>
+                                @endif
+                                @foreach($genresList->take(3) as $g)
+                                    <span class="genre-pill !py-0.5 !px-2 !text-[11px]">{{ $g->name }}</span>
+                                @endforeach
                             </div>
-                            
-                            {{-- Couverture 3D Flottante (Desktop) --}}
-                            <div class="hidden md:block flex-shrink-0 relative group perspective-1000 pointer-events-auto">
-                                <a href="{{ $mangaUrl }}" class="block cursor-pointer relative">
-                                    {{-- Lueur d'arrière-plan --}}
-                                    <div class="absolute -inset-2 bg-gradient-to-r from-crimson/30 to-violet/30 rounded-2xl blur-xl opacity-75 group-hover:opacity-100 transition duration-500"></div>
 
-                                    @if($manga->cover_image)
-                                        <img src="{{ Storage::url($manga->cover_image) }}" alt="{{ $manga->title }}" 
-                                             class="relative w-52 lg:w-64 aspect-[2/3] object-cover rounded-2xl border border-white/15 shadow-2xl transition-all duration-500 ease-out group-hover:scale-105 group-hover:border-crimson/60">
-                                    @endif
+                            {{-- Display Title (48px / Nunito 700 / -0.02em) --}}
+                            <h1 class="text-display line-clamp-2 mb-4">
+                                <a href="{{ $mangaUrl }}" class="hover:text-[var(--accent)] transition-colors">
+                                    {{ $manga->title }}
+                                </a>
+                            </h1>
+
+                            {{-- Synopsis --}}
+                            @if($manga->synopsis)
+                                <p class="text-body text-[var(--text-2)] line-clamp-2 max-w-xl mb-6">
+                                    {{ $manga->synopsis }}
+                                </p>
+                            @endif
+
+                            {{-- CTA Buttons --}}
+                            <div class="flex items-center gap-3">
+                                @if($firstChapter)
+                                    <a href="{{ route('chapter.show', [$manga->slug, $firstChapter->slug]) }}" class="btn-primary">
+                                        <span>Lire le Ch. {{ $firstChapter->number }}</span>
+                                        <span>→</span>
+                                    </a>
+                                @endif
+                                <a href="{{ $mangaUrl }}" class="btn-secondary">
+                                    <span>Fiche détaillée</span>
                                 </a>
                             </div>
+                        </div>
+
+                        {{-- Cover 3:4 Preview Desktop --}}
+                        <div class="hidden md:block w-48 lg:w-56 aspect-[3/4] flex-shrink-0 rounded-[6px] overflow-hidden border border-[var(--border)] shadow-md">
+                            @if($manga->cover_image)
+                                <img src="{{ Storage::url($manga->cover_image) }}" alt="{{ $manga->title }}" class="w-full h-full object-cover">
+                            @endif
                         </div>
                     </div>
                 </div>
                 @endforeach
             </div>
-            
-            {{-- Pagination Pilules --}}
-            <div class="swiper-pagination !bottom-4 sm:!bottom-6"></div>
+
+            {{-- Slider Pagination --}}
+            <div class="swiper-pagination !bottom-6 max-w-[1280px] mx-auto text-left px-6 pointer-events-auto"></div>
         </div>
     </section>
 
     <script>
     document.addEventListener('DOMContentLoaded', function () {
-        new Swiper('.hero-swiper', {
-            loop: true,
-            effect: 'fade',
-            fadeEffect: { crossFade: true },
-            autoplay: {
-                delay: 4500,
-                disableOnInteraction: false,
-            },
-            pagination: {
-                el: '.swiper-pagination',
-                clickable: true,
-            },
-            touchStartPreventDefault: false,
-            preventClicks: false,
-            preventClicksPropagation: false,
-            watchSlidesProgress: true,
-        });
+        if (typeof Swiper !== 'undefined') {
+            new Swiper('.hero-swiper', {
+                loop: true,
+                effect: 'fade',
+                fadeEffect: { crossFade: true },
+                pagination: {
+                    el: '.swiper-pagination',
+                    clickable: true,
+                },
+            });
+        }
+
+        // Parallax desktop 0.4x speed via transform
+        if (window.innerWidth >= 768) {
+            window.addEventListener('scroll', () => {
+                const scrolled = window.scrollY;
+                if (scrolled < 800) {
+                    const parallaxElements = document.querySelectorAll('.hero-parallax-bg');
+                    parallaxElements.forEach(el => {
+                        el.style.transform = `translate3d(0, ${scrolled * 0.4}px, 0)`;
+                    });
+                }
+            }, { passive: true });
+        }
     });
     </script>
-    @else
-    {{-- Fallback si aucun manga en avant --}}
-    <section class="relative mb-12 animate-fade-in">
-        <div class="relative overflow-hidden rounded-3xl bg-panel border border-white/10 px-6 sm:px-10 py-12 sm:py-16 flex flex-col items-center text-center">
-            <h1 class="font-display font-black text-4xl sm:text-5xl lg:text-6xl tracking-tight mb-4">
-                HIDDEN<span class="text-crimson">SCAN</span>
-            </h1>
-            <p class="text-mist text-lg max-w-xl">
-                Lis tes mangas, manhwas et manhuas en ligne gratuitement, sans pub invasive.
-            </p>
-        </div>
-    </section>
     @endif
 
-    {{-- ═══ Bandeau "Reprendre ma lecture" (Mobile-First & Bureau) ═══ --}}
-    <div x-data="readingHistory()" x-init="init()" x-show="history.length > 0" x-cloak class="mb-10 animate-fade-in">
-        <div class="bg-gradient-to-r from-panel via-panel-hi to-panel border border-white/10 rounded-2xl p-3.5 sm:p-4 shadow-xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 relative overflow-hidden">
-            <div class="absolute left-0 top-0 bottom-0 w-1 bg-crimson"></div>
-            
-            <div class="flex items-center gap-3.5 min-w-0">
-                <div class="w-10 h-10 rounded-xl bg-crimson/20 border border-crimson/30 flex items-center justify-center text-crimson flex-shrink-0 text-lg">
+    {{-- ═══ 2. BANDEAU DE REPRISE DE LECTURE (Local & Sync) ═══ --}}
+    <div x-data="readingHistory()" x-init="init()" x-show="history.length > 0" x-cloak class="mb-12" data-aos="fade-in" data-aos-duration="400">
+        <div class="bg-[var(--bg-surface)] border border-[var(--border)] rounded-[6px] p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+            <div class="flex items-center gap-3 min-w-0">
+                <div class="w-9 h-9 rounded-[4px] bg-[var(--bg-raised)] border border-[var(--border)] flex items-center justify-center text-base text-[var(--accent)] flex-shrink-0">
                     📖
                 </div>
                 <div class="min-w-0">
                     <div class="flex items-center gap-2">
-                        <span class="text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full bg-crimson/20 text-crimson border border-crimson/30">
-                            Reprise
-                        </span>
-                        <h3 class="font-display font-bold text-sm sm:text-base text-white truncate" x-text="latest.mangaTitle"></h3>
+                        <span class="text-label text-[var(--accent)] font-bold">Reprendre la lecture</span>
+                        <span class="text-[var(--border)]">•</span>
+                        <h3 class="font-heading font-semibold text-[15px] text-[var(--text-1)] truncate" x-text="latest.mangaTitle"></h3>
                     </div>
-                    <p class="text-xs text-mist mt-0.5 truncate">
-                        Chapitre <span class="font-semibold text-white" x-text="latest.chapter"></span> (Progression : <span x-text="latest.percent + '%'"></span>)
+                    <p class="text-caption text-[var(--text-2)] mt-0.5">
+                        Chapitre <span class="text-[var(--text-1)] font-medium" x-text="latest.chapter"></span>
+                        <template x-if="latest.percent">
+                            <span class="text-[var(--text-3)]" x-text="' (' + latest.percent + '%)'"></span>
+                        </template>
                     </p>
                 </div>
             </div>
 
-            <a :href="'/chapitre/' + latest.mangaSlug + '/' + latest.slug" 
-               class="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-crimson hover:bg-crimson-glow text-white font-bold text-xs sm:text-sm shadow-md shadow-crimson/30 hover:scale-105 active:scale-95 transition-all flex-shrink-0">
-                <span>Continuer la lecture ▶</span>
+            <a :href="'/chapitre/' + latest.mangaSlug + '/' + latest.slug" class="btn-primary !py-2 !px-4 !text-caption flex-shrink-0 w-full sm:w-auto text-center">
+                <span>Continuer la lecture</span>
+                <span>→</span>
             </a>
         </div>
     </div>
@@ -200,171 +181,43 @@
                     this.history = Object.values(data)
                         .filter(item => item && item.mangaTitle && item.slug)
                         .sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt))
-                        .slice(0, 4);
+                        .slice(0, 3);
                 } catch(e) {}
             }
         }
     }
     </script>
 
-    {{-- ═══ Section Projets Officiels Hidden Scan (Exclusivité Team) ═══ --}}
-    @php
-        $officialMangas = $latest_updates->where('is_external', false)->take(4);
-    @endphp
-    @if($officialMangas->count())
-    <section class="mb-12 animate-fade-in-up">
-        <div class="flex items-center justify-between mb-5">
-            <h2 class="section-title">
-                <span>Projets Officiels Hidden Scan</span>
-            </h2>
-            <span class="text-xs font-bold text-crimson px-2.5 py-1 rounded-full bg-crimson/15 border border-crimson/30">
-                👑 Nos Créations
-            </span>
-        </div>
-        
-        <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
-            @foreach($officialMangas as $manga)
-                <x-manga-card :manga="$manga" :show-chapters="true" />
-            @endforeach
-        </div>
-    </section>
-    @endif
-
-    {{-- ═══ Section Planning Hebdomadaire des Sorties (Option 1) ═══ --}}
-    @if(isset($weeklySchedule) && count($weeklySchedule))
-    <section class="mb-14 animate-fade-in-up" x-data="{ activeDay: '{{ $todayKey ?? 'lundi' }}' }">
-        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6">
-            <div>
-                <div class="flex items-center gap-2 mb-1">
-                    <span class="text-xs font-black uppercase tracking-wider text-crimson px-2.5 py-0.5 rounded-full bg-crimson/15 border border-crimson/30">
-                        ⚡ Programme Officiel
-                    </span>
-                    <span class="text-xs text-mist font-semibold">Mise à jour en continu</span>
-                </div>
-                <h2 class="section-title">
-                    <span>Planning des Sorties</span>
-                </h2>
-            </div>
-            <a href="{{ route('planning') }}" class="inline-flex items-center gap-2 text-xs sm:text-sm font-bold text-mist hover:text-white transition group">
-                <span>Voir le calendrier complet de la semaine</span>
-                <span class="group-hover:translate-x-1 transition-transform text-crimson">→</span>
+    {{-- ═══ 3. TOP TENDANCES & POPULAIRES (Grille 6 Colonnes) ═══ --}}
+    @if(isset($popular) && $popular->count())
+    <section class="mb-14" data-aos="fade-in" data-aos-duration="600">
+        <div class="flex items-center justify-between mb-4">
+            <h2 class="section-title">Populaire en ce moment</h2>
+            <a href="{{ route('manga.index', ['sort' => 'popular']) }}" class="text-caption text-[var(--text-2)] hover:text-[var(--text-1)] transition flex items-center gap-1 font-semibold">
+                <span>Voir tout</span>
+                <span>→</span>
             </a>
         </div>
 
-        {{-- Onglets des 7 jours --}}
-        <div class="flex items-center gap-2 overflow-x-auto pb-3 mb-6 no-scrollbar">
-            @foreach($weeklySchedule as $dayKey => $dayData)
-                <button type="button"
-                        @click="activeDay = '{{ $dayKey }}'"
-                        :class="activeDay === '{{ $dayKey }}' 
-                            ? 'bg-crimson text-white border-crimson shadow-[0_0_18px_rgba(255,42,85,0.4)] scale-105' 
-                            : 'bg-panel text-mist hover:text-white hover:bg-panel-hi border-white/5'"
-                        class="px-4 py-2.5 rounded-2xl border text-xs sm:text-sm font-bold transition-all duration-200 cursor-pointer flex-shrink-0 flex items-center gap-2 select-none">
-                    <span>{{ $dayData['label'] }}</span>
-                    @if(!empty($dayData['is_today']))
-                        <span class="text-[9px] uppercase px-1.5 py-0.2 rounded-full {{ $dayKey === ($todayKey ?? 'lundi') ? 'bg-black/30 text-white' : 'bg-crimson/20 text-crimson' }} font-black">
-                            Auj.
-                        </span>
-                    @endif
-                    <span class="text-[10px] px-1.5 py-0.5 rounded-full bg-white/10"
-                          :class="activeDay === '{{ $dayKey }}' ? 'bg-white/25 text-white' : 'text-mist'">
-                        {{ count($dayData['items'] ?? []) }}
-                    </span>
-                </button>
+        {{-- Grille 6 Colonnes Desktop / 3 Tablette / 2 Mobile --}}
+        <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
+            @foreach($popular->take(6) as $index => $manga)
+                <div data-aos="fade-up" data-aos-duration="400" data-aos-easing="ease-out-cubic" data-aos-delay="{{ ($index % 6) * 50 }}">
+                    <x-manga-card :manga="$manga" :show-rank="$index + 1" />
+                </div>
             @endforeach
         </div>
-
-        {{-- Conteneur des cartes par jour --}}
-        @foreach($weeklySchedule as $dayKey => $dayData)
-            <div x-show="activeDay === '{{ $dayKey }}'"
-                 x-cloak
-                 x-transition:enter="transition ease-out duration-200"
-                 x-transition:enter-start="opacity-0 translate-y-2"
-                 x-transition:enter-end="opacity-100 translate-y-0"
-                 class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                @forelse(($dayData['items'] ?? []) as $slot)
-                    @php
-                        $manga = $slot['manga'] ?? null;
-                        $latestCh = $slot['latest_chapter'] ?? null;
-                        $isOfficial = $manga && !($manga->is_external ?? false);
-                    @endphp
-                    @if($manga)
-                    <div class="relative overflow-hidden rounded-2xl bg-panel/90 border border-white/10 p-4 hover:border-crimson/50 hover:bg-panel-hi transition-all group flex items-center gap-4 shadow-lg">
-                        {{-- Cover Image --}}
-                        <a href="{{ route('manga.show', $manga->slug) }}" class="w-16 h-22 sm:w-20 sm:h-28 rounded-xl overflow-hidden bg-ink-deep flex-shrink-0 relative block">
-                            @if($manga->cover_image)
-                                <img src="{{ Storage::url($manga->cover_image) }}" alt="{{ $manga->title }}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300">
-                            @else
-                                <div class="w-full h-full bg-gradient-to-br from-panel-hi to-ink-deep flex items-center justify-center text-xl">📖</div>
-                            @endif
-                            <span class="absolute top-1 left-1 text-[9px] font-black px-1.5 py-0.5 rounded bg-black/70 backdrop-blur-md text-amber-300 border border-white/10">
-                                {{ $slot['time'] ?? '18h00' }}
-                            </span>
-                        </a>
-
-                        {{-- Détails --}}
-                        <div class="flex-1 min-w-0">
-                            <div class="flex items-center gap-1.5 mb-1">
-                                @if($isOfficial)
-                                    <span class="text-[9px] font-black uppercase px-2 py-0.5 rounded bg-crimson/20 border border-crimson/40 text-crimson">
-                                        Officiel HS
-                                    </span>
-                                @else
-                                    <span class="text-[9px] font-bold uppercase px-2 py-0.5 rounded bg-white/10 text-mist">
-                                        Scan
-                                    </span>
-                                @endif
-                                <span class="text-[10px] text-amber-300 font-semibold truncate">{{ $slot['status_label'] ?? 'Sortie' }}</span>
-                            </div>
-
-                            <h3 class="font-display font-bold text-sm sm:text-base text-white group-hover:text-crimson transition-colors truncate">
-                                <a href="{{ route('manga.show', $manga->slug) }}">
-                                    {{ $manga->title }}
-                                </a>
-                            </h3>
-
-                            <p class="text-xs text-mist mt-1 line-clamp-1">
-                                {{ $manga->synopsis ? Str::limit($manga->synopsis, 60) : 'Nouveau chapitre prévu cette semaine.' }}
-                            </p>
-
-                            <div class="mt-2.5 flex items-center gap-2">
-                                @if($latestCh)
-                                    <a href="{{ route('chapter.show', [$manga->slug, $latestCh->slug]) }}"
-                                       class="inline-flex items-center gap-1 text-[11px] font-extrabold text-crimson hover:text-white bg-crimson/10 hover:bg-crimson px-2.5 py-1 rounded-lg transition">
-                                        <span>Lire Ch. {{ $latestCh->number }}</span>
-                                        <span>→</span>
-                                    </a>
-                                @else
-                                    <a href="{{ route('manga.show', $manga->slug) }}"
-                                       class="inline-flex items-center gap-1 text-[11px] font-extrabold text-mist hover:text-white bg-white/5 hover:bg-white/15 px-2.5 py-1 rounded-lg transition">
-                                        <span>Voir la fiche</span>
-                                    </a>
-                                @endif
-                            </div>
-                        </div>
-                    </div>
-                    @endif
-                @empty
-                    <div class="col-span-full p-8 text-center bg-panel border border-white/5 rounded-2xl">
-                        <span class="text-3xl mb-2 block">☕</span>
-                        <p class="text-sm font-bold text-white">Aucun drop programmé ce jour-là</p>
-                        <p class="text-xs text-mist mt-1">L'équipe prépare les prochains chapitres en coulisses.</p>
-                    </div>
-                @endforelse
-            </div>
-        @endforeach
     </section>
+
+    <div class="section-separator"></div>
     @endif
 
-    {{-- ═══ Dernières Sorties ═══ --}}
+    {{-- ═══ 4. DERNIÈRES SORTIES (Grille 6 Colonnes & Filtres par Pills) ═══ --}}
     @if($latest_updates->count())
-    @php
-        $mangaDataJson = $latest_updates->map(fn($m) => ['slug' => $m->slug, 'type' => $m->type->value, 'is_external' => (bool)$m->is_external])->values()->toJson();
-    @endphp
-    <section class="mb-14 animate-fade-in-up" 
+    <section class="mb-16" 
              x-data="{ 
-                 category: 'all',
-                 items: {{ $mangaDataJson }},
+                 selectedTab: 'all',
+                 items: {{ $latest_updates->map(fn($m) => ['slug' => $m->slug, 'type' => $m->type->value, 'is_external' => (bool)$m->is_external])->values()->toJson() }},
                  favSlugs: [],
                  init() {
                      try {
@@ -373,180 +226,156 @@
                      } catch(e) {}
                  },
                  isVisible(type, slug, isExternal) {
-                     if (this.category === 'all') return true;
-                     if (this.category === 'official') return !isExternal;
-                     if (this.category === 'favorites') return this.favSlugs.includes(slug);
-                     return this.category === type;
-                 },
-                 get count() {
-                     if (this.category === 'all') return this.items.length;
-                     if (this.category === 'official') return this.items.filter(i => !i.is_external).length;
-                     if (this.category === 'favorites') return this.items.filter(i => this.favSlugs.includes(i.slug)).length;
-                     return this.items.filter(i => i.type === this.category).length;
+                     if (this.selectedTab === 'all') return true;
+                     if (this.selectedTab === 'official') return !isExternal;
+                     if (this.selectedTab === 'favorites') return this.favSlugs.includes(slug);
+                     return this.selectedTab === type;
                  }
              }">
         
-        <div class="flex items-center justify-between mb-5">
-            <h2 class="section-title">
-                <span>Dernières Sorties</span>
-            </h2>
-            <a href="{{ route('manga.index', ['sort' => 'latest']) }}" class="text-sm font-semibold text-mist hover:text-crimson transition flex items-center gap-1">
-                <span>Tout le catalogue</span>
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+        <div class="flex items-center justify-between mb-4">
+            <h2 class="section-title">Dernières Sorties</h2>
+            <a href="{{ route('manga.index', ['sort' => 'latest']) }}" class="text-caption text-[var(--text-2)] hover:text-[var(--text-1)] transition flex items-center gap-1 font-semibold">
+                <span>Catalogue complet</span>
+                <span>→</span>
             </a>
         </div>
 
-        {{-- Barre de filtres de catégories par Pills Néon --}}
-        <div class="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-none mb-6 -mx-4 px-4 sm:mx-0 sm:px-0">
-            <button type="button" @click="category = 'all'" 
-                    :class="category === 'all' ? 'bg-crimson text-white font-bold shadow-md shadow-crimson/30' : 'bg-panel text-mist hover:text-white hover:bg-panel-hi border border-white/5'" 
-                    class="px-4 py-2 rounded-full text-xs sm:text-sm transition-all duration-200 cursor-pointer select-none whitespace-nowrap flex items-center gap-1.5">
-                <span>Tout</span>
-                <span class="text-[11px] px-1.5 py-0.2 rounded-full bg-white/20" x-text="items.length">{{ $latest_updates->count() }}</span>
+        {{-- Barre de Pills de Genre / Types (Horizontally Scrollable, No Scrollbar) --}}
+        <div class="flex items-center gap-2 overflow-x-auto no-scrollbar mb-6 pb-1">
+            <button type="button" @click="selectedTab = 'all'" 
+                    class="genre-pill" :class="selectedTab === 'all' ? 'active' : ''">
+                Tout
             </button>
-
-            <button type="button" @click="category = 'official'" 
-                    :class="category === 'official' ? 'bg-crimson text-white font-bold shadow-md shadow-crimson/30' : 'bg-panel text-mist hover:text-white hover:bg-panel-hi border border-white/5'" 
-                    class="px-4 py-2 rounded-full text-xs sm:text-sm transition-all duration-200 cursor-pointer select-none whitespace-nowrap flex items-center gap-1.5">
-                <span>👑 Hidden Scan</span>
-                <span class="text-[11px] px-1.5 py-0.2 rounded-full bg-white/20" x-text="items.filter(i => !i.is_external).length">0</span>
+            <button type="button" @click="selectedTab = 'official'" 
+                    class="genre-pill" :class="selectedTab === 'official' ? 'active' : ''">
+                Projets Officiels
             </button>
-
-            <button type="button" @click="category = 'manhwa'" 
-                    :class="category === 'manhwa' ? 'bg-crimson text-white font-bold shadow-md shadow-crimson/30' : 'bg-panel text-mist hover:text-white hover:bg-panel-hi border border-white/5'" 
-                    class="px-4 py-2 rounded-full text-xs sm:text-sm transition-all duration-200 cursor-pointer select-none whitespace-nowrap flex items-center gap-1.5">
-                <span>Manhwa</span>
-                <span class="text-[11px] px-1.5 py-0.2 rounded-full bg-white/20" x-text="items.filter(i => i.type === 'manhwa').length">0</span>
+            <button type="button" @click="selectedTab = 'manhwa'" 
+                    class="genre-pill" :class="selectedTab === 'manhwa' ? 'active' : ''">
+                Manhwa
             </button>
-
-            <button type="button" @click="category = 'manhua'" 
-                    :class="category === 'manhua' ? 'bg-crimson text-white font-bold shadow-md shadow-crimson/30' : 'bg-panel text-mist hover:text-white hover:bg-panel-hi border border-white/5'" 
-                    class="px-4 py-2 rounded-full text-xs sm:text-sm transition-all duration-200 cursor-pointer select-none whitespace-nowrap flex items-center gap-1.5">
-                <span>Manhua</span>
-                <span class="text-[11px] px-1.5 py-0.2 rounded-full bg-white/20" x-text="items.filter(i => i.type === 'manhua').length">0</span>
+            <button type="button" @click="selectedTab = 'manhua'" 
+                    class="genre-pill" :class="selectedTab === 'manhua' ? 'active' : ''">
+                Manhua
             </button>
-
-            <button type="button" @click="category = 'manga'" 
-                    :class="category === 'manga' ? 'bg-crimson text-white font-bold shadow-md shadow-crimson/30' : 'bg-panel text-mist hover:text-white hover:bg-panel-hi border border-white/5'" 
-                    class="px-4 py-2 rounded-full text-xs sm:text-sm transition-all duration-200 cursor-pointer select-none whitespace-nowrap flex items-center gap-1.5">
-                <span>Manga</span>
-                <span class="text-[11px] px-1.5 py-0.2 rounded-full bg-white/20" x-text="items.filter(i => i.type === 'manga').length">0</span>
+            <button type="button" @click="selectedTab = 'manga'" 
+                    class="genre-pill" :class="selectedTab === 'manga' ? 'active' : ''">
+                Manga
             </button>
-
-            <button type="button" @click="category = 'favorites'" 
-                    :class="category === 'favorites' ? 'bg-crimson text-white font-bold shadow-md shadow-crimson/30' : 'bg-panel text-mist hover:text-white hover:bg-panel-hi border border-white/5'" 
-                    class="px-4 py-2 rounded-full text-xs sm:text-sm transition-all duration-200 cursor-pointer select-none whitespace-nowrap flex items-center gap-1.5">
-                <span>❤️ Favoris</span>
-                <span class="text-[11px] px-1.5 py-0.2 rounded-full bg-white/20" x-text="items.filter(i => favSlugs.includes(i.slug)).length">0</span>
+            <button type="button" @click="selectedTab = 'favorites'" 
+                    class="genre-pill" :class="selectedTab === 'favorites' ? 'active' : ''">
+                Mes Favoris
             </button>
         </div>
 
-        {{-- Grille Manga Responsive 2 à 6 colonnes --}}
-        <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4" x-show="count > 0">
-            @foreach($latest_updates as $manga)
+        {{-- Grille 6 Colonnes Stricte --}}
+        <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
+            @foreach($latest_updates as $index => $manga)
                 <div x-show="isVisible('{{ $manga->type->value }}', '{{ $manga->slug }}', {{ $manga->is_external ? 'true' : 'false' }})"
-                     x-transition:enter="transition ease-out duration-200"
-                     x-transition:enter-start="opacity-0 scale-95"
-                     x-transition:enter-end="opacity-100 scale-100">
+                     data-aos="fade-up" 
+                     data-aos-duration="400" 
+                     data-aos-easing="ease-out-cubic" 
+                     data-aos-delay="{{ ($index % 6) * 50 }}">
                     <x-manga-card :manga="$manga" :show-chapters="true" />
                 </div>
             @endforeach
         </div>
-
-        {{-- État vide explicite --}}
-        <div x-show="count === 0" x-cloak class="p-8 text-center bg-panel border border-white/5 rounded-3xl animate-fade-in my-4">
-            <span class="text-3xl mb-2 block">📚</span>
-            <p class="text-sm font-bold text-white">Aucune série trouvée pour ce filtre</p>
-            <button type="button" @click="category = 'all'" class="mt-3 px-4 py-2 rounded-xl bg-panel-hi hover:bg-panel-hover text-xs font-semibold text-white border border-white/10 transition">
-                Voir toutes les sorties
-            </button>
-        </div>
     </section>
+
+    <div class="section-separator"></div>
     @endif
 
-    {{-- ═══ Section Populaires & Podium ═══ --}}
-    @if($popular->count())
-    <section class="mb-14 animate-fade-in-up">
-        <div class="flex items-center justify-between mb-6">
-            <h2 class="section-title">
-                <span>Top du Moment</span>
-            </h2>
-            <a href="{{ route('manga.index', ['sort' => 'popular']) }}" class="text-sm font-semibold text-mist hover:text-crimson transition flex items-center gap-1">
-                <span>Classement complet</span>
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+    {{-- ═══ 5. PLANNING DE LA SEMAINE (Composant Hebdomadaire Propre) ═══ --}}
+    @if(isset($weeklySchedule) && count($weeklySchedule))
+    <section class="mb-14" x-data="{ activeDay: '{{ $todayKey ?? 'lundi' }}' }" data-aos="fade-in" data-aos-duration="600">
+        <div class="flex items-center justify-between mb-4">
+            <div>
+                <h2 class="section-title">Planning des Sorties</h2>
+                <p class="text-caption text-[var(--text-2)] mt-0.5">Le programme prévisionnel de publication de nos équipes</p>
+            </div>
+            <a href="{{ route('planning') }}" class="text-caption text-[var(--text-2)] hover:text-[var(--text-1)] transition flex items-center gap-1 font-semibold">
+                <span>Semaine complète</span>
+                <span>→</span>
             </a>
         </div>
-        <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
-            @foreach($popular as $index => $manga)
-                <x-manga-card :manga="$manga" :show-rank="$index < 3 ? $index + 1 : null" />
+
+        {{-- Sélecteur de jour scrollable --}}
+        <div class="flex items-center gap-2 overflow-x-auto no-scrollbar mb-4 pb-1">
+            @foreach($weeklySchedule as $dayKey => $dayData)
+                <button type="button"
+                        @click="activeDay = '{{ $dayKey }}'"
+                        class="genre-pill"
+                        :class="activeDay === '{{ $dayKey }}' ? 'active' : ''">
+                    <span>{{ $dayData['label'] }}</span>
+                    @if(!empty($dayData['is_today']))
+                        <span class="text-[9px] px-1 py-0.2 rounded-[2px] bg-white/20 font-bold uppercase">Auj.</span>
+                    @endif
+                </button>
             @endforeach
         </div>
+
+        {{-- Grille des slots du jour actif --}}
+        @foreach($weeklySchedule as $dayKey => $dayData)
+            <div x-show="activeDay === '{{ $dayKey }}'" x-cloak class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                @forelse(($dayData['items'] ?? []) as $slot)
+                    @php
+                        $manga = $slot['manga'] ?? null;
+                        $latestCh = $slot['latest_chapter'] ?? null;
+                    @endphp
+                    @if($manga)
+                        <div class="p-3 bg-[var(--bg-surface)] border border-[var(--border)] rounded-[6px] hover:border-[var(--text-3)] transition flex items-center gap-3">
+                            <a href="{{ route('manga.show', $manga->slug) }}" class="w-12 h-16 rounded-[4px] bg-[var(--bg-raised)] overflow-hidden flex-shrink-0 block">
+                                @if($manga->cover_image)
+                                    <img src="{{ Storage::url($manga->cover_image) }}" alt="{{ $manga->title }}" class="w-full h-full object-cover">
+                                @endif
+                            </a>
+                            <div class="flex-1 min-w-0">
+                                <div class="text-[11px] text-[var(--text-3)] uppercase font-semibold mb-0.5">{{ $slot['time'] ?? '18h00' }}</div>
+                                <h3 class="font-heading font-semibold text-[14px] text-[var(--text-1)] truncate">
+                                    <a href="{{ route('manga.show', $manga->slug) }}" class="hover:text-[var(--accent)] transition">
+                                        {{ $manga->title }}
+                                    </a>
+                                </h3>
+                                @if($latestCh)
+                                    <div class="text-caption text-[var(--text-2)] mt-1">
+                                        <a href="{{ route('chapter.show', [$manga->slug, $latestCh->slug]) }}" class="hover:text-[var(--accent)] transition">
+                                            Ch. {{ $latestCh->number }} disponible
+                                        </a>
+                                    </div>
+                                @endif
+                            </div>
+                        </div>
+                    @endif
+                @empty
+                    <div class="col-span-full py-8 text-center bg-[var(--bg-surface)] border border-[var(--border)] rounded-[6px] text-caption text-[var(--text-3)]">
+                        Aucune sortie prévue pour ce jour.
+                    </div>
+                @endforelse
+            </div>
+        @endforeach
     </section>
     @endif
 
-    {{-- ═══ Bannière Découverte "Surprends-moi 🎲" ═══ --}}
-    <div class="mb-12 p-5 sm:p-6 rounded-3xl bg-gradient-to-r from-panel via-panel-hi to-panel border border-white/10 shadow-2xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-5 animate-fade-in relative overflow-hidden">
-        <div class="absolute -right-16 -top-16 w-48 h-48 bg-crimson/10 rounded-full blur-3xl pointer-events-none"></div>
-
-        <div class="flex items-center gap-4">
-            <div class="w-12 h-12 rounded-2xl bg-gradient-to-br from-crimson to-violet flex items-center justify-center text-2xl shadow-lg shadow-crimson/30 flex-shrink-0 animate-bounce">
-                🎲
-            </div>
-            <div>
-                <div class="flex items-center gap-2">
-                    <h3 class="font-display font-black text-lg text-white">À court d'idées de lecture ?</h3>
-                    <span class="text-[10px] px-2 py-0.5 rounded-full bg-crimson/20 border border-crimson/30 text-crimson font-black uppercase">Hasard</span>
+    {{-- ═══ 6. DISCORD COMMUNAUTÉ ═══ --}}
+    <section class="mb-14" data-aos="fade-in" data-aos-duration="600">
+        <div class="bg-[var(--bg-surface)] border border-[var(--border)] rounded-[6px] p-6 sm:p-8 flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
+            <div class="max-w-xl">
+                <div class="inline-flex items-center gap-2 px-2.5 py-1 rounded-[4px] bg-[var(--bg-raised)] border border-[var(--border)] text-label text-[var(--accent)] mb-3">
+                    <span>COMMUNAUTÉ OFFICIELLE</span>
                 </div>
-                <p class="text-xs sm:text-sm text-mist mt-0.5">
-                    Laisse l'algorithme Hidden Scan te dégoter une pépite selon tes genres favoris.
+                <h2 class="font-heading font-semibold text-[24px] text-[var(--text-1)] mb-2">Rejoins la communauté</h2>
+                <p class="text-body text-[var(--text-2)] text-[14px] leading-relaxed">
+                    Échange avec les traducteurs, participe aux votes des prochaines séries, sois notifié en direct de la sortie de tes chapitres et rejoins les rangs de notre dojo martial.
                 </p>
             </div>
-        </div>
-        <a href="{{ route('manga.random') }}"
-           onclick="if(window.HiddenScan && !{{ auth()->check() ? 'true' : 'false' }}){ const favs = window.HiddenScan.getFavorites().map(f => f.slug).join(','); if(favs) this.href = '{{ route('manga.random') }}?favs=' + encodeURIComponent(favs); }"
-           class="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-3 rounded-2xl bg-gradient-to-r from-crimson to-[#dc2626] hover:from-crimson-glow hover:to-crimson text-white font-bold text-sm shadow-xl shadow-crimson/30 hover:scale-105 active:scale-95 transition-all flex-shrink-0">
-            <span>Surprends-moi 🎲</span>
-        </a>
-    </div>
-
-    {{-- ═══ Bannière Discord Communautaire (Option 5) ═══ --}}
-    <section class="mb-12 rounded-3xl bg-gradient-to-br from-[#181a38] via-[#101226] to-[#0c0d18] border border-[#5865F2]/40 shadow-2xl p-6 sm:p-8 relative overflow-hidden animate-fade-in-up">
-        <div class="absolute -right-12 -top-12 w-64 h-64 bg-[#5865F2]/20 rounded-full blur-3xl pointer-events-none"></div>
-        <div class="absolute -left-12 -bottom-12 w-48 h-48 bg-crimson/15 rounded-full blur-3xl pointer-events-none"></div>
-
-        <div class="relative z-10 flex flex-col md:flex-row items-center justify-between gap-6">
-            <div class="flex items-center sm:items-start gap-5 text-center sm:text-left">
-                <div class="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl bg-[#5865F2]/20 border border-[#5865F2]/40 flex items-center justify-center text-3xl sm:text-4xl flex-shrink-0 shadow-lg shadow-[#5865F2]/30">
-                    <svg class="w-10 h-10 sm:w-12 sm:h-12 text-[#5865F2]" viewBox="0 0 127.14 96.36" fill="currentColor">
-                        <path d="M107.7,8.07A105.15,105.15,0,0,0,81.47,0a72.06,72.06,0,0,0-3.36,6.83A97.68,97.68,0,0,0,49,6.83,72.37,72.37,0,0,0,45.64,0,105.89,105.89,0,0,0,19.39,8.09C2.79,32.65-1.71,56.6.54,80.21h0A105.73,105.73,0,0,0,32.71,96.36,77.7,77.7,0,0,0,39.6,85.25a68.42,68.42,0,0,1-10.85-5.18c.91-.66,1.8-1.34,2.66-2a75.57,75.57,0,0,0,64.32,0c.87.71,1.76,1.39,2.66,2a68.68,68.68,0,0,1-10.87,5.19,77,77,0,0,0,6.89,11.1A105.25,105.25,0,0,0,126.6,80.22h0C129.24,52.84,122.09,29.11,107.7,8.07ZM42.45,65.69C36.18,65.69,31,60,31,53s5-12.74,11.43-12.74S54,46,53.89,53,48.84,65.69,42.45,65.69Zm42.24,0C78.41,65.69,73.31,60,73.31,53s5-12.74,11.43-12.74S96.2,46,96.12,53,91.08,65.69,84.69,65.69Z"/>
+            <div class="flex-shrink-0 w-full md:w-auto">
+                <a href="https://discord.gg/sMUeFSks4" target="_blank" rel="noopener noreferrer" class="btn-primary inline-flex items-center justify-center gap-2 w-full md:w-auto text-sm py-2.5 px-6">
+                    <svg class="w-4 h-4 fill-current" viewBox="0 0 24 24">
+                        <path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057 19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028c.462-.63.874-1.295 1.226-1.994.021-.041.001-.09-.041-.106a13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.929 1.793 8.18 1.793 12.061 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.894.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.028zM8.02 15.33c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.956-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.956 2.418-2.157 2.418zm7.975 0c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.955-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.946 2.418-2.157 2.418z"/>
                     </svg>
-                </div>
-                <div class="max-w-xl">
-                    <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#5865F2]/20 border border-[#5865F2]/30 text-[#8ea1ff] text-xs font-black uppercase tracking-wider mb-2">
-                        <span>⛩️ Le Dojo des Ombres</span>
-                        <span>•</span>
-                        <span>Discord Officiel</span>
-                    </div>
-                    <h3 class="font-display font-black text-xl sm:text-2xl text-white">
-                        Rejoins la communauté <span class="text-[#8ea1ff]">Hidden Scan</span>
-                    </h3>
-                    <p class="text-xs sm:text-sm text-mist mt-1 leading-relaxed">
-                        Alertes instantanées lors des sorties de chapitres, discussions avec les traducteurs & lecteurs, sondages et événements exclusifs !
-                    </p>
-                </div>
-            </div>
-
-            <div class="flex-shrink-0 w-full sm:w-auto text-center">
-                <a href="https://discord.gg/sMUeFSks4"
-                   target="_blank"
-                   rel="noopener noreferrer"
-                   class="inline-flex items-center justify-center gap-2.5 w-full sm:w-auto px-7 py-3.5 rounded-2xl bg-[#5865F2] hover:bg-[#4752C4] text-white font-black text-sm shadow-xl shadow-[#5865F2]/40 hover:scale-105 active:scale-95 transition-all">
-                    <svg class="w-5 h-5 fill-current" viewBox="0 0 127.14 96.36">
-                        <path d="M107.7,8.07A105.15,105.15,0,0,0,81.47,0a72.06,72.06,0,0,0-3.36,6.83A97.68,97.68,0,0,0,49,6.83,72.37,72.37,0,0,0,45.64,0,105.89,105.89,0,0,0,19.39,8.09C2.79,32.65-1.71,56.6.54,80.21h0A105.73,105.73,0,0,0,32.71,96.36,77.7,77.7,0,0,0,39.6,85.25a68.42,68.42,0,0,1-10.85-5.18c.91-.66,1.8-1.34,2.66-2a75.57,75.57,0,0,0,64.32,0c.87.71,1.76,1.39,2.66,2a68.68,68.68,0,0,1-10.87,5.19,77,77,0,0,0,6.89,11.1A105.25,105.25,0,0,0,126.6,80.22h0C129.24,52.84,122.09,29.11,107.7,8.07ZM42.45,65.69C36.18,65.69,31,60,31,53s5-12.74,11.43-12.74S54,46,53.89,53,48.84,65.69,42.45,65.69Zm42.24,0C78.41,65.69,73.31,60,73.31,53s5-12.74,11.43-12.74S96.2,46,96.12,53,91.08,65.69,84.69,65.69Z"/>
-                    </svg>
-                    <span>Rejoindre le Discord</span>
+                    <span>Rejoindre notre Discord</span>
                 </a>
-                <span class="block text-[11px] text-mist/70 mt-2">Accès libre & gratuit</span>
             </div>
         </div>
     </section>

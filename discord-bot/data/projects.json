@@ -17,7 +17,7 @@
     "steps": {
       "trad": 9,
       "check": 8,
-      "clean": 10,
+      "clean": 11,
       "edit": 5,
       "qc": 0
     },
@@ -199,7 +199,7 @@
     "is_rush": false,
     "staff": {
       "trad": "<@540048485563498516>",
-      "check": "<@979449727047323668>",
+      "check": "<@1018906133295005766>",
       "clean": "<@1086279413278179480>",
       "edit": "<@1310979117172391940>",
       "qc": null
@@ -322,5 +322,32 @@
     "cover_url": null,
     "cover_image": null,
     "is_rush": false
+  },
+  "log-into-the-future": {
+    "slug": "log-into-the-future",
+    "title": "Log Into The Future",
+    "is_external": true,
+    "team_name": null,
+    "discord_role_id": null,
+    "drive_url": null,
+    "va_url": null,
+    "va_chapter": 0,
+    "cover_url": "http://127.0.0.1:8000/storage/mangas/covers/Cog8KJif9uFA2AsOpfDgUc8zwDEoz1DZ.jpg",
+    "cover_image": "mangas/covers/Cog8KJif9uFA2AsOpfDgUc8zwDEoz1DZ.jpg",
+    "is_rush": false,
+    "staff": {
+      "trad": null,
+      "check": null,
+      "clean": null,
+      "edit": null,
+      "qc": null
+    },
+    "steps": {
+      "trad": 5,
+      "check": 5,
+      "clean": 5,
+      "edit": 5,
+      "qc": 5
+    }
   }
 }

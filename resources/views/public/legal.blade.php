@@ -1,11 +1,11 @@
-<x-layouts.public title="{{ $title }} - Hidden Scan">
-    <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-20 animate-fade-in">
-        <div class="mb-10 text-center">
-            <h1 class="text-3xl sm:text-5xl font-display font-bold text-chalk mb-4">{{ $title }}</h1>
-            <p class="text-mist">Dernière mise à jour : {{ now()->format('d/m/Y') }}</p>
+<x-layouts.public title="{{ $title }} — Hidden Scan">
+    <div class="max-w-3xl mx-auto py-8 sm:py-12" data-aos="fade-in" data-aos-duration="400">
+        <div class="mb-8">
+            <h1 class="text-h1 mb-2">{{ $title }}</h1>
+            <p class="text-caption text-[var(--text-3)]">Dernière mise à jour : {{ now()->format('d/m/Y') }}</p>
         </div>
         
-        <div class="bg-panel rounded-2xl p-6 sm:p-10 border border-line/30 shadow-2xl prose prose-invert prose-violet max-w-none">
+        <div class="bg-[var(--bg-surface)] rounded-[6px] p-6 sm:p-8 border border-[var(--border)] prose prose-invert max-w-none text-body text-[var(--text-2)] leading-relaxed">
             {!! $content !!}
         </div>
     </div>

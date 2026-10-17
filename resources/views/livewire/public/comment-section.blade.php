@@ -1,9 +1,9 @@
-<div class="w-full max-w-full overflow-hidden text-[#b8b8d8]" x-data="commentHelper()">
+<div class="w-full max-w-full overflow-hidden text-[var(--text-1)]" x-data="commentHelper()">
     <style>
         .comments-main-container {
-            background-color: #131318;
-            color: #b8b8d8;
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: transparent;
+            color: var(--text-1);
+            font-family: var(--font-ui);
             width: 100%;
             max-width: 100%;
             box-sizing: border-box;
@@ -21,19 +21,21 @@
         }
 
         .comments-header-title {
+            font-family: var(--font-heading);
             font-size: 18px;
-            font-weight: 700;
-            color: #ffffff;
+            font-weight: 600;
+            color: var(--text-1);
             letter-spacing: -0.2px;
         }
 
         .comments-counter-badge {
-            background: #3a3a8a;
-            color: #a0b0ff;
-            font-size: 12px;
+            background: var(--bg-raised);
+            color: var(--accent);
+            border: 1px solid var(--border);
+            font-size: 11px;
             font-weight: 700;
-            padding: 2px 9px;
-            border-radius: 9999px;
+            padding: 2px 8px;
+            border-radius: var(--radius-sm);
             display: inline-flex;
             align-items: center;
             justify-content: center;
@@ -42,43 +44,43 @@
         .comments-sort-group {
             display: flex;
             align-items: center;
-            gap: 2px;
-            background: #1a1a22;
-            border: 1px solid #252535;
+            gap: 4px;
+            background: var(--bg-surface);
+            border: 1px solid var(--border);
             padding: 3px;
-            border-radius: 9999px;
+            border-radius: var(--radius-sm);
         }
 
         .comments-sort-btn {
             font-size: 12px;
             font-weight: 500;
-            color: #60608a;
+            color: var(--text-2);
             background: transparent;
             border: none;
-            padding: 5px 12px;
-            border-radius: 9999px;
+            padding: 4px 12px;
+            border-radius: var(--radius-sm);
             cursor: pointer;
-            transition: all 0.2s ease;
+            transition: all 0.15s ease;
             white-space: nowrap;
         }
 
         .comments-sort-btn:hover {
-            color: #ffffff;
+            color: var(--text-1);
+            background: var(--bg-raised);
         }
 
         .comments-sort-btn.active {
-            background: #ffffff;
-            color: #111111;
+            background: var(--accent);
+            color: #ffffff;
             font-weight: 600;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
         }
 
         /* ─── Main Input Card ─── */
         .comments-input-card {
-            background: #1a1a22;
-            border: 1px solid #252535;
-            border-radius: 12px;
-            padding: 14px 16px;
+            background: var(--bg-surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-md);
+            padding: 16px;
             margin-bottom: 24px;
             box-sizing: border-box;
             width: 100%;
@@ -92,18 +94,18 @@
         }
 
         .comments-avatar-40 {
-            width: 38px;
-            height: 38px;
-            border-radius: 50%;
-            background: #202030;
-            border: 1px solid #252535;
+            width: 36px;
+            height: 36px;
+            border-radius: var(--radius-sm);
+            background: var(--bg-raised);
+            border: 1px solid var(--border);
             display: flex;
             align-items: center;
             justify-content: center;
             flex-shrink: 0;
-            color: #d0d0f0;
+            color: var(--text-1);
             font-weight: 700;
-            font-size: 14px;
+            font-size: 13px;
             overflow: hidden;
             user-select: none;
         }
@@ -116,48 +118,48 @@
 
         .comments-textarea {
             width: 100%;
-            background: #202030;
-            border: 1px solid #252535;
-            border-radius: 8px;
+            background: var(--bg-base);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
             padding: 10px 12px;
-            font-size: 13.5px;
-            color: #e8e8f0;
+            font-size: 14px;
+            color: var(--text-1);
             resize: vertical;
             min-height: 76px;
             font-family: inherit;
             line-height: 1.5;
             outline: none;
-            transition: border-color 0.2s ease;
+            transition: border-color 0.15s ease;
             box-sizing: border-box;
         }
 
         .comments-textarea::placeholder {
-            color: #383858;
+            color: var(--text-3);
         }
 
         .comments-textarea:focus {
-            border-color: #5b6ef5;
+            border-color: var(--accent);
         }
 
         .comments-pseudo-input {
             width: 100%;
-            background: #202030;
-            border: 1px solid #252535;
-            border-radius: 6px;
+            background: var(--bg-base);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
             padding: 8px 12px;
             font-size: 13px;
-            color: #e8e8f0;
+            color: var(--text-1);
             margin-bottom: 10px;
             outline: none;
             box-sizing: border-box;
         }
 
         .comments-pseudo-input::placeholder {
-            color: #383858;
+            color: var(--text-3);
         }
 
         .comments-pseudo-input:focus {
-            border-color: #5b6ef5;
+            border-color: var(--accent);
         }
 
         .comments-input-footer {
@@ -175,7 +177,7 @@
         .comments-format-tools {
             display: flex;
             align-items: center;
-            gap: 2px;
+            gap: 4px;
             flex-wrap: wrap;
         }
 
@@ -187,8 +189,8 @@
             justify-content: center;
             background: transparent;
             border: none;
-            border-radius: 6px;
-            color: #60608a;
+            border-radius: var(--radius-sm);
+            color: var(--text-2);
             font-size: 12px;
             font-weight: 600;
             cursor: pointer;
@@ -198,21 +200,21 @@
         }
 
         .comments-format-btn:hover {
-            color: #ffffff;
-            background: #202030;
+            color: var(--text-1);
+            background: var(--bg-raised);
         }
 
         .btn-publish-comment {
-            background: linear-gradient(135deg, #5b6ef5, #7b8ef8);
+            background: var(--accent);
             color: #ffffff;
             font-weight: 600;
             font-size: 13px;
-            padding: 7px 18px;
-            border-radius: 9999px;
+            padding: 8px 18px;
+            border-radius: var(--radius-sm);
             border: none;
             cursor: pointer;
-            box-shadow: 0 4px 14px rgba(91, 110, 245, 0.35);
-            transition: all 0.2s ease;
+            box-shadow: var(--shadow-sm);
+            transition: background-color 0.15s ease;
             display: inline-flex;
             align-items: center;
             gap: 6px;
@@ -221,37 +223,35 @@
         }
 
         .btn-publish-comment:hover {
-            transform: translateY(-1px);
-            box-shadow: 0 6px 18px rgba(91, 110, 245, 0.45);
-            filter: brightness(1.05);
+            background: var(--accent-hover);
         }
 
         .btn-publish-comment:active {
-            transform: translateY(0);
+            transform: scale(0.98);
         }
 
         /* ─── Comment Card ─── */
         .comments-list-wrap {
             display: flex;
             flex-direction: column;
-            gap: 14px;
+            gap: 12px;
             width: 100%;
         }
 
         .comment-card {
-            background: #1a1a22;
-            border: 1px solid #252535;
-            border-radius: 10px;
+            background: var(--bg-surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-md);
             padding: 14px 16px;
             position: relative;
             overflow: hidden;
-            transition: border-color 0.2s ease;
+            transition: border-color 0.15s ease;
             box-sizing: border-box;
             width: 100%;
         }
 
         .comment-card:hover {
-            border-color: #2e2e42;
+            border-color: var(--text-3);
         }
 
         .comment-bg-illustration {
@@ -902,8 +902,8 @@
                                 <textarea wire:model="editingContent" class="comments-textarea" rows="3"></textarea>
                                 @error('editingContent') <span class="text-xs text-red-400 mt-1 block">{{ $message }}</span> @enderror
                                 <div class="flex gap-2 mt-2">
-                                    <button type="button" wire:click="updateComment" class="px-4 py-1.5 rounded-full bg-[#5b6ef5] text-white text-xs font-semibold cursor-pointer hover:bg-[#6c7ef8] transition">Enregistrer</button>
-                                    <button type="button" wire:click="cancelEdit" class="px-4 py-1.5 rounded-full bg-[#202030] text-xs text-[#a0a0c0] hover:text-white cursor-pointer transition">Annuler</button>
+                                    <button type="button" wire:click="updateComment" class="px-3 py-1.5 rounded-[4px] bg-[var(--accent)] hover:bg-[var(--accent-hover)] text-white text-xs font-semibold cursor-pointer transition">Enregistrer</button>
+                                    <button type="button" wire:click="cancelEdit" class="px-3 py-1.5 rounded-[4px] bg-[var(--bg-raised)] text-xs text-[var(--text-2)] hover:text-white cursor-pointer transition">Annuler</button>
                                 </div>
                             </div>
                         @else
@@ -1051,8 +1051,8 @@
                                                     <textarea wire:model="editingContent" class="comments-textarea" rows="2"></textarea>
                                                     @error('editingContent') <span class="text-xs text-red-400 mt-1 block">{{ $message }}</span> @enderror
                                                     <div class="flex gap-2 mt-2">
-                                                        <button type="button" wire:click="updateComment" class="px-3 py-1 rounded-full bg-[#5b6ef5] text-white text-xs font-semibold cursor-pointer">Enregistrer</button>
-                                                        <button type="button" wire:click="cancelEdit" class="px-3 py-1 rounded-full bg-[#202030] text-xs text-[#a0a0c0] hover:text-white cursor-pointer">Annuler</button>
+                                                        <button type="button" wire:click="updateComment" class="px-3 py-1 rounded-[4px] bg-[var(--accent)] hover:bg-[var(--accent-hover)] text-white text-xs font-semibold cursor-pointer">Enregistrer</button>
+                                                        <button type="button" wire:click="cancelEdit" class="px-3 py-1 rounded-[4px] bg-[var(--bg-raised)] text-xs text-[var(--text-2)] hover:text-white cursor-pointer">Annuler</button>
                                                     </div>
                                                 </div>
                                             @else
