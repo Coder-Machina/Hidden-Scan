@@ -13,12 +13,17 @@ class LeaderboardService
      */
     public static function getTopCultivators(int $limit = 30, ?User $currentUser = null): array
     {
-        // Récupérer les utilisateurs réels
+        // Récupérer uniquement les utilisateurs réels ayant lu au moins un chapitre ou gagné des points
         $realUsers = User::where('is_banned', false)
             ->withCount(['readingProgress' => function ($q) {
                 $q->where('is_read', true);
             }])
             ->get()
+            ->filter(function ($u) {
+                $readCount = (int) $u->reading_progress_count;
+                $xp = (int) ($u->xp ?? ($readCount * 15 + ($u->streak ?? 0) * 10));
+                return $readCount > 0 || $xp > 0;
+            })
             ->map(function ($u) {
                 $readCount = (int) $u->reading_progress_count;
                 $xp = (int) ($u->xp ?? ($readCount * 15 + ($u->streak ?? 0) * 10));
@@ -42,7 +47,7 @@ class LeaderboardService
                 ];
             });
 
-        // Trier uniquement les utilisateurs réels
+        // Trier uniquement les utilisateurs actifs
         $all = $realUsers
             ->sortByDesc(fn ($item) => $item['xp'] * 1000 + $item['read_count'])
             ->values();
@@ -62,20 +67,27 @@ class LeaderboardService
             $ranked[] = $item;
         }
 
-        // Si l'utilisateur connecté n'est pas dans le top, trouver son rang
+        // Si l'utilisateur connecté a lu des chapitres mais n'est pas dans le top visible
         if ($currentUser && !$currentPosition) {
             $userRead = $currentUser->readingProgress()->where('is_read', true)->count();
-            $userXp = $currentUser->xp ?? ($userRead * 15);
-            $higherCount = $all->where('xp', '>', $userXp)->count();
-            $currentPosition = $higherCount + 1;
+            $userXp = (int) ($currentUser->xp ?? ($userRead * 15));
+            if ($userRead > 0 || $userXp > 0) {
+                $higherCount = $all->where('xp', '>', $userXp)->count();
+                $currentPosition = $higherCount + 1;
+            } else {
+                $currentPosition = null;
+            }
         }
 
+        $podium = count($ranked) >= 3 ? array_slice($ranked, 0, 3) : [];
+        $list = count($ranked) >= 3 ? array_slice($ranked, 3, $limit - 3) : $ranked;
+
         return [
-            'podium' => array_slice($ranked, 0, 3),
-            'list' => array_slice($ranked, 3, $limit - 3),
+            'podium' => $podium,
+            'list' => $list,
             'all' => array_slice($ranked, 0, $limit),
             'total_cultivators' => count($ranked),
-            'current_user_rank' => $currentPosition ?? 1,
+            'current_user_rank' => $currentPosition,
         ];
     }
 

@@ -237,7 +237,7 @@ class User extends Authenticatable implements FilamentUser
             return Storage::url($this->avatar);
         }
 
-        if (file_exists(public_path('images/avatars/meliodas.png'))) {
+        if (($this->name === 'Meliodas' || str_contains(strtolower($this->email ?? ''), 'meliodas')) && file_exists(public_path('images/avatars/meliodas.png'))) {
             return asset('images/avatars/meliodas.png');
         }
 
