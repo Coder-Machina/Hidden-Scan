@@ -24,6 +24,7 @@ class ProcessChapterZip implements ShouldQueue
         public Chapter $chapter,
         public string $zipPath,
         public bool $publishWhenReady = false,
+        public int|string $maxPageWidth = 1400,
     ) {}
 
     public function handle(): void
@@ -100,30 +101,34 @@ class ProcessChapterZip implements ShouldQueue
                 $pageNumber = $index + 1;
                 $ext = strtolower(pathinfo($file, PATHINFO_EXTENSION));
 
-                if ($ext === 'webp') {
-                    $destPath = $destFolder . '/' . $pageNumber . '.webp';
-                    Storage::disk('public')->put($destPath, file_get_contents($file));
-                } else {
-                    $saved = false;
-                    try {
-                        $image = $manager->decode($file);
-                        // WebP ne supporte pas les dimensions supérieures à 16383px (fréquent sur les strips webtoons très hauts)
-                        if ($image->width() <= 16380 && $image->height() <= 16380) {
-                            $destPath = $destFolder . '/' . $pageNumber . '.webp';
-                            $encoded = $image->encode(new WebpEncoder(quality: 82));
-                            Storage::disk('public')->put($destPath, (string) $encoded);
-                            $saved = true;
+                $saved = false;
+                try {
+                    $image = $manager->decode($file);
+
+                    // Redimensionnement automatique si l'image dépasse la largeur configurée
+                    if ($this->maxPageWidth !== 'original' && (int) $this->maxPageWidth > 0) {
+                        $targetWidth = (int) $this->maxPageWidth;
+                        if ($image->width() > $targetWidth) {
+                            $image->scaleDown(width: $targetWidth);
                         }
-                    } catch (\Throwable $e) {
-                        Log::warning("Échec conversion WebP pour la page {$pageNumber} du chapitre {$this->chapter->id}: " . $e->getMessage());
                     }
 
-                    // Fallback : conserve l'image originale si l'encodage WebP échoue ou dépasse 16383px
-                    if (!$saved) {
-                        $fallbackExt = in_array($ext, ['jpg', 'jpeg', 'png', 'gif', 'avif']) ? $ext : 'jpg';
-                        $destPath = $destFolder . '/' . $pageNumber . '.' . $fallbackExt;
-                        Storage::disk('public')->put($destPath, file_get_contents($file));
+                    // WebP ne supporte pas les dimensions supérieures à 16383px (fréquent sur les strips webtoons très hauts)
+                    if ($image->width() <= 16380 && $image->height() <= 16380) {
+                        $destPath = $destFolder . '/' . $pageNumber . '.webp';
+                        $encoded = $image->encode(new WebpEncoder(quality: 82));
+                        Storage::disk('public')->put($destPath, (string) $encoded);
+                        $saved = true;
                     }
+                } catch (\Throwable $e) {
+                    Log::warning("Échec conversion WebP/redimensionnement pour la page {$pageNumber} du chapitre {$this->chapter->id}: " . $e->getMessage());
+                }
+
+                // Fallback : conserve l'image originale si l'encodage WebP échoue ou dépasse 16383px
+                if (!$saved) {
+                    $fallbackExt = in_array($ext, ['jpg', 'jpeg', 'png', 'gif', 'avif', 'webp']) ? $ext : 'jpg';
+                    $destPath = $destFolder . '/' . $pageNumber . '.' . $fallbackExt;
+                    Storage::disk('public')->put($destPath, file_get_contents($file));
                 }
 
                 ChapterPage::create([

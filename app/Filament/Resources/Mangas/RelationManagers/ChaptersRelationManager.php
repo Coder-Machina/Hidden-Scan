@@ -156,6 +156,17 @@ class ChaptersRelationManager extends RelationManager
                             ->default('24')
                             ->required(fn ($get) => $get('status') === 'programme')
                             ->visible(fn ($get) => $get('status') === 'programme'),
+                        Select::make('max_page_width')
+                            ->label('Redimensionnement des pages importées')
+                            ->options([
+                                '1400' => 'HD 1400px (Recommandé - Idéal web & mobile)',
+                                '1200' => '1200px (Standard)',
+                                '1080' => '1080px (Léger mobile)',
+                                '1600' => '1600px (Haute résolution)',
+                                'original' => 'Taille originale (aucun redimensionnement)',
+                            ])
+                            ->default('1400')
+                            ->helperText('Redimensionne automatiquement les images trop volumineuses du ZIP.'),
                         FileUpload::make('zip_files')
                             ->label('Fichiers ZIP des chapitres')
                             ->disk('local')
@@ -293,7 +304,8 @@ class ChaptersRelationManager extends RelationManager
                                 'published_at' => null,
                             ]);
 
-                            ProcessChapterZip::dispatch($chapter, $item['file'], publishWhenReady: $shouldPublish);
+                            $maxPageWidth = $data['max_page_width'] ?? 1400;
+                            ProcessChapterZip::dispatch($chapter, $item['file'], publishWhenReady: $shouldPublish, maxPageWidth: $maxPageWidth);
                             $createdCount++;
                         }
 
@@ -327,6 +339,7 @@ class ChaptersRelationManager extends RelationManager
                             $zipPath = is_array($zip) ? array_values($zip)[0] : $zip;
                             $statusVal = $data['status'] ?? null;
                             $shouldPublish = ($statusVal === \App\Enums\ChapterStatus::PUBLIE->value || $statusVal === \App\Enums\ChapterStatus::PUBLIE);
+                            $maxPageWidth = $data['max_page_width'] ?? 1400;
 
                             if ($shouldPublish) {
                                 $record->update(['status' => \App\Enums\ChapterStatus::CONTROLE]);
@@ -334,7 +347,7 @@ class ChaptersRelationManager extends RelationManager
 
                             @ini_set('max_execution_time', '0');
                             @set_time_limit(0);
-                            ProcessChapterZip::dispatch($record, $zipPath, publishWhenReady: $shouldPublish);
+                            ProcessChapterZip::dispatch($record, $zipPath, publishWhenReady: $shouldPublish, maxPageWidth: $maxPageWidth);
                         }
                     }),
             ])
@@ -414,13 +427,89 @@ class ChaptersRelationManager extends RelationManager
                             $zipPath = is_array($zip) ? array_values($zip)[0] : $zip;
                             $statusVal = $data['status'] ?? null;
                             $shouldPublish = ($statusVal === \App\Enums\ChapterStatus::PUBLIE->value || $statusVal === \App\Enums\ChapterStatus::PUBLIE);
+                            $maxPageWidth = $data['max_page_width'] ?? 1400;
+
                             if ($shouldPublish) {
                                 $record->update(['status' => \App\Enums\ChapterStatus::CONTROLE]);
                             }
                             @ini_set('max_execution_time', '0');
                             @set_time_limit(0);
-                            ProcessChapterZip::dispatch($record, $zipPath, publishWhenReady: $shouldPublish);
+                            ProcessChapterZip::dispatch($record, $zipPath, publishWhenReady: $shouldPublish, maxPageWidth: $maxPageWidth);
                         }
+                    }),
+                Action::make('resize_pages')
+                    ->label('Redimensionner')
+                    ->icon('heroicon-m-arrows-pointing-in')
+                    ->color('info')
+                    ->modalHeading(fn (Chapter $record) => "Redimensionner les images du Chapitre {$record->number}")
+                    ->modalDescription("Optimise et redimensionne toutes les pages existantes de ce chapitre pour un affichage plus fluide.")
+                    ->form([
+                        Select::make('target_width')
+                            ->label('Largeur maximale (pixels)')
+                            ->options([
+                                '1400' => '1400px (Recommandé HD - Idéal PC & Mobile)',
+                                '1200' => '1200px (Standard - Très rapide)',
+                                '1080' => '1080px (Léger - Économie de bande passante)',
+                                '900'  => '900px (Mobile ultra fluide)',
+                                '1600' => '1600px (Très haute résolution)',
+                            ])
+                            ->default('1400')
+                            ->required(),
+                        Select::make('quality')
+                            ->label('Qualité d\'encodage WebP')
+                            ->options([
+                                '85' => '85% (Haute qualité)',
+                                '80' => '80% (Équilibré - Recommandé)',
+                                '75' => '75% (Compacité maximale)',
+                                '90' => '90% (Qualité maximale)',
+                            ])
+                            ->default('80')
+                            ->required(),
+                    ])
+                    ->action(function (Chapter $record, array $data) {
+                        $targetWidth = (int) $data['target_width'];
+                        $quality = (int) $data['quality'];
+                        $pages = $record->pages()->orderBy('page_number')->get();
+
+                        if ($pages->isEmpty()) {
+                            Notification::make()->title('Aucune page trouvée pour ce chapitre')->warning()->send();
+                            return;
+                        }
+
+                        $manager = new \Intervention\Image\ImageManager(new \Intervention\Image\Drivers\Gd\Driver());
+                        $resizedCount = 0;
+
+                        foreach ($pages as $page) {
+                            $path = Storage::disk('public')->path($page->image_path);
+                            if (!file_exists($path)) {
+                                continue;
+                            }
+
+                            try {
+                                $image = $manager->decode($path);
+                                if ($image->width() > $targetWidth) {
+                                    $image->scaleDown(width: $targetWidth);
+                                }
+                                $encoded = $image->encode(new \Intervention\Image\Encoders\WebpEncoder(quality: $quality));
+
+                                $newRelativePath = 'chapters/' . $record->id . '/' . $page->page_number . '.webp';
+                                Storage::disk('public')->put($newRelativePath, (string) $encoded);
+
+                                if ($newRelativePath !== $page->image_path) {
+                                    Storage::disk('public')->delete($page->image_path);
+                                    $page->update(['image_path' => $newRelativePath]);
+                                }
+                                $resizedCount++;
+                            } catch (\Throwable $e) {
+                                Log::error("Erreur redimensionnement page {$page->id}: " . $e->getMessage());
+                            }
+                        }
+
+                        Notification::make()
+                            ->title("{$resizedCount} image(s) redimensionnée(s)")
+                            ->body("Toutes les pages du chapitre {$record->number} ont été optimisées en max {$targetWidth}px (WebP {$quality}%).")
+                            ->success()
+                            ->send();
                     }),
                 Action::make('notify_discord')
                     ->label('Annoncer Discord')
@@ -449,6 +538,64 @@ class ChaptersRelationManager extends RelationManager
             ])
             ->toolbarActions([
                 BulkActionGroup::make([
+                    BulkAction::make('bulk_resize')
+                        ->label('Redimensionner la sélection')
+                        ->icon('heroicon-o-arrows-pointing-in')
+                        ->color('info')
+                        ->form([
+                            Select::make('target_width')
+                                ->label('Largeur maximale (pixels)')
+                                ->options([
+                                    '1400' => '1400px (Recommandé HD)',
+                                    '1200' => '1200px (Standard)',
+                                    '1080' => '1080px (Léger mobile)',
+                                    '1600' => '1600px (Haute résolution)',
+                                ])
+                                ->default('1400')
+                                ->required(),
+                            Select::make('quality')
+                                ->label('Qualité d\'encodage WebP')
+                                ->options([
+                                    '85' => '85%',
+                                    '80' => '80%',
+                                    '75' => '75%',
+                                ])
+                                ->default('80')
+                                ->required(),
+                        ])
+                        ->action(function (Collection $records, array $data) {
+                            $targetWidth = (int) $data['target_width'];
+                            $quality = (int) $data['quality'];
+                            $manager = new \Intervention\Image\ImageManager(new \Intervention\Image\Drivers\Gd\Driver());
+                            $totalResized = 0;
+
+                            foreach ($records as $record) {
+                                foreach ($record->pages()->orderBy('page_number')->get() as $page) {
+                                    $path = Storage::disk('public')->path($page->image_path);
+                                    if (!file_exists($path)) continue;
+                                    try {
+                                        $image = $manager->decode($path);
+                                        if ($image->width() > $targetWidth) {
+                                            $image->scaleDown(width: $targetWidth);
+                                        }
+                                        $encoded = $image->encode(new \Intervention\Image\Encoders\WebpEncoder(quality: $quality));
+                                        $newRelativePath = 'chapters/' . $record->id . '/' . $page->page_number . '.webp';
+                                        Storage::disk('public')->put($newRelativePath, (string) $encoded);
+                                        if ($newRelativePath !== $page->image_path) {
+                                            Storage::disk('public')->delete($page->image_path);
+                                            $page->update(['image_path' => $newRelativePath]);
+                                        }
+                                        $totalResized++;
+                                    } catch (\Throwable $e) {}
+                                }
+                            }
+
+                            Notification::make()
+                                ->title("{$records->count()} chapitre(s) redimensionnés")
+                                ->body("{$totalResized} pages optimisées en max {$targetWidth}px.")
+                                ->success()
+                                ->send();
+                        }),
                     BulkAction::make('bulk_publish')
                         ->label('Publier la sélection')
                         ->icon('heroicon-o-check-circle')

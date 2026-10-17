@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\Users\Schemas;
 
 use App\Models\User;
+use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Schemas\Schema;
@@ -14,6 +15,18 @@ class UserForm
     {
         return $schema
             ->components([
+                FileUpload::make('avatar')
+                    ->label('Photo de profil (Avatar)')
+                    ->image()
+                    ->imageEditor()
+                    ->circleCropper()
+                    ->imageResizeMode('cover')
+                    ->imageCropAspectRatio('1:1')
+                    ->imageResizeTargetWidth('300')
+                    ->imageResizeTargetHeight('300')
+                    ->disk('public')
+                    ->directory('avatars')
+                    ->helperText('Cliquez sur le crayon pour recadrer, rogner ou redimensionner l\'avatar.'),
                 TextInput::make('name')
                     ->label('Nom / Pseudo')
                     ->placeholder('ex: Alex, Zoro, Modo1')

@@ -128,8 +128,21 @@ class ProfileController extends Controller
         if (!empty($validated['avatar_data'])) {
             $user->avatar = $validated['avatar_data'];
         } elseif ($request->hasFile('avatar_file')) {
-            $path = $request->file('avatar_file')->store('avatars', 'public');
-            $user->avatar = $path;
+            $file = $request->file('avatar_file');
+            try {
+                $manager = new \Intervention\Image\ImageManager(new \Intervention\Image\Drivers\Gd\Driver());
+                $image = $manager->decode($file->getPathname());
+                if ($image->width() > 400 || $image->height() > 400) {
+                    $image->scaleDown(width: 400, height: 400);
+                }
+                $encoded = $image->encode(new \Intervention\Image\Encoders\WebpEncoder(quality: 85));
+                $filename = 'avatars/' . \Illuminate\Support\Str::random(40) . '.webp';
+                \Illuminate\Support\Facades\Storage::disk('public')->put($filename, (string) $encoded);
+                $user->avatar = $filename;
+            } catch (\Throwable $e) {
+                $path = $file->store('avatars', 'public');
+                $user->avatar = $path;
+            }
         } elseif (!empty($validated['avatar_preset'])) {
             $user->avatar = $validated['avatar_preset'];
         } elseif (!empty($validated['avatar_url'])) {
@@ -140,8 +153,21 @@ class ProfileController extends Controller
         if (!empty($validated['banner_data'])) {
             $user->banner = $validated['banner_data'];
         } elseif ($request->hasFile('banner_file')) {
-            $bannerPath = $request->file('banner_file')->store('banners', 'public');
-            $user->banner = $bannerPath;
+            $file = $request->file('banner_file');
+            try {
+                $manager = new \Intervention\Image\ImageManager(new \Intervention\Image\Drivers\Gd\Driver());
+                $image = $manager->decode($file->getPathname());
+                if ($image->width() > 1600) {
+                    $image->scaleDown(width: 1600);
+                }
+                $encoded = $image->encode(new \Intervention\Image\Encoders\WebpEncoder(quality: 85));
+                $filename = 'banners/' . \Illuminate\Support\Str::random(40) . '.webp';
+                \Illuminate\Support\Facades\Storage::disk('public')->put($filename, (string) $encoded);
+                $user->banner = $filename;
+            } catch (\Throwable $e) {
+                $bannerPath = $file->store('banners', 'public');
+                $user->banner = $bannerPath;
+            }
         } elseif (!empty($validated['banner_url'])) {
             $user->banner = $validated['banner_url'];
         }

@@ -115,20 +115,42 @@ class MangaForm
                         FileUpload::make('cover_image')
                             ->label('Couverture')
                             ->image()
-                            ->disk('public')
-                            ->directory('mangas/covers')
+                            ->imageEditor()
+                            ->imageEditorAspectRatios([
+                                null,
+                                '2:3',
+                                '3:4',
+                                '1:1',
+                                '16:9',
+                            ])
+                            ->imageEditorMode(2)
                             ->imageResizeMode('cover')
                             ->imageCropAspectRatio('2:3')
-                            ->imageResizeTargetWidth('400')
-                            ->imageResizeTargetHeight('600'),
+                            ->imageResizeTargetWidth('600')
+                            ->imageResizeTargetHeight('900')
+                            ->disk('public')
+                            ->directory('mangas/covers')
+                            ->helperText('Cliquez sur le crayon après sélection pour recadrer ou redimensionner l\'image.'),
                         FileUpload::make('banner_image')
                             ->label('Bannière')
                             ->image()
+                            ->imageEditor()
+                            ->imageEditorAspectRatios([
+                                null,
+                                '16:9',
+                                '21:9',
+                                '3:1',
+                                '4:1',
+                                '2:3',
+                                '1:1',
+                            ])
+                            ->imageEditorMode(2)
+                            ->imageResizeMode('cover')
+                            ->imageResizeTargetWidth('1600')
+                            ->imageResizeTargetHeight('600')
                             ->disk('public')
                             ->directory('mangas/banners')
-                            ->imageResizeMode('cover')
-                            ->imageResizeTargetWidth('1200')
-                            ->imageResizeTargetHeight('400'),
+                            ->helperText('Cliquez sur le crayon pour ajuster le cadrage ou la taille de la bannière héro.'),
                     ]),
 
                 Section::make('Origine & Annonces Discord')

@@ -57,10 +57,18 @@ class ChapterForm
                     ->disk('local')
                     ->directory('uploads/zips')
                     ->acceptedFileTypes(['application/zip', 'application/x-zip-compressed'])
-                    ->maxSize(512000)
-                    ->afterStateUpdated(function ($state, $get, $set) {
-                        // Le Job sera lancé après la création du chapitre
-                    }),
+                    ->maxSize(512000),
+                Select::make('max_page_width')
+                    ->label('Redimensionnement des pages importées')
+                    ->options([
+                        '1400' => 'HD 1400px de large (Recommandé - Optimal pour la lecture)',
+                        '1200' => '1200px de large (Standard)',
+                        '1080' => '1080px de large (Léger mobile)',
+                        '1600' => '1600px de large (Haute résolution)',
+                        'original' => 'Taille originale (ne pas redimensionner)',
+                    ])
+                    ->default('1400')
+                    ->helperText('Redimensionne automatiquement les images trop volumineuses du ZIP.'),
             ]);
     }
 }
