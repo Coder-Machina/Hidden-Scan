@@ -106,5 +106,32 @@
       "edit": 5,
       "qc": 5
     }
+  },
+  "my-passive-skills-are-invincible": {
+    "slug": "my-passive-skills-are-invincible",
+    "title": "My Passive Skills Are Invincible",
+    "is_external": false,
+    "team_name": null,
+    "discord_role_id": "1535265321328447550",
+    "drive_url": "https://drive.google.com/drive/folders/1V9pd65xTqe1jmiOT1y-l92-eXu3M3toW?usp=drive_link",
+    "va_url": "https://qimanga.com/series/4190634673-my-passive-skills-are-invincible",
+    "va_chapter": 204,
+    "cover_url": "https://media.qimanhwa.com/file/qiscans/upload/upload/series/4190634673-my-passive-skills-are-invincible/wp-featured-62920/featured.webp",
+    "cover_image": "https://media.qimanhwa.com/file/qiscans/upload/upload/series/4190634673-my-passive-skills-are-invincible/wp-featured-62920/featured.webp",
+    "is_rush": false,
+    "staff": {
+      "trad": "<@1163161538652291074>",
+      "check": "<@1501270135959195829>",
+      "clean": "<@1163161538652291074>",
+      "edit": null,
+      "qc": null
+    },
+    "steps": {
+      "trad": 20,
+      "check": 20,
+      "clean": 24,
+      "edit": 0,
+      "qc": 0
+    }
   }
 }

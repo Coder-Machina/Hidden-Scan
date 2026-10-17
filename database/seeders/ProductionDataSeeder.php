@@ -3062,6 +3062,50 @@ class ProductionDataSeeder extends Seeder
       ),
     ),
   ),
+  array (
+    'title' => 'My Passive Skills Are Invincible',
+    'slug' => 'my-passive-skills-are-invincible',
+    'synopsis' => 'Dans un monde où chacun cherche à éveiller des compétences actives spectaculaires, il découvre que ses compétences passives sont infiniment plus puissantes et le rendent tout simplement invincible.',
+    'type' => 'manhua',
+    'status' => 'en_cours',
+    'release_year' => '2023',
+    'cover_image' => 'https://media.qimanhwa.com/file/qiscans/upload/upload/series/4190634673-my-passive-skills-are-invincible/wp-featured-62920/featured.webp',
+    'banner_image' => NULL,
+    'is_featured' => true,
+    'is_external' => false,
+    'team_name' => NULL,
+    'discord_role_id' => '1535265321328447550',
+    'discord_webhook_url' => NULL,
+    'drive_url' => 'https://drive.google.com/drive/folders/1V9pd65xTqe1jmiOT1y-l92-eXu3M3toW?usp=drive_link',
+    'va_url' => 'https://qimanga.com/series/4190634673-my-passive-skills-are-invincible',
+    'va_chapter_number' => 204,
+    'views_count' => 0,
+    'average_rating' => 0.0,
+    'ratings_count' => 0,
+    'trad_user' => '<@1163161538652291074>',
+    'check_user' => '<@1501270135959195829>',
+    'clean_user' => '<@1163161538652291074>',
+    'step_trad_chapter' => 20,
+    'step_check_chapter' => 20,
+    'step_clean_chapter' => 24,
+    'genres' => 
+    array (
+      0 => 'action',
+      1 => 'fantastique',
+    ),
+    'tags' => 
+    array (
+    ),
+    'authors' => 
+    array (
+    ),
+    'artists' => 
+    array (
+    ),
+    'chapters' => 
+    array (
+    ),
+  ),
 );
         foreach ($mangas as $mData) {
             $genreSlugs = $mData['genres'] ?? [];
