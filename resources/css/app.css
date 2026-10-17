@@ -446,21 +446,33 @@ main {
   overflow: hidden;
   background-image: var(--hero-img);
   background-size: cover;
-  background-position: center right;
+  background-position: 70% 15% !important;
   background-repeat: no-repeat;
   transition: background-image 400ms ease;
 }
 
+/* Léger assombrissement en haut pour la lisibilité de la navbar */
+.hero::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    to bottom,
+    rgba(10, 10, 10, 0.35) 0%,
+    transparent 30%
+  );
+  z-index: 1;
+}
+
 /* Overlay: noir dense à gauche, transparent à droite */
-/* Pas d'overlay bottom-to-top — overlay LEFT-to-RIGHT */
 .hero__overlay {
   position: absolute;
   inset: 0;
   background: linear-gradient(
     to right,
-    rgba(10, 10, 10, 0.97) 0%,
-    rgba(10, 10, 10, 0.75) 40%,
-    rgba(10, 10, 10, 0.20) 65%,
+    rgba(10, 10, 10, 0.95) 0%,
+    rgba(10, 10, 10, 0.60) 35%,
+    rgba(10, 10, 10, 0.10) 60%,
     transparent 100%
   );
   z-index: 1;
@@ -477,6 +489,46 @@ main {
     transparent 40%
   );
   z-index: 1;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   BARRE "REPRENDRE LA LECTURE" (RESUME BAR)
+   ═══════════════════════════════════════════════════════════ */
+
+[x-data*="readingHistory"] {
+  margin-top: 24px;
+}
+
+[x-data*="readingHistory"] > div,
+.resume-bar {
+  position: relative;
+  border-top: 1px solid #1e1e1e !important;
+  background: #0f0f0f !important;
+  padding: 16px 48px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+}
+
+/* Fondu naturel entre le hero et la barre */
+[x-data*="readingHistory"] > div::before,
+.resume-bar::before {
+  content: '';
+  position: absolute;
+  top: -24px;
+  left: 0;
+  right: 0;
+  height: 24px;
+  background: linear-gradient(to top, #0a0a0a 0%, transparent 100%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+@media (max-width: 640px) {
+  [x-data*="readingHistory"] > div,
+  .resume-bar {
+    padding: 16px 20px !important;
+  }
 }
 
 .hero__content {
