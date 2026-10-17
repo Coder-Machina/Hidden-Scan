@@ -4,9 +4,23 @@
         {{-- En-tête --}}
         <div class="text-center mb-10">
             <h1 class="text-h1 mb-2">Classement des Lecteurs</h1>
-            <p class="text-caption text-[var(--text-2)] max-w-xl mx-auto">
+            <p class="text-caption text-[var(--text-2)] max-w-xl mx-auto mb-4">
                 Chaque chapitre lu nourrit votre progression martiale. Grimpez au sommet du classement et atteignez le pinacle.
             </p>
+            @auth
+                <div class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-[4px] bg-[var(--bg-raised)] border border-[var(--border)] text-caption">
+                    @if(auth()->user()->isStaffOrAdmin())
+                        <span class="text-amber-400 font-bold">🛡️ Staff / Admin</span>
+                        <span class="text-[var(--text-3)]">(Hors classement)</span>
+                    @elseif($currentUserRank)
+                        <span class="text-[var(--text-2)]">Votre rang actuel :</span>
+                        <span class="text-[var(--accent)] font-bold">#{{ $currentUserRank }}</span>
+                    @else
+                        <span class="text-[var(--text-2)]">Votre statut :</span>
+                        <span class="text-[var(--text-3)] font-semibold">Non classé (0 chapitre lu)</span>
+                    @endif
+                </div>
+            @endauth
         </div>
 
         @if($leaderboard['total_cultivators'] === 0)
@@ -104,7 +118,11 @@
                             <span class="text-caption text-[var(--text-3)]">Mis à jour automatiquement après chaque lecture</span>
                         </div>
                         @auth
-                            @if($currentUserRank)
+                            @if(auth()->user()->isStaffOrAdmin())
+                                <div class="px-3 py-1 rounded-[4px] bg-[var(--bg-raised)] border border-[var(--border)] text-caption text-[var(--text-2)] flex items-center gap-1.5">
+                                    <span>🛡️</span> <span>Staff / Admin</span> <span class="text-[var(--text-3)]">(Hors classement)</span>
+                                </div>
+                            @elseif($currentUserRank)
                                 <div class="px-3 py-1 rounded-[4px] bg-[var(--bg-raised)] border border-[var(--border)] text-caption font-semibold text-[var(--text-1)]">
                                     Votre rang : <span class="text-[var(--accent)] font-bold">#{{ $currentUserRank }}</span>
                                 </div>

@@ -80,6 +80,30 @@ class User extends Authenticatable implements FilamentUser
     }
 
     /**
+     * Vérifie si l'utilisateur est un membre du staff (Admin, Modo, Uploader, Fondateur)
+     */
+    public function isStaffOrAdmin(): bool
+    {
+        $founderEmails = [
+            'meliodasdsama006@gmail.com',
+            'meliodasdsala006@gmail.com',
+            'admin@hiddenscan.com',
+            'admin@hidden-scan.com',
+        ];
+
+        if ($this->email && in_array(strtolower($this->email), $founderEmails, true)) {
+            return true;
+        }
+
+        return $this->hasAnyRole([
+            'owner', 'Owner',
+            'admin', 'Admin', 'Administrateur',
+            'modo', 'Modo', 'Modérateur', 'moderateur',
+            'uploader', 'Uploader',
+        ]);
+    }
+
+    /**
      * Badge Staff : Admin (rouge), Modo (violet), Uploader (bleu ciel)
      */
     public function getStaffBadgeAttribute(): ?array

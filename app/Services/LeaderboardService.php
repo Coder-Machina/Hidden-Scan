@@ -13,13 +13,18 @@ class LeaderboardService
      */
     public static function getTopCultivators(int $limit = 30, ?User $currentUser = null): array
     {
-        // Récupérer uniquement les utilisateurs réels ayant lu au moins un chapitre ou gagné des points
+        // Récupérer uniquement les utilisateurs réels non-staff ayant lu au moins un chapitre ou gagné des points
         $realUsers = User::where('is_banned', false)
             ->withCount(['readingProgress' => function ($q) {
                 $q->where('is_read', true);
             }])
             ->get()
             ->filter(function ($u) {
+                // Les admins, modos et membres du staff sont strictement hors classement (même s'ils lisent)
+                if (method_exists($u, 'isStaffOrAdmin') && $u->isStaffOrAdmin()) {
+                    return false;
+                }
+
                 $readCount = (int) $u->reading_progress_count;
                 $xp = (int) ($u->xp ?? ($readCount * 15 + ($u->streak ?? 0) * 10));
                 return $readCount > 0 || $xp > 0;
@@ -47,7 +52,7 @@ class LeaderboardService
                 ];
             });
 
-        // Trier uniquement les utilisateurs actifs
+        // Trier uniquement les lecteurs actifs
         $all = $realUsers
             ->sortByDesc(fn ($item) => $item['xp'] * 1000 + $item['read_count'])
             ->values();
@@ -67,8 +72,11 @@ class LeaderboardService
             $ranked[] = $item;
         }
 
-        // Si l'utilisateur connecté a lu des chapitres mais n'est pas dans le top visible
-        if ($currentUser && !$currentPosition) {
+        // Si l'utilisateur connecté est un admin ou membre du staff : strictement hors-classement
+        if ($currentUser && method_exists($currentUser, 'isStaffOrAdmin') && $currentUser->isStaffOrAdmin()) {
+            $currentPosition = null;
+        } elseif ($currentUser && !$currentPosition) {
+            // Si le lecteur connecté a lu des chapitres mais n'est pas dans le top visible
             $userRead = $currentUser->readingProgress()->where('is_read', true)->count();
             $userXp = (int) ($currentUser->xp ?? ($userRead * 15));
             if ($userRead > 0 || $userXp > 0) {
