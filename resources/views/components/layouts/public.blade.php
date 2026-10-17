@@ -504,9 +504,9 @@
       @keydown.escape.window="closeSearch()">
 
     @unless($hideNavbar)
-    {{-- ═══ Navbar (64px, Transparent -> Dark Blur on scroll) ═══ --}}
+    {{-- ═══ Navbar séparée — toujours opaque, jamais dans le hero (Aniverse style) ═══ --}}
     <nav id="main-navbar" 
-         class="fixed top-0 left-0 right-0 z-50 h-16 transition-all duration-200 border-b border-transparent bg-transparent"
+         class="navbar navbar--opaque w-full transition-all duration-200"
          x-data="{ 
              mobileOpen: false, 
              userMobileMenuOpen: false,
@@ -812,7 +812,7 @@
     {{-- ═══ Page Wrapper (1360px container or Full Width) ═══ --}}
     <main class="flex-1 w-full mx-auto relative z-10 overflow-x-hidden">
         @if($container)
-            <div class="max-w-[1360px] w-full mx-auto px-4 sm:px-6 lg:px-8 {{ $hideNavbar ? '' : 'pt-20' }} pb-16">
+            <div class="max-w-[1360px] w-full mx-auto px-4 sm:px-6 lg:px-8 {{ $hideNavbar ? '' : 'pt-8' }} pb-16">
                 {{ $slot }}
             </div>
         @else
@@ -911,19 +911,6 @@
         </div>
     </footer>
     @endif
-
-    {{-- ═══ Script Navbar Scroll Transparent / Dark Blur ═══ --}}
-    <script>
-    window.addEventListener('scroll', () => {
-        const navbar = document.getElementById('main-navbar');
-        if (!navbar) return;
-        const scrolled = window.scrollY > 60;
-        navbar.style.background = scrolled ? 'rgba(10,10,10,0.95)' : 'transparent';
-        navbar.style.backdropFilter = scrolled ? 'blur(12px)' : 'none';
-        navbar.style.borderBottomColor = scrolled ? 'var(--border)' : 'transparent';
-        navbar.style.transition = 'all 250ms ease';
-    });
-    </script>
 
     @livewireScripts
 </body>

@@ -1,13 +1,14 @@
 @use('Illuminate\Support\Facades\Storage')
 <x-layouts.public :container="false" title="Hidden Scan — Plateforme de lecture de mangas et manhwas">
 
-    {{-- ═══ 1. HERO SECTION CINÉMATIQUE PLEINE LARGEUR (ANIVERSE STYLE) ═══ --}}
+    {{-- ═══ 1. HERO SECTION CINÉMATIQUE SÉPARÉE (ANIVERSE STYLE) ═══ --}}
     @if($featured->count())
     @php
         $firstManga = $featured->first();
     @endphp
-    <section class="hero" 
-             style="--hero-img: url('{{ $firstManga->banner_url ?? $firstManga->cover_url }}')"
+    <section class="hero-wrapper">
+      <div class="hero-container">
+        <div class="hero-card"
              x-data="{ 
                  activeIndex: 0,
                  slides: [
@@ -16,49 +17,56 @@
                      @endforeach
                  ]
              }"
-             :style="'--hero-img: url(\'' + slides[activeIndex] + '\')'">
-        <div class="hero__overlay"></div>
+             style="--banner: url('{{ $firstManga->banner_url ?? $firstManga->cover_url }}')"
+             :style="'--banner: url(\'' + slides[activeIndex] + '\')'">
 
-        @foreach($featured as $index => $manga)
-        <div class="hero__content" 
-             x-show="activeIndex === {{ $index }}"
-             x-cloak
-             style="{{ $index === 0 ? '' : 'display: none;' }}">
-            <div class="hero__meta">
-                <span class="hero__type">{{ strtoupper($manga->type?->value ?? (string)$manga->type) }}</span>
-                <span class="hero__dot">·</span>
-                <span class="hero__status">{{ strtoupper($manga->status?->value ?? (string)$manga->status) }}</span>
-            </div>
-            <h1 class="hero__title">{{ $manga->title }}</h1>
-            <p class="hero__synopsis">{{ Str::limit($manga->synopsis, 160) }}</p>
-            <div class="hero__tags">
-                @foreach($manga->genres->take(3) as $genre)
-                    <span class="hero__tag">{{ $genre->name }}</span>
-                @endforeach
-            </div>
-            <div class="hero__actions">
-                <a href="{{ route('manga.read.first', $manga) }}" class="btn btn--primary">
-                    ▶ Lire maintenant
-                </a>
-                <a href="{{ route('manga.show', $manga) }}" class="btn btn--ghost">
-                    Fiche détaillée
-                </a>
-            </div>
-        </div>
-        @endforeach
+          {{-- Overlay uniquement en bas-gauche --}}
+          <div class="hero-card__overlay"></div>
 
-        @if($featured->count() > 1)
-        <div class="hero__indicators">
-            @foreach($featured as $index => $manga)
-                <button type="button" 
-                        class="hero__dot-nav" 
-                        :class="{ 'active': activeIndex === {{ $index }} }" 
-                        @click="activeIndex = {{ $index }}"
-                        aria-label="Slide {{ $index + 1 }}">
-                </button>
+          {{-- Contenu en bas-gauche --}}
+          @foreach($featured as $index => $manga)
+          <div class="hero-card__content"
+               x-show="activeIndex === {{ $index }}"
+               x-cloak
+               style="{{ $index === 0 ? '' : 'display: none;' }}">
+            <p class="hero-card__meta">
+              {{ strtoupper($manga->type?->value ?? (string)$manga->type) }}
+              <span>·</span>
+              {{ strtoupper($manga->status?->value ?? (string)$manga->status) }}
+            </p>
+            <h1 class="hero-card__title">{{ $manga->title }}</h1>
+            <p class="hero-card__synopsis">
+              {{ Str::limit($manga->synopsis, 150) }}
+            </p>
+            <div class="hero-card__actions">
+              <a href="{{ route('manga.read.first', $manga) }}"
+                 class="btn btn--primary">
+                ▶ Lire maintenant
+              </a>
+              <a href="{{ route('manga.show', $manga) }}"
+                 class="btn btn--ghost">
+                Fiche détaillée
+              </a>
+            </div>
+          </div>
+          @endforeach
+
+          {{-- Indicateurs carousel --}}
+          @if($featured->count() > 1)
+          <div class="hero-card__dots">
+            @foreach($featured as $i => $item)
+              <button type="button"
+                      class="dot {{ $i === 0 ? 'dot--active' : '' }}"
+                      :class="{ 'dot--active': activeIndex === {{ $i }} }"
+                      @click="activeIndex = {{ $i }}"
+                      data-index="{{ $i }}"
+                      aria-label="Slide {{ $i + 1 }}"></button>
             @endforeach
+          </div>
+          @endif
+
         </div>
-        @endif
+      </div>
     </section>
     @endif
 
