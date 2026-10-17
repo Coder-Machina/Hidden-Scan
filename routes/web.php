@@ -22,7 +22,8 @@ Route::get('/leaderboard', fn() => redirect()->route('leaderboard'));
 Route::prefix('manga')->name('manga.')->group(function () {
     Route::get('/', [MangaController::class, 'index'])->name('index');
     Route::get('/aleatoire', [MangaController::class, 'random'])->name('aleatoire');
-    Route::get('/{slug}', [MangaController::class, 'show'])->name('show');
+    Route::get('/{manga:slug}/lire-premier', [MangaController::class, 'readFirst'])->name('read.first');
+    Route::get('/{manga:slug}', [MangaController::class, 'show'])->name('show');
 });
 
 Route::prefix('chapitre')->name('chapter.')->group(function () {

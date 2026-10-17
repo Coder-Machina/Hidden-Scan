@@ -40,6 +40,32 @@ class Manga extends Model
         $this->attributes['views_count'] = (int) ($value ?? 0);
     }
 
+    public function getCoverUrlAttribute(): string
+    {
+        if ($this->cover_image) {
+            if (str_starts_with($this->cover_image, 'http://') || str_starts_with($this->cover_image, 'https://') || str_starts_with($this->cover_image, '/')) {
+                return $this->cover_image;
+            }
+
+            return \Illuminate\Support\Facades\Storage::url($this->cover_image);
+        }
+
+        return asset('images/default-cover.jpg');
+    }
+
+    public function getBannerUrlAttribute(): ?string
+    {
+        if ($this->banner_image) {
+            if (str_starts_with($this->banner_image, 'http://') || str_starts_with($this->banner_image, 'https://') || str_starts_with($this->banner_image, '/')) {
+                return $this->banner_image;
+            }
+
+            return \Illuminate\Support\Facades\Storage::url($this->banner_image);
+        }
+
+        return null;
+    }
+
     public function authors()
     {
         return $this->belongsToMany(Author::class, 'author_manga');

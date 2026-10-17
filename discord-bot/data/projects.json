@@ -349,5 +349,32 @@
       "edit": 5,
       "qc": 5
     }
+  },
+  "god-of-blackfield": {
+    "slug": "god-of-blackfield",
+    "title": "God of Blackfield",
+    "drive_url": "https://drive.google.com/drive/u/3/folders/1LULOgCP5f1otzPVxkPyvzsBcTtF-GjJ_?hl=fr",
+    "va_url": "https://qimanga.com/series/god-of-blackfield",
+    "va_chapter": 338,
+    "cover_url": "https://cdn.discordapp.com/attachments/1537844888232534016/1537844888434118656/god-of-blackfield-1-1-280x400.jpg?ex=6ad43c69&is=6ad2eae9&hm=3562f3527a558265d9786df33c6655f0f9a47805ac9f4455d249e9530072ef27",
+    "cover_image": null,
+    "is_rush": false,
+    "is_external": false,
+    "discord_role_id": "1560999086772060210",
+    "team_name": null,
+    "staff": {
+      "trad": "<@979449727047323668>",
+      "check": "<@929297904852697138>",
+      "clean": "<@1163161538652291074>",
+      "edit": "<@834735285032058902>",
+      "qc": null
+    },
+    "steps": {
+      "trad": 169,
+      "check": 169,
+      "clean": 169,
+      "edit": 169,
+      "qc": 169
+    }
   }
 }

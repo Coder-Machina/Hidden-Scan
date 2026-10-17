@@ -97,6 +97,18 @@ class MangaController extends Controller
         return view('public.manga.show', compact('manga', 'readChapterIds', 'resumeChapter'));
     }
 
+    public function readFirst(string $slug)
+    {
+        $manga = Manga::where('slug', $slug)->firstOrFail();
+        $firstChapter = $manga->chapters()->where('status', \App\Enums\ChapterStatus::PUBLIE)->orderBy('number', 'asc')->first();
+
+        if ($firstChapter) {
+            return redirect()->route('chapter.show', [$manga->slug, $firstChapter->slug]);
+        }
+
+        return redirect()->route('manga.show', $manga->slug);
+    }
+
     public function rate(string $slug, \Illuminate\Http\Request $request)
     {
         $request->validate(['score' => 'required|integer|min:1|max:5']);
