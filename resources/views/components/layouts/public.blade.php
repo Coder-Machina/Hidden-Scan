@@ -620,21 +620,25 @@
                     <div class="relative">
                         <button type="button" 
                                 @click="userMobileMenuOpen = !userMobileMenuOpen" 
-                                class="flex items-center gap-2 py-1 px-2 rounded-[4px] hover:bg-[var(--bg-raised)] border border-transparent hover:border-[var(--border)] transition cursor-pointer"
+                                class="flex items-center gap-2.5 p-1 rounded-full hover:bg-[var(--bg-raised)] border border-transparent hover:border-[var(--border)] transition cursor-pointer group"
                                 aria-label="Menu profil utilisateur">
-                            <img src="{{ Auth::user()->avatar_url }}" alt="{{ Auth::user()->name }}" class="w-6 h-6 rounded-[4px] object-cover bg-[var(--bg-raised)] navbar-avatar-img">
-                            <span class="text-caption font-semibold text-[var(--text-1)] max-w-[90px] truncate hidden sm:inline">{{ Auth::user()->name }}</span>
-                            <svg class="w-3.5 h-3.5 text-[var(--text-3)]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                            <div class="relative w-8 h-8 rounded-full overflow-hidden border border-[var(--border)] group-hover:border-[var(--accent)] ring-1 ring-white/10 group-hover:ring-2 group-hover:ring-[var(--accent)]/40 transition-all flex-shrink-0 bg-[var(--bg-raised)]">
+                                <img src="{{ Auth::user()->avatar_url }}" alt="{{ Auth::user()->name }}" class="w-full h-full rounded-full object-cover navbar-avatar-img">
+                            </div>
+                            <span class="text-caption font-semibold text-[var(--text-1)] group-hover:text-white max-w-[90px] truncate hidden sm:inline transition-colors">{{ Auth::user()->name }}</span>
+                            <svg class="w-3.5 h-3.5 text-[var(--text-3)] group-hover:text-[var(--text-1)] transition-colors hidden sm:inline" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
                         </button>
 
                         <div x-show="userMobileMenuOpen" 
                              x-cloak 
                              @click.outside="userMobileMenuOpen = false"
-                             class="absolute right-0 mt-2 w-64 bg-[var(--bg-surface)] border border-[var(--border)] rounded-[6px] shadow-2xl z-50 overflow-hidden backdrop-blur-xl">
+                             class="absolute right-0 mt-2 w-64 bg-[var(--bg-surface)] border border-[var(--border)] rounded-[8px] shadow-2xl z-50 overflow-hidden backdrop-blur-xl">
                             
-                            {{-- Header Utilisateur avec avatar & informations --}}
+                            {{-- Header Utilisateur avec avatar circulaire & informations --}}
                             <div class="px-4 py-3 border-b border-[var(--border)] bg-[var(--bg-raised)]/60 flex items-center gap-3">
-                                <img src="{{ Auth::user()->avatar_url }}" alt="{{ Auth::user()->name }}" class="w-9 h-9 rounded-[4px] object-cover border border-[var(--border)] bg-[var(--bg-base)] flex-shrink-0">
+                                <div class="relative w-10 h-10 rounded-full overflow-hidden border-2 border-[var(--border)] ring-1 ring-white/10 flex-shrink-0 bg-[var(--bg-base)]">
+                                    <img src="{{ Auth::user()->avatar_url }}" alt="{{ Auth::user()->name }}" class="w-full h-full rounded-full object-cover navbar-avatar-img shadow-sm">
+                                </div>
                                 <div class="min-w-0 flex-1">
                                     <div class="font-bold text-white text-xs truncate">
                                         {{ Auth::user()->name }}

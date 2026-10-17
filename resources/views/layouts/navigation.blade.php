@@ -35,7 +35,7 @@
                 <x-dropdown align="right" width="48">
                     <x-slot name="trigger">
                         <button class="inline-flex items-center gap-2 px-3 py-1.5 border border-[var(--border)] text-caption font-semibold rounded-[4px] text-[var(--text-1)] bg-[var(--bg-surface)] hover:bg-[var(--bg-raised)] focus:outline-none transition ease-in-out duration-150 cursor-pointer">
-                            <img src="{{ Auth::user()->avatar_url }}" alt="" class="w-5 h-5 rounded-[4px] object-cover bg-[var(--bg-raised)]">
+                            <img src="{{ Auth::user()->avatar_url }}" alt="" class="w-6 h-6 rounded-full object-cover bg-[var(--bg-raised)] border border-[var(--border)]">
                             <div class="max-w-[100px] truncate">{{ Auth::user()->name }}</div>
 
                             <div class="ms-1">

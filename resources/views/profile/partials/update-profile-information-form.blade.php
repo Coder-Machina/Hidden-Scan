@@ -39,8 +39,8 @@
 
             <div class="flex flex-col sm:flex-row sm:items-center gap-6">
                 {{-- Aperçu --}}
-                <div class="relative w-20 h-20 sm:w-24 sm:h-24 rounded-[6px] border border-[var(--border)] bg-[var(--bg-raised)] overflow-hidden flex-shrink-0 mx-auto sm:mx-0">
-                    <img :src="avatarPreview" alt="Aperçu avatar" class="w-full h-full object-cover">
+                <div class="relative w-20 h-20 sm:w-24 sm:h-24 rounded-full border-2 border-[var(--border)] bg-[var(--bg-raised)] overflow-hidden flex-shrink-0 mx-auto sm:mx-0 shadow-lg ring-2 ring-white/10">
+                    <img :src="avatarPreview" alt="Aperçu avatar" class="w-full h-full rounded-full object-cover">
                 </div>
 
                 {{-- Upload & URL --}}

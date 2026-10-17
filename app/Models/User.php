@@ -224,6 +224,9 @@ class User extends Authenticatable implements FilamentUser
             if (str_starts_with($this->avatar, 'http://') || str_starts_with($this->avatar, 'https://') || str_starts_with($this->avatar, 'data:image/')) {
                 return $this->avatar;
             }
+            if (str_starts_with($this->avatar, '/')) {
+                return $this->avatar;
+            }
             if (str_starts_with($this->avatar, 'preset:')) {
                 $presetName = substr($this->avatar, 7);
 
@@ -231,6 +234,10 @@ class User extends Authenticatable implements FilamentUser
             }
 
             return Storage::url($this->avatar);
+        }
+
+        if (file_exists(public_path('images/avatars/meliodas.png'))) {
+            return asset('images/avatars/meliodas.png');
         }
 
         return 'https://ui-avatars.com/api/?name='.urlencode($this->name).'&background=1c2438&color=60a5fa&size=200&bold=true';

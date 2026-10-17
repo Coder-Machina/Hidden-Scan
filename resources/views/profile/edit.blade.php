@@ -48,7 +48,7 @@
                 currentTab: '{{ $defaultTab ?? "overview" }}',
                 murimSubtab: 'guide',
                 settingsSubtab: 'profile',
-                avatarPreview: @json($user->avatar ? $user->avatar_url : ''),
+                avatarPreview: @json($user->avatar_url),
                 bannerPreview: @json($user->banner ? $user->banner_url : ''),
                 avatarData: '',
                 bannerData: '',
@@ -447,13 +447,13 @@
                         
                         {{-- Avatar avec Aura de Qi --}}
                         <div class="relative flex-shrink-0 group">
-                            <div class="w-28 h-28 sm:w-32 sm:h-32 md:w-36 md:h-36 rounded-full p-1 bg-[var(--bg-base)] flex items-center justify-center transition-all duration-300 relative" :class="getFrameClass(currentFrame)">
+                            <div class="w-28 h-28 sm:w-32 sm:h-32 md:w-36 md:h-36 rounded-full p-1 bg-[var(--bg-base)] flex items-center justify-center transition-all duration-300 relative shadow-2xl ring-2 ring-white/10" :class="getFrameClass(currentFrame)">
                                 <div class="w-full h-full rounded-full overflow-hidden bg-[var(--bg-surface)] flex items-center justify-center">
                                     <template x-if="!avatarPreview">
                                         <span class="text-3xl sm:text-4xl font-black text-amber-300 tracking-wider select-none">{{ $initials }}</span>
                                     </template>
                                     <template x-if="avatarPreview">
-                                        <img :src="avatarPreview" class="w-full h-full object-cover" alt="{{ $user->name }}">
+                                        <img :src="avatarPreview" src="{{ $user->avatar_url }}" class="w-full h-full object-cover" alt="{{ $user->name }}">
                                     </template>
                                 </div>
                             </div>
