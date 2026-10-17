@@ -16,11 +16,11 @@ class ProductionDataSeeder extends Seeder
     public function run(): void
     {
         Chapter::$skipDiscordNotification = true;
-        try {
-            $this->call([
-                RoleSeeder::class,
-                RolesAndPermissionsSeeder::class,
-            ]);
+
+        $this->call([
+            RoleSeeder::class,
+            RolesAndPermissionsSeeder::class,
+        ]);
 
         $users = array (
   0 => 
@@ -206,6 +206,41 @@ class ProductionDataSeeder extends Seeder
     'name' => 'Geomnem',
     'slug' => 'geomnem',
   ),
+  23 => 
+  array (
+    'name' => 'Mei Yue Yi Geng',
+    'slug' => 'mei-yue-yi-geng',
+  ),
+  24 => 
+  array (
+    'name' => 'Lie Ren',
+    'slug' => 'lie-ren',
+  ),
+  25 => 
+  array (
+    'name' => 'Insung Shin',
+    'slug' => 'insung-shin',
+  ),
+  26 => 
+  array (
+    'name' => 'Mujang',
+    'slug' => 'mujang',
+  ),
+  27 => 
+  array (
+    'name' => 'Un',
+    'slug' => 'un',
+  ),
+  28 => 
+  array (
+    'name' => 'Baijiao Lu',
+    'slug' => 'baijiao-lu',
+  ),
+  29 => 
+  array (
+    'name' => 'Xia Zi Wu Hui',
+    'slug' => 'xia-zi-wu-hui',
+  ),
 );
         foreach ($authors as $aData) {
             Author::firstOrCreate(['slug' => $aData['slug']], $aData);
@@ -291,6 +326,21 @@ class ProductionDataSeeder extends Seeder
   array (
     'name' => 'Sleepy-C',
     'slug' => 'sleepy-c',
+  ),
+  16 => 
+  array (
+    'name' => 'Ruo Zhi Ji Ji',
+    'slug' => 'ruo-zhi-ji-ji',
+  ),
+  17 => 
+  array (
+    'name' => 'Ji Zhi Wa Wa',
+    'slug' => 'ji-zhi-wa-wa',
+  ),
+  18 => 
+  array (
+    'name' => 'Xin Yue Fan',
+    'slug' => 'xin-yue-fan',
   ),
 );
         foreach ($artists as $artData) {
@@ -472,7 +522,7 @@ class ProductionDataSeeder extends Seeder
         $mangas = array (
   0 => 
   array (
-    'title' => 'Genius Grandson of the Loan Shark King ',
+    'title' => 'Genius Grandson of the Loan Shark King',
     'slug' => 'genius-grandson-of-the-loan-shark-king',
     'synopsis' => 'Kim Mu-hyuk, le petit-fils du roi des usuriers, pourra-t-il monter sur le trône de l\'impitoyable empire des usuriers, craint même par les gangsters ? Kim Mu-hyuk, le petit-fils du roi requin prêteur Cheon Tae-san, auquel même les riches élites de Corée du Sud se sont inclinées, s\'efforce d\'être reconnu comme membre de la famille Cheon. Malgré ses efforts, Mu-Hyuk est trahi et tué par ses oncles dans une lutte acharnée pour l\'héritage de son grand-père. Cependant, au lieu de mourir, il se réveille dans les années 1990’, avec une seconde chance de réécrire son destin. Déterminé à empêcher la mort de sa grand-mère, qui l\'a élevé, et à récupérer l\'héritage de la famille Cheon, Mu-hyuk entreprend de préserver ses amitiés rompues et de se venger brutalement de ses oncles et de tous ceux qui se dressent sur son chemin. Bien qu\'autrefois un fauteur de troubles,Mu-hyuk atteint rapidement le sommet tant sur le plan scolaire que social, gagnant ainsi la confiance de son grand-père. Alors qu\'il consolide sa place dans la famille, Mu-hyuk commence à manipuler le monde souterrain, prenant le contrôle d\'organisations criminelles et de personnalités influentes de la politique et des affaires. Peu à peu, il ouvre la voie pour réaliser ses ambitions et se venger, étape par étape.',
     'type' => 'manhwa',
@@ -800,7 +850,7 @@ class ProductionDataSeeder extends Seeder
     'team_name' => NULL,
     'discord_role_id' => '1535265320133066753',
     'discord_webhook_url' => NULL,
-    'views_count' => 105,
+    'views_count' => 106,
     'average_rating' => 5.0,
     'ratings_count' => 4,
     'genres' => 
@@ -1770,7 +1820,7 @@ class ProductionDataSeeder extends Seeder
         'title' => NULL,
         'slug' => 'chapitre-11',
         'status' => 'publie',
-        'views_count' => 0,
+        'views_count' => 1,
         'published_at' => '2026-09-28 18:00:09',
         'pages' => 
         array (
@@ -2572,13 +2622,13 @@ class ProductionDataSeeder extends Seeder
     'status' => 'en_cours',
     'release_year' => '2020',
     'cover_image' => 'mangas/covers/1Tf0CbSeuvvbh0uJJP0REJAYu3aP6mrD.jpg',
-    'banner_image' => NULL,
+    'banner_image' => 'mangas/banners/01M54TTCA97YKHBT5QFCVMA8E2.jpg',
     'is_featured' => true,
     'is_external' => true,
     'team_name' => NULL,
     'discord_role_id' => NULL,
     'discord_webhook_url' => NULL,
-    'views_count' => 0,
+    'views_count' => 3,
     'average_rating' => 0.0,
     'ratings_count' => 0,
     'genres' => 
@@ -2608,7 +2658,7 @@ class ProductionDataSeeder extends Seeder
         'title' => NULL,
         'slug' => 'chapitre-0',
         'status' => 'publie',
-        'views_count' => 0,
+        'views_count' => 2,
         'published_at' => '2026-09-28 22:12:24',
         'pages' => 
         array (
@@ -2799,7 +2849,7 @@ class ProductionDataSeeder extends Seeder
         'title' => NULL,
         'slug' => 'chapitre-3',
         'status' => 'publie',
-        'views_count' => 0,
+        'views_count' => 1,
         'published_at' => '2026-09-28 22:13:05',
         'pages' => 
         array (
@@ -3062,32 +3112,1400 @@ class ProductionDataSeeder extends Seeder
       ),
     ),
   ),
+  10 => 
   array (
-    'title' => 'My Passive Skills Are Invincible',
-    'slug' => 'my-passive-skills-are-invincible',
-    'synopsis' => 'Dans un monde où chacun cherche à éveiller des compétences actives spectaculaires, il découvre que ses compétences passives sont infiniment plus puissantes et le rendent tout simplement invincible.',
+    'title' => 'Log Into The Future',
+    'slug' => 'log-into-the-future',
+    'synopsis' => '300 ans après que des bêtes mutantes ont ravagé le monde, l’humanité a commencé à perdre du terrain, avec les arts martiaux comme dernière ligne de défense. Lu Sheng obtient mystérieusement le pouvoir de voyager 10 000 ans dans le futur, pour découvrir que l\'humanité a disparu. Cependant, il acquiert la sagesse culminante des arts martiaux pour lutter contre ces monstres, perfectionnant ses compétences jusqu\'au sommet. Armé de ces nouvelles connaissances, Lu Sheng peut-il émerger comme la dernière lueur d’espoir pour la survie de l’humanité ? ',
     'type' => 'manhua',
     'status' => 'en_cours',
     'release_year' => '2023',
-    'cover_image' => 'https://media.qimanhwa.com/file/qiscans/upload/upload/series/4190634673-my-passive-skills-are-invincible/wp-featured-62920/featured.webp',
+    'cover_image' => 'mangas/covers/Cog8KJif9uFA2AsOpfDgUc8zwDEoz1DZ.jpg',
+    'banner_image' => NULL,
+    'is_featured' => false,
+    'is_external' => false,
+    'team_name' => NULL,
+    'discord_role_id' => '1561061869320675529',
+    'discord_webhook_url' => NULL,
+    'views_count' => 0,
+    'average_rating' => 0.0,
+    'ratings_count' => 0,
+    'genres' => 
+    array (
+      0 => 'action',
+      1 => 'drame',
+      2 => 'fantastique',
+    ),
+    'tags' => 
+    array (
+    ),
+    'authors' => 
+    array (
+      0 => 'mei-yue-yi-geng',
+      1 => 'lie-ren',
+    ),
+    'artists' => 
+    array (
+      0 => 'ruo-zhi-ji-ji',
+      1 => 'ji-zhi-wa-wa',
+    ),
+    'chapters' => 
+    array (
+      0 => 
+      array (
+        'number' => 1,
+        'title' => NULL,
+        'slug' => 'chapitre-1',
+        'status' => 'publie',
+        'views_count' => 0,
+        'published_at' => '2026-10-17 11:49:57',
+        'pages' => 
+        array (
+          0 => 
+          array (
+            'page_number' => 1,
+            'image_path' => 'chapters/60/1.webp',
+          ),
+          1 => 
+          array (
+            'page_number' => 2,
+            'image_path' => 'chapters/60/2.webp',
+          ),
+          2 => 
+          array (
+            'page_number' => 3,
+            'image_path' => 'chapters/60/3.webp',
+          ),
+          3 => 
+          array (
+            'page_number' => 4,
+            'image_path' => 'chapters/60/4.webp',
+          ),
+          4 => 
+          array (
+            'page_number' => 5,
+            'image_path' => 'chapters/60/5.webp',
+          ),
+          5 => 
+          array (
+            'page_number' => 6,
+            'image_path' => 'chapters/60/6.webp',
+          ),
+          6 => 
+          array (
+            'page_number' => 7,
+            'image_path' => 'chapters/60/7.webp',
+          ),
+          7 => 
+          array (
+            'page_number' => 8,
+            'image_path' => 'chapters/60/8.webp',
+          ),
+          8 => 
+          array (
+            'page_number' => 9,
+            'image_path' => 'chapters/60/9.webp',
+          ),
+          9 => 
+          array (
+            'page_number' => 10,
+            'image_path' => 'chapters/60/10.webp',
+          ),
+          10 => 
+          array (
+            'page_number' => 11,
+            'image_path' => 'chapters/60/11.webp',
+          ),
+          11 => 
+          array (
+            'page_number' => 12,
+            'image_path' => 'chapters/60/12.webp',
+          ),
+          12 => 
+          array (
+            'page_number' => 13,
+            'image_path' => 'chapters/60/13.webp',
+          ),
+          13 => 
+          array (
+            'page_number' => 14,
+            'image_path' => 'chapters/60/14.webp',
+          ),
+          14 => 
+          array (
+            'page_number' => 15,
+            'image_path' => 'chapters/60/15.webp',
+          ),
+          15 => 
+          array (
+            'page_number' => 16,
+            'image_path' => 'chapters/60/16.webp',
+          ),
+          16 => 
+          array (
+            'page_number' => 17,
+            'image_path' => 'chapters/60/17.webp',
+          ),
+          17 => 
+          array (
+            'page_number' => 18,
+            'image_path' => 'chapters/60/18.webp',
+          ),
+          18 => 
+          array (
+            'page_number' => 19,
+            'image_path' => 'chapters/60/19.webp',
+          ),
+          19 => 
+          array (
+            'page_number' => 20,
+            'image_path' => 'chapters/60/20.webp',
+          ),
+          20 => 
+          array (
+            'page_number' => 21,
+            'image_path' => 'chapters/60/21.webp',
+          ),
+          21 => 
+          array (
+            'page_number' => 22,
+            'image_path' => 'chapters/60/22.webp',
+          ),
+          22 => 
+          array (
+            'page_number' => 23,
+            'image_path' => 'chapters/60/23.webp',
+          ),
+          23 => 
+          array (
+            'page_number' => 24,
+            'image_path' => 'chapters/60/24.webp',
+          ),
+          24 => 
+          array (
+            'page_number' => 25,
+            'image_path' => 'chapters/60/25.webp',
+          ),
+          25 => 
+          array (
+            'page_number' => 26,
+            'image_path' => 'chapters/60/26.webp',
+          ),
+          26 => 
+          array (
+            'page_number' => 27,
+            'image_path' => 'chapters/60/27.webp',
+          ),
+          27 => 
+          array (
+            'page_number' => 28,
+            'image_path' => 'chapters/60/28.webp',
+          ),
+          28 => 
+          array (
+            'page_number' => 29,
+            'image_path' => 'chapters/60/29.webp',
+          ),
+          29 => 
+          array (
+            'page_number' => 30,
+            'image_path' => 'chapters/60/30.webp',
+          ),
+          30 => 
+          array (
+            'page_number' => 31,
+            'image_path' => 'chapters/60/31.webp',
+          ),
+          31 => 
+          array (
+            'page_number' => 32,
+            'image_path' => 'chapters/60/32.webp',
+          ),
+          32 => 
+          array (
+            'page_number' => 33,
+            'image_path' => 'chapters/60/33.webp',
+          ),
+          33 => 
+          array (
+            'page_number' => 34,
+            'image_path' => 'chapters/60/34.webp',
+          ),
+          34 => 
+          array (
+            'page_number' => 35,
+            'image_path' => 'chapters/60/35.webp',
+          ),
+          35 => 
+          array (
+            'page_number' => 36,
+            'image_path' => 'chapters/60/36.webp',
+          ),
+          36 => 
+          array (
+            'page_number' => 37,
+            'image_path' => 'chapters/60/37.webp',
+          ),
+          37 => 
+          array (
+            'page_number' => 38,
+            'image_path' => 'chapters/60/38.webp',
+          ),
+          38 => 
+          array (
+            'page_number' => 39,
+            'image_path' => 'chapters/60/39.webp',
+          ),
+          39 => 
+          array (
+            'page_number' => 40,
+            'image_path' => 'chapters/60/40.webp',
+          ),
+          40 => 
+          array (
+            'page_number' => 41,
+            'image_path' => 'chapters/60/41.webp',
+          ),
+          41 => 
+          array (
+            'page_number' => 42,
+            'image_path' => 'chapters/60/42.webp',
+          ),
+          42 => 
+          array (
+            'page_number' => 43,
+            'image_path' => 'chapters/60/43.webp',
+          ),
+          43 => 
+          array (
+            'page_number' => 44,
+            'image_path' => 'chapters/60/44.webp',
+          ),
+          44 => 
+          array (
+            'page_number' => 45,
+            'image_path' => 'chapters/60/45.webp',
+          ),
+          45 => 
+          array (
+            'page_number' => 46,
+            'image_path' => 'chapters/60/46.webp',
+          ),
+          46 => 
+          array (
+            'page_number' => 47,
+            'image_path' => 'chapters/60/47.webp',
+          ),
+          47 => 
+          array (
+            'page_number' => 48,
+            'image_path' => 'chapters/60/48.webp',
+          ),
+          48 => 
+          array (
+            'page_number' => 49,
+            'image_path' => 'chapters/60/49.webp',
+          ),
+          49 => 
+          array (
+            'page_number' => 50,
+            'image_path' => 'chapters/60/50.webp',
+          ),
+          50 => 
+          array (
+            'page_number' => 51,
+            'image_path' => 'chapters/60/51.webp',
+          ),
+          51 => 
+          array (
+            'page_number' => 52,
+            'image_path' => 'chapters/60/52.webp',
+          ),
+          52 => 
+          array (
+            'page_number' => 53,
+            'image_path' => 'chapters/60/53.webp',
+          ),
+          53 => 
+          array (
+            'page_number' => 54,
+            'image_path' => 'chapters/60/54.webp',
+          ),
+          54 => 
+          array (
+            'page_number' => 55,
+            'image_path' => 'chapters/60/55.webp',
+          ),
+          55 => 
+          array (
+            'page_number' => 56,
+            'image_path' => 'chapters/60/56.webp',
+          ),
+          56 => 
+          array (
+            'page_number' => 57,
+            'image_path' => 'chapters/60/57.webp',
+          ),
+          57 => 
+          array (
+            'page_number' => 58,
+            'image_path' => 'chapters/60/58.webp',
+          ),
+          58 => 
+          array (
+            'page_number' => 59,
+            'image_path' => 'chapters/60/59.webp',
+          ),
+          59 => 
+          array (
+            'page_number' => 60,
+            'image_path' => 'chapters/60/60.webp',
+          ),
+          60 => 
+          array (
+            'page_number' => 61,
+            'image_path' => 'chapters/60/61.webp',
+          ),
+          61 => 
+          array (
+            'page_number' => 62,
+            'image_path' => 'chapters/60/62.webp',
+          ),
+          62 => 
+          array (
+            'page_number' => 63,
+            'image_path' => 'chapters/60/63.webp',
+          ),
+          63 => 
+          array (
+            'page_number' => 64,
+            'image_path' => 'chapters/60/64.webp',
+          ),
+          64 => 
+          array (
+            'page_number' => 65,
+            'image_path' => 'chapters/60/65.webp',
+          ),
+          65 => 
+          array (
+            'page_number' => 66,
+            'image_path' => 'chapters/60/66.webp',
+          ),
+          66 => 
+          array (
+            'page_number' => 67,
+            'image_path' => 'chapters/60/67.webp',
+          ),
+          67 => 
+          array (
+            'page_number' => 68,
+            'image_path' => 'chapters/60/68.webp',
+          ),
+          68 => 
+          array (
+            'page_number' => 69,
+            'image_path' => 'chapters/60/69.webp',
+          ),
+          69 => 
+          array (
+            'page_number' => 70,
+            'image_path' => 'chapters/60/70.webp',
+          ),
+          70 => 
+          array (
+            'page_number' => 71,
+            'image_path' => 'chapters/60/71.webp',
+          ),
+          71 => 
+          array (
+            'page_number' => 72,
+            'image_path' => 'chapters/60/72.webp',
+          ),
+          72 => 
+          array (
+            'page_number' => 73,
+            'image_path' => 'chapters/60/73.webp',
+          ),
+          73 => 
+          array (
+            'page_number' => 74,
+            'image_path' => 'chapters/60/74.webp',
+          ),
+          74 => 
+          array (
+            'page_number' => 75,
+            'image_path' => 'chapters/60/75.webp',
+          ),
+          75 => 
+          array (
+            'page_number' => 76,
+            'image_path' => 'chapters/60/76.webp',
+          ),
+          76 => 
+          array (
+            'page_number' => 77,
+            'image_path' => 'chapters/60/77.webp',
+          ),
+          77 => 
+          array (
+            'page_number' => 78,
+            'image_path' => 'chapters/60/78.webp',
+          ),
+          78 => 
+          array (
+            'page_number' => 79,
+            'image_path' => 'chapters/60/79.webp',
+          ),
+          79 => 
+          array (
+            'page_number' => 80,
+            'image_path' => 'chapters/60/80.webp',
+          ),
+          80 => 
+          array (
+            'page_number' => 81,
+            'image_path' => 'chapters/60/81.webp',
+          ),
+          81 => 
+          array (
+            'page_number' => 82,
+            'image_path' => 'chapters/60/82.webp',
+          ),
+          82 => 
+          array (
+            'page_number' => 83,
+            'image_path' => 'chapters/60/83.webp',
+          ),
+          83 => 
+          array (
+            'page_number' => 84,
+            'image_path' => 'chapters/60/84.webp',
+          ),
+          84 => 
+          array (
+            'page_number' => 85,
+            'image_path' => 'chapters/60/85.webp',
+          ),
+          85 => 
+          array (
+            'page_number' => 86,
+            'image_path' => 'chapters/60/86.webp',
+          ),
+          86 => 
+          array (
+            'page_number' => 87,
+            'image_path' => 'chapters/60/87.webp',
+          ),
+          87 => 
+          array (
+            'page_number' => 88,
+            'image_path' => 'chapters/60/88.webp',
+          ),
+          88 => 
+          array (
+            'page_number' => 89,
+            'image_path' => 'chapters/60/89.webp',
+          ),
+          89 => 
+          array (
+            'page_number' => 90,
+            'image_path' => 'chapters/60/90.webp',
+          ),
+          90 => 
+          array (
+            'page_number' => 91,
+            'image_path' => 'chapters/60/91.webp',
+          ),
+          91 => 
+          array (
+            'page_number' => 92,
+            'image_path' => 'chapters/60/92.webp',
+          ),
+          92 => 
+          array (
+            'page_number' => 93,
+            'image_path' => 'chapters/60/93.webp',
+          ),
+          93 => 
+          array (
+            'page_number' => 94,
+            'image_path' => 'chapters/60/94.webp',
+          ),
+          94 => 
+          array (
+            'page_number' => 95,
+            'image_path' => 'chapters/60/95.webp',
+          ),
+          95 => 
+          array (
+            'page_number' => 96,
+            'image_path' => 'chapters/60/96.webp',
+          ),
+          96 => 
+          array (
+            'page_number' => 97,
+            'image_path' => 'chapters/60/97.webp',
+          ),
+          97 => 
+          array (
+            'page_number' => 98,
+            'image_path' => 'chapters/60/98.webp',
+          ),
+          98 => 
+          array (
+            'page_number' => 99,
+            'image_path' => 'chapters/60/99.webp',
+          ),
+        ),
+      ),
+      1 => 
+      array (
+        'number' => 2,
+        'title' => NULL,
+        'slug' => 'chapitre-2',
+        'status' => 'publie',
+        'views_count' => 0,
+        'published_at' => '2026-10-17 11:50:01',
+        'pages' => 
+        array (
+          0 => 
+          array (
+            'page_number' => 1,
+            'image_path' => 'chapters/61/1.webp',
+          ),
+          1 => 
+          array (
+            'page_number' => 2,
+            'image_path' => 'chapters/61/2.webp',
+          ),
+          2 => 
+          array (
+            'page_number' => 3,
+            'image_path' => 'chapters/61/3.webp',
+          ),
+          3 => 
+          array (
+            'page_number' => 4,
+            'image_path' => 'chapters/61/4.webp',
+          ),
+          4 => 
+          array (
+            'page_number' => 5,
+            'image_path' => 'chapters/61/5.webp',
+          ),
+          5 => 
+          array (
+            'page_number' => 6,
+            'image_path' => 'chapters/61/6.webp',
+          ),
+          6 => 
+          array (
+            'page_number' => 7,
+            'image_path' => 'chapters/61/7.webp',
+          ),
+          7 => 
+          array (
+            'page_number' => 8,
+            'image_path' => 'chapters/61/8.webp',
+          ),
+          8 => 
+          array (
+            'page_number' => 9,
+            'image_path' => 'chapters/61/9.webp',
+          ),
+          9 => 
+          array (
+            'page_number' => 10,
+            'image_path' => 'chapters/61/10.webp',
+          ),
+          10 => 
+          array (
+            'page_number' => 11,
+            'image_path' => 'chapters/61/11.webp',
+          ),
+          11 => 
+          array (
+            'page_number' => 12,
+            'image_path' => 'chapters/61/12.webp',
+          ),
+          12 => 
+          array (
+            'page_number' => 13,
+            'image_path' => 'chapters/61/13.webp',
+          ),
+          13 => 
+          array (
+            'page_number' => 14,
+            'image_path' => 'chapters/61/14.webp',
+          ),
+          14 => 
+          array (
+            'page_number' => 15,
+            'image_path' => 'chapters/61/15.webp',
+          ),
+          15 => 
+          array (
+            'page_number' => 16,
+            'image_path' => 'chapters/61/16.webp',
+          ),
+          16 => 
+          array (
+            'page_number' => 17,
+            'image_path' => 'chapters/61/17.webp',
+          ),
+          17 => 
+          array (
+            'page_number' => 18,
+            'image_path' => 'chapters/61/18.webp',
+          ),
+          18 => 
+          array (
+            'page_number' => 19,
+            'image_path' => 'chapters/61/19.webp',
+          ),
+          19 => 
+          array (
+            'page_number' => 20,
+            'image_path' => 'chapters/61/20.webp',
+          ),
+          20 => 
+          array (
+            'page_number' => 21,
+            'image_path' => 'chapters/61/21.webp',
+          ),
+          21 => 
+          array (
+            'page_number' => 22,
+            'image_path' => 'chapters/61/22.webp',
+          ),
+          22 => 
+          array (
+            'page_number' => 23,
+            'image_path' => 'chapters/61/23.webp',
+          ),
+          23 => 
+          array (
+            'page_number' => 24,
+            'image_path' => 'chapters/61/24.webp',
+          ),
+          24 => 
+          array (
+            'page_number' => 25,
+            'image_path' => 'chapters/61/25.webp',
+          ),
+          25 => 
+          array (
+            'page_number' => 26,
+            'image_path' => 'chapters/61/26.webp',
+          ),
+          26 => 
+          array (
+            'page_number' => 27,
+            'image_path' => 'chapters/61/27.webp',
+          ),
+          27 => 
+          array (
+            'page_number' => 28,
+            'image_path' => 'chapters/61/28.webp',
+          ),
+          28 => 
+          array (
+            'page_number' => 29,
+            'image_path' => 'chapters/61/29.webp',
+          ),
+          29 => 
+          array (
+            'page_number' => 30,
+            'image_path' => 'chapters/61/30.webp',
+          ),
+          30 => 
+          array (
+            'page_number' => 31,
+            'image_path' => 'chapters/61/31.webp',
+          ),
+          31 => 
+          array (
+            'page_number' => 32,
+            'image_path' => 'chapters/61/32.webp',
+          ),
+          32 => 
+          array (
+            'page_number' => 33,
+            'image_path' => 'chapters/61/33.webp',
+          ),
+          33 => 
+          array (
+            'page_number' => 34,
+            'image_path' => 'chapters/61/34.webp',
+          ),
+          34 => 
+          array (
+            'page_number' => 35,
+            'image_path' => 'chapters/61/35.webp',
+          ),
+          35 => 
+          array (
+            'page_number' => 36,
+            'image_path' => 'chapters/61/36.webp',
+          ),
+          36 => 
+          array (
+            'page_number' => 37,
+            'image_path' => 'chapters/61/37.webp',
+          ),
+          37 => 
+          array (
+            'page_number' => 38,
+            'image_path' => 'chapters/61/38.webp',
+          ),
+          38 => 
+          array (
+            'page_number' => 39,
+            'image_path' => 'chapters/61/39.webp',
+          ),
+          39 => 
+          array (
+            'page_number' => 40,
+            'image_path' => 'chapters/61/40.webp',
+          ),
+          40 => 
+          array (
+            'page_number' => 41,
+            'image_path' => 'chapters/61/41.webp',
+          ),
+          41 => 
+          array (
+            'page_number' => 42,
+            'image_path' => 'chapters/61/42.webp',
+          ),
+          42 => 
+          array (
+            'page_number' => 43,
+            'image_path' => 'chapters/61/43.webp',
+          ),
+          43 => 
+          array (
+            'page_number' => 44,
+            'image_path' => 'chapters/61/44.webp',
+          ),
+          44 => 
+          array (
+            'page_number' => 45,
+            'image_path' => 'chapters/61/45.webp',
+          ),
+          45 => 
+          array (
+            'page_number' => 46,
+            'image_path' => 'chapters/61/46.webp',
+          ),
+          46 => 
+          array (
+            'page_number' => 47,
+            'image_path' => 'chapters/61/47.webp',
+          ),
+          47 => 
+          array (
+            'page_number' => 48,
+            'image_path' => 'chapters/61/48.webp',
+          ),
+          48 => 
+          array (
+            'page_number' => 49,
+            'image_path' => 'chapters/61/49.webp',
+          ),
+          49 => 
+          array (
+            'page_number' => 50,
+            'image_path' => 'chapters/61/50.webp',
+          ),
+          50 => 
+          array (
+            'page_number' => 51,
+            'image_path' => 'chapters/61/51.webp',
+          ),
+          51 => 
+          array (
+            'page_number' => 52,
+            'image_path' => 'chapters/61/52.webp',
+          ),
+          52 => 
+          array (
+            'page_number' => 53,
+            'image_path' => 'chapters/61/53.webp',
+          ),
+          53 => 
+          array (
+            'page_number' => 54,
+            'image_path' => 'chapters/61/54.webp',
+          ),
+          54 => 
+          array (
+            'page_number' => 55,
+            'image_path' => 'chapters/61/55.webp',
+          ),
+          55 => 
+          array (
+            'page_number' => 56,
+            'image_path' => 'chapters/61/56.webp',
+          ),
+          56 => 
+          array (
+            'page_number' => 57,
+            'image_path' => 'chapters/61/57.webp',
+          ),
+          57 => 
+          array (
+            'page_number' => 58,
+            'image_path' => 'chapters/61/58.webp',
+          ),
+          58 => 
+          array (
+            'page_number' => 59,
+            'image_path' => 'chapters/61/59.webp',
+          ),
+          59 => 
+          array (
+            'page_number' => 60,
+            'image_path' => 'chapters/61/60.webp',
+          ),
+          60 => 
+          array (
+            'page_number' => 61,
+            'image_path' => 'chapters/61/61.webp',
+          ),
+          61 => 
+          array (
+            'page_number' => 62,
+            'image_path' => 'chapters/61/62.webp',
+          ),
+          62 => 
+          array (
+            'page_number' => 63,
+            'image_path' => 'chapters/61/63.webp',
+          ),
+          63 => 
+          array (
+            'page_number' => 64,
+            'image_path' => 'chapters/61/64.webp',
+          ),
+          64 => 
+          array (
+            'page_number' => 65,
+            'image_path' => 'chapters/61/65.webp',
+          ),
+          65 => 
+          array (
+            'page_number' => 66,
+            'image_path' => 'chapters/61/66.webp',
+          ),
+          66 => 
+          array (
+            'page_number' => 67,
+            'image_path' => 'chapters/61/67.webp',
+          ),
+          67 => 
+          array (
+            'page_number' => 68,
+            'image_path' => 'chapters/61/68.webp',
+          ),
+          68 => 
+          array (
+            'page_number' => 69,
+            'image_path' => 'chapters/61/69.webp',
+          ),
+        ),
+      ),
+      2 => 
+      array (
+        'number' => 3,
+        'title' => NULL,
+        'slug' => 'chapitre-3',
+        'status' => 'publie',
+        'views_count' => 0,
+        'published_at' => '2026-10-17 11:50:03',
+        'pages' => 
+        array (
+          0 => 
+          array (
+            'page_number' => 1,
+            'image_path' => 'chapters/62/1.webp',
+          ),
+          1 => 
+          array (
+            'page_number' => 2,
+            'image_path' => 'chapters/62/2.webp',
+          ),
+          2 => 
+          array (
+            'page_number' => 3,
+            'image_path' => 'chapters/62/3.webp',
+          ),
+          3 => 
+          array (
+            'page_number' => 4,
+            'image_path' => 'chapters/62/4.webp',
+          ),
+          4 => 
+          array (
+            'page_number' => 5,
+            'image_path' => 'chapters/62/5.webp',
+          ),
+          5 => 
+          array (
+            'page_number' => 6,
+            'image_path' => 'chapters/62/6.webp',
+          ),
+          6 => 
+          array (
+            'page_number' => 7,
+            'image_path' => 'chapters/62/7.webp',
+          ),
+          7 => 
+          array (
+            'page_number' => 8,
+            'image_path' => 'chapters/62/8.webp',
+          ),
+          8 => 
+          array (
+            'page_number' => 9,
+            'image_path' => 'chapters/62/9.webp',
+          ),
+          9 => 
+          array (
+            'page_number' => 10,
+            'image_path' => 'chapters/62/10.webp',
+          ),
+          10 => 
+          array (
+            'page_number' => 11,
+            'image_path' => 'chapters/62/11.webp',
+          ),
+          11 => 
+          array (
+            'page_number' => 12,
+            'image_path' => 'chapters/62/12.webp',
+          ),
+          12 => 
+          array (
+            'page_number' => 13,
+            'image_path' => 'chapters/62/13.webp',
+          ),
+          13 => 
+          array (
+            'page_number' => 14,
+            'image_path' => 'chapters/62/14.webp',
+          ),
+          14 => 
+          array (
+            'page_number' => 15,
+            'image_path' => 'chapters/62/15.webp',
+          ),
+          15 => 
+          array (
+            'page_number' => 16,
+            'image_path' => 'chapters/62/16.webp',
+          ),
+          16 => 
+          array (
+            'page_number' => 17,
+            'image_path' => 'chapters/62/17.webp',
+          ),
+          17 => 
+          array (
+            'page_number' => 18,
+            'image_path' => 'chapters/62/18.webp',
+          ),
+          18 => 
+          array (
+            'page_number' => 19,
+            'image_path' => 'chapters/62/19.webp',
+          ),
+          19 => 
+          array (
+            'page_number' => 20,
+            'image_path' => 'chapters/62/20.webp',
+          ),
+          20 => 
+          array (
+            'page_number' => 21,
+            'image_path' => 'chapters/62/21.webp',
+          ),
+          21 => 
+          array (
+            'page_number' => 22,
+            'image_path' => 'chapters/62/22.webp',
+          ),
+          22 => 
+          array (
+            'page_number' => 23,
+            'image_path' => 'chapters/62/23.webp',
+          ),
+          23 => 
+          array (
+            'page_number' => 24,
+            'image_path' => 'chapters/62/24.webp',
+          ),
+          24 => 
+          array (
+            'page_number' => 25,
+            'image_path' => 'chapters/62/25.webp',
+          ),
+          25 => 
+          array (
+            'page_number' => 26,
+            'image_path' => 'chapters/62/26.webp',
+          ),
+          26 => 
+          array (
+            'page_number' => 27,
+            'image_path' => 'chapters/62/27.webp',
+          ),
+          27 => 
+          array (
+            'page_number' => 28,
+            'image_path' => 'chapters/62/28.webp',
+          ),
+          28 => 
+          array (
+            'page_number' => 29,
+            'image_path' => 'chapters/62/29.webp',
+          ),
+          29 => 
+          array (
+            'page_number' => 30,
+            'image_path' => 'chapters/62/30.webp',
+          ),
+          30 => 
+          array (
+            'page_number' => 31,
+            'image_path' => 'chapters/62/31.webp',
+          ),
+          31 => 
+          array (
+            'page_number' => 32,
+            'image_path' => 'chapters/62/32.webp',
+          ),
+          32 => 
+          array (
+            'page_number' => 33,
+            'image_path' => 'chapters/62/33.webp',
+          ),
+          33 => 
+          array (
+            'page_number' => 34,
+            'image_path' => 'chapters/62/34.webp',
+          ),
+          34 => 
+          array (
+            'page_number' => 35,
+            'image_path' => 'chapters/62/35.webp',
+          ),
+          35 => 
+          array (
+            'page_number' => 36,
+            'image_path' => 'chapters/62/36.webp',
+          ),
+          36 => 
+          array (
+            'page_number' => 37,
+            'image_path' => 'chapters/62/37.webp',
+          ),
+          37 => 
+          array (
+            'page_number' => 38,
+            'image_path' => 'chapters/62/38.webp',
+          ),
+          38 => 
+          array (
+            'page_number' => 39,
+            'image_path' => 'chapters/62/39.webp',
+          ),
+          39 => 
+          array (
+            'page_number' => 40,
+            'image_path' => 'chapters/62/40.webp',
+          ),
+          40 => 
+          array (
+            'page_number' => 41,
+            'image_path' => 'chapters/62/41.webp',
+          ),
+          41 => 
+          array (
+            'page_number' => 42,
+            'image_path' => 'chapters/62/42.webp',
+          ),
+          42 => 
+          array (
+            'page_number' => 43,
+            'image_path' => 'chapters/62/43.webp',
+          ),
+          43 => 
+          array (
+            'page_number' => 44,
+            'image_path' => 'chapters/62/44.webp',
+          ),
+          44 => 
+          array (
+            'page_number' => 45,
+            'image_path' => 'chapters/62/45.webp',
+          ),
+          45 => 
+          array (
+            'page_number' => 46,
+            'image_path' => 'chapters/62/46.webp',
+          ),
+          46 => 
+          array (
+            'page_number' => 47,
+            'image_path' => 'chapters/62/47.webp',
+          ),
+          47 => 
+          array (
+            'page_number' => 48,
+            'image_path' => 'chapters/62/48.webp',
+          ),
+          48 => 
+          array (
+            'page_number' => 49,
+            'image_path' => 'chapters/62/49.webp',
+          ),
+          49 => 
+          array (
+            'page_number' => 50,
+            'image_path' => 'chapters/62/50.webp',
+          ),
+          50 => 
+          array (
+            'page_number' => 51,
+            'image_path' => 'chapters/62/51.webp',
+          ),
+          51 => 
+          array (
+            'page_number' => 52,
+            'image_path' => 'chapters/62/52.webp',
+          ),
+        ),
+      ),
+      3 => 
+      array (
+        'number' => 4,
+        'title' => NULL,
+        'slug' => 'chapitre-4',
+        'status' => 'publie',
+        'views_count' => 0,
+        'published_at' => '2026-10-17 11:50:05',
+        'pages' => 
+        array (
+          0 => 
+          array (
+            'page_number' => 1,
+            'image_path' => 'chapters/63/1.webp',
+          ),
+          1 => 
+          array (
+            'page_number' => 2,
+            'image_path' => 'chapters/63/2.webp',
+          ),
+          2 => 
+          array (
+            'page_number' => 3,
+            'image_path' => 'chapters/63/3.webp',
+          ),
+          3 => 
+          array (
+            'page_number' => 4,
+            'image_path' => 'chapters/63/4.webp',
+          ),
+          4 => 
+          array (
+            'page_number' => 5,
+            'image_path' => 'chapters/63/5.webp',
+          ),
+          5 => 
+          array (
+            'page_number' => 6,
+            'image_path' => 'chapters/63/6.webp',
+          ),
+          6 => 
+          array (
+            'page_number' => 7,
+            'image_path' => 'chapters/63/7.webp',
+          ),
+          7 => 
+          array (
+            'page_number' => 8,
+            'image_path' => 'chapters/63/8.webp',
+          ),
+          8 => 
+          array (
+            'page_number' => 9,
+            'image_path' => 'chapters/63/9.webp',
+          ),
+          9 => 
+          array (
+            'page_number' => 10,
+            'image_path' => 'chapters/63/10.webp',
+          ),
+          10 => 
+          array (
+            'page_number' => 11,
+            'image_path' => 'chapters/63/11.webp',
+          ),
+          11 => 
+          array (
+            'page_number' => 12,
+            'image_path' => 'chapters/63/12.webp',
+          ),
+        ),
+      ),
+      4 => 
+      array (
+        'number' => 5,
+        'title' => NULL,
+        'slug' => 'chapitre-5',
+        'status' => 'publie',
+        'views_count' => 0,
+        'published_at' => '2026-10-17 11:50:06',
+        'pages' => 
+        array (
+          0 => 
+          array (
+            'page_number' => 1,
+            'image_path' => 'chapters/64/1.webp',
+          ),
+          1 => 
+          array (
+            'page_number' => 2,
+            'image_path' => 'chapters/64/2.webp',
+          ),
+          2 => 
+          array (
+            'page_number' => 3,
+            'image_path' => 'chapters/64/3.webp',
+          ),
+          3 => 
+          array (
+            'page_number' => 4,
+            'image_path' => 'chapters/64/4.webp',
+          ),
+          4 => 
+          array (
+            'page_number' => 5,
+            'image_path' => 'chapters/64/5.webp',
+          ),
+          5 => 
+          array (
+            'page_number' => 6,
+            'image_path' => 'chapters/64/6.webp',
+          ),
+          6 => 
+          array (
+            'page_number' => 7,
+            'image_path' => 'chapters/64/7.webp',
+          ),
+          7 => 
+          array (
+            'page_number' => 8,
+            'image_path' => 'chapters/64/8.webp',
+          ),
+          8 => 
+          array (
+            'page_number' => 9,
+            'image_path' => 'chapters/64/9.webp',
+          ),
+          9 => 
+          array (
+            'page_number' => 10,
+            'image_path' => 'chapters/64/10.webp',
+          ),
+          10 => 
+          array (
+            'page_number' => 11,
+            'image_path' => 'chapters/64/11.webp',
+          ),
+          11 => 
+          array (
+            'page_number' => 12,
+            'image_path' => 'chapters/64/12.webp',
+          ),
+          12 => 
+          array (
+            'page_number' => 13,
+            'image_path' => 'chapters/64/13.webp',
+          ),
+          13 => 
+          array (
+            'page_number' => 14,
+            'image_path' => 'chapters/64/14.webp',
+          ),
+          14 => 
+          array (
+            'page_number' => 15,
+            'image_path' => 'chapters/64/15.webp',
+          ),
+        ),
+      ),
+    ),
+  ),
+  11 => 
+  array (
+    'title' => 'God of Blackfield',
+    'slug' => 'god-of-blackfield',
+    'synopsis' => 'Ne laissant que de la suie noire et des cadavres dans son sillage, Kang Chan, le « Dieu de Blackfield », a semé la peur dans le cœur de ses ennemis. Mais un jour, dans le chaos de la bataille, sa vie fut brusquement anéantie. « On m’a tiré dessus… mais la balle est venue de derrière moi ! Ressuscité trois ans plus tard, ce « dieu » est désormais un lycéen débile confronté à des problèmes majeurs : des tyrans sauvages, des relations commerciales louches et même des filles. La vengeance semblait être une évidence, mais le lycée est un champ de bataille à part entière ! ',
+    'type' => 'manhwa',
+    'status' => 'en_cours',
+    'release_year' => '2020',
+    'cover_image' => 'mangas/covers/nePfuDzjg9ZJyYigAiNDbp6AvVPBeKjT.jpg',
+    'banner_image' => NULL,
+    'is_featured' => true,
+    'is_external' => false,
+    'team_name' => NULL,
+    'discord_role_id' => '1560999086772060210',
+    'discord_webhook_url' => NULL,
+    'views_count' => 0,
+    'average_rating' => 0.0,
+    'ratings_count' => 0,
+    'genres' => 
+    array (
+      0 => 'action',
+      1 => 'drame',
+      2 => 'surnaturel',
+    ),
+    'tags' => 
+    array (
+    ),
+    'authors' => 
+    array (
+      0 => 'insung-shin',
+      1 => 'mujang',
+      2 => 'un',
+    ),
+    'artists' => 
+    array (
+    ),
+    'chapters' => 
+    array (
+    ),
+  ),
+  12 => 
+  array (
+    'title' => 'My Passive Skills Are Invincible',
+    'slug' => 'my-passive-skills-are-invincible',
+    'synopsis' => 'Dans sa vie passée, Edmund Cheng s\'est frayé un chemin jusqu\'au sommet de "Apocalypse", remportant des titres de niveau divin dans toutes les classes, pour ne pas devenir le numéro un mondial. La mort n\'était pas la fin. Il se réveille dans un nouveau monde, fonctionnant selon exactement les mêmes règles que "Apocalypse", sauf que maintenant c\'est réel, et que tout le monde a une chance d\'éveiller une classe. Alors que d\'autres sont encore en train de tâtonner avec les bases, Edmund connaît déjà chaque classe cachée, chaque chemin secret. Il a déjà fait ça. Désormais, armé de la gloire qu’il n’a jamais pu revendiquer, il tracera un chemin que personne n’a jamais parcouru – et cette fois, il prendra sa place au sommet. ',
+    'type' => 'manhua',
+    'status' => 'en_cours',
+    'release_year' => '2023',
+    'cover_image' => 'mangas/covers/5o1PnDGX9gxzvZpRYBXCXftTf919NrSl.jpg',
     'banner_image' => NULL,
     'is_featured' => true,
     'is_external' => false,
     'team_name' => NULL,
     'discord_role_id' => '1535265321328447550',
     'discord_webhook_url' => NULL,
-    'drive_url' => 'https://drive.google.com/drive/folders/1V9pd65xTqe1jmiOT1y-l92-eXu3M3toW?usp=drive_link',
-    'va_url' => 'https://qimanga.com/series/4190634673-my-passive-skills-are-invincible',
-    'va_chapter_number' => 204,
     'views_count' => 0,
     'average_rating' => 0.0,
     'ratings_count' => 0,
-    'trad_user' => '<@1163161538652291074>',
-    'check_user' => '<@1501270135959195829>',
-    'clean_user' => '<@1163161538652291074>',
-    'step_trad_chapter' => 20,
-    'step_check_chapter' => 20,
-    'step_clean_chapter' => 24,
     'genres' => 
     array (
       0 => 'action',
@@ -3098,9 +4516,12 @@ class ProductionDataSeeder extends Seeder
     ),
     'authors' => 
     array (
+      0 => 'baijiao-lu',
+      1 => 'xia-zi-wu-hui',
     ),
     'artists' => 
     array (
+      0 => 'xin-yue-fan',
     ),
     'chapters' => 
     array (
@@ -3164,8 +4585,5 @@ class ProductionDataSeeder extends Seeder
                 }
             }
         }
-    } finally {
-        Chapter::$skipDiscordNotification = false;
     }
-}
 }

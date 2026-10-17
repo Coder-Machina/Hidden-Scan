@@ -99,6 +99,8 @@ class ProductionDataSeeder extends Seeder
 {
     public function run(): void
     {
+        Chapter::\$skipDiscordNotification = true;
+
         \$this->call([
             RoleSeeder::class,
             RolesAndPermissionsSeeder::class,
