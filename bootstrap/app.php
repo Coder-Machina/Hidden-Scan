@@ -26,6 +26,7 @@ return Application::configure(basePath: dirname(__DIR__))
 
         $middleware->web(append: [
             \App\Http\Middleware\CheckScheduledChaptersMiddleware::class,
+            \App\Http\Middleware\EnsureNotBannedMiddleware::class,
         ]);
 
         $middleware->alias([

@@ -79,10 +79,11 @@ class LoginRequest extends FormRequest
             }
 
             if ($user->isBanned()) {
+                $until = $user->banned_until ? " jusqu'au " . $user->banned_until->locale('fr')->translatedFormat('d/m/Y à H:i') : '';
                 $reason = $user->ban_reason ? ' Motif : ' . $user->ban_reason : '';
 
                 throw ValidationException::withMessages([
-                    'pass_code' => 'Ce compte a été suspendu par un administrateur.' . $reason,
+                    'pass_code' => "Ce compte a été suspendu{$until} par un administrateur.{$reason}",
                 ]);
             }
 
@@ -102,13 +103,15 @@ class LoginRequest extends FormRequest
         }
 
         if (Auth::user()?->isBanned()) {
-            $reason = Auth::user()->ban_reason ? ' Motif : ' . Auth::user()->ban_reason : '';
+            $user = Auth::user();
+            $until = $user->banned_until ? " jusqu'au " . $user->banned_until->locale('fr')->translatedFormat('d/m/Y à H:i') : '';
+            $reason = $user->ban_reason ? ' Motif : ' . $user->ban_reason : '';
             Auth::logout();
             $this->session()->invalidate();
             $this->session()->regenerateToken();
 
             throw ValidationException::withMessages([
-                'email' => 'Ce compte a été suspendu par un administrateur.' . $reason,
+                'email' => "Ce compte a été suspendu{$until} par un administrateur.{$reason}",
             ]);
         }
 

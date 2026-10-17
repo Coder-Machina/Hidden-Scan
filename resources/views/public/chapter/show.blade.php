@@ -1,4 +1,9 @@
 @use('Illuminate\Support\Facades\Storage')
+@php
+    $isGuest = !auth()->check();
+    $totalPages = $chapter->pages->count();
+    $previewLimit = $totalPages > 1 ? min(4, max(1, $totalPages - 1)) : 1;
+@endphp
 <x-layouts.public :title="$manga->title . ' — Ch. ' . $chapter->number . ' | Hidden Scan'" :hide-navbar="true" :show-footer="false">
 
     <div x-data="chapterReader()" x-init="init()" 
@@ -109,13 +114,27 @@
                  class="flex flex-col items-center mx-auto transition-all w-full"
                  :style="'max-width: ' + (isMobile ? '100%' : readerWidth + '%') + '; gap: ' + pageGap + 'px;'">
                 @forelse($chapter->pages as $index => $page)
-                    <div class="w-full relative" data-page="{{ $page->page_number }}">
-                        <img src="{{ Storage::url($page->image_path) }}" 
-                             alt="Page {{ $page->page_number }}" 
-                             loading="{{ $index < 3 ? 'eager' : 'lazy' }}" 
-                             class="w-full block"
-                             @load="onImageLoad({{ $page->page_number }})">
-                    </div>
+                    @if($isGuest && $index >= $previewLimit)
+                        {{-- Aperçu flouté incitatif de la page suivante --}}
+                        <div class="w-full relative overflow-hidden max-h-[320px] select-none pointer-events-none opacity-25 blur-sm">
+                            <img src="{{ Storage::url($page->image_path) }}" 
+                                 alt="Page {{ $page->page_number }}" 
+                                 class="w-full block">
+                            <div class="absolute inset-0 bg-gradient-to-b from-transparent via-[#000000]/60 to-[#000000]"></div>
+                        </div>
+
+                        {{-- Carte de verrouillage pour inciter à la connexion --}}
+                        @include('public.chapter.partials.login-wall', ['previewLimit' => $previewLimit])
+                        @break
+                    @else
+                        <div class="w-full relative" data-page="{{ $page->page_number }}">
+                            <img src="{{ Storage::url($page->image_path) }}" 
+                                 alt="Page {{ $page->page_number }}" 
+                                 loading="{{ $index < 3 ? 'eager' : 'lazy' }}" 
+                                 class="w-full block"
+                                 @load="onImageLoad({{ $page->page_number }})">
+                        </div>
+                    @endif
                 @empty
                     <div class="py-24 text-center text-caption text-[var(--text-3)]">
                         Aucune image disponible pour ce chapitre.
@@ -128,11 +147,23 @@
                  class="flex flex-col items-center mx-auto transition-all w-full"
                  :style="'max-width: ' + (isMobile ? '100%' : readerWidth + '%')">
                 @if($chapter->pages->count())
-                    <div class="w-full relative cursor-pointer" @click="nextPage()">
-                        <img :src="pages[currentPage - 1]?.src || ''" 
-                             :alt="'Page ' + currentPage" 
-                             class="w-full block">
-                    </div>
+                    @if($isGuest)
+                        <div x-show="currentPage > {{ $previewLimit }}" class="w-full">
+                            @include('public.chapter.partials.login-wall', ['previewLimit' => $previewLimit])
+                        </div>
+
+                        <div x-show="currentPage <= {{ $previewLimit }}" class="w-full relative cursor-pointer" @click="nextPage()">
+                            <img :src="pages[currentPage - 1]?.src || ''" 
+                                 :alt="'Page ' + currentPage" 
+                                 class="w-full block">
+                        </div>
+                    @else
+                        <div class="w-full relative cursor-pointer" @click="nextPage()">
+                            <img :src="pages[currentPage - 1]?.src || ''" 
+                                 :alt="'Page ' + currentPage" 
+                                 class="w-full block">
+                        </div>
+                    @endif
 
                     <div class="flex items-center justify-center gap-4 mt-6">
                         <button type="button" @click="prevPage()" :disabled="currentPage <= 1" class="btn-secondary !text-caption disabled:opacity-30">
@@ -141,7 +172,7 @@
                         <span class="text-caption font-mono text-[var(--text-2)]">
                             <span x-text="currentPage"></span> / <span x-text="totalPages"></span>
                         </span>
-                        <button type="button" @click="nextPage()" :disabled="currentPage >= totalPages" class="btn-primary !text-caption disabled:opacity-30">
+                        <button type="button" @click="nextPage()" :disabled="!isGuest && currentPage >= totalPages" class="btn-primary !text-caption disabled:opacity-30">
                             Suivante →
                         </button>
                     </div>
@@ -197,7 +228,9 @@
             readerWidth: parseInt(localStorage.getItem('hs_reader_width') || '75'),
             pageGap: parseInt(localStorage.getItem('hs_page_gap') || '0'),
             currentPage: 1,
-            totalPages: {{ $chapter->pages->count() }},
+            totalPages: {{ $totalPages }},
+            isGuest: {{ $isGuest ? 'true' : 'false' }},
+            previewLimit: {{ $previewLimit }},
             progressPercent: 0,
             isMobile: window.innerWidth < 768,
             pages: [
@@ -263,6 +296,11 @@
             },
 
             nextPage() {
+                if (this.isGuest && this.currentPage >= this.previewLimit) {
+                    this.currentPage = this.previewLimit + 1;
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                    return;
+                }
                 if (this.currentPage < this.totalPages) {
                     this.currentPage++;
                     this.progressPercent = Math.round((this.currentPage / this.totalPages) * 100);

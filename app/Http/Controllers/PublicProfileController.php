@@ -8,17 +8,19 @@ class PublicProfileController extends Controller
 {
     public function show(string $username)
     {
-        // Trouver l'utilisateur par username (accessible par tous si public, ou par le propriétaire connecté)
+        // Trouver l'utilisateur par username ou ID
         $user = User::where('username', $username)
-                    ->when(auth()->id() !== null, function ($query) {
-                        $query->where(function ($q) {
-                            $q->where('profile_public', true)
-                              ->orWhere('id', auth()->id());
-                        });
-                    }, function ($query) {
-                        $query->where('profile_public', true);
-                    })
+                    ->orWhere('id', $username)
                     ->firstOrFail();
+
+        // Si le profil n'est pas public, seuls les administrateurs/modérateurs et le propriétaire peuvent le consulter
+        $viewer = auth()->user();
+        $canView = $user->profile_public 
+            || ($viewer && ($viewer->id === $user->id || $viewer->isStaffOrAdmin()));
+
+        if (! $canView) {
+            abort(404, 'Ce profil est privé ou introuvable.');
+        }
 
         // Relation d'historique de lecture
         $readingRelation = method_exists($user, 'readingHistory')

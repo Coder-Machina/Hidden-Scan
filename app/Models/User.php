@@ -20,8 +20,8 @@ use Illuminate\Support\Facades\Storage;
     'pass_code', 'last_ip_address',
     'avatar', 'banner', 'bio', 'xp', 'streak', 'qi_shields', 'spiritual_beast', 'avatar_frame', 'custom_title_color', 'last_read_at', 'favorite_genre', 'reader_mode',
     'tier_list', 'top_mangas',
-    'is_banned', 'banned_at', 'ban_reason',
-    'is_comment_banned', 'comment_banned_at', 'comment_ban_reason',
+    'is_banned', 'banned_at', 'banned_until', 'ban_reason',
+    'is_comment_banned', 'comment_banned_at', 'comment_banned_until', 'comment_ban_reason',
 ])]
 #[Hidden(['password', 'remember_token'])]
 class User extends Authenticatable implements FilamentUser
@@ -52,6 +52,25 @@ class User extends Authenticatable implements FilamentUser
         } while (static::where('pass_code', $code)->exists());
 
         return $code;
+    }
+
+    protected static function booted(): void
+    {
+        static::creating(function (User $user) {
+            if (\Illuminate\Support\Facades\Schema::hasColumn('users', 'username') && empty($user->username)) {
+                $base = \Illuminate\Support\Str::slug($user->name ?: 'user', '');
+                if (empty($base)) {
+                    $base = 'user';
+                }
+                $username = strtolower($base);
+                $counter = 1;
+                while (static::where('username', $username)->exists()) {
+                    $username = strtolower($base).$counter;
+                    $counter++;
+                }
+                $user->username = $username;
+            }
+        });
     }
 
     public function canAccessPanel(Panel $panel): bool
@@ -167,8 +186,10 @@ class User extends Authenticatable implements FilamentUser
             'top_mangas' => 'array',
             'is_banned' => 'boolean',
             'banned_at' => 'datetime',
+            'banned_until' => 'datetime',
             'is_comment_banned' => 'boolean',
             'comment_banned_at' => 'datetime',
+            'comment_banned_until' => 'datetime',
             'profile_public' => 'boolean',
         ];
     }
@@ -200,12 +221,48 @@ class User extends Authenticatable implements FilamentUser
 
     public function isBanned(): bool
     {
-        return (bool) $this->is_banned;
+        if (! $this->is_banned) {
+            return false;
+        }
+
+        // Si le ban temporaire est expiré, réhabiliter le compte automatiquement
+        if ($this->banned_until && now()->greaterThanOrEqualTo($this->banned_until)) {
+            $this->updateQuietly([
+                'is_banned' => false,
+                'banned_at' => null,
+                'banned_until' => null,
+                'ban_reason' => null,
+            ]);
+
+            return false;
+        }
+
+        return true;
     }
 
     public function isCommentBanned(): bool
     {
-        return (bool) ($this->is_banned || $this->is_comment_banned);
+        if ($this->isBanned()) {
+            return true;
+        }
+
+        if (! $this->is_comment_banned) {
+            return false;
+        }
+
+        // Si le ban de commentaire temporaire est expiré, le réhabiliter automatiquement
+        if ($this->comment_banned_until && now()->greaterThanOrEqualTo($this->comment_banned_until)) {
+            $this->updateQuietly([
+                'is_comment_banned' => false,
+                'comment_banned_at' => null,
+                'comment_banned_until' => null,
+                'comment_ban_reason' => null,
+            ]);
+
+            return false;
+        }
+
+        return true;
     }
 
     /**

@@ -18,8 +18,12 @@ class RegisteredUserController extends Controller
     /**
      * Display the registration view.
      */
-    public function create(): View
+    public function create(Request $request): View
     {
+        if ($request->has('redirect')) {
+            session()->put('url.intended', $request->query('redirect'));
+        }
+
         return view('auth.register');
     }
 
@@ -53,7 +57,7 @@ class RegisteredUserController extends Controller
 
         Auth::login($user);
 
-        return redirect(route('dashboard', absolute: false));
+        return redirect()->intended(route('dashboard', absolute: false));
     }
 
     /**
@@ -61,6 +65,10 @@ class RegisteredUserController extends Controller
      */
     public function storePass(Request $request): RedirectResponse
     {
+        if ($request->has('redirect')) {
+            session()->put('url.intended', $request->input('redirect') ?: $request->query('redirect'));
+        }
+
         // Si l'utilisateur est déjà connecté, on le déconnecte pour créer son nouveau compte
         if (Auth::check()) {
             Auth::logout();
@@ -88,6 +96,6 @@ class RegisteredUserController extends Controller
 
         Auth::login($user, remember: true);
 
-        return redirect()->route('home')->with('new_pass_code', $passCode);
+        return redirect()->intended(route('home'))->with('new_pass_code', $passCode);
     }
 }
