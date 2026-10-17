@@ -17,6 +17,8 @@ FROM php:8.4-fpm-alpine
 RUN apk add --no-cache \
     nginx \
     supervisor \
+    nodejs \
+    npm \
     curl \
     git \
     libpng-dev \
@@ -62,17 +64,22 @@ COPY --from=frontend /app/public/build ./public/build
 # Finalisation Composer
 RUN composer dump-autoload --optimize
 
+# Installation des dépendances du bot Discord
+RUN cd /var/www/html/discord-bot && npm install --omit=dev
+
 # Configuration Nginx, Supervisor, PHP et Entrypoint
 COPY docker/nginx.conf /etc/nginx/http.d/default.conf
 COPY docker/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 COPY docker/php.ini /usr/local/etc/php/conf.d/custom.ini
 COPY docker/php-fpm.conf /usr/local/etc/php-fpm.d/zz-custom.conf
 COPY docker/entrypoint.sh /usr/local/bin/entrypoint.sh
-RUN chmod +x /usr/local/bin/entrypoint.sh
+COPY docker/start-bot.sh /usr/local/bin/start-bot.sh
+RUN chmod +x /usr/local/bin/entrypoint.sh /usr/local/bin/start-bot.sh
 
 # Permissions
-RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache \
-    && chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache
+RUN mkdir -p /var/www/html/discord-bot/data \
+    && chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache /var/www/html/discord-bot/data \
+    && chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache /var/www/html/discord-bot/data
 
 EXPOSE 80
 

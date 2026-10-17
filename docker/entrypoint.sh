@@ -51,10 +51,11 @@ php artisan config:cache || true
 php artisan route:cache || true
 php artisan view:cache || true
 
-# Permissions indispensables pour SQLite et le serveur web (évite 'attempt to write a readonly database')
+# Permissions indispensables pour SQLite, le stockage et les fichiers du bot
 echo "🔒 Applying strict permissions for www-data..."
-chown -R www-data:www-data /var/www/html/database /var/www/html/storage /var/www/html/bootstrap/cache
-chmod -R 775 /var/www/html/database /var/www/html/storage /var/www/html/bootstrap/cache
+mkdir -p /var/www/html/discord-bot/data
+chown -R www-data:www-data /var/www/html/database /var/www/html/storage /var/www/html/bootstrap/cache /var/www/html/discord-bot/data
+chmod -R 775 /var/www/html/database /var/www/html/storage /var/www/html/bootstrap/cache /var/www/html/discord-bot/data
 if [ -f /var/www/html/database/database.sqlite ]; then
     chmod 664 /var/www/html/database/database.sqlite
 fi
