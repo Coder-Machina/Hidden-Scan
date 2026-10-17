@@ -16,7 +16,7 @@ use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Facades\Storage;
 
 #[Fillable([
-    'name', 'email', 'password',
+    'name', 'username', 'profile_public', 'email', 'password',
     'pass_code', 'last_ip_address',
     'avatar', 'banner', 'bio', 'xp', 'streak', 'qi_shields', 'spiritual_beast', 'avatar_frame', 'custom_title_color', 'last_read_at', 'favorite_genre', 'reader_mode',
     'tier_list', 'top_mangas',
@@ -145,6 +145,7 @@ class User extends Authenticatable implements FilamentUser
             'banned_at' => 'datetime',
             'is_comment_banned' => 'boolean',
             'comment_banned_at' => 'datetime',
+            'profile_public' => 'boolean',
         ];
     }
 
@@ -262,6 +263,11 @@ class User extends Authenticatable implements FilamentUser
     public function readingProgress()
     {
         return $this->hasMany(ReadingProgress::class);
+    }
+
+    public function readingHistory()
+    {
+        return $this->readingProgress();
     }
 
     /**

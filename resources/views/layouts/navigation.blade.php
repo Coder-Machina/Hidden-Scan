@@ -32,6 +32,7 @@
 
             <!-- Settings Dropdown -->
             <div class="hidden sm:flex sm:items-center sm:ms-6">
+                @auth
                 <x-dropdown align="right" width="48">
                     <x-slot name="trigger">
                         <button class="inline-flex items-center gap-2 px-3 py-1.5 border border-[var(--border)] text-caption font-semibold rounded-[4px] text-[var(--text-1)] bg-[var(--bg-surface)] hover:bg-[var(--bg-raised)] focus:outline-none transition ease-in-out duration-150 cursor-pointer">
@@ -64,6 +65,13 @@
                         </form>
                     </x-slot>
                 </x-dropdown>
+                @else
+                <div class="flex items-center gap-2">
+                    <a href="{{ route('login') }}" class="btn-primary !py-1.5 !px-3 !text-xs">
+                        Connexion
+                    </a>
+                </div>
+                @endauth
             </div>
 
             <!-- Hamburger -->
@@ -96,6 +104,7 @@
         </div>
 
         <!-- Responsive Settings Options -->
+        @auth
         <div class="pt-4 pb-3 border-t border-[var(--border)]">
             <div class="px-4">
                 <div class="font-semibold text-sm text-[var(--text-1)]">{{ Auth::user()->name }}</div>
@@ -120,5 +129,12 @@
                 </form>
             </div>
         </div>
+        @else
+        <div class="pt-3 pb-3 px-4 border-t border-[var(--border)]">
+            <a href="{{ route('login') }}" class="btn-primary !py-1.5 !px-3 !text-xs w-full text-center block">
+                Connexion
+            </a>
+        </div>
+        @endauth
     </div>
 </nav>

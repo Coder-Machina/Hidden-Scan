@@ -32,9 +32,15 @@
             @endisset
 
             <!-- Page Content -->
-            <main class="max-w-[1280px] mx-auto px-4 sm:px-6 lg:px-8 py-8">
-                {{ $slot }}
-            </main>
+            @isset($slot)
+                <main class="max-w-[1280px] mx-auto px-4 sm:px-6 lg:px-8 py-8">
+                    {{ $slot }}
+                </main>
+            @else
+                <main class="w-full">
+                    @yield('content')
+                </main>
+            @endisset
         </div>
     </body>
 </html>

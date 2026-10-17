@@ -7,6 +7,7 @@ use App\Http\Controllers\Public\ChapterController;
 use App\Http\Controllers\Public\LibraryController;
 use App\Http\Controllers\Public\PlanningController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\PublicProfileController;
 
 // ═══ PUBLIC ROUTES ═══
 Route::get('/', [HomeController::class, 'index'])->name('home');
@@ -14,6 +15,10 @@ Route::get('/planning', [PlanningController::class, 'index'])->name('planning');
 Route::get('/classement', [\App\Http\Controllers\Public\LeaderboardController::class, 'index'])->name('leaderboard');
 Route::get('/bibliotheque', [LibraryController::class, 'index'])->name('library');
 Route::post('/manga/{slug}/noter', [MangaController::class, 'rate'])->name('manga.rate');
+
+// Profil public — accessible par tous, connectés ou non
+Route::get('/user/{username}', [PublicProfileController::class, 'show'])
+     ->name('profile.public');
 
 Route::get('/surprise-moi', [MangaController::class, 'random'])->name('manga.random');
 Route::get('/random', fn() => redirect()->route('manga.random'));
