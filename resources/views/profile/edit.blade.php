@@ -1,5 +1,7 @@
-<x-layouts.public title="Profil — Hidden Scan">
+<x-layouts.public :title="$user->name . ($user->username ? ' (@' . $user->username . ')' : '') . ' — Profil — Hidden Scan'">
     @php
+        $isOwner = $isOwner ?? (auth()->check() && auth()->id() === $user->id);
+        $isStaff = $isStaff ?? (auth()->check() && auth()->user()->isStaffOrAdmin());
         $initials = strtoupper(substr($user->name, 0, 2));
     @endphp
 
@@ -45,6 +47,7 @@
     <script>
         function profileComponent() {
             return {
+                isOwner: @json($isOwner),
                 currentTab: '{{ $defaultTab ?? "overview" }}',
                 murimSubtab: 'guide',
                 settingsSubtab: 'profile',
@@ -52,8 +55,8 @@
                 bannerPreview: @json($user->banner ? $user->banner_url : ''),
                 avatarData: '',
                 bannerData: '',
-                favorites: [],
-                history: [],
+                favorites: @json($userFavorites ?? []),
+                history: @json($userReadingHistory ?? []),
                 serverProgress: {},
                 libTab: 'favorites',
                 mangasLookup: @json($mangasLookup ?? []),
@@ -305,40 +308,44 @@
                 },
 
                 loadData() {
-                    if (window.HiddenScan) {
+                    if (this.isOwner && window.HiddenScan) {
                         const rawFavs = window.HiddenScan.getFavorites() || [];
-                        this.favorites = rawFavs.map(fav => {
-                            const lookup = this.mangasLookup[fav.slug] || {};
-                            return {
-                                ...fav,
-                                title: lookup.title || fav.title || fav.slug,
-                                cover: lookup.cover || fav.cover || '',
-                            };
-                        }).sort((a, b) => new Date(b.addedAt) - new Date(a.addedAt));
+                        if (rawFavs.length > 0) {
+                            this.favorites = rawFavs.map(fav => {
+                                const lookup = this.mangasLookup[fav.slug] || {};
+                                return {
+                                    ...fav,
+                                    title: lookup.title || fav.title || fav.slug,
+                                    cover: lookup.cover || fav.cover || '',
+                                };
+                            }).sort((a, b) => new Date(b.addedAt) - new Date(a.addedAt));
+                        }
 
                         const rawHistory = window.HiddenScan.getHistory() || [];
                         const progress = window.HiddenScan.getProgress() || {};
                         
-                        this.history = rawHistory.map(item => {
-                            const mSlug = item.mangaSlug || item.manga || '';
-                            const lookup = this.mangasLookup[mSlug] || {};
-                            const fav = this.favorites.find(f => f.slug === mSlug);
-                            const prog = progress[mSlug];
-                            const cNum = item.chapter || (prog ? prog.chapter : 1);
-                            const cSlug = item.chapterSlug || (prog ? prog.slug : ('chapitre-' + cNum));
-                            const title = lookup.title || item.mangaTitle || (fav ? fav.title : (prog ? prog.title : mSlug.replace(/-/g, ' ')));
-                            const cTitle = item.chapterTitle || (prog ? prog.chapterTitle : ('Chapitre ' + cNum));
-                            const cover = lookup.cover || item.cover || (fav ? fav.cover : (prog ? prog.cover : ''));
+                        if (rawHistory.length > 0) {
+                            this.history = rawHistory.map(item => {
+                                const mSlug = item.mangaSlug || item.manga || '';
+                                const lookup = this.mangasLookup[mSlug] || {};
+                                const fav = this.favorites.find(f => f.slug === mSlug);
+                                const prog = progress[mSlug];
+                                const cNum = item.chapter || (prog ? prog.chapter : 1);
+                                const cSlug = item.chapterSlug || (prog ? prog.slug : ('chapitre-' + cNum));
+                                const title = lookup.title || item.mangaTitle || (fav ? fav.title : (prog ? prog.title : mSlug.replace(/-/g, ' ')));
+                                const cTitle = item.chapterTitle || (prog ? prog.chapterTitle : ('Chapitre ' + cNum));
+                                const cover = lookup.cover || item.cover || (fav ? fav.cover : (prog ? prog.cover : ''));
 
-                            return {
-                                mangaSlug: mSlug,
-                                chapterSlug: cSlug,
-                                mangaTitle: title,
-                                chapterTitle: cTitle,
-                                cover: cover,
-                                readAt: item.readAt || new Date().toISOString()
-                            };
-                        });
+                                return {
+                                    mangaSlug: mSlug,
+                                    chapterSlug: cSlug,
+                                    mangaTitle: title,
+                                    chapterTitle: cTitle,
+                                    cover: cover,
+                                    readAt: item.readAt || new Date().toISOString()
+                                };
+                            });
+                        }
                     }
                 },
 
@@ -415,6 +422,16 @@
 
     <div class="w-full max-w-7xl mx-auto px-3 sm:px-5 md:px-6 py-4 md:py-8" x-data="profileComponent()">
 
+        {{-- Encart Profil Privé (si profil privé et visible uniquement par owner/staff) --}}
+        @if(!$user->profile_public)
+            <div class="mb-6 p-4 rounded-[6px] bg-amber-500/10 border border-amber-500/30 text-amber-300 text-xs font-bold flex items-center justify-between">
+                <div class="flex items-center gap-2.5">
+                    <x-lucide name="lock" class="w-4 h-4 text-amber-400" />
+                    <span>Ce profil est privé. Seuls vous et les administrateurs pouvez voir cette page.</span>
+                </div>
+            </div>
+        @endif
+
         {{-- ═══════════════════════════════════════════════════════════
              1. HERO BANNER & IDENTITÉ VISUELLE (Design Sophistiqué Style shapes.gallery / ui.live)
              ═══════════════════════════════════════════════════════════ --}}
@@ -458,15 +475,17 @@
                                 </div>
                             </div>
 
-                            {{-- Bouton raccourci de changement d'aura --}}
-                            <button 
-                                type="button" 
-                                @click="switchTab('murim'); murimSubtab = 'auras'" 
-                                class="absolute -bottom-1 -right-1 w-8 h-8 rounded-full bg-[var(--bg-surface)] border border-[var(--border)] text-amber-300 hover:text-white hover:border-[var(--accent)] flex items-center justify-center text-xs transition-all duration-200 hover:scale-110 cursor-pointer" 
-                                title="Changer d'Aura Martiale"
-                            >
-                                <x-lucide name="sparkles" class="w-4 h-4" />
-                            </button>
+                            {{-- Bouton raccourci de changement d'aura (réservé au propriétaire) --}}
+                            @if($isOwner)
+                                <button 
+                                    type="button" 
+                                    @click="switchTab('murim'); murimSubtab = 'auras'" 
+                                    class="absolute -bottom-1 -right-1 w-8 h-8 rounded-full bg-[var(--bg-surface)] border border-[var(--border)] text-amber-300 hover:text-white hover:border-[var(--accent)] flex items-center justify-center text-xs transition-all duration-200 hover:scale-110 cursor-pointer" 
+                                    title="Changer d'Aura Martiale"
+                                >
+                                    <x-lucide name="sparkles" class="w-4 h-4" />
+                                </button>
+                            @endif
                         </div>
 
                         {{-- Nom, Titre & Badges Principaux --}}
@@ -475,6 +494,10 @@
                                 <h1 class="text-2xl sm:text-3xl md:text-4xl font-black text-white tracking-tight truncate">
                                     {{ $user->name }}
                                 </h1>
+
+                                <span class="text-xs sm:text-sm font-semibold text-[var(--accent)]">
+                                    {{ '@' . ($user->username ?: \Illuminate\Support\Str::slug($user->name, '')) }}
+                                </span>
 
                                 {{-- Badge de Rang Murim --}}
                                 <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-[4px] text-xs font-black" style="background-color: {{ $murimStatus['current']['color'] }}20; color: {{ $murimStatus['current']['color'] }}; border: 1px solid {{ $murimStatus['current']['color'] }}50;">
@@ -501,6 +524,26 @@
 
                     {{-- Actions Rapides --}}
                     <div class="flex items-center justify-center sm:justify-end gap-2.5 flex-wrap flex-shrink-0">
+                        @if(!$isOwner)
+                            @auth
+                                <button 
+                                    type="button" 
+                                    class="px-4 py-2 rounded-[4px] bg-[var(--accent)] hover:bg-[var(--accent-hover)] text-white text-xs font-bold transition flex items-center gap-2 cursor-pointer shadow-lg shadow-[var(--accent)]/20"
+                                >
+                                    <x-lucide name="user-plus" class="w-4 h-4" />
+                                    <span>+ Suivre</span>
+                                </button>
+                            @else
+                                <a 
+                                    href="{{ route('login') }}" 
+                                    class="px-4 py-2 rounded-[4px] bg-[var(--accent)] hover:bg-[var(--accent-hover)] text-white text-xs font-bold transition flex items-center gap-2 cursor-pointer shadow-lg shadow-[var(--accent)]/20"
+                                >
+                                    <x-lucide name="user-plus" class="w-4 h-4" />
+                                    <span>+ Suivre</span>
+                                </a>
+                            @endauth
+                        @endif
+
                         <button 
                             type="button" 
                             @click="openCardModal()" 
@@ -510,24 +553,26 @@
                             <span>Carte Martiale</span>
                         </button>
 
-                        <button 
-                            type="button" 
-                            @click="switchTab('settings'); settingsSubtab = 'profile'" 
-                            class="px-4 py-2 rounded-[4px] bg-[var(--bg-surface)] border border-[var(--border)] hover:border-[var(--accent)] hover:text-white text-[var(--text-1)] text-xs font-bold transition flex items-center gap-2 cursor-pointer"
-                        >
-                            <svg class="w-4 h-4 text-[var(--text-2)]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
-                            <span>Modifier profil</span>
-                        </button>
+                        @if($isOwner)
+                            <button 
+                                type="button" 
+                                @click="switchTab('settings'); settingsSubtab = 'profile'" 
+                                class="px-4 py-2 rounded-[4px] bg-[var(--bg-surface)] border border-[var(--border)] hover:border-[var(--accent)] hover:text-white text-[var(--text-1)] text-xs font-bold transition flex items-center gap-2 cursor-pointer"
+                            >
+                                <svg class="w-4 h-4 text-[var(--text-2)]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+                                <span>Modifier profil</span>
+                            </button>
 
-                        <button 
-                            type="button" 
-                            @click="switchTab('settings'); settingsSubtab = 'security'" 
-                            class="px-3.5 py-2 rounded-[4px] bg-[var(--bg-surface)] border border-[var(--border)] hover:border-[var(--accent)] hover:text-white text-[var(--text-1)] text-xs font-bold transition flex items-center gap-2 cursor-pointer" 
-                            title="Paramètres & Sécurité"
-                        >
-                            <svg class="w-4 h-4 text-[var(--accent)]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"></circle><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
-                            <span class="hidden sm:inline">Paramètres</span>
-                        </button>
+                            <button 
+                                type="button" 
+                                @click="switchTab('settings'); settingsSubtab = 'security'" 
+                                class="px-3.5 py-2 rounded-[4px] bg-[var(--bg-surface)] border border-[var(--border)] hover:border-[var(--accent)] hover:text-white text-[var(--text-1)] text-xs font-bold transition flex items-center gap-2 cursor-pointer" 
+                                title="Paramètres & Sécurité"
+                            >
+                                <svg class="w-4 h-4 text-[var(--accent)]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"></circle><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+                                <span class="hidden sm:inline">Paramètres</span>
+                            </button>
+                        @endif
                     </div>
                 </div>
 
@@ -576,7 +621,7 @@
                     </div>
                 </div>
                 <div class="text-2xl sm:text-3xl font-black text-white tracking-tight">{{ number_format($readCount) }}</div>
-                <div class="text-[11px] text-[var(--text-3)] group-hover:text-[var(--text-2)] mt-1 truncate transition-colors">Maîtrise martiale</div>
+                <div class="text-[11px] text-[var(--text-3)] group-hover:text-[var(--text-2)] mt-1 truncate transition-colors">{{ $mangasLusCount ?? 0 }} Mangas lus • Maîtrise martiale</div>
             </div>
 
             {{-- Stat 2 : Favoris --}}
@@ -690,16 +735,18 @@
                 </button>
             </div>
 
-            {{-- Onglet 5 : Paramètres & Sécurité --}}
-            <button 
-                type="button" 
-                @click="switchTab('settings')"
-                class="flex items-center gap-2 px-4 py-2 rounded-[4px] text-xs sm:text-sm font-bold transition-all cursor-pointer flex-shrink-0"
-                :class="currentTab === 'settings' ? 'bg-[var(--accent)] text-white' : 'text-[var(--text-2)] hover:text-white hover:bg-[var(--bg-raised)]'"
-            >
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"></circle><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
-                <span>Paramètres</span>
-            </button>
+            @if($isOwner)
+                {{-- Onglet 5 : Paramètres & Sécurité --}}
+                <button 
+                    type="button" 
+                    @click="switchTab('settings')"
+                    class="flex items-center gap-2 px-4 py-2 rounded-[4px] text-xs sm:text-sm font-bold transition-all cursor-pointer flex-shrink-0"
+                    :class="currentTab === 'settings' ? 'bg-[var(--accent)] text-white' : 'text-[var(--text-2)] hover:text-white hover:bg-[var(--bg-raised)]'"
+                >
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"></circle><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+                    <span>Paramètres</span>
+                </button>
+            @endif
         </div>
 
         {{-- ═══════════════════════════════════════════════════════════
@@ -909,10 +956,12 @@
                         </h3>
                         <p class="text-xs text-[var(--text-2)]">Vos œuvres de référence affichées publiquement sur votre profil.</p>
                     </div>
-                    <button type="button" @click="saveTopMangas()" class="px-3.5 py-1.5 rounded-[4px] btn-primary text-xs flex items-center gap-1.5 cursor-pointer">
-                        <x-lucide name="save" class="w-3.5 h-3.5" />
-                        <span>Sauvegarder</span>
-                    </button>
+                    @if($isOwner)
+                        <button type="button" @click="saveTopMangas()" class="px-3.5 py-1.5 rounded-[4px] btn-primary text-xs flex items-center gap-1.5 cursor-pointer">
+                            <x-lucide name="save" class="w-3.5 h-3.5" />
+                            <span>Sauvegarder</span>
+                        </button>
+                    @endif
                 </div>
 
                 <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3.5">
@@ -928,31 +977,40 @@
                                     <div class="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent flex flex-col justify-end p-2.5">
                                         <span class="text-xs font-bold text-white line-clamp-2 leading-tight" x-text="getManga(topMangasIds[{{ $slot }}]).title"></span>
                                     </div>
-                                    <button type="button" @click.stop="removeTopSlot({{ $slot }})" class="absolute top-2 right-2 z-20 w-6 h-6 rounded-[4px] bg-[var(--accent)] text-white flex items-center justify-center text-xs opacity-0 group-hover:opacity-100 transition shadow hover:scale-110 cursor-pointer" title="Retirer">
-                                        <x-lucide name="x" class="w-3.5 h-3.5" />
-                                    </button>
+                                    @if($isOwner)
+                                        <button type="button" @click.stop="removeTopSlot({{ $slot }})" class="absolute top-2 right-2 z-20 w-6 h-6 rounded-[4px] bg-[var(--accent)] text-white flex items-center justify-center text-xs opacity-0 group-hover:opacity-100 transition shadow hover:scale-110 cursor-pointer" title="Retirer">
+                                            <x-lucide name="x" class="w-3.5 h-3.5" />
+                                        </button>
+                                    @endif
                                 </div>
                             </template>
 
                             <template x-if="!topMangasIds[{{ $slot }}] || !getManga(topMangasIds[{{ $slot }}])">
-                                <button type="button" @click="openSelector('top:{{ $slot }}')" class="w-full h-full flex flex-col items-center justify-center gap-2 border-2 border-dashed border-[var(--border)] rounded-[4px] hover:border-[var(--accent)] hover:bg-[var(--bg-raised)] transition cursor-pointer p-4 group">
-                                    <div class="w-8 h-8 rounded-[4px] bg-[var(--bg-surface)] border border-[var(--border)] flex items-center justify-center text-lg text-[var(--text-3)] group-hover:text-[var(--accent)] transition">
-                                        +
+                                @if($isOwner)
+                                    <button type="button" @click="openSelector('top:{{ $slot }}')" class="w-full h-full flex flex-col items-center justify-center gap-2 border-2 border-dashed border-[var(--border)] rounded-[4px] hover:border-[var(--accent)] hover:bg-[var(--bg-raised)] transition cursor-pointer p-4 group">
+                                        <div class="w-8 h-8 rounded-[4px] bg-[var(--bg-surface)] border border-[var(--border)] flex items-center justify-center text-lg text-[var(--text-3)] group-hover:text-[var(--accent)] transition">
+                                            +
+                                        </div>
+                                        <span class="text-[11px] font-bold text-[var(--text-2)] group-hover:text-white transition">Choisir une série</span>
+                                    </button>
+                                @else
+                                    <div class="w-full h-full flex flex-col items-center justify-center gap-2 border border-dashed border-[var(--border)]/50 rounded-[4px] p-4 opacity-40">
+                                        <x-lucide name="star" class="w-6 h-6 text-[var(--text-3)]" />
+                                        <span class="text-[10px] text-[var(--text-3)] font-medium">Emplacement libre</span>
                                     </div>
-                                    <span class="text-[11px] font-bold text-[var(--text-2)] group-hover:text-white transition">Choisir une série</span>
-                                </button>
+                                @endif
                             </template>
                         </div>
                     @endfor
                 </div>
             </div>
 
-            {{-- 1.D. Reprendre la lecture (Dernières lectures) --}}
-            <div class="p-6 sm:p-7 rounded-[6px] bg-[var(--bg-surface)] border border-[var(--border)]" x-show="history.length > 0">
+            {{-- 1.D. Reprendre la lecture (Dernières lectures) / Récemment lus --}}
+            <div class="p-6 sm:p-7 rounded-[6px] bg-[var(--bg-surface)] border border-[var(--border)]" x-show="history.length > 0 || {{ (isset($recents) && $recents->isNotEmpty()) ? 'true' : 'false' }}">
                 <div class="flex items-center justify-between mb-5">
                     <h3 class="text-base font-bold text-white flex items-center gap-2">
                         <x-lucide name="play" class="w-4 h-4 text-[var(--accent)] fill-current" />
-                        <span>Reprendre la lecture</span>
+                        <span>{{ $isOwner ? 'Reprendre la lecture' : 'Récemment lus' }}</span>
                     </h3>
                     <button type="button" @click="switchTab('library'); libTab = 'history'" class="text-xs font-bold text-[var(--text-2)] hover:text-white transition cursor-pointer">
                         Voir tout l'historique →
@@ -960,20 +1018,37 @@
                 </div>
 
                 <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-                    <template x-for="item in history.slice(0, 3)" :key="item.mangaSlug + item.chapterSlug">
-                        <a :href="'/lecture/' + item.mangaSlug + '/' + item.chapterSlug" class="flex items-center gap-3.5 p-3 rounded-[6px] bg-[var(--bg-base)] border border-[var(--border)] hover:border-[var(--accent)] hover:bg-[var(--bg-raised)] transition group">
-                            <div class="w-14 h-20 rounded-[4px] overflow-hidden bg-black/50 flex-shrink-0">
-                                <template x-if="item.cover">
-                                    <img :src="item.cover" class="w-full h-full object-cover group-hover:scale-105 transition-transform" alt="">
-                                </template>
-                            </div>
-                            <div class="min-w-0 flex-1">
-                                <h4 class="text-sm font-bold text-white truncate group-hover:text-[var(--accent)] transition" x-text="item.mangaTitle"></h4>
-                                <span class="text-xs font-semibold text-[var(--accent)] block mt-0.5 truncate" x-text="item.chapterTitle"></span>
-                                <span class="text-[11px] text-[var(--text-3)] mt-1 block">Reprendre la lecture →</span>
-                            </div>
-                        </a>
-                    </template>
+                    @if(isset($recents) && $recents->isNotEmpty())
+                        @foreach($recents->take(3) as $rItem)
+                            <a href="{{ route('manga.show', $rItem->manga->slug) }}" class="flex items-center gap-3.5 p-3 rounded-[6px] bg-[var(--bg-base)] border border-[var(--border)] hover:border-[var(--accent)] hover:bg-[var(--bg-raised)] transition group">
+                                <div class="w-14 h-20 rounded-[4px] overflow-hidden bg-black/50 flex-shrink-0">
+                                    <img src="{{ $rItem->manga->cover_image ? \Illuminate\Support\Facades\Storage::url($rItem->manga->cover_image) : '/images/default-cover.jpg' }}" class="w-full h-full object-cover group-hover:scale-105 transition-transform" alt="{{ $rItem->manga->title }}">
+                                </div>
+                                <div class="min-w-0 flex-1">
+                                    <h4 class="text-sm font-bold text-white truncate group-hover:text-[var(--accent)] transition">{{ $rItem->manga->title }}</h4>
+                                    <span class="text-xs font-semibold text-[var(--accent)] block mt-0.5 truncate">
+                                        {{ $rItem->chapter ? ($rItem->chapter->title ?: 'Chapitre ' . $rItem->chapter->number) : 'Dernière lecture' }}
+                                    </span>
+                                    <span class="text-[11px] text-[var(--text-3)] mt-1 block">Accéder à la série →</span>
+                                </div>
+                            </a>
+                        @endforeach
+                    @else
+                        <template x-for="item in history.slice(0, 3)" :key="item.mangaSlug + item.chapterSlug">
+                            <a :href="'/lecture/' + item.mangaSlug + '/' + item.chapterSlug" class="flex items-center gap-3.5 p-3 rounded-[6px] bg-[var(--bg-base)] border border-[var(--border)] hover:border-[var(--accent)] hover:bg-[var(--bg-raised)] transition group">
+                                <div class="w-14 h-20 rounded-[4px] overflow-hidden bg-black/50 flex-shrink-0">
+                                    <template x-if="item.cover">
+                                        <img :src="item.cover" class="w-full h-full object-cover group-hover:scale-105 transition-transform" alt="">
+                                    </template>
+                                </div>
+                                <div class="min-w-0 flex-1">
+                                    <h4 class="text-sm font-bold text-white truncate group-hover:text-[var(--accent)] transition" x-text="item.mangaTitle"></h4>
+                                    <span class="text-xs font-semibold text-[var(--accent)] block mt-0.5 truncate" x-text="item.chapterTitle"></span>
+                                    <span class="text-[11px] text-[var(--text-3)] mt-1 block">Reprendre la lecture →</span>
+                                </div>
+                            </a>
+                        </template>
+                    @endif
                 </div>
             </div>
 
@@ -1024,28 +1099,30 @@
              ────────────────────────────────────────────────────────── --}}
         <div x-show="currentTab === 'library'" x-cloak class="space-y-6">
 
-            {{-- Bannière Mode Rattrapage --}}
-            <div class="p-5 rounded-[6px] bg-[var(--bg-surface)] border border-[var(--border)] flex flex-col sm:flex-row items-center justify-between gap-4">
-                <div class="flex items-center gap-3.5">
-                    <div class="w-12 h-12 rounded-[4px] bg-[var(--accent)]/10 border border-[var(--accent)]/30 flex items-center justify-center text-2xl text-[var(--accent)] flex-shrink-0">
-                        <x-lucide name="zap" class="w-6 h-6 text-[var(--accent)]" />
-                    </div>
-                    <div>
-                        <div class="flex items-center gap-2">
-                            <span class="text-sm font-bold text-white">Mode Rattrapage</span>
-                            <span class="text-[9px] font-bold uppercase px-2 py-0.5 rounded-[4px] bg-[var(--accent)] text-white">Nouveau</span>
+            @if($isOwner)
+                {{-- Bannière Mode Rattrapage --}}
+                <div class="p-5 rounded-[6px] bg-[var(--bg-surface)] border border-[var(--border)] flex flex-col sm:flex-row items-center justify-between gap-4">
+                    <div class="flex items-center gap-3.5">
+                        <div class="w-12 h-12 rounded-[4px] bg-[var(--accent)]/10 border border-[var(--accent)]/30 flex items-center justify-center text-2xl text-[var(--accent)] flex-shrink-0">
+                            <x-lucide name="zap" class="w-6 h-6 text-[var(--accent)]" />
                         </div>
-                        <p class="text-xs text-[var(--text-2)] mt-0.5">
-                            Retrouvez tous les chapitres non lus de vos séries favorites classés par date !
-                        </p>
+                        <div>
+                            <div class="flex items-center gap-2">
+                                <span class="text-sm font-bold text-white">Mode Rattrapage</span>
+                                <span class="text-[9px] font-bold uppercase px-2 py-0.5 rounded-[4px] bg-[var(--accent)] text-white">Nouveau</span>
+                            </div>
+                            <p class="text-xs text-[var(--text-2)] mt-0.5">
+                                Retrouvez tous les chapitres non lus de vos séries favorites classés par date !
+                            </p>
+                        </div>
                     </div>
-                </div>
 
-                <a href="{{ route('library', ['tab' => 'rattrapage']) }}" class="px-4 py-2 rounded-[4px] btn-primary text-xs flex items-center gap-1.5 flex-shrink-0">
-                    <span>Accéder au Rattrapage</span>
-                    <span>→</span>
-                </a>
-            </div>
+                    <a href="{{ route('library', ['tab' => 'rattrapage']) }}" class="px-4 py-2 rounded-[4px] btn-primary text-xs flex items-center gap-1.5 flex-shrink-0">
+                        <span>Accéder au Rattrapage</span>
+                        <span>→</span>
+                    </a>
+                </div>
+            @endif
 
             {{-- Sous-onglets : Favoris vs Historique --}}
             <div class="flex items-center gap-2">
@@ -1055,7 +1132,7 @@
                     class="px-4 py-2 rounded-[4px] text-xs font-bold transition cursor-pointer"
                     :class="libTab === 'favorites' ? 'bg-[var(--accent)] text-white' : 'bg-[var(--bg-surface)] border border-[var(--border)] text-[var(--text-2)] hover:text-white hover:bg-[var(--bg-raised)]'"
                 >
-                    Mes Favoris (<span x-text="favorites.length">0</span>)
+                    <span>{{ $isOwner ? 'Mes Favoris' : 'Favoris' }}</span> (<span x-text="favorites.length">{{ $favoritesCount }}</span>)
                 </button>
                 <button 
                     type="button" 
@@ -1063,77 +1140,130 @@
                     class="px-4 py-2 rounded-[4px] text-xs font-bold transition cursor-pointer"
                     :class="libTab === 'history' ? 'bg-[var(--accent)] text-white' : 'bg-[var(--bg-surface)] border border-[var(--border)] text-[var(--text-2)] hover:text-white hover:bg-[var(--bg-raised)]'"
                 >
-                    Historique de lecture (<span x-text="history.length">0</span>)
+                    <span>{{ $isOwner ? 'Historique de lecture' : 'Récemment lus' }}</span> (<span x-text="history.length">{{ $recents->count() }}</span>)
                 </button>
             </div>
 
             {{-- Grille des Favoris --}}
             <div x-show="libTab === 'favorites'">
-                <template x-if="favorites.length === 0">
-                    <div class="p-12 text-center rounded-[6px] bg-[var(--bg-surface)] border border-[var(--border)]">
-                        <div class="w-12 h-12 mx-auto mb-3 rounded-[4px] bg-[var(--bg-raised)] border border-[var(--border)] flex items-center justify-center text-amber-400">
-                            <x-lucide name="star" class="w-6 h-6" />
-                        </div>
-                        <h4 class="text-base font-bold text-white mb-1">Aucun favori pour le moment</h4>
-                        <p class="text-xs text-[var(--text-2)] max-w-sm mx-auto mb-4">Ajoutez des mangas ou webtoons à vos favoris en cliquant sur le cœur sur leur fiche !</p>
-                        <a href="{{ route('manga.index') }}" class="px-4 py-2 rounded-[4px] btn-primary text-xs inline-block">Explorer le Catalogue</a>
-                    </div>
-                </template>
+                @if(isset($favoris) && $favoris->isNotEmpty())
+                    <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3.5">
+                        @foreach($favoris as $fav)
+                            <div class="group relative rounded-[6px] overflow-hidden bg-[var(--bg-surface)] border border-[var(--border)] hover:border-[var(--accent)] transition-all flex flex-col">
+                                <a href="{{ route('manga.show', $fav->manga->slug) }}" class="aspect-[3/4] w-full overflow-hidden relative block bg-black/40">
+                                    <img src="{{ $fav->manga->cover_image ? \Illuminate\Support\Facades\Storage::url($fav->manga->cover_image) : '/images/default-cover.jpg' }}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" alt="{{ $fav->manga->title }}" loading="lazy">
+                                    <div class="absolute inset-0 bg-gradient-to-t from-black via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex flex-col justify-end p-2.5">
+                                        <span class="text-xs font-bold text-white leading-tight">{{ $fav->manga->title }}</span>
+                                    </div>
+                                </a>
 
-                <div x-show="favorites.length > 0" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3.5">
-                    <template x-for="fav in favorites" :key="fav.slug">
-                        <div class="group relative rounded-[6px] overflow-hidden bg-[var(--bg-surface)] border border-[var(--border)] hover:border-[var(--accent)] transition-all flex flex-col">
-                            <a :href="'/manga/' + fav.slug" class="aspect-[3/4] w-full overflow-hidden relative block bg-black/40">
-                                <img :src="fav.cover || '/images/default-cover.jpg'" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" alt="">
-                                <div class="absolute inset-0 bg-gradient-to-t from-black via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex flex-col justify-end p-2.5">
-                                    <span class="text-xs font-bold text-white leading-tight" x-text="fav.title"></span>
+                                <div class="p-2.5 flex items-center justify-between gap-1">
+                                    <a href="{{ route('manga.show', $fav->manga->slug) }}" class="text-xs font-bold text-white truncate hover:text-[var(--accent)] transition">{{ $fav->manga->title }}</a>
+                                    @if($isOwner)
+                                        <button type="button" @click="removeFavorite('{{ $fav->manga->slug }}')" class="w-6 h-6 rounded-[4px] text-[var(--text-3)] hover:text-[var(--accent)] hover:bg-[var(--bg-raised)] flex items-center justify-center text-xs transition cursor-pointer" title="Retirer des favoris">
+                                            <x-lucide name="x" class="w-3.5 h-3.5" />
+                                        </button>
+                                    @endif
                                 </div>
-                            </a>
-
-                            <div class="p-2.5 flex items-center justify-between gap-1">
-                                <a :href="'/manga/' + fav.slug" class="text-xs font-bold text-white truncate hover:text-[var(--accent)] transition" x-text="fav.title"></a>
-                                <button type="button" @click="removeFavorite(fav.slug)" class="w-6 h-6 rounded-[4px] text-[var(--text-3)] hover:text-[var(--accent)] hover:bg-[var(--bg-raised)] flex items-center justify-center text-xs transition cursor-pointer" title="Retirer des favoris">
-                                    <x-lucide name="x" class="w-3.5 h-3.5" />
-                                </button>
                             </div>
+                        @endforeach
+                    </div>
+                @else
+                    <template x-if="favorites.length === 0">
+                        <div class="p-12 text-center rounded-[6px] bg-[var(--bg-surface)] border border-[var(--border)]">
+                            <div class="w-12 h-12 mx-auto mb-3 rounded-[4px] bg-[var(--bg-raised)] border border-[var(--border)] flex items-center justify-center text-amber-400">
+                                <x-lucide name="star" class="w-6 h-6" />
+                            </div>
+                            <h4 class="text-base font-bold text-white mb-1">Aucun favori pour le moment</h4>
+                            <p class="text-xs text-[var(--text-2)] max-w-sm mx-auto mb-4">Ajoutez des mangas ou webtoons à vos favoris en cliquant sur le cœur sur leur fiche !</p>
+                            <a href="{{ route('manga.index') }}" class="px-4 py-2 rounded-[4px] btn-primary text-xs inline-block">Explorer le Catalogue</a>
                         </div>
                     </template>
-                </div>
+
+                    <div x-show="favorites.length > 0" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3.5">
+                        <template x-for="fav in favorites" :key="fav.slug">
+                            <div class="group relative rounded-[6px] overflow-hidden bg-[var(--bg-surface)] border border-[var(--border)] hover:border-[var(--accent)] transition-all flex flex-col">
+                                <a :href="'/manga/' + fav.slug" class="aspect-[3/4] w-full overflow-hidden relative block bg-black/40">
+                                    <img :src="fav.cover || '/images/default-cover.jpg'" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" alt="">
+                                    <div class="absolute inset-0 bg-gradient-to-t from-black via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex flex-col justify-end p-2.5">
+                                        <span class="text-xs font-bold text-white leading-tight" x-text="fav.title"></span>
+                                    </div>
+                                </a>
+
+                                <div class="p-2.5 flex items-center justify-between gap-1">
+                                    <a :href="'/manga/' + fav.slug" class="text-xs font-bold text-white truncate hover:text-[var(--accent)] transition" x-text="fav.title"></a>
+                                    @if($isOwner)
+                                        <button type="button" @click="removeFavorite(fav.slug)" class="w-6 h-6 rounded-[4px] text-[var(--text-3)] hover:text-[var(--accent)] hover:bg-[var(--bg-raised)] flex items-center justify-center text-xs transition cursor-pointer" title="Retirer des favoris">
+                                            <x-lucide name="x" class="w-3.5 h-3.5" />
+                                        </button>
+                                    @endif
+                                </div>
+                            </div>
+                        </template>
+                    </div>
+                @endif
             </div>
 
             {{-- Liste de l'Historique de Lecture --}}
             <div x-show="libTab === 'history'">
-                <template x-if="history.length === 0">
-                    <div class="p-12 text-center rounded-[6px] bg-[var(--bg-surface)] border border-[var(--border)]">
-                        <div class="w-12 h-12 mx-auto mb-3 rounded-[4px] bg-[var(--bg-raised)] border border-[var(--border)] flex items-center justify-center text-[var(--text-3)]">
-                            <x-lucide name="history" class="w-6 h-6" />
-                        </div>
-                        <h4 class="text-base font-bold text-white mb-1">Votre historique est vide</h4>
-                        <p class="text-xs text-[var(--text-2)] max-w-sm mx-auto mb-4">Commencez la lecture d'un chapitre pour le voir apparaître ici automatiquement !</p>
-                        <a href="{{ route('manga.index') }}" class="px-4 py-2 rounded-[4px] btn-primary text-xs inline-block">Découvrir les Séries</a>
-                    </div>
-                </template>
+                @if(isset($recents) && $recents->isNotEmpty())
+                    <div class="divide-y divide-[var(--border)] rounded-[6px] bg-[var(--bg-surface)] border border-[var(--border)] overflow-hidden">
+                        @foreach($recents as $rItem)
+                            <div class="p-4 flex items-center justify-between gap-4 hover:bg-[var(--bg-raised)] transition">
+                                <div class="flex items-center gap-3.5 min-w-0">
+                                    <div class="w-12 h-16 rounded-[4px] overflow-hidden bg-black/40 flex-shrink-0">
+                                        <img src="{{ $rItem->manga->cover_image ? \Illuminate\Support\Facades\Storage::url($rItem->manga->cover_image) : '/images/default-cover.jpg' }}" class="w-full h-full object-cover" alt="{{ $rItem->manga->title }}">
+                                    </div>
+                                    <div class="min-w-0">
+                                        <h4 class="text-sm font-bold text-white truncate">{{ $rItem->manga->title }}</h4>
+                                        <span class="text-xs font-semibold text-[var(--accent)] block mt-0.5 truncate">
+                                            {{ $rItem->chapter ? ($rItem->chapter->title ?: 'Chapitre ' . $rItem->chapter->number) : 'Dernière lecture' }}
+                                        </span>
+                                        <span class="text-[10px] text-[var(--text-3)] mt-0.5 block">
+                                            {{ $rItem->updated_at ? $rItem->updated_at->diffForHumans() : 'Récemment' }}
+                                        </span>
+                                    </div>
+                                </div>
 
-                <div x-show="history.length > 0" class="divide-y divide-[var(--border)] rounded-[6px] bg-[var(--bg-surface)] border border-[var(--border)] overflow-hidden">
-                    <template x-for="item in history" :key="item.mangaSlug + item.chapterSlug">
-                        <div class="p-4 flex items-center justify-between gap-4 hover:bg-[var(--bg-raised)] transition">
-                            <div class="flex items-center gap-3.5 min-w-0">
-                                <div class="w-12 h-16 rounded-[4px] overflow-hidden bg-black/40 flex-shrink-0">
-                                    <img :src="item.cover || '/images/default-cover.jpg'" class="w-full h-full object-cover" alt="">
-                                </div>
-                                <div class="min-w-0">
-                                    <h4 class="text-sm font-bold text-white truncate" x-text="item.mangaTitle"></h4>
-                                    <span class="text-xs font-semibold text-[var(--accent)] block mt-0.5 truncate" x-text="item.chapterTitle"></span>
-                                    <span class="text-[10px] text-[var(--text-3)] mt-0.5 block" x-text="new Date(item.readAt).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })"></span>
-                                </div>
+                                <a href="{{ route('manga.show', $rItem->manga->slug) }}" class="px-3.5 py-1.5 rounded-[4px] btn-secondary text-xs flex-shrink-0">
+                                    Consulter →
+                                </a>
                             </div>
-
-                            <a :href="'/lecture/' + item.mangaSlug + '/' + item.chapterSlug" class="px-3.5 py-1.5 rounded-[4px] btn-secondary text-xs flex-shrink-0">
-                                Reprendre →
-                            </a>
+                        @endforeach
+                    </div>
+                @else
+                    <template x-if="history.length === 0">
+                        <div class="p-12 text-center rounded-[6px] bg-[var(--bg-surface)] border border-[var(--border)]">
+                            <div class="w-12 h-12 mx-auto mb-3 rounded-[4px] bg-[var(--bg-raised)] border border-[var(--border)] flex items-center justify-center text-[var(--text-3)]">
+                                <x-lucide name="history" class="w-6 h-6" />
+                            </div>
+                            <h4 class="text-base font-bold text-white mb-1">Votre historique est vide</h4>
+                            <p class="text-xs text-[var(--text-2)] max-w-sm mx-auto mb-4">Commencez la lecture d'un chapitre pour le voir apparaître ici automatiquement !</p>
+                            <a href="{{ route('manga.index') }}" class="px-4 py-2 rounded-[4px] btn-primary text-xs inline-block">Découvrir les Séries</a>
                         </div>
                     </template>
-                </div>
+
+                    <div x-show="history.length > 0" class="divide-y divide-[var(--border)] rounded-[6px] bg-[var(--bg-surface)] border border-[var(--border)] overflow-hidden">
+                        <template x-for="item in history" :key="item.mangaSlug + item.chapterSlug">
+                            <div class="p-4 flex items-center justify-between gap-4 hover:bg-[var(--bg-raised)] transition">
+                                <div class="flex items-center gap-3.5 min-w-0">
+                                    <div class="w-12 h-16 rounded-[4px] overflow-hidden bg-black/40 flex-shrink-0">
+                                        <img :src="item.cover || '/images/default-cover.jpg'" class="w-full h-full object-cover" alt="">
+                                    </div>
+                                    <div class="min-w-0">
+                                        <h4 class="text-sm font-bold text-white truncate" x-text="item.mangaTitle"></h4>
+                                        <span class="text-xs font-semibold text-[var(--accent)] block mt-0.5 truncate" x-text="item.chapterTitle"></span>
+                                        <span class="text-[10px] text-[var(--text-3)] mt-0.5 block" x-text="new Date(item.readAt).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })"></span>
+                                    </div>
+                                </div>
+
+                                <a :href="'/lecture/' + item.mangaSlug + '/' + item.chapterSlug" class="px-3.5 py-1.5 rounded-[4px] btn-secondary text-xs flex-shrink-0">
+                                    Reprendre →
+                                </a>
+                            </div>
+                        </template>
+                    </div>
+                @endif
             </div>
 
         </div>
@@ -1318,10 +1448,12 @@
                             Classez vos séries fétiches selon leur prestige martial.
                         </p>
                     </div>
-                    <button type="button" @click="saveTierList()" class="px-4 py-2 rounded-[4px] btn-primary text-xs flex items-center gap-2 flex-shrink-0 cursor-pointer">
-                        <x-lucide name="save" class="w-3.5 h-3.5" />
-                        <span>Enregistrer ma Tier List</span>
-                    </button>
+                    @if($isOwner)
+                        <button type="button" @click="saveTierList()" class="px-4 py-2 rounded-[4px] btn-primary text-xs flex items-center gap-2 flex-shrink-0 cursor-pointer">
+                            <x-lucide name="save" class="w-3.5 h-3.5" />
+                            <span>Enregistrer ma Tier List</span>
+                        </button>
+                    @endif
                 </div>
 
                 @php
@@ -1342,9 +1474,11 @@
                             <div class="w-full sm:w-28 sm:min-w-[7rem] flex sm:flex-col items-center justify-between sm:justify-center p-3 text-center {{ $meta['bg'] }} font-bold">
                                 <span class="text-2xl">{{ $tierKey }}</span>
                                 <span class="text-[9px] uppercase tracking-wider opacity-90 leading-tight">{{ $meta['label'] }}</span>
-                                <button type="button" @click="openSelector('tier:{{ $tierKey }}')" class="sm:hidden px-2 py-1 rounded-[4px] bg-black/30 text-white text-[10px] font-bold cursor-pointer">
-                                    + Ajouter
-                                </button>
+                                @if($isOwner)
+                                    <button type="button" @click="openSelector('tier:{{ $tierKey }}')" class="sm:hidden px-2 py-1 rounded-[4px] bg-black/30 text-white text-[10px] font-bold cursor-pointer">
+                                        + Ajouter
+                                    </button>
+                                @endif
                             </div>
 
                             <div class="flex-1 p-3 flex items-center gap-3 overflow-x-auto min-h-[110px] bg-[var(--bg-surface)] custom-scrollbar">
@@ -1356,18 +1490,22 @@
                                                 <div class="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-transparent p-1 flex flex-col justify-end">
                                                     <span class="text-[10px] font-bold text-white line-clamp-2 leading-tight" x-text="getManga(mId).title"></span>
                                                 </div>
-                                                <button type="button" @click.stop="removeFromTier('{{ $tierKey }}', mId)" class="absolute top-1 right-1 w-5 h-5 rounded-[4px] bg-[var(--accent)] text-white flex items-center justify-center text-[10px] opacity-0 group-hover/manga:opacity-100 transition shadow hover:scale-110 cursor-pointer" title="Retirer">
-                                                    <x-lucide name="x" class="w-3 h-3" />
-                                                </button>
+                                                @if($isOwner)
+                                                    <button type="button" @click.stop="removeFromTier('{{ $tierKey }}', mId)" class="absolute top-1 right-1 w-5 h-5 rounded-[4px] bg-[var(--accent)] text-white flex items-center justify-center text-[10px] opacity-0 group-hover/manga:opacity-100 transition shadow hover:scale-110 cursor-pointer" title="Retirer">
+                                                        <x-lucide name="x" class="w-3 h-3" />
+                                                    </button>
+                                                @endif
                                             </div>
                                         </template>
                                     </div>
                                 </template>
 
-                                <button type="button" @click="openSelector('tier:{{ $tierKey }}')" class="flex-shrink-0 w-20 aspect-[3/4] rounded-[4px] border-2 border-dashed border-[var(--border)] hover:border-[var(--accent)] hover:bg-[var(--bg-raised)] transition flex flex-col items-center justify-center gap-1 text-[var(--text-3)] hover:text-white cursor-pointer group">
-                                    <span class="text-xl group-hover:scale-110 transition">+</span>
-                                    <span class="text-[9px] font-bold uppercase tracking-wider">Ajouter</span>
-                                </button>
+                                @if($isOwner)
+                                    <button type="button" @click="openSelector('tier:{{ $tierKey }}')" class="flex-shrink-0 w-20 aspect-[3/4] rounded-[4px] border-2 border-dashed border-[var(--border)] hover:border-[var(--accent)] hover:bg-[var(--bg-raised)] transition flex flex-col items-center justify-center gap-1 text-[var(--text-3)] hover:text-white cursor-pointer group">
+                                        <span class="text-xl group-hover:scale-110 transition">+</span>
+                                        <span class="text-[9px] font-bold uppercase tracking-wider">Ajouter</span>
+                                    </button>
+                                @endif
                             </div>
                         </div>
                     @endforeach
@@ -1480,6 +1618,7 @@
             </div>
         </div>
 
+        @if($isOwner)
         {{-- ──────────────────────────────────────────────────────────
              ONGLET 5 : PARAMÈTRES & COMPTE (SETTINGS)
              ────────────────────────────────────────────────────────── --}}
@@ -1671,7 +1810,9 @@
             </div>
 
         </div>
+        @endif
 
+        @if($isOwner)
         {{-- ═══════════════════════════════════════════════════════════
              MODALE DE SÉLECTION D'ŒUVRE (TOP 5 & TIER LIST)
              ═══════════════════════════════════════════════════════════ --}}
@@ -1732,6 +1873,7 @@
                 </div>
             </div>
         </div>
+        @endif
 
         {{-- ═══════════════════════════════════════════════════════════
              MODALE CARTE DE DISCIPLE HOLOGRAPHIQUE

@@ -17,90 +17,13 @@ class ProfileController extends Controller
     public function edit(Request $request): View
     {
         $user = $request->user();
-        
-        // Stats de lecture et Voie Martiale Murim
-        $readCount = $user->readingProgress()->where('is_read', true)->count();
-        $favoritesCount = $user->favorites()->count();
-        $commentsCount = $user->comments()->count();
-        $likesReceived = $user->comments()->sum('likes_count') ?? 0;
-        $recentComments = $user->comments()
-            ->with(['commentable'])
-            ->latest()
-            ->take(6)
-            ->get();
+        $data = \App\Services\ProfileDataService::getProfileData(
+            $user,
+            $user,
+            $request->query('tab')
+        );
 
-        $murimStatus = \App\Services\MurimRankService::calculateStatus($readCount, (int) ($user->streak ?? 0));
-        $monthlyHeatmap = \App\Services\LeaderboardService::getMonthlyHeatmap($user);
-        $leaderboard = \App\Services\LeaderboardService::getTopCultivators(15, $user);
-
-        $genres = \App\Models\Genre::orderBy('name')->get();
-
-        $allMangas = \App\Models\Manga::select(['id', 'title', 'slug', 'cover_image', 'type'])
-            ->orderBy('title')
-            ->get();
-
-        // Manga lookup mapping for covers & titles in library / reading history
-        $mangasLookup = $allMangas->mapWithKeys(function ($m) {
-            return [$m->slug => [
-                'id' => $m->id,
-                'title' => $m->title,
-                'cover' => $m->cover_image ? \Illuminate\Support\Facades\Storage::url($m->cover_image) : null,
-            ]];
-        });
-
-        // Hydratation du Top 5
-        $topMangasIds = is_array($user->top_mangas) ? $user->top_mangas : [];
-        $topMangasMap = !empty($topMangasIds) 
-            ? \App\Models\Manga::whereIn('id', $topMangasIds)->get()->keyBy('id')
-            : collect();
-
-        // Hydratation de la Tier List
-        $tierListConfig = is_array($user->tier_list) ? $user->tier_list : [
-            'S' => [], 'A' => [], 'B' => [], 'C' => [], 'D' => [], 'F' => []
-        ];
-
-        // Données allMangas préparées pour Javascript
-        $allMangasData = $allMangas->map(fn($m) => [
-            'id' => $m->id,
-            'title' => $m->title,
-            'slug' => $m->slug,
-            'cover' => $m->cover_image ? \Illuminate\Support\Facades\Storage::url($m->cover_image) : null,
-            'type' => is_object($m->type) ? ($m->type->value ?? 'manga') : ($m->type ?? 'manga'),
-        ])->values()->all();
-
-        // Hydratation Bête Spirituelle & Cadres d'Avatar
-        $spiritualBeasts = \App\Services\MurimRankService::getSpiritualBeasts();
-        $userBeastStatus = \App\Services\MurimRankService::getBeastStatus($user->spiritual_beast ?? 'shadow_crow', $readCount);
-        $avatarFrames = \App\Services\MurimRankService::getAvatarFrames($readCount);
-
-        $validTabs = ['overview', 'murim', 'activity', 'beast', 'tierlist', 'leaderboard', 'library', 'edit', 'settings'];
-        $reqTab = $request->query('tab');
-        $defaultTab = in_array($reqTab, $validTabs) ? $reqTab : 'overview';
-
-        return view('profile.edit', [
-            'user' => $user,
-            'defaultTab' => $defaultTab,
-            'readCount' => $readCount,
-            'favoritesCount' => $favoritesCount,
-            'commentsCount' => $commentsCount,
-            'likesReceived' => $likesReceived,
-            'recentComments' => $recentComments,
-            'murimStatus' => $murimStatus,
-            'monthlyHeatmap' => $monthlyHeatmap,
-            'leaderboard' => $leaderboard,
-            'genres' => $genres,
-            'allMangas' => $allMangas,
-            'allMangasData' => $allMangasData,
-            'mangasLookup' => $mangasLookup,
-            'topMangasIds' => $topMangasIds,
-            'topMangasMap' => $topMangasMap,
-            'tierListConfig' => $tierListConfig,
-            'spiritualBeasts' => $spiritualBeasts,
-            'userBeastStatus' => $userBeastStatus,
-            'avatarFrames' => $avatarFrames,
-            'currentFrame' => $user->avatar_frame ?? 'novice',
-            'qiShields' => (int) ($user->qi_shields ?? 0),
-        ]);
+        return view('profile.edit', $data);
     }
 
     /**
