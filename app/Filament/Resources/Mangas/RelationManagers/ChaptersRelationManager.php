@@ -520,7 +520,8 @@ class ChaptersRelationManager extends RelationManager
                     ->modalDescription('Envoyer immédiatement la fiche d\'annonce de ce chapitre sur Discord.')
                     ->modalSubmitActionLabel('Envoyer maintenant')
                     ->action(function (Chapter $record) {
-                        $sent = app(\App\Services\DiscordWebhookService::class)->sendChapterNotification($record, force: true);
+                        $service = app(\App\Services\DiscordWebhookService::class);
+                        $sent = $service->sendChapterNotification($record, force: true);
                         if ($sent) {
                             Notification::make()
                                 ->title('Annonce Discord envoyée')
@@ -530,6 +531,7 @@ class ChaptersRelationManager extends RelationManager
                         } else {
                             Notification::make()
                                 ->title('Échec de l\'envoi Discord')
+                                ->body($service->getLastError() ?: 'Vérifiez la configuration du webhook Discord.')
                                 ->danger()
                                 ->send();
                         }

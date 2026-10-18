@@ -15,9 +15,21 @@ class DiscordWebhookService
     /**
      * Résout l'URL du webhook selon la source de l'œuvre (interne Hidden Scan ou externe / autre team).
      */
-    public const ACTIVE_WEBHOOK_URL = 'https://discord.com/api/webhooks/1559483412274749531/Hh0lIt5H0TCF6gnO2jtBudzazJsnrzsxsesWyuGZK6W-J2Ymh58GBlqsM_AZ03M3fpKx';
+    public const ACTIVE_WEBHOOK_URL = 'https://discord.com/api/webhooks/1561350325582045307/NI0204CkgS_fug4r0ETKCa9t9bHr6j6MeyXWACWpKn7Z2X6ZKoW7moQdapFrsti85cYI';
+
+    public const DEAD_WEBHOOK_IDS = [
+        '1558548282387468388',
+        '1559483412274749531',
+    ];
 
     public const DEAD_WEBHOOK_ID = '1558548282387468388';
+
+    protected ?string $lastError = null;
+
+    public function getLastError(): ?string
+    {
+        return $this->lastError;
+    }
 
     /**
      * Les 4 projets officiels produits par l'équipe Hidden Scan avec leurs rôles Discord vérifiés.
@@ -80,11 +92,56 @@ class DiscordWebhookService
             $url = config('services.discord.webhook_url');
         }
 
-        if (! empty($url) && str_contains($url, self::DEAD_WEBHOOK_ID)) {
-            $url = self::ACTIVE_WEBHOOK_URL;
+        if (! empty($url)) {
+            foreach (self::DEAD_WEBHOOK_IDS as $deadId) {
+                if (str_contains($url, $deadId)) {
+                    $url = self::ACTIVE_WEBHOOK_URL;
+                    break;
+                }
+            }
         }
 
         return $url;
+    }
+
+    /**
+     * Tente de recréer un webhook valide automatiquement via l'API bot si jamais celui-ci est 404.
+     */
+    public function autoHealWebhook(): ?string
+    {
+        $botToken = config('services.discord.bot_token', env('DISCORD_BOT_TOKEN'));
+        if (! $botToken && file_exists(base_path('discord-bot/.env'))) {
+            $lines = file(base_path('discord-bot/.env'));
+            foreach ($lines as $line) {
+                if (str_starts_with(trim($line), 'DISCORD_BOT_TOKEN=')) {
+                    $botToken = trim(substr(trim($line), strlen('DISCORD_BOT_TOKEN=')));
+                    break;
+                }
+            }
+        }
+
+        if (! $botToken) {
+            return null;
+        }
+
+        try {
+            $res = Http::withHeaders([
+                'Authorization' => "Bot {$botToken}",
+                'Content-Type' => 'application/json',
+            ])->post("https://discord.com/api/v10/channels/1558906655381389399/webhooks", [
+                'name' => 'Hidden Scan - Sorties',
+            ]);
+
+            if ($res->successful() && ! empty($res->json('url'))) {
+                $newUrl = $res->json('url');
+                Log::info("Discord Webhook régénéré automatiquement par le bot : {$newUrl}");
+                return $newUrl;
+            }
+        } catch (\Throwable $e) {
+            Log::error("Erreur lors de l'auto-healing du webhook Discord : " . $e->getMessage());
+        }
+
+        return null;
     }
 
     /**
@@ -115,10 +172,18 @@ class DiscordWebhookService
         }
 
         // Auto-récupération immédiate si le webhook configuré a été supprimé sur Discord (erreur 404)
-        if ($response->status() === 404 && $webhookUrl !== self::ACTIVE_WEBHOOK_URL) {
-            Log::warning("Discord Webhook 404 sur {$webhookUrl}, bascule automatique vers le webhook actif : ".self::ACTIVE_WEBHOOK_URL);
+        if ($response->status() === 404) {
+            if ($webhookUrl !== self::ACTIVE_WEBHOOK_URL) {
+                Log::warning("Discord Webhook 404 sur {$webhookUrl}, bascule automatique vers le webhook actif : ".self::ACTIVE_WEBHOOK_URL);
 
-            return $this->postToWebhook(self::ACTIVE_WEBHOOK_URL, $payload, $localFilePath);
+                return $this->postToWebhook(self::ACTIVE_WEBHOOK_URL, $payload, $localFilePath);
+            }
+
+            // Si même ACTIVE_WEBHOOK_URL renvoie 404, tenter l'auto-healing
+            $healedUrl = $this->autoHealWebhook();
+            if ($healedUrl && $healedUrl !== $webhookUrl) {
+                return $this->postToWebhook($healedUrl, $payload, $localFilePath);
+            }
         }
 
         return $response;
@@ -219,12 +284,14 @@ class DiscordWebhookService
             $response = $this->postToWebhook($webhookUrl, $payload, $localFilePath);
 
             if ($response->successful()) {
+                $this->lastError = null;
                 $chapter->updateQuietly(['discord_notified_at' => now()]);
                 Log::info("Webhook Discord envoyé avec succès pour le chapitre {$chapter->id} de {$manga->title}");
 
                 return true;
             }
 
+            $this->lastError = "Erreur Discord (HTTP {$response->status()}) : {$response->body()}";
             Log::error("Échec de l'envoi du webhook Discord", [
                 'status' => $response->status(),
                 'body' => $response->body(),
@@ -232,6 +299,7 @@ class DiscordWebhookService
 
             return false;
         } catch (\Throwable $e) {
+            $this->lastError = "Erreur de connexion Discord : " . $e->getMessage();
             Log::error("Exception lors de l'envoi du webhook Discord : ".$e->getMessage());
 
             return false;
@@ -335,6 +403,7 @@ class DiscordWebhookService
             $response = $this->postToWebhook($webhookUrl, $payload, $localFilePath);
 
             if ($response->successful()) {
+                $this->lastError = null;
                 foreach ($chaptersToNotify as $c) {
                     $c->updateQuietly(['discord_notified_at' => now()]);
                 }
@@ -342,6 +411,7 @@ class DiscordWebhookService
                 return true;
             }
 
+            $this->lastError = "Erreur Discord (HTTP {$response->status()}) : {$response->body()}";
             Log::error("Échec de l'envoi du webhook Discord en masse", [
                 'status' => $response->status(),
                 'body' => $response->body(),
@@ -349,6 +419,7 @@ class DiscordWebhookService
 
             return false;
         } catch (\Throwable $e) {
+            $this->lastError = "Erreur de connexion Discord : " . $e->getMessage();
             Log::error('Erreur envoi notification Discord en masse : '.$e->getMessage());
 
             return false;
