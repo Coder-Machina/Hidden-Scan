@@ -10,3 +10,15 @@ Artisan::command('inspire', function () {
 })->purpose('Display an inspiring quote');
 
 Schedule::command('chapters:publish-scheduled')->everyMinute();
+
+Schedule::call(function () {
+    \App\Models\ScraperManga::where('status', 'active')
+        ->where(function ($q) {
+            $q->whereNull('last_checked_at')
+              ->orWhere('last_checked_at', '<', now()->subHour());
+        })
+        ->each(fn($sm) =>
+            \App\Jobs\ScrapeNewChaptersJob::dispatch($sm)->onQueue('scraper')
+        );
+})->hourly()->name('auto-sync-chapitres');
+

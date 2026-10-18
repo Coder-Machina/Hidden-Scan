@@ -11,7 +11,8 @@
         "intervention/image-laravel": "^4.1",
         "laravel/framework": "^13.17",
         "laravel/tinker": "^3.0",
-        "spatie/laravel-permission": "^8.3"
+        "spatie/laravel-permission": "^8.3",
+        "symfony/dom-crawler": "^8.1"
     },
     "require-dev": {
         "fakerphp/faker": "^1.23",

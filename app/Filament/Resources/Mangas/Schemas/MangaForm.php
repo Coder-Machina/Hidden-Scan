@@ -178,6 +178,72 @@ class MangaForm
                             ->helperText('Laissez vide pour utiliser le salon automatique (officiel ou sorties site).'),
                     ]),
 
+                Section::make('Source des Chapitres')
+                    ->description('Lier une URL externe pour importer les chapitres automatiquement.')
+                    ->icon('heroicon-o-bolt')
+                    ->columns(2)
+                    ->schema([
+                        Select::make('scraper_source_id')
+                            ->label('Site source')
+                            ->placeholder('— Aucune source (import manuel) —')
+                            ->options(fn () => \App\Models\ScraperSource::where('active', true)->pluck('name', 'id'))
+                            ->helperText('Sélectionne le site depuis lequel importer les chapitres.')
+                            ->live()
+                            ->searchable(),
+                        TextInput::make('scraper_source_url')
+                            ->label('URL du manga sur ce site')
+                            ->placeholder('https://poseidon-scan.net/manga/solo-leveling')
+                            ->url()
+                            ->visible(fn ($get) => !empty($get('scraper_source_id')))
+                            ->helperText('Colle l\'URL exacte de la page manga sur le site source. Les chapitres seront importés automatiquement en arrière-plan.')
+                            ->columnSpanFull(),
+                        \Filament\Forms\Components\Placeholder::make('scraper_status')
+                            ->label('Statut scraping')
+                            ->visible(fn ($record) => $record && $record->scraperManga)
+                            ->columnSpanFull()
+                            ->content(function ($record) {
+                                if (!$record || !$record->scraperManga) return null;
+                                $sm = $record->scraperManga;
+                                $statusBadge = match($sm->status) {
+                                    'active' => '<span class="px-2 py-1 text-xs font-semibold rounded bg-emerald-500/20 text-emerald-400">Actif</span>',
+                                    'paused' => '<span class="px-2 py-1 text-xs font-semibold rounded bg-amber-500/20 text-amber-400">En pause</span>',
+                                    'error' => '<span class="px-2 py-1 text-xs font-semibold rounded bg-rose-500/20 text-rose-400">Erreur</span>',
+                                    default => ucfirst($sm->status),
+                                };
+                                $lastChap = $sm->last_chapter_scraped ? htmlspecialchars($sm->last_chapter_scraped) : 'Aucun';
+                                $lastCheck = $sm->last_checked_at ? $sm->last_checked_at->diffForHumans() : 'Jamais';
+                                $errorHtml = $sm->last_error ? '<div class="mt-2 text-xs text-rose-400">⚠️ ' . htmlspecialchars($sm->last_error) . '</div>' : '';
+                                $syncRoute = route('admin.scraper.sync', $sm);
+                                $csrfToken = csrf_token();
+
+                                return new \Illuminate\Support\HtmlString("
+                                    <div class='p-4 rounded-xl bg-gray-900/60 border border-gray-700/60 space-y-3 text-sm'>
+                                        <div class='flex items-center justify-between'>
+                                            <span class='text-gray-400 font-medium'>Statut :</span>
+                                            <div>{$statusBadge}</div>
+                                        </div>
+                                        <div class='flex items-center justify-between'>
+                                            <span class='text-gray-400 font-medium'>Dernier chapitre importé :</span>
+                                            <span class='font-mono font-bold text-gray-200'>{$lastChap}</span>
+                                        </div>
+                                        <div class='flex items-center justify-between'>
+                                            <span class='text-gray-400 font-medium'>Dernière vérification :</span>
+                                            <span class='text-gray-300'>{$lastCheck}</span>
+                                        </div>
+                                        {$errorHtml}
+                                        <div class='pt-2 border-t border-gray-800 flex justify-end'>
+                                            <form method='POST' action='{$syncRoute}' class='inline'>
+                                                <input type='hidden' name='_token' value='{$csrfToken}'>
+                                                <button type='submit' class='px-3 py-1.5 text-xs font-medium rounded-lg bg-gray-800 hover:bg-gray-700 text-gray-200 border border-gray-600 transition shadow-sm'>
+                                                    ↻ Vérifier maintenant
+                                                </button>
+                                            </form>
+                                        </div>
+                                    </div>
+                                ");
+                            }),
+                    ]),
+
                 Section::make('Options')
                     ->description('Paramètres généraux de l\'œuvre.')
                     ->icon('heroicon-o-cog-6-tooth')

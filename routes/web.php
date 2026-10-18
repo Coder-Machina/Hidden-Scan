@@ -78,4 +78,13 @@ Route::middleware('auth')->group(function () {
     Route::post('/profile/avatar-frame', [ProfileController::class, 'saveAvatarFrame'])->name('profile.avatar_frame');
 });
 
+// ═══ ADMIN SCRAPER ROUTES ═══
+Route::middleware(['auth'])->prefix('admin')->group(function () {
+    Route::post('/scraper/{scraperManga}/sync', [\App\Http\Controllers\Admin\ScraperController::class, 'syncNow'])
+        ->name('admin.scraper.sync');
+
+    Route::patch('/scraper/{scraperManga}/toggle', [\App\Http\Controllers\Admin\ScraperController::class, 'toggleStatus'])
+        ->name('admin.scraper.toggle');
+});
+
 require __DIR__.'/auth.php';

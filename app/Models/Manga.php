@@ -135,4 +135,9 @@ class Manga extends Model
     {
         return $this->hasMany(StaffContribution::class);
     }
+
+    public function scraperManga()
+    {
+        return $this->hasOne(ScraperManga::class);
+    }
 }
