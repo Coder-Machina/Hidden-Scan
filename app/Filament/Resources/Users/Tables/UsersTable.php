@@ -14,7 +14,6 @@ use Filament\Forms\Components\Radio;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
-use Filament\Forms\Get;
 use Filament\Notifications\Notification;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
@@ -145,8 +144,8 @@ class UsersTable
                             ->required(),
                         DateTimePicker::make('custom_banned_until')
                             ->label('Fin du bannissement personnalisé')
-                            ->visible(fn (Get $get) => $get('duration') === 'custom')
-                            ->required(fn (Get $get) => $get('duration') === 'custom')
+                            ->visible(fn ($get) => $get('duration') === 'custom')
+                            ->required(fn ($get) => $get('duration') === 'custom')
                             ->minDate(now()),
                         Toggle::make('ban_ip')
                             ->label('Bloquer également l\'adresse IP associée (bloque l\'accès au site)')
