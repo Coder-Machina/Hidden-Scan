@@ -64,7 +64,8 @@ class CommentSection extends Component
         // 2. Check if IP is banned
         $ip = Request::ip();
         $ipHash = hash('sha256', $ip . config('app.key'));
-        if (\App\Models\BannedIp::where('ip_hash', $ipHash)->exists()) {
+        $sha1 = sha1($ip);
+        if (\App\Models\BannedIp::where('ip_hash', $ipHash)->orWhere('ip_hash', $sha1)->orWhere('ip_address', $ip)->exists()) {
             $this->addError('content', 'Vous avez été banni de l\'espace commentaires.');
             return;
         }
@@ -140,7 +141,8 @@ class CommentSection extends Component
         // 2. Check if IP is banned
         $ip = Request::ip();
         $ipHash = hash('sha256', $ip . config('app.key'));
-        if (\App\Models\BannedIp::where('ip_hash', $ipHash)->exists()) {
+        $sha1 = sha1($ip);
+        if (\App\Models\BannedIp::where('ip_hash', $ipHash)->orWhere('ip_hash', $sha1)->orWhere('ip_address', $ip)->exists()) {
             $this->addError('replyContent', 'Vous avez été banni de l\'espace commentaires.');
             return;
         }

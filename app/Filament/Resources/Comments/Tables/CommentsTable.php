@@ -37,6 +37,8 @@ class CommentsTable
                     ->searchable()
                     ->sortable()
                     ->weight('bold')
+                    ->url(fn (Comment $record): ?string => $record->user ? route('profile.public', $record->user->username ?: ($record->user->name ?: $record->user->id)) : null)
+                    ->openUrlInNewTab()
                     ->icon(function (Comment $record) {
                         $isBanned = ($record->user && $record->user->is_banned);
                         $isCommentBanned = ($record->user && $record->user->is_comment_banned) || BannedIp::where('ip_hash', $record->ip_hash)->exists();
@@ -167,8 +169,14 @@ class CommentsTable
                             ->columns(2),
                     ])
                     ->extraModalFooterActions(fn (Comment $record) => $record->user_id ? [
+                        Action::make('openPublicProfile')
+                            ->label('Profil public')
+                            ->icon('heroicon-o-arrow-top-right-on-square')
+                            ->color('info')
+                            ->url(route('profile.public', $record->user->username ?: ($record->user->name ?: $record->user->id)))
+                            ->openUrlInNewTab(),
                         Action::make('openUserResource')
-                            ->label('Voir la fiche utilisateur')
+                            ->label('Voir la fiche utilisateur (Admin)')
                             ->icon('heroicon-o-arrow-top-right-on-square')
                             ->url(UserResource::getUrl('view', ['record' => $record->user_id]))
                             ->openUrlInNewTab(),

@@ -31,7 +31,7 @@ class UsersTable
                     ->sortable()
                     ->weight('bold')
                     ->description(fn (User $record): ?string => $record->username ? '@' . $record->username : null)
-                    ->url(fn (User $record): string => route('profile.public', $record->username ?? $record->name))
+                    ->url(fn (User $record): string => route('profile.public', $record->username ?: ($record->name ?: $record->id)))
                     ->openUrlInNewTab(),
                 TextColumn::make('roles.name')
                     ->label('Rôles')
@@ -105,7 +105,7 @@ class UsersTable
                     ->icon('heroicon-o-arrow-top-right-on-square')
                     ->color('info')
                     ->tooltip('Voir le profil sur le site public')
-                    ->url(fn (User $record): string => route('profile.public', $record->username ?? $record->name))
+                    ->url(fn (User $record): string => route('profile.public', $record->username ?: ($record->name ?: $record->id)))
                     ->openUrlInNewTab(),
                 ViewAction::make(),
                 EditAction::make(),
@@ -113,7 +113,7 @@ class UsersTable
                     ->label('Bannir')
                     ->icon('heroicon-o-no-symbol')
                     ->color('danger')
-                    ->visible(fn (User $record) => !$record->isBanned() && !$record->isStaffOrAdmin())
+                    ->visible(fn (User $record) => !$record->isBanned() && $record->id !== auth()->id() && !$record->isFounder())
                     ->modalHeading(fn (User $record) => 'Sanctionner ' . $record->name)
                     ->schema([
                         Radio::make('ban_type')
@@ -212,10 +212,25 @@ class UsersTable
                             ]);
 
                             if ($banIp && $record->last_ip_address && !in_array($record->last_ip_address, ['127.0.0.1', '::1', 'localhost'])) {
+                                $ip = $record->last_ip_address;
                                 DB::table('banned_ips')->updateOrInsert(
-                                    ['ip_address' => $record->last_ip_address],
+                                    ['ip_address' => $ip],
                                     [
-                                        'ip_hash' => sha1($record->last_ip_address),
+                                        'ip_hash' => sha1($ip),
+                                        'ban_type' => 'all',
+                                        'reason' => $reason ?: 'Compte banni radicalement',
+                                        'banned_by' => auth()->id(),
+                                        'banned_until' => $bannedUntil,
+                                        'updated_at' => now(),
+                                        'created_at' => now(),
+                                    ]
+                                );
+
+                                $sha256 = hash('sha256', $ip . config('app.key'));
+                                DB::table('banned_ips')->updateOrInsert(
+                                    ['ip_hash' => $sha256],
+                                    [
+                                        'ip_address' => $ip,
                                         'ban_type' => 'all',
                                         'reason' => $reason ?: 'Compte banni radicalement',
                                         'banned_by' => auth()->id(),
@@ -256,7 +271,7 @@ class UsersTable
                     ->label('Débannir')
                     ->icon('heroicon-o-arrow-uturn-left')
                     ->color('success')
-                    ->visible(fn (User $record) => $record->is_banned || $record->is_comment_banned)
+                    ->visible(fn (User $record) => $record->isBanned() || $record->isCommentBanned())
                     ->requiresConfirmation()
                     ->modalHeading(fn (User $record) => 'Débannir ' . $record->name)
                     ->action(function (User $record) {
@@ -272,10 +287,17 @@ class UsersTable
                         ]);
 
                         if ($record->last_ip_address) {
+                            $ip = $record->last_ip_address;
                             DB::table('banned_ips')
-                                ->where('ip_address', $record->last_ip_address)
-                                ->orWhere('ip_hash', sha1($record->last_ip_address))
+                                ->where('ip_address', $ip)
+                                ->orWhere('ip_hash', sha1($ip))
+                                ->orWhere('ip_hash', hash('sha256', $ip . config('app.key')))
                                 ->delete();
+                        }
+
+                        $commentHashes = $record->comments()->pluck('ip_hash')->filter()->unique();
+                        if ($commentHashes->isNotEmpty()) {
+                            DB::table('banned_ips')->whereIn('ip_hash', $commentHashes)->delete();
                         }
 
                         // Audit log

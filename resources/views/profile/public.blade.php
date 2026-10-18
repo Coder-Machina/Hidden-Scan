@@ -1,4 +1,4 @@
-<x-layouts.public :title="$user->name . ' (@' . $user->username . ') — Hidden Scan'">
+<x-layouts.public :title="$user->name . ($user->username ? ' (@' . $user->username . ')' : '') . ' — Hidden Scan'">
 <div class="max-w-[1280px] mx-auto px-4 sm:px-6 lg:px-8 py-8">
 
 {{-- HEADER PROFIL --}}
@@ -8,7 +8,7 @@
     {{-- Avatar --}}
     <div class="profile-avatar">
       @if($user->avatar_url)
-        <img src="{{ $user->avatar_url }}" alt="{{ $user->username }}">
+        <img src="{{ $user->avatar_url }}" alt="{{ $user->username ?: $user->name }}">
       @else
         <div class="profile-avatar__placeholder">
           {{ strtoupper(substr($user->name, 0, 1)) }}
@@ -19,7 +19,7 @@
     {{-- Infos --}}
     <div class="profile-info">
       <h1 class="profile-info__name">{{ $user->name }}</h1>
-      <p class="profile-info__username">{{ '@' . $user->username }}</p>
+      <p class="profile-info__username">{{ '@' . ($user->username ?: \Illuminate\Support\Str::slug($user->name, '')) }}</p>
       @if($user->bio)
         <p class="profile-info__bio">{{ $user->bio }}</p>
       @endif

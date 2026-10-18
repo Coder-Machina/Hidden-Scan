@@ -47,11 +47,28 @@ class ListComments extends ListRecords
             $user->update([
                 'is_banned' => false,
                 'banned_at' => null,
+                'banned_until' => null,
                 'ban_reason' => null,
                 'is_comment_banned' => false,
                 'comment_banned_at' => null,
+                'comment_banned_until' => null,
                 'comment_ban_reason' => null,
             ]);
+
+            if ($user->last_ip_address) {
+                $ip = $user->last_ip_address;
+                \Illuminate\Support\Facades\DB::table('banned_ips')
+                    ->where('ip_address', $ip)
+                    ->orWhere('ip_hash', sha1($ip))
+                    ->orWhere('ip_hash', hash('sha256', $ip . config('app.key')))
+                    ->delete();
+            }
+
+            $commentHashes = $user->comments()->pluck('ip_hash')->filter()->unique();
+            if ($commentHashes->isNotEmpty()) {
+                \Illuminate\Support\Facades\DB::table('banned_ips')->whereIn('ip_hash', $commentHashes)->delete();
+            }
+
             Notification::make()->title("L'utilisateur {$user->name} a été débanni avec succès.")->success()->send();
         }
     }

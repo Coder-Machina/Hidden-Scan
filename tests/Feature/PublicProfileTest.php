@@ -241,5 +241,56 @@ class PublicProfileTest extends TestCase
         $urlWithoutUser = $actionWithUser->record($readerWithoutUsername)->getUrl();
         $this->assertEquals(route('profile.public', 'Reader No User'), $urlWithoutUser);
     }
+
+    public function test_public_profile_resolves_case_insensitively_and_with_url_decoding(): void
+    {
+        $user = User::factory()->create([
+            'name' => 'Co-Admin Special',
+            'username' => 'coadmin_special',
+            'profile_public' => true,
+        ]);
+
+        // Exact username
+        $this->get('/user/coadmin_special')->assertOk()->assertSee('Co-Admin Special');
+
+        // Uppercase username
+        $this->get('/user/COADMIN_SPECIAL')->assertOk()->assertSee('Co-Admin Special');
+
+        // URL encoded Name with spaces and hyphen
+        $this->get('/user/Co-Admin%20Special')->assertOk()->assertSee('Co-Admin Special');
+    }
+
+    public function test_public_profile_defaults_to_public(): void
+    {
+        $user = User::factory()->create([
+            'name' => 'DefaultPublicUser',
+            'username' => 'default_public_user',
+        ]);
+
+        $this->assertTrue((bool) $user->profile_public);
+
+        $response = $this->get('/user/default_public_user');
+        $response->assertOk();
+        $response->assertSee('DefaultPublicUser');
+    }
+
+    public function test_banned_accounts_modal_renders_public_profile_link(): void
+    {
+        $bannedUser = User::factory()->create([
+            'name' => 'Banned Member',
+            'username' => 'banned_member',
+            'is_banned' => true,
+            'ban_reason' => 'Spam répété',
+        ]);
+
+        $rendered = view('filament.comments.banned-accounts-modal', [
+            'bannedUsers' => collect([$bannedUser]),
+            'bannedIps' => collect(),
+        ])->render();
+
+        $this->assertStringContainsString('Profil public', $rendered);
+        $this->assertStringContainsString(route('profile.public', 'banned_member'), $rendered);
+        $this->assertStringContainsString('target="_blank"', $rendered);
+    }
 }
 

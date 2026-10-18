@@ -13,6 +13,12 @@ class ViewUser extends ViewRecord
     protected function getHeaderActions(): array
     {
         return [
+            \Filament\Actions\Action::make('public_profile')
+                ->label('Profil public')
+                ->icon('heroicon-o-arrow-top-right-on-square')
+                ->color('info')
+                ->url(fn (): string => route('profile.public', $this->record->username ?: ($this->record->name ?: $this->record->id)))
+                ->openUrlInNewTab(),
             EditAction::make(),
         ];
     }

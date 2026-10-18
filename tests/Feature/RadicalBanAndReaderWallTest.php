@@ -205,4 +205,59 @@ class RadicalBanAndReaderWallTest extends TestCase
         $response->assertSee('Lecteur Secret');
         $response->assertSee('@lecteursecret');
     }
+
+    public function test_banned_user_cookie_blocks_subsequent_guest_requests(): void
+    {
+        $user = User::factory()->create([
+            'is_banned' => true,
+            'ban_reason' => 'Toxique',
+        ]);
+
+        // Premier accès : l'utilisateur est connecté et banni -> il reçoit un cookie hs_banned_uid et 403
+        $response = $this->actingAs($user)->get('/');
+        $response->assertStatus(403);
+        $response->assertCookie('hs_banned_uid');
+
+        // Deuxième accès : l'utilisateur n'est plus authentifié (guest), mais a le cookie -> il reste bloqué 403
+        $this->assertGuest();
+        $responseGuest = $this->withCookie('hs_banned_uid', (string) $user->id)->get('/');
+        $responseGuest->assertStatus(403);
+        $responseGuest->assertSee('Toxique');
+    }
+
+    public function test_admin_cannot_ban_self_or_founder_in_table(): void
+    {
+        $admin = User::where('email', 'admin@hiddenscan.com')->first();
+        if (! $admin) {
+            $admin = User::factory()->create(['email' => 'admin@hiddenscan.com']);
+            $admin->assignRole('admin');
+        }
+
+        $otherAdmin = User::factory()->create(['email' => 'other_admin@test.com']);
+        $otherAdmin->assignRole('admin');
+
+        $founder = User::where('email', 'meliodasdsama006@gmail.com')->first();
+        if (! $founder) {
+            $founder = User::factory()->create(['email' => 'meliodasdsama006@gmail.com']);
+            $founder->assignRole('owner');
+        }
+
+        $reader = User::factory()->create(['name' => 'Target Reader', 'email' => 'target@reader.com']);
+
+        $test = \Livewire\Livewire::actingAs($otherAdmin)
+            ->test(\App\Filament\Resources\Users\Pages\ListUsers::class)
+            ->set('activeTab', 'all');
+
+        $action = $test->instance()->getTable()->getAction('ban');
+
+        // Cannot ban self
+        $this->assertFalse($action->record($otherAdmin)->isVisible());
+
+        // Cannot ban founder
+        $this->assertFalse($action->record($founder)->isVisible());
+        $this->assertFalse($action->record($admin)->isVisible());
+
+        // Can ban regular member / reader
+        $this->assertTrue($action->record($reader)->isVisible());
+    }
 }

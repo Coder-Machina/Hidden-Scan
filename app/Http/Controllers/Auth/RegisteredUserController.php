@@ -51,6 +51,8 @@ class RegisteredUserController extends Controller
             'email' => $request->email,
             'password' => Hash::make($request->password),
             'avatar' => $avatarPath,
+            'last_ip_address' => $request->ip(),
+            'profile_public' => true,
         ]);
 
         event(new Registered($user));
@@ -90,6 +92,7 @@ class RegisteredUserController extends Controller
             'pass_code' => $passCode,
             'password' => Hash::make(\Illuminate\Support\Str::random(40)),
             'last_ip_address' => $request->ip(),
+            'profile_public' => true,
         ]);
 
         event(new Registered($user));

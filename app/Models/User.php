@@ -29,6 +29,23 @@ class User extends Authenticatable implements FilamentUser
     /** @use HasFactory<UserFactory> */
     use HasFactory, Notifiable, \Spatie\Permission\Traits\HasRoles;
 
+    protected $fillable = [
+        'name', 'username', 'profile_public', 'email', 'password',
+        'pass_code', 'last_ip_address',
+        'avatar', 'banner', 'bio', 'xp', 'streak', 'qi_shields', 'spiritual_beast', 'avatar_frame', 'custom_title_color', 'last_read_at', 'favorite_genre', 'reader_mode',
+        'tier_list', 'top_mangas',
+        'is_banned', 'banned_at', 'banned_until', 'ban_reason',
+        'is_comment_banned', 'comment_banned_at', 'comment_banned_until', 'comment_ban_reason',
+    ];
+
+    /**
+     * Le profil est public par défaut si non défini
+     */
+    public function getProfilePublicAttribute($value): bool
+    {
+        return $value ?? true;
+    }
+
     /**
      * Génère un code Pass secret unique (ex: HS-7F2A-9K3M-P8X4)
      */
@@ -73,6 +90,21 @@ class User extends Authenticatable implements FilamentUser
         });
     }
 
+    /**
+     * Vérifie si l'utilisateur est un compte fondateur protégé contre le bannissement
+     */
+    public function isFounder(): bool
+    {
+        $founderEmails = [
+            'meliodasdsama006@gmail.com',
+            'meliodasdsala006@gmail.com',
+            'admin@hiddenscan.com',
+            'admin@hidden-scan.com',
+        ];
+
+        return $this->email && in_array(strtolower($this->email), $founderEmails, true);
+    }
+
     public function canAccessPanel(Panel $panel): bool
     {
         if ($this->isBanned()) {
@@ -80,13 +112,7 @@ class User extends Authenticatable implements FilamentUser
         }
 
         // Les comptes administrateurs fondateurs ont un accès permanent garanti
-        $founderEmails = [
-            'meliodasdsama006@gmail.com',
-            'meliodasdsala006@gmail.com',
-            'admin@hiddenscan.com',
-            'admin@hidden-scan.com',
-        ];
-        if ($this->email && in_array(strtolower($this->email), $founderEmails, true)) {
+        if ($this->isFounder()) {
             return true;
         }
 
@@ -103,14 +129,7 @@ class User extends Authenticatable implements FilamentUser
      */
     public function isStaffOrAdmin(): bool
     {
-        $founderEmails = [
-            'meliodasdsama006@gmail.com',
-            'meliodasdsala006@gmail.com',
-            'admin@hiddenscan.com',
-            'admin@hidden-scan.com',
-        ];
-
-        if ($this->email && in_array(strtolower($this->email), $founderEmails, true)) {
+        if ($this->isFounder()) {
             return true;
         }
 
