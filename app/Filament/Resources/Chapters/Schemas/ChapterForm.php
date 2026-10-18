@@ -58,6 +58,7 @@ class ChapterForm
                     ->directory('uploads/zips')
                     ->acceptedFileTypes([
                         'application/zip',
+                        'application/x-zip',
                         'application/x-zip-compressed',
                         'application/vnd.comicbook+zip',
                         'application/x-cbz',
@@ -66,9 +67,10 @@ class ChapterForm
                         'application/x-gtar',
                         'multipart/x-tar',
                         'application/octet-stream',
+                        'application/x-compressed',
                     ])
                     ->helperText('Accepte les archives .zip, .cbz ou .tar contenant les pages d\'images du chapitre.')
-                    ->maxSize(512000),
+                    ->maxSize(1048576),
                 Select::make('max_page_width')
                     ->label('Redimensionnement des pages importées')
                     ->options([

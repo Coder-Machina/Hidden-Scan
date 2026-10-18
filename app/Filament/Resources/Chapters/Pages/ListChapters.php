@@ -62,6 +62,7 @@ class ListChapters extends ListRecords
                         ->directory('uploads/bulk-zips')
                         ->acceptedFileTypes([
                             'application/zip',
+                            'application/x-zip',
                             'application/x-zip-compressed',
                             'application/vnd.comicbook+zip',
                             'application/x-cbz',
@@ -70,8 +71,9 @@ class ListChapters extends ListRecords
                             'application/x-gtar',
                             'multipart/x-tar',
                             'application/octet-stream',
+                            'application/x-compressed',
                         ])
-                        ->maxSize(512000)
+                        ->maxSize(1048576)
                         ->multiple()
                         ->preserveFilenames()
                         ->storeFileNamesIn('zip_original_names')
