@@ -348,10 +348,10 @@ class AuditLog extends Model
             'pause' => 'En pause',
             'manga' => 'Manga',
             'manhwa' => 'Manhwa',
-            'manhua' => 'Manhua',
-            'owner' => 'Propriétaire',
             'admin' => 'Administrateur',
+            'modo' => 'Modérateur',
             'moderator' => 'Modérateur',
+            'uploader' => 'Uploader',
             'comment_only' => 'Commentaires uniquement',
             'full_account' => 'Bannissement total du compte',
         ];

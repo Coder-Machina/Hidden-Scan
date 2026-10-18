@@ -25,7 +25,6 @@ class RolePermissionsIsolationTest extends TestCase
     {
         parent::setUp();
 
-        Role::firstOrCreate(['name' => 'owner', 'guard_name' => 'web']);
         Role::firstOrCreate(['name' => 'admin', 'guard_name' => 'web']);
         Role::firstOrCreate(['name' => 'modo', 'guard_name' => 'web']);
         Role::firstOrCreate(['name' => 'uploader', 'guard_name' => 'web']);
@@ -87,17 +86,13 @@ class RolePermissionsIsolationTest extends TestCase
         $this->assertTrue(AuditLogResource::canViewAny());
     }
 
-    public function test_owner_accesses_all_resources(): void
+    public function test_only_three_staff_roles_are_allowed(): void
     {
-        $owner = User::factory()->create();
-        $owner->assignRole('owner');
+        $allowed = ['admin', 'Admin', 'modo', 'Modo', 'uploader', 'Uploader'];
+        $dbRoles = Role::pluck('name')->toArray();
 
-        $this->actingAs($owner);
-
-        $this->assertTrue(MangaResource::canViewAny());
-        $this->assertTrue(UserResource::canViewAny());
-        $this->assertTrue(CommentResource::canViewAny());
-        $this->assertTrue(CommentReportResource::canViewAny());
-        $this->assertTrue(AuditLogResource::canViewAny());
+        foreach ($dbRoles as $roleName) {
+            $this->assertContains($roleName, $allowed, "Le rôle {$roleName} ne doit pas exister en dehors d'ADMIN, MODO et UPLOADER");
+        }
     }
 }

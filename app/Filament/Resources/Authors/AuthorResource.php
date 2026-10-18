@@ -30,7 +30,7 @@ class AuthorResource extends Resource
 
     public static function canViewAny(): bool
     {
-        return auth()->user()?->hasAnyRole(['admin', 'Admin', 'owner', 'Owner', 'uploader', 'Uploader']) ?? false;
+        return auth()->user()?->hasAnyRole(['admin', 'Admin', 'uploader', 'Uploader']) ?? false;
     }
 
     public static function form(Schema $schema): Schema

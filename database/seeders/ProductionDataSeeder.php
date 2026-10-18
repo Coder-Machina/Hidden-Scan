@@ -31,8 +31,7 @@ class ProductionDataSeeder extends Seeder
     'email_verified_at' => NULL,
     'roles' => 
     array (
-      0 => 'owner',
-      1 => 'admin',
+      0 => 'admin',
     ),
   ),
   1 => 
@@ -43,8 +42,7 @@ class ProductionDataSeeder extends Seeder
     'email_verified_at' => NULL,
     'roles' => 
     array (
-      0 => 'owner',
-      1 => 'admin',
+      0 => 'admin',
     ),
   ),
   2 => 

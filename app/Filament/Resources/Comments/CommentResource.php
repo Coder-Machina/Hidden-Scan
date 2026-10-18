@@ -30,7 +30,7 @@ class CommentResource extends Resource
 
     public static function canViewAny(): bool
     {
-        return auth()->user()?->hasAnyRole(['admin', 'Admin', 'owner', 'Owner', 'modo', 'Modo', 'moderateur', 'Modérateur']) ?? false;
+        return auth()->user()?->hasAnyRole(['admin', 'Admin', 'modo', 'Modo', 'moderateur', 'Modérateur']) ?? false;
     }
 
     public static function form(Schema $schema): Schema

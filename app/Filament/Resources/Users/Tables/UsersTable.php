@@ -38,7 +38,7 @@ class UsersTable
                     ->badge()
                     ->formatStateUsing(fn (string $state): string => strtoupper($state))
                     ->color(fn (string $state): string => match (strtolower($state)) {
-                        'owner', 'admin', 'administrateur' => 'danger', // Rouge
+                        'admin' => 'danger', // Rouge
                         'modo', 'modérateur', 'moderateur' => 'purple', // Violet
                         'uploader' => 'info', // Bleu ciel
                         default => 'gray',
@@ -116,7 +116,7 @@ class UsersTable
                     ->visible(fn (User $record) => !$record->isBanned()
                         && $record->id !== auth()->id()
                         && !$record->isFounder()
-                        && (!auth()->user()?->hasAnyRole(['modo', 'Modo', 'moderateur', 'Modérateur']) || !$record->hasAnyRole(['admin', 'Admin', 'owner', 'Owner', 'modo', 'Modo', 'moderateur', 'Modérateur']))
+                        && (!auth()->user()?->hasAnyRole(['modo', 'Modo', 'moderateur', 'Modérateur']) || !$record->hasAnyRole(['admin', 'Admin', 'modo', 'Modo', 'moderateur', 'Modérateur']))
                     )
                     ->modalHeading(fn (User $record) => 'Sanctionner ' . $record->name)
                     ->schema([
@@ -278,7 +278,7 @@ class UsersTable
                     ->visible(fn (User $record) => ($record->isBanned() || $record->isCommentBanned())
                         && $record->id !== auth()->id()
                         && !$record->isFounder()
-                        && (!auth()->user()?->hasAnyRole(['modo', 'Modo', 'moderateur', 'Modérateur']) || !$record->hasAnyRole(['admin', 'Admin', 'owner', 'Owner', 'modo', 'Modo', 'moderateur', 'Modérateur']))
+                        && (!auth()->user()?->hasAnyRole(['modo', 'Modo', 'moderateur', 'Modérateur']) || !$record->hasAnyRole(['admin', 'Admin', 'modo', 'Modo', 'moderateur', 'Modérateur']))
                     )
                     ->modalHeading(fn (User $record) => 'Modifier la sanction de ' . $record->name)
                     ->modalDescription('Ajuster la durée (ex: retirer le caractère définitif), changer le type de sanction ou lever le bannissement.')
@@ -423,7 +423,7 @@ class UsersTable
                     ->visible(fn (User $record) => ($record->isBanned() || $record->isCommentBanned())
                         && $record->id !== auth()->id()
                         && !$record->isFounder()
-                        && (!auth()->user()?->hasAnyRole(['modo', 'Modo', 'moderateur', 'Modérateur']) || !$record->hasAnyRole(['admin', 'Admin', 'owner', 'Owner', 'modo', 'Modo', 'moderateur', 'Modérateur']))
+                        && (!auth()->user()?->hasAnyRole(['modo', 'Modo', 'moderateur', 'Modérateur']) || !$record->hasAnyRole(['admin', 'Admin', 'modo', 'Modo', 'moderateur', 'Modérateur']))
                     )
                     ->requiresConfirmation()
                     ->modalHeading(fn (User $record) => 'Débannir ' . $record->name)

@@ -11,12 +11,38 @@
         <div class="hero-card"
              x-data="{ 
                  activeIndex: 0,
+                 timer: null,
                  slides: [
                      @foreach($featured as $f)
                          '{{ $f->banner_url ?? $f->cover_url }}',
                      @endforeach
-                 ]
+                 ],
+                 init() {
+                     this.startAutoplay();
+                 },
+                 startAutoplay() {
+                     this.stopAutoplay();
+                     if (this.slides.length > 1) {
+                         this.timer = setInterval(() => {
+                             this.activeIndex = (this.activeIndex + 1) % this.slides.length;
+                         }, 2000);
+                     }
+                 },
+                 stopAutoplay() {
+                     if (this.timer) {
+                         clearInterval(this.timer);
+                         this.timer = null;
+                     }
+                 },
+                 goTo(i) {
+                     this.activeIndex = i;
+                     this.startAutoplay();
+                 }
              }"
+             @mouseenter="stopAutoplay()"
+             @mouseleave="startAutoplay()"
+             @touchstart="stopAutoplay()"
+             @touchend="startAutoplay()"
              style="--banner: url('{{ $firstManga->banner_url ?? $firstManga->cover_url }}')"
              :style="'--banner: url(\'' + slides[activeIndex] + '\')'">
 
@@ -59,7 +85,7 @@
               <button type="button"
                       class="dot {{ $i === 0 ? 'dot--active' : '' }}"
                       :class="{ 'dot--active': activeIndex === {{ $i }} }"
-                      @click="activeIndex = {{ $i }}"
+                      @click="goTo({{ $i }})"
                       data-index="{{ $i }}"
                       aria-label="Slide {{ $i + 1 }}"></button>
             @endforeach

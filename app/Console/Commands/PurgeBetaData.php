@@ -79,7 +79,7 @@ class PurgeBetaData extends Command
                 ->first();
 
             if ($meliodas && method_exists($meliodas, 'hasRole')) {
-                if (!$meliodas->hasRole('admin') && !$meliodas->hasRole('Admin') && !$meliodas->hasRole('owner')) {
+                if (!$meliodas->hasRole('admin') && !$meliodas->hasRole('Admin')) {
                     $meliodas->assignRole('admin');
                 }
             }

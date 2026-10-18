@@ -56,8 +56,19 @@
                 @endif
             </div>
 
-            {{-- Page Counter & Settings Toggle --}}
-            <div class="flex items-center gap-3">
+            {{-- Page Counter, Défilement 2s & Settings Toggle --}}
+            <div class="flex items-center gap-2 sm:gap-3">
+                <button type="button" @click="toggleAutoScroll()"
+                        class="flex items-center gap-1.5 px-2.5 py-1 rounded-[4px] text-[11px] font-semibold transition cursor-pointer"
+                        :class="autoScrollActive ? 'bg-[var(--accent)] text-white shadow-md shadow-[var(--accent)]/30' : 'bg-[#1e1e1e] text-[var(--text-2)] hover:text-white'"
+                        :title="autoScrollActive ? 'Arrêter le défilement automatique' : 'Activer le défilement automatique (2s)'">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path x-show="!autoScrollActive" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
+                        <path x-show="autoScrollActive" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 9v6m4-6v6" />
+                    </svg>
+                    <span class="hidden sm:inline" x-text="autoScrollActive ? 'Défilement 2s (On)' : 'Défilement 2s'"></span>
+                </button>
+
                 <span class="text-caption text-[var(--text-2)] font-mono">
                     <span x-text="currentPage"></span> / <span x-text="totalPages"></span>
                 </span>
@@ -88,6 +99,15 @@
                         Page par page
                     </button>
                 </div>
+            </div>
+
+            <div>
+                <label class="text-caption text-[var(--text-3)] block mb-1.5 font-semibold">Défilement automatique (2 secondes)</label>
+                <button type="button" @click="toggleAutoScroll()"
+                        :class="autoScrollActive ? 'bg-[var(--accent)] text-white' : 'bg-[#1e1e1e] text-[var(--text-2)]'"
+                        class="w-full py-1.5 rounded-[4px] text-caption font-semibold cursor-pointer transition">
+                    <span x-text="autoScrollActive ? 'Actif (Défilement toutes les 2s)' : 'Désactivé (Cliquer pour activer)'"></span>
+                </button>
             </div>
 
             <div>
@@ -223,6 +243,8 @@
         return {
             controlsVisible: true,
             idleTimer: null,
+            autoScrollActive: false,
+            autoScrollTimer: null,
             showSettings: false,
             readMode: localStorage.getItem('hs_read_mode') || 'vertical',
             readerWidth: parseInt(localStorage.getItem('hs_reader_width') || '75'),
@@ -320,6 +342,44 @@
                 localStorage.setItem('hs_read_mode', this.readMode);
                 localStorage.setItem('hs_reader_width', this.readerWidth);
                 localStorage.setItem('hs_page_gap', this.pageGap);
+            },
+
+            toggleAutoScroll() {
+                this.autoScrollActive = !this.autoScrollActive;
+                if (this.autoScrollActive) {
+                    this.startAutoScroll();
+                } else {
+                    this.stopAutoScroll();
+                }
+            },
+
+            startAutoScroll() {
+                this.stopAutoScroll();
+                this.autoScrollTimer = setInterval(() => {
+                    if (this.readMode === 'page') {
+                        if (this.currentPage < this.totalPages && (!this.isGuest || this.currentPage < this.previewLimit)) {
+                            this.nextPage();
+                        } else {
+                            this.stopAutoScroll();
+                            this.autoScrollActive = false;
+                        }
+                    } else {
+                        const maxScroll = document.documentElement.scrollHeight - window.innerHeight;
+                        if (window.scrollY < maxScroll - 40) {
+                            window.scrollBy({ top: window.innerHeight * 0.85, behavior: 'smooth' });
+                        } else {
+                            this.stopAutoScroll();
+                            this.autoScrollActive = false;
+                        }
+                    }
+                }, 2000);
+            },
+
+            stopAutoScroll() {
+                if (this.autoScrollTimer) {
+                    clearInterval(this.autoScrollTimer);
+                    this.autoScrollTimer = null;
+                }
             }
         };
     }

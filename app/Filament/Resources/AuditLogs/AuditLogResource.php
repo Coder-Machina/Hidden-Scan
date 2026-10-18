@@ -31,7 +31,7 @@ class AuditLogResource extends Resource
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedClipboardDocumentList;
     public static function canViewAny(): bool
     {
-        return auth()->user()?->hasAnyRole(['admin', 'Admin', 'owner', 'Owner']) ?? false;
+        return auth()->user()?->hasAnyRole(['admin', 'Admin']) ?? false;
     }
 
     public static function canCreate(): bool

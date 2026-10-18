@@ -239,7 +239,7 @@ class RadicalBanAndReaderWallTest extends TestCase
         $founder = User::where('email', 'meliodasdsama006@gmail.com')->first();
         if (! $founder) {
             $founder = User::factory()->create(['email' => 'meliodasdsama006@gmail.com']);
-            $founder->assignRole('owner');
+            $founder->assignRole('admin');
         }
 
         $reader = User::factory()->create(['name' => 'Target Reader', 'email' => 'target@reader.com']);

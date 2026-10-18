@@ -23,7 +23,7 @@ class ListUsers extends ListRecords
 
     public function getTabs(): array
     {
-        $staffRoles = ['admin', 'Admin', 'owner', 'Owner', 'modo', 'Modo', 'uploader', 'Uploader'];
+        $staffRoles = ['admin', 'Admin', 'modo', 'Modo', 'uploader', 'Uploader'];
 
         return [
             'staff' => Tab::make('Équipe Staff')

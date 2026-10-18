@@ -117,9 +117,8 @@ class User extends Authenticatable implements FilamentUser
         }
 
         return $this->hasAnyRole([
-            'owner', 'Owner',
-            'admin', 'Admin', 'Administrateur',
-            'modo', 'Modo', 'Modérateur', 'moderateur',
+            'admin', 'Admin',
+            'modo', 'Modo', 'moderateur', 'Modérateur',
             'uploader', 'Uploader',
         ]);
     }
@@ -134,9 +133,8 @@ class User extends Authenticatable implements FilamentUser
         }
 
         return $this->hasAnyRole([
-            'owner', 'Owner',
-            'admin', 'Admin', 'Administrateur',
-            'modo', 'Modo', 'Modérateur', 'moderateur',
+            'admin', 'Admin',
+            'modo', 'Modo', 'moderateur', 'Modérateur',
             'uploader', 'Uploader',
         ]);
     }
@@ -152,7 +150,7 @@ class User extends Authenticatable implements FilamentUser
             'admin@hiddenscan.com',
             'admin@hidden-scan.com',
         ];
-        if (($this->email && in_array(strtolower($this->email), $founderEmails, true)) || $this->hasAnyRole(['owner', 'Owner', 'admin', 'Admin', 'Administrateur'])) {
+        if (($this->email && in_array(strtolower($this->email), $founderEmails, true)) || $this->hasAnyRole(['admin', 'Admin'])) {
             return [
                 'name' => 'Admin',
                 'color' => 'red',

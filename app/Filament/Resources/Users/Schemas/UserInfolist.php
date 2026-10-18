@@ -26,7 +26,7 @@ class UserInfolist
                             ->badge()
                             ->formatStateUsing(fn (string $state): string => strtoupper($state))
                             ->color(fn (string $state): string => match (strtolower($state)) {
-                                'owner', 'admin', 'administrateur' => 'danger', // Rouge
+                                'admin' => 'danger', // Rouge
                                 'modo', 'modérateur', 'moderateur' => 'purple', // Violet
                                 'uploader' => 'info', // Bleu ciel
                                 default => 'gray',

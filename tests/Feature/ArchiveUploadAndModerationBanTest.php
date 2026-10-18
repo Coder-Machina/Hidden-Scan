@@ -31,7 +31,7 @@ class ArchiveUploadAndModerationBanTest extends TestCase
         parent::setUp();
         Role::firstOrCreate(['name' => 'admin']);
         Role::firstOrCreate(['name' => 'modo']);
-        Role::firstOrCreate(['name' => 'owner']);
+        Role::firstOrCreate(['name' => 'uploader']);
     }
 
     public function test_process_chapter_zip_extracts_cbz_archive(): void
