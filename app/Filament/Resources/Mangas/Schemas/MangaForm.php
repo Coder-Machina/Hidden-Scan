@@ -234,6 +234,23 @@ class MangaForm
                                             ]),
                                     ])
                                     ->createOptionAction(fn ($action) => $action->modalHeading('Ajouter un nouveau site source')->modalSubmitActionLabel('Enregistrer ce site'))
+                                    ->createOptionUsing(function (array $data): int {
+                                        $source = \App\Models\ScraperSource::create([
+                                            'name'              => $data['name'],
+                                            'base_url'          => $data['base_url'],
+                                            'sel_chapter_list'  => $data['sel_chapter_list'] ?? '.wp-manga-chapter',
+                                            'sel_chapter_title' => $data['sel_chapter_title'] ?? '.wp-manga-chapter a',
+                                            'sel_chapter_url'   => $data['sel_chapter_url'] ?? '.wp-manga-chapter a',
+                                            'sel_chapter_pages' => $data['sel_chapter_pages'] ?? '.page-break img',
+                                            'sel_chapter_date'  => '.chapter-release-date',
+                                            'headers'           => [
+                                                'User-Agent' => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+                                            ],
+                                            'active'            => true,
+                                        ]);
+
+                                        return $source->id;
+                                    })
                                     ->helperText('Choisissez un site existant ou cliquez sur "+" pour en ajouter un nouveau.')
                                     ->columnSpan(4),
                                 TextInput::make('source_url')
