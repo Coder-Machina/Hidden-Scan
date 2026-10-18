@@ -6,6 +6,8 @@ services:
     region: frankfurt
     dockerfilePath: Dockerfile
     envVars:
+      - key: PORT
+        value: 10000
       - key: APP_NAME
         value: "Hidden Scan"
       - key: APP_ENV
