@@ -49,8 +49,10 @@
                         <div class="w-8 h-8 mx-auto mb-2 rounded-[4px] bg-[var(--bg-raised)] border border-[var(--border)] text-caption font-bold text-[var(--text-2)] flex items-center justify-center">
                             #2
                         </div>
-                        <img src="{{ $podium[1]['avatar_url'] }}" alt="{{ $podium[1]['name'] }}" class="w-16 h-16 mx-auto mb-2 rounded-[4px] object-cover bg-[var(--bg-base)]">
-                        <h3 class="font-heading font-semibold text-[15px] text-[var(--text-1)] truncate mb-1">{{ $podium[1]['name'] }}</h3>
+                        <a href="{{ route('profile.public', $podium[1]['username'] ?? $podium[1]['name']) }}" class="user-link flex-col mb-1 inline-flex">
+                            <img src="{{ $podium[1]['avatar_url'] }}" alt="{{ $podium[1]['name'] }}" class="w-16 h-16 mx-auto mb-2 rounded-[4px] object-cover bg-[var(--bg-base)]">
+                            <h3 class="font-heading font-semibold text-[15px] text-[var(--text-1)] truncate mb-1">{{ $podium[1]['name'] }}</h3>
+                        </a>
                         <div class="text-[11px] font-semibold text-[var(--text-2)] mb-3 flex items-center justify-center gap-1.5">
                             <x-lucide :name="$podium[1]['murim_icon'] ?? 'award'" class="w-3.5 h-3.5 text-slate-400" />
                             <span>{{ $podium[1]['murim_title'] }}</span>
@@ -72,8 +74,10 @@
                         <div class="w-8 h-8 mx-auto mb-2 rounded-[4px] bg-[var(--accent)] text-white text-caption font-bold flex items-center justify-center">
                             #1
                         </div>
-                        <img src="{{ $podium[0]['avatar_url'] }}" alt="{{ $podium[0]['name'] }}" class="w-20 h-20 mx-auto mb-2 rounded-[4px] object-cover bg-[var(--bg-base)] border border-[var(--accent)]">
-                        <h3 class="font-heading font-bold text-[17px] text-[var(--text-1)] truncate mb-1">{{ $podium[0]['name'] }}</h3>
+                        <a href="{{ route('profile.public', $podium[0]['username'] ?? $podium[0]['name']) }}" class="user-link flex-col mb-1 inline-flex">
+                            <img src="{{ $podium[0]['avatar_url'] }}" alt="{{ $podium[0]['name'] }}" class="w-20 h-20 mx-auto mb-2 rounded-[4px] object-cover bg-[var(--bg-base)] border border-[var(--accent)]">
+                            <h3 class="font-heading font-bold text-[17px] text-[var(--text-1)] truncate mb-1">{{ $podium[0]['name'] }}</h3>
+                        </a>
                         <div class="text-[11px] font-semibold text-[var(--accent)] mb-3 flex items-center justify-center gap-1.5">
                             <x-lucide :name="$podium[0]['murim_icon'] ?? 'crown'" class="w-3.5 h-3.5 text-amber-400" />
                             <span>{{ $podium[0]['murim_title'] }}</span>
@@ -95,8 +99,10 @@
                         <div class="w-8 h-8 mx-auto mb-2 rounded-[4px] bg-[var(--bg-raised)] border border-[var(--border)] text-caption font-bold text-[var(--text-2)] flex items-center justify-center">
                             #3
                         </div>
-                        <img src="{{ $podium[2]['avatar_url'] }}" alt="{{ $podium[2]['name'] }}" class="w-16 h-16 mx-auto mb-2 rounded-[4px] object-cover bg-[var(--bg-base)]">
-                        <h3 class="font-heading font-semibold text-[15px] text-[var(--text-1)] truncate mb-1">{{ $podium[2]['name'] }}</h3>
+                        <a href="{{ route('profile.public', $podium[2]['username'] ?? $podium[2]['name']) }}" class="user-link flex-col mb-1 inline-flex">
+                            <img src="{{ $podium[2]['avatar_url'] }}" alt="{{ $podium[2]['name'] }}" class="w-16 h-16 mx-auto mb-2 rounded-[4px] object-cover bg-[var(--bg-base)]">
+                            <h3 class="font-heading font-semibold text-[15px] text-[var(--text-1)] truncate mb-1">{{ $podium[2]['name'] }}</h3>
+                        </a>
                         <div class="text-[11px] font-semibold text-[var(--text-2)] mb-3 flex items-center justify-center gap-1.5">
                             <x-lucide :name="$podium[2]['murim_icon'] ?? 'medal'" class="w-3.5 h-3.5 text-amber-600" />
                             <span>{{ $podium[2]['murim_title'] }}</span>
@@ -159,10 +165,10 @@
                                              #{{ $c['rank'] }}
                                         </td>
                                         <td class="py-3 px-4">
-                                            <div class="flex items-center gap-2.5">
+                                            <a href="{{ route('profile.public', $c['username'] ?? $c['name']) }}" class="user-link">
                                                 <img src="{{ $c['avatar_url'] }}" alt="{{ $c['name'] }}" class="w-7 h-7 rounded-[4px] object-cover bg-[var(--bg-base)]">
-                                                <div class="font-semibold text-[var(--text-1)] truncate">{{ $c['name'] }}</div>
-                                            </div>
+                                                <span class="font-semibold text-[var(--text-1)] truncate">{{ $c['name'] }}</span>
+                                            </a>
                                         </td>
                                         <td class="py-3 px-4">
                                             <span class="text-caption text-[var(--text-2)] inline-flex items-center gap-1.5">

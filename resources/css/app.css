@@ -891,6 +891,19 @@ main {
   }
 }
 
+.user-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  text-decoration: none;
+  color: inherit;
+  transition: opacity 150ms ease;
+}
+
+.user-link:hover {
+  opacity: 0.8;
+}
+
 /* ── Respect de Prefers-Reduced-Motion (Obligatoire) ── */
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
@@ -900,3 +913,4 @@ main {
     scroll-behavior: auto !important;
   }
 }
+

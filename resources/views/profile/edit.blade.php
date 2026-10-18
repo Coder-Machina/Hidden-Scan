@@ -1444,7 +1444,7 @@
                                 @endif
                             </div>
 
-                            <div class="col-span-6 sm:col-span-5 flex items-center gap-3 min-w-0">
+                            <a href="{{ route('profile.public', $cultivator['username'] ?? $cultivator['name']) }}" class="user-link col-span-6 sm:col-span-5 min-w-0">
                                 <div class="w-8 h-8 rounded-full bg-[var(--bg-surface)] border border-[var(--border)] overflow-hidden flex-shrink-0 flex items-center justify-center text-xs font-bold text-white">
                                     @if(!empty($cultivator['avatar_url']))
                                         <img src="{{ $cultivator['avatar_url'] }}" class="w-full h-full object-cover" alt="">
@@ -1458,7 +1458,7 @@
                                         @if($isMe) <span class="text-[10px] text-amber-300 font-normal">(Vous)</span> @endif
                                     </span>
                                 </div>
-                            </div>
+                            </a>
 
                             <div class="hidden sm:block sm:col-span-3">
                                 <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-[4px] text-xs font-bold" style="background-color: {{ $cultivator['murim_color'] }}15; color: {{ $cultivator['murim_color'] }}; border: 1px solid {{ $cultivator['murim_color'] }}40;">

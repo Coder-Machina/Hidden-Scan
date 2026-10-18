@@ -31,7 +31,7 @@ class UsersTable
                     ->sortable()
                     ->weight('bold')
                     ->description(fn (User $record): ?string => $record->username ? '@' . $record->username : null)
-                    ->url(fn (User $record): string => route('profile.public', $record->username ?: $record->id))
+                    ->url(fn (User $record): string => route('profile.public', $record->username ?? $record->name))
                     ->openUrlInNewTab(),
                 TextColumn::make('roles.name')
                     ->label('Rôles')
@@ -105,7 +105,7 @@ class UsersTable
                     ->icon('heroicon-o-arrow-top-right-on-square')
                     ->color('info')
                     ->tooltip('Voir le profil sur le site public')
-                    ->url(fn (User $record): string => route('profile.public', $record->username ?: $record->id))
+                    ->url(fn (User $record): string => route('profile.public', $record->username ?? $record->name))
                     ->openUrlInNewTab(),
                 ViewAction::make(),
                 EditAction::make(),

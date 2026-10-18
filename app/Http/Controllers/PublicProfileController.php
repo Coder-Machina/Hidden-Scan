@@ -8,8 +8,9 @@ class PublicProfileController extends Controller
 {
     public function show(string $username)
     {
-        // Trouver l'utilisateur par username ou ID
+        // Trouver l'utilisateur par username, name ou ID
         $user = User::where('username', $username)
+                    ->orWhere('name', $username)
                     ->orWhere('id', $username)
                     ->firstOrFail();
 

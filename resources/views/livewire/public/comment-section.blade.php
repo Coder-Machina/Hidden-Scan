@@ -877,26 +877,37 @@
                         {{-- Meta du commentaire --}}
                         <div class="comment-meta-row">
                             <div class="comment-user-info">
-                                <div class="comment-avatar-34">
-                                    @if($comment->user && $comment->user->avatar)
-                                        <img src="{{ $comment->user->avatar_url }}" alt="{{ $comment->pseudo }}">
-                                    @else
-                                        <span>{{ strtoupper(substr($comment->pseudo ?: 'A', 0, 1)) }}</span>
-                                    @endif
-                                </div>
-
-                                <div class="comment-user-text">
-                                    <div class="flex items-center gap-2 flex-wrap">
-                                        <span class="comment-pseudo">{{ $comment->pseudo ?: 'Anonyme' }}</span>
-                                        @if($comment->user?->staff_badge)
+                                @if($comment->user)
+                                    <a href="{{ route('profile.public', $comment->user->username ?? $comment->user->name) }}" class="user-link">
+                                        <div class="comment-avatar-34">
+                                            @if($comment->user->avatar)
+                                                <img src="{{ $comment->user->avatar_url }}" alt="{{ $comment->pseudo }}">
+                                            @else
+                                                <span>{{ strtoupper(substr($comment->pseudo ?: 'A', 0, 1)) }}</span>
+                                            @endif
+                                        </div>
+                                        <span class="comment-pseudo">{{ $comment->pseudo ?: $comment->user->name }}</span>
+                                    </a>
+                                    <div class="comment-user-text">
+                                        @if($comment->user->staff_badge)
                                             <span class="inline-flex items-center gap-1 text-[10px] font-extrabold uppercase tracking-wider px-2 py-0.5 rounded border {{ $comment->user->staff_badge['bg'] }} {{ $comment->user->staff_badge['text'] }} {{ $comment->user->staff_badge['border'] }}">
                                                 <span class="w-1.5 h-1.5 rounded-full" style="background-color: {{ $comment->user->staff_badge['hex'] }}"></span>
                                                 {{ $comment->user->staff_badge['name'] }}
                                             </span>
                                         @endif
+                                        <span class="comment-time">{{ $comment->created_at->diffForHumans() }}</span>
                                     </div>
-                                    <span class="comment-time">{{ $comment->created_at->diffForHumans() }}</span>
-                                </div>
+                                @else
+                                    <div class="comment-avatar-34">
+                                        <span>{{ strtoupper(substr($comment->pseudo ?: 'A', 0, 1)) }}</span>
+                                    </div>
+                                    <div class="comment-user-text">
+                                        <div class="flex items-center gap-2 flex-wrap">
+                                            <span class="comment-pseudo">{{ $comment->pseudo ?: 'Anonyme' }}</span>
+                                        </div>
+                                        <span class="comment-time">{{ $comment->created_at->diffForHumans() }}</span>
+                                    </div>
+                                @endif
                             </div>
                         </div>
 
@@ -1033,25 +1044,37 @@
                                         <div class="reply-item-card">
                                             <div class="comment-meta-row">
                                                 <div class="comment-user-info">
-                                                    <div class="comment-avatar-34" style="width: 28px; height: 28px; font-size: 11px;">
-                                                        @if($reply->user && $reply->user->avatar)
-                                                             <img src="{{ $reply->user->avatar_url }}" alt="{{ $reply->pseudo }}">
-                                                        @else
-                                                            <span>{{ strtoupper(substr($reply->pseudo ?: 'A', 0, 1)) }}</span>
-                                                        @endif
-                                                    </div>
-                                                    <div class="comment-user-text">
-                                                        <div class="flex items-center gap-1.5 flex-wrap">
-                                                            <span class="comment-pseudo" style="font-size: 12px;">{{ $reply->pseudo ?: 'Anonyme' }}</span>
-                                                            @if($reply->user?->staff_badge)
+                                                    @if($reply->user)
+                                                        <a href="{{ route('profile.public', $reply->user->username ?? $reply->user->name) }}" class="user-link">
+                                                            <div class="comment-avatar-34" style="width: 28px; height: 28px; font-size: 11px;">
+                                                                @if($reply->user->avatar)
+                                                                     <img src="{{ $reply->user->avatar_url }}" alt="{{ $reply->pseudo }}">
+                                                                @else
+                                                                    <span>{{ strtoupper(substr($reply->pseudo ?: 'A', 0, 1)) }}</span>
+                                                                @endif
+                                                            </div>
+                                                            <span class="comment-pseudo" style="font-size: 12px;">{{ $reply->pseudo ?: $reply->user->name }}</span>
+                                                        </a>
+                                                        <div class="comment-user-text">
+                                                            @if($reply->user->staff_badge)
                                                                 <span class="inline-flex items-center gap-1 text-[9px] font-extrabold uppercase tracking-wider px-1.5 py-0.5 rounded border {{ $reply->user->staff_badge['bg'] }} {{ $reply->user->staff_badge['text'] }} {{ $reply->user->staff_badge['border'] }}">
                                                                     <span class="w-1 h-1 rounded-full" style="background-color: {{ $reply->user->staff_badge['hex'] }}"></span>
                                                                     {{ $reply->user->staff_badge['name'] }}
                                                                 </span>
                                                             @endif
+                                                            <span class="comment-time">{{ $reply->created_at->diffForHumans() }}</span>
                                                         </div>
-                                                        <span class="comment-time">{{ $reply->created_at->diffForHumans() }}</span>
-                                                    </div>
+                                                    @else
+                                                        <div class="comment-avatar-34" style="width: 28px; height: 28px; font-size: 11px;">
+                                                            <span>{{ strtoupper(substr($reply->pseudo ?: 'A', 0, 1)) }}</span>
+                                                        </div>
+                                                        <div class="comment-user-text">
+                                                            <div class="flex items-center gap-1.5 flex-wrap">
+                                                                <span class="comment-pseudo" style="font-size: 12px;">{{ $reply->pseudo ?: 'Anonyme' }}</span>
+                                                            </div>
+                                                            <span class="comment-time">{{ $reply->created_at->diffForHumans() }}</span>
+                                                        </div>
+                                                    @endif
                                                 </div>
                                             </div>
 

@@ -37,6 +37,7 @@ class LeaderboardService
                 return [
                     'id' => $u->id,
                     'name' => $u->name,
+                    'username' => $u->username,
                     'avatar_url' => $u->avatar_url,
                     'is_staff' => (bool) $u->staff_badge,
                     'staff_badge' => $u->staff_badge,

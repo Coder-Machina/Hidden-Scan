@@ -112,4 +112,134 @@ class PublicProfileTest extends TestCase
         $response->assertSee('Favoris');
         $response->assertSee('Récemment lus');
     }
+
+    public function test_public_profile_can_be_resolved_by_name_fallback_when_username_is_null(): void
+    {
+        $user = User::factory()->create([
+            'name' => 'SoloMaster',
+            'profile_public' => true,
+        ]);
+        \Illuminate\Support\Facades\DB::table('users')->where('id', $user->id)->update(['username' => null]);
+        $user->refresh();
+
+        $this->assertNull($user->username);
+
+        $response = $this->get(route('profile.public', ['username' => $user->name]));
+
+        $response->assertOk();
+        $response->assertSee('SoloMaster');
+    }
+
+    public function test_leaderboard_page_renders_user_links_for_cultivators(): void
+    {
+        $manga = Manga::create([
+            'title' => 'Murim World',
+            'slug' => 'murim-world',
+            'synopsis' => 'Martial arts journey',
+            'type' => 'manhwa',
+            'status' => 'en_cours',
+        ]);
+
+        $users = collect();
+        for ($i = 1; $i <= 4; $i++) {
+            $u = User::factory()->create([
+                'name' => "Cultivator {$i}",
+                'username' => "cultivator{$i}",
+                'profile_public' => true,
+            ]);
+            $chapter = \App\Models\Chapter::create([
+                'manga_id' => $manga->id,
+                'number' => $i,
+                'title' => "Chapitre {$i}",
+                'slug' => "chapitre-{$i}",
+            ]);
+            ReadingProgress::create([
+                'user_id' => $u->id,
+                'manga_id' => $manga->id,
+                'chapter_id' => $chapter->id,
+                'is_read' => true,
+            ]);
+            $users->push($u);
+        }
+
+        $response = $this->get(route('leaderboard'));
+        $response->assertOk();
+        $response->assertSee('user-link');
+        foreach ($users as $user) {
+            $response->assertSee(route('profile.public', $user->username));
+        }
+    }
+
+    public function test_comment_section_renders_user_link(): void
+    {
+        $manga = Manga::create([
+            'title' => 'Peerless Commenter',
+            'slug' => 'peerless-commenter',
+            'synopsis' => 'Story about comments',
+            'type' => 'manga',
+            'status' => 'en_cours',
+        ]);
+
+        $user = User::factory()->create([
+            'name' => 'DragonSlayer',
+            'username' => 'dragonslayer',
+            'profile_public' => true,
+        ]);
+
+        \App\Models\Comment::create([
+            'commentable_type' => Manga::class,
+            'commentable_id' => $manga->id,
+            'user_id' => $user->id,
+            'pseudo' => 'DragonSlayer',
+            'content' => 'Incroyable manga !',
+            'ip_hash' => hash('sha256', '127.0.0.1'),
+            'is_approved' => true,
+        ]);
+
+        \Livewire\Livewire::actingAs($user)
+            ->test(\App\Livewire\Public\CommentSection::class, [
+                'type' => Manga::class,
+                'id' => $manga->id,
+            ])
+            ->assertSee('user-link')
+            ->assertSee(route('profile.public', 'dragonslayer'));
+    }
+
+    public function test_admin_users_table_public_profile_action_points_to_public_profile(): void
+    {
+        $adminRole = \Spatie\Permission\Models\Role::firstOrCreate(['name' => 'admin']);
+        $admin = User::factory()->create([
+            'email' => 'admin_profile_action@hiddenscan.com',
+        ]);
+        $admin->assignRole($adminRole);
+
+        $readerWithUsername = User::factory()->create([
+            'name' => 'Reader With User',
+            'username' => 'reader_u',
+        ]);
+
+        $readerWithoutUsername = User::factory()->create([
+            'name' => 'Reader No User',
+        ]);
+        \Illuminate\Support\Facades\DB::table('users')->where('id', $readerWithoutUsername->id)->update(['username' => null]);
+        $readerWithoutUsername->refresh();
+
+        $this->assertNull($readerWithoutUsername->username);
+
+        $test = \Livewire\Livewire::actingAs($admin)
+            ->test(\App\Filament\Resources\Users\Pages\ListUsers::class)
+            ->set('activeTab', 'all')
+            ->assertTableActionExists('public_profile');
+
+        $actionWithUser = $test->instance()->getTable()->getAction('public_profile');
+        $this->assertNotNull($actionWithUser);
+        $this->assertTrue($actionWithUser->shouldOpenUrlInNewTab());
+
+        $urlWithUser = $actionWithUser->record($readerWithUsername)->getUrl();
+        $this->assertEquals(route('profile.public', 'reader_u'), $urlWithUser);
+
+        $urlWithoutUser = $actionWithUser->record($readerWithoutUsername)->getUrl();
+        $this->assertEquals(route('profile.public', 'Reader No User'), $urlWithoutUser);
+    }
 }
+
