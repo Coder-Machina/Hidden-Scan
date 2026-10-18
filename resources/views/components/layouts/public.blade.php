@@ -525,12 +525,12 @@
          }"
          @click.outside="closeAll()">
         
-        <div class="max-w-[1280px] w-full mx-auto px-4 sm:px-6 h-full flex items-center justify-between gap-4">
+        <div class="navbar__inner max-w-[1280px] w-full mx-auto px-4 sm:px-6 h-full flex items-center justify-between gap-4">
             
             {{-- Logo Gauche --}}
-            <a href="{{ route('home') }}" class="flex items-center gap-2.5 flex-shrink-0 group py-1">
+            <a href="{{ route('home') }}" class="navbar__logo flex items-center gap-2.5 flex-shrink-0 group py-1">
                 <img src="{{ asset('images/logo.png') }}" alt="Hidden Scan" class="w-8 h-8 rounded-[4px] object-cover">
-                <span class="font-heading font-extrabold text-[19px] tracking-tight text-[var(--text-1)]">
+                <span class="navbar__logo-text font-heading font-extrabold text-[19px] tracking-tight text-[var(--text-1)]">
                     HIDDEN<span class="text-[var(--accent)]">SCAN</span>
                 </span>
             </a>
@@ -549,7 +549,7 @@
             </div>
 
             {{-- Navigation Centrale / Liens Essentiels --}}
-            <div class="hidden lg:flex items-center gap-6 text-[14px] font-medium text-[var(--text-2)]">
+            <div class="navbar__links hidden lg:flex items-center gap-6 text-[14px] font-medium text-[var(--text-2)]">
                 <a href="{{ route('home') }}" class="hover:text-[var(--text-1)] transition {{ request()->routeIs('home') ? 'text-[var(--text-1)] font-semibold' : '' }}">
                     Accueil
                 </a>
@@ -577,10 +577,10 @@
             </div>
 
             {{-- Actions Droite (Auth & Menus) --}}
-            <div class="flex items-center gap-3 flex-shrink-0">
+            <div class="navbar__actions flex items-center gap-3 flex-shrink-0">
                 
                 {{-- Bouton Recherche Mobile --}}
-                <button type="button" @click="openSearch()" class="md:hidden p-2 text-[var(--text-2)] hover:text-[var(--text-1)]" aria-label="Recherche">
+                <button type="button" @click="openSearch()" class="navbar__search-icon md:hidden p-2 text-[var(--text-2)] hover:text-[var(--text-1)]" aria-label="Rechercher">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
                 </button>
 
@@ -708,19 +708,21 @@
                     </div>
                 @else
                     {{-- Visiteur : Connexion & Inscription --}}
-                    <div class="flex items-center gap-2">
-                        <a href="{{ route('login') }}" class="btn-primary">
-                            Se connecter
+                    <div class="navbar__auth flex items-center gap-2">
+                        <a href="{{ route('login') }}" class="btn-primary btn-login">
+                            <span class="label-desktop">Se connecter</span>
+                            <span class="label-mobile">Connexion</span>
                         </a>
-                        <a href="{{ route('register') }}" class="btn-secondary hidden sm:inline-flex">
-                            S'inscrire
+                        <a href="{{ route('register') }}" class="btn-secondary btn-register">
+                            <span class="label-desktop">S'inscrire</span>
+                            <span class="label-mobile">Inscription</span>
                         </a>
                     </div>
                 @endauth
 
                 @guest
                 {{-- Mobile Hamburger --}}
-                <button type="button" @click="mobileOpen = !mobileOpen" class="lg:hidden p-2 text-[var(--text-2)] hover:text-[var(--text-1)]" aria-label="Menu mobile" title="Menu principal">
+                <button type="button" @click="mobileOpen = !mobileOpen" class="navbar__hamburger lg:hidden p-2 text-[var(--text-2)] hover:text-[var(--text-1)]" aria-label="Menu mobile" title="Menu principal">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
                 </button>
                 @endguest

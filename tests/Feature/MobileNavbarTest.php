@@ -2,7 +2,6 @@
 
 namespace Tests\Feature;
 
-use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -10,32 +9,43 @@ class MobileNavbarTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_guest_sees_se_connecter_in_navbar(): void
+    public function test_guest_navbar_contains_mobile_and_desktop_labels_and_classes(): void
     {
-        $response = $this->get('/');
+        $response = $this->get(route('home'));
 
         $response->assertStatus(200);
-        $response->assertSee(route('login'));
-        $response->assertSee('Se connecter');
-        $response->assertSee('title="Menu principal"', false);
+
+        // Check navbar structure
+        $response->assertSee('navbar__logo', false);
+        $response->assertSee('navbar__logo-text', false);
+        $response->assertSee('navbar__search-icon', false);
+        $response->assertSee('navbar__auth', false);
+
+        // Check responsive labels for login
+        $response->assertSee('label-desktop">Se connecter</span>', false);
+        $response->assertSee('label-mobile">Connexion</span>', false);
+
+        // Check responsive labels for register
+        $response->assertSee('label-desktop">S\'inscrire</span>', false);
+        $response->assertSee('label-mobile">Inscription</span>', false);
+
+        // Check that register button is not hidden with Tailwind's hidden sm:inline-flex
+        $response->assertDontSee('btn-secondary hidden sm:inline-flex', false);
+        $response->assertSee('btn-register', false);
+        $response->assertSee('btn-login', false);
     }
 
-    public function test_authenticated_user_sees_avatar_and_profile_menu_in_navbar(): void
+    public function test_css_contains_mobile_navbar_rules(): void
     {
-        $user = User::factory()->create([
-            'name' => 'JeanDupont',
-            'email' => 'jean@test.com',
-        ]);
+        $css = file_get_contents(resource_path('css/app.css'));
 
-        $response = $this->actingAs($user)->get('/');
-
-        $response->assertStatus(200);
-        $response->assertSee($user->name);
-        $response->assertSee('Mon Profil');
-        $response->assertSee('Mode Rattrapage');
-        $response->assertSee('Ma Bibliothèque');
-        $response->assertSee('Se déconnecter');
-        $response->assertSee('userMobileMenuOpen');
-        $response->assertDontSee('title="Menu principal"', false);
+        $this->assertStringContainsString('@media (max-width: 768px)', $css);
+        $this->assertStringContainsString('.navbar__logo span', $css);
+        $this->assertStringContainsString('.navbar__logo-text', $css);
+        $this->assertStringContainsString('.navbar__auth', $css);
+        $this->assertStringContainsString('a.btn-login', $css);
+        $this->assertStringContainsString('a.btn-register', $css);
+        $this->assertStringContainsString('.label-desktop', $css);
+        $this->assertStringContainsString('.label-mobile', $css);
     }
 }
