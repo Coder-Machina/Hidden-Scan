@@ -202,34 +202,38 @@ class MangaForm
                                     ->preload()
                                     ->createOptionForm([
                                         TextInput::make('name')
-                                            ->label('Nom du site source')
-                                            ->placeholder('Ex: Flame Comics, Asura, Reaper, etc.')
+                                            ->label('Nom du site')
+                                            ->placeholder('Ex: Scan-FR, Asura Scans, Flame, Reaper...')
                                             ->required(),
                                         TextInput::make('base_url')
-                                            ->label('URL racine du site')
-                                            ->placeholder('https://flamecomics.xyz')
+                                            ->label('Lien / URL du site')
+                                            ->placeholder('https://mon-site-scan.fr')
                                             ->url()
-                                            ->required(),
-                                        TextInput::make('sel_chapter_list')
-                                            ->label('Sélecteur conteneur des chapitres')
-                                            ->default('.wp-manga-chapter')
                                             ->required()
-                                            ->helperText('Ex: .wp-manga-chapter ou li.chapter-item'),
-                                        TextInput::make('sel_chapter_title')
-                                            ->label('Sélecteur titre')
-                                            ->default('.wp-manga-chapter a')
-                                            ->required(),
-                                        TextInput::make('sel_chapter_url')
-                                            ->label('Sélecteur lien')
-                                            ->default('.wp-manga-chapter a')
-                                            ->required(),
-                                        TextInput::make('sel_chapter_pages')
-                                            ->label('Sélecteur images pages')
-                                            ->default('.page-break img')
-                                            ->required()
-                                            ->helperText('Ex: .page-break img ou .reading-content img'),
+                                            ->helperText('Collez l\'adresse principale du site (ex: https://mon-site.fr).'),
+                                        Section::make('Réglages techniques (optionnel - réservé aux développeurs)')
+                                            ->collapsed()
+                                            ->compact()
+                                            ->schema([
+                                                TextInput::make('sel_chapter_list')
+                                                    ->label('Sélecteur conteneur chapitres')
+                                                    ->default('.wp-manga-chapter')
+                                                    ->required(),
+                                                TextInput::make('sel_chapter_title')
+                                                    ->label('Sélecteur titre')
+                                                    ->default('.wp-manga-chapter a')
+                                                    ->required(),
+                                                TextInput::make('sel_chapter_url')
+                                                    ->label('Sélecteur lien')
+                                                    ->default('.wp-manga-chapter a')
+                                                    ->required(),
+                                                TextInput::make('sel_chapter_pages')
+                                                    ->label('Sélecteur images')
+                                                    ->default('.page-break img')
+                                                    ->required(),
+                                            ]),
                                     ])
-                                    ->createOptionAction(fn ($action) => $action->modalHeading('Ajouter une nouvelle source de scraping')->modalSubmitActionLabel('Enregistrer ce site'))
+                                    ->createOptionAction(fn ($action) => $action->modalHeading('Ajouter un nouveau site source')->modalSubmitActionLabel('Enregistrer ce site'))
                                     ->helperText('Choisissez un site existant ou cliquez sur "+" pour en ajouter un nouveau.')
                                     ->columnSpan(4),
                                 TextInput::make('source_url')
