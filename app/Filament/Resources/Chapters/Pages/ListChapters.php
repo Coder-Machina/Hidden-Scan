@@ -34,7 +34,7 @@ class ListChapters extends ListRecords
                 ->icon('heroicon-o-arrow-up-tray')
                 ->color('success')
                 ->modalHeading('Charger plusieurs chapitres')
-                ->modalDescription('Sélectionnez un manga et uploadez plusieurs fichiers ZIP. Chaque fichier ZIP sera traité comme un chapitre séparé, numéroté séquentiellement à partir du numéro indiqué.')
+                ->modalDescription('Sélectionnez un manga et uploadez plusieurs archives (ZIP, CBZ ou TAR). Chaque archive sera traitée comme un chapitre séparé, avec détection automatique du numéro de chapitre.')
                 ->modalSubmitActionLabel('Lancer le traitement')
                 ->form([
                     Select::make('manga_id')
@@ -57,16 +57,26 @@ class ListChapters extends ListRecords
                         ->default('brouillon')
                         ->required(),
                     FileUpload::make('zip_files')
-                        ->label('Fichiers ZIP des chapitres')
+                        ->label('Fichiers d\'archives des chapitres (ZIP, CBZ, TAR)')
                         ->disk('local')
                         ->directory('uploads/bulk-zips')
-                        ->acceptedFileTypes(['application/zip', 'application/x-zip-compressed'])
+                        ->acceptedFileTypes([
+                            'application/zip',
+                            'application/x-zip-compressed',
+                            'application/vnd.comicbook+zip',
+                            'application/x-cbz',
+                            'application/x-tar',
+                            'application/tar',
+                            'application/x-gtar',
+                            'multipart/x-tar',
+                            'application/octet-stream',
+                        ])
                         ->maxSize(512000)
                         ->multiple()
                         ->preserveFilenames()
                         ->storeFileNamesIn('zip_original_names')
                         ->required()
-                        ->helperText('Chaque ZIP = 1 chapitre. Détection et tri automatique par numéro de chapitre, peu importe la vitesse de chargement de chaque fichier.'),
+                        ->helperText('Chaque archive (ZIP, CBZ ou TAR) = 1 chapitre. Détection et tri automatique par numéro de chapitre, peu importe la vitesse de chargement de chaque fichier.'),
                 ])
                 ->action(function (array $data) {
                     $manga = Manga::findOrFail($data['manga_id']);
@@ -83,7 +93,7 @@ class ListChapters extends ListRecords
                     @ini_set('max_execution_time', '0');
                     @set_time_limit(0);
 
-                    // 1. Analyse et détection du numéro de chapitre pour chaque fichier ZIP
+                    // 1. Analyse et détection du numéro de chapitre pour chaque fichier ZIP/CBZ/TAR
                     $inspectedFiles = [];
                     foreach ($zipFiles as $zipFile) {
                         $fullPath = null;
@@ -102,28 +112,47 @@ class ListChapters extends ListRecords
                         $origName = $originalNames[$zipFile] ?? basename($zipFile);
                         $detectedNumber = null;
 
-                        // A. Inspection de l'archive ZIP interne
+                        // A. Inspection de l'archive interne (TAR via PharData, ZIP/CBZ via ZipArchive)
                         if ($fullPath && file_exists($fullPath)) {
-                            $zip = new ZipArchive();
-                            if ($zip->open($fullPath) === true) {
-                                $limit = min(25, $zip->numFiles);
-                                for ($i = 0; $i < $limit; $i++) {
-                                    $entryName = $zip->getNameIndex($i);
-                                    if (preg_match('/(?:chapitre|chapter|ch|ep|épisode|episode)[\s._-]*(\d+(?:\.\d+)?)/i', $entryName, $m)) {
-                                        $detectedNumber = (float) $m[1];
-                                        break;
+                            $isTar = str_ends_with(strtolower($origName), '.tar') || str_ends_with(strtolower($fullPath), '.tar');
+
+                            if ($isTar) {
+                                try {
+                                    $phar = new \PharData($fullPath);
+                                    $count = 0;
+                                    foreach ($phar as $entry) {
+                                        $entryName = $entry->getFilename();
+                                        if (preg_match('/(?:chapitre|chapter|ch|ep|épisode|episode)[\s._-]*(\d+(?:\.\d+)?)/i', $entryName, $m)) {
+                                            $detectedNumber = (float) $m[1];
+                                            break;
+                                        }
+                                        if (++$count > 25) break;
                                     }
+                                } catch (\Throwable $e) {
+                                    // Ignorer
                                 }
-                                if ($detectedNumber === null) {
+                            } else {
+                                $zip = new ZipArchive();
+                                if ($zip->open($fullPath) === true) {
+                                    $limit = min(25, $zip->numFiles);
                                     for ($i = 0; $i < $limit; $i++) {
                                         $entryName = $zip->getNameIndex($i);
-                                        if (preg_match('/(?:^|[\D])(\d+(?:\.\d+)?)(?:\.zip|\/|$)/i', $entryName, $m)) {
+                                        if (preg_match('/(?:chapitre|chapter|ch|ep|épisode|episode)[\s._-]*(\d+(?:\.\d+)?)/i', $entryName, $m)) {
                                             $detectedNumber = (float) $m[1];
                                             break;
                                         }
                                     }
+                                    if ($detectedNumber === null) {
+                                        for ($i = 0; $i < $limit; $i++) {
+                                            $entryName = $zip->getNameIndex($i);
+                                            if (preg_match('/(?:^|[\D])(\d+(?:\.\d+)?)(?:\.(?:zip|cbz|tar)|\/|$)/i', $entryName, $m)) {
+                                                $detectedNumber = (float) $m[1];
+                                                break;
+                                            }
+                                        }
+                                    }
+                                    $zip->close();
                                 }
-                                $zip->close();
                             }
                         }
 
@@ -131,7 +160,7 @@ class ListChapters extends ListRecords
                         if ($detectedNumber === null) {
                             if (preg_match('/(?:chapitre|chapter|ch|ep|épisode|episode)[\s._-]*(\d+(?:\.\d+)?)/i', $origName, $m)) {
                                 $detectedNumber = (float) $m[1];
-                            } elseif (preg_match('/(?:^|[\D])(\d+(?:\.\d+)?)(?:\.zip|\/|$)/i', $origName, $m)) {
+                            } elseif (preg_match('/(?:^|[\D])(\d+(?:\.\d+)?)(?:\.(?:zip|cbz|tar)|\/|$)/i', $origName, $m)) {
                                 $detectedNumber = (float) $m[1];
                             }
                         }

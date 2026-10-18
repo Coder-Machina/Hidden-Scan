@@ -119,7 +119,7 @@ class ChaptersRelationManager extends RelationManager
                     ->icon('heroicon-o-arrow-up-tray')
                     ->color('success')
                     ->modalHeading(fn () => 'Upload en masse pour « ' . $this->getOwnerRecord()->title . ' »')
-                    ->modalDescription('Sélectionnez plusieurs fichiers ZIP. Chaque fichier ZIP sera traité comme un chapitre séparé, numéroté séquentiellement ou selon le nom de fichier.')
+                    ->modalDescription('Sélectionnez plusieurs archives (ZIP, CBZ ou TAR). Chaque archive sera traitée comme un chapitre séparé, numéroté séquentiellement ou selon le nom de fichier.')
                     ->modalSubmitActionLabel('Lancer le traitement')
                     ->form([
                         TextInput::make('start_number')
@@ -166,18 +166,28 @@ class ChaptersRelationManager extends RelationManager
                                 'original' => 'Taille originale (aucun redimensionnement)',
                             ])
                             ->default('1400')
-                            ->helperText('Redimensionne automatiquement les images trop volumineuses du ZIP.'),
+                            ->helperText('Redimensionne automatiquement les images trop volumineuses des archives.'),
                         FileUpload::make('zip_files')
-                            ->label('Fichiers ZIP des chapitres')
+                            ->label('Fichiers d\'archives des chapitres (ZIP, CBZ, TAR)')
                             ->disk('local')
                             ->directory('uploads/bulk-zips')
-                            ->acceptedFileTypes(['application/zip', 'application/x-zip-compressed'])
+                            ->acceptedFileTypes([
+                                'application/zip',
+                                'application/x-zip-compressed',
+                                'application/vnd.comicbook+zip',
+                                'application/x-cbz',
+                                'application/x-tar',
+                                'application/tar',
+                                'application/x-gtar',
+                                'multipart/x-tar',
+                                'application/octet-stream',
+                            ])
                             ->maxSize(512000)
                             ->multiple()
                             ->preserveFilenames()
                             ->storeFileNamesIn('zip_original_names')
                             ->required()
-                            ->helperText('Chaque ZIP = 1 chapitre. Publication et tri automatique par ordre séquentiel.'),
+                            ->helperText('Chaque archive (ZIP, CBZ ou TAR) = 1 chapitre. Publication et tri automatique par ordre séquentiel.'),
                     ])
                     ->action(function (array $data) {
                         /** @var Manga $manga */
@@ -200,7 +210,7 @@ class ChaptersRelationManager extends RelationManager
                         @ini_set('max_execution_time', '0');
                         @set_time_limit(0);
 
-                        // 1. Analyse et détection du numéro de chapitre pour chaque fichier ZIP
+                        // 1. Analyse et détection du numéro de chapitre pour chaque fichier ZIP/CBZ/TAR
                         $inspectedFiles = [];
                         foreach ($zipFiles as $zipFile) {
                             $fullPath = null;
@@ -219,28 +229,47 @@ class ChaptersRelationManager extends RelationManager
                             $origName = $originalNames[$zipFile] ?? basename($zipFile);
                             $detectedNumber = null;
 
-                            // Inspection de l'archive ZIP interne
+                            // Inspection de l'archive interne (TAR via PharData, ZIP/CBZ via ZipArchive)
                             if ($fullPath && file_exists($fullPath)) {
-                                $zip = new ZipArchive();
-                                if ($zip->open($fullPath) === true) {
-                                    $limit = min(25, $zip->numFiles);
-                                    for ($i = 0; $i < $limit; $i++) {
-                                        $entryName = $zip->getNameIndex($i);
-                                        if (preg_match('/(?:chapitre|chapter|ch|ep|épisode|episode)[\s._-]*(\d+(?:\.\d+)?)/i', $entryName, $m)) {
-                                            $detectedNumber = (float) $m[1];
-                                            break;
+                                $isTar = str_ends_with(strtolower($origName), '.tar') || str_ends_with(strtolower($fullPath), '.tar');
+
+                                if ($isTar) {
+                                    try {
+                                        $phar = new \PharData($fullPath);
+                                        $count = 0;
+                                        foreach ($phar as $entry) {
+                                            $entryName = $entry->getFilename();
+                                            if (preg_match('/(?:chapitre|chapter|ch|ep|épisode|episode)[\s._-]*(\d+(?:\.\d+)?)/i', $entryName, $m)) {
+                                                $detectedNumber = (float) $m[1];
+                                                break;
+                                            }
+                                            if (++$count > 25) break;
                                         }
+                                    } catch (\Throwable $e) {
+                                        // Ignorer
                                     }
-                                    if ($detectedNumber === null) {
+                                } else {
+                                    $zip = new ZipArchive();
+                                    if ($zip->open($fullPath) === true) {
+                                        $limit = min(25, $zip->numFiles);
                                         for ($i = 0; $i < $limit; $i++) {
                                             $entryName = $zip->getNameIndex($i);
-                                            if (preg_match('/(?:^|[\D])(\d+(?:\.\d+)?)(?:\.zip|\/|$)/i', $entryName, $m)) {
+                                            if (preg_match('/(?:chapitre|chapter|ch|ep|épisode|episode)[\s._-]*(\d+(?:\.\d+)?)/i', $entryName, $m)) {
                                                 $detectedNumber = (float) $m[1];
                                                 break;
                                             }
                                         }
+                                        if ($detectedNumber === null) {
+                                            for ($i = 0; $i < $limit; $i++) {
+                                                $entryName = $zip->getNameIndex($i);
+                                                if (preg_match('/(?:^|[\D])(\d+(?:\.\d+)?)(?:\.(?:zip|cbz|tar)|\/|$)/i', $entryName, $m)) {
+                                                    $detectedNumber = (float) $m[1];
+                                                    break;
+                                                }
+                                            }
+                                        }
+                                        $zip->close();
                                     }
-                                    $zip->close();
                                 }
                             }
 
@@ -248,7 +277,7 @@ class ChaptersRelationManager extends RelationManager
                             if ($detectedNumber === null) {
                                 if (preg_match('/(?:chapitre|chapter|ch|ep|épisode|episode)[\s._-]*(\d+(?:\.\d+)?)/i', $origName, $m)) {
                                     $detectedNumber = (float) $m[1];
-                                } elseif (preg_match('/(?:^|[\D])(\d+(?:\.\d+)?)(?:\.zip|\/|$)/i', $origName, $m)) {
+                                } elseif (preg_match('/(?:^|[\D])(\d+(?:\.\d+)?)(?:\.(?:zip|cbz|tar)|\/|$)/i', $origName, $m)) {
                                     $detectedNumber = (float) $m[1];
                                 }
                             }

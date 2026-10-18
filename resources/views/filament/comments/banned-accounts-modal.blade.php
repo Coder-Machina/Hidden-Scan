@@ -285,6 +285,14 @@
                                 <div class="hs-item-meta">
                                     <span>Motif : <strong>{{ $user->ban_reason ?: ($user->comment_ban_reason ?: 'Non spécifié') }}</strong></span>
                                     <span>Date : <strong>{{ ($user->banned_at ?: $user->comment_banned_at)?->format('d/m/Y H:i') ?: '—' }}</strong></span>
+                                    @php
+                                        $until = $user->banned_until ?: $user->comment_banned_until;
+                                    @endphp
+                                    @if($until)
+                                        <span>Expiration : <strong style="color: #fbbf24;">{{ $until->format('d/m/Y H:i') }} ({{ $until->diffForHumans() }})</strong></span>
+                                    @else
+                                        <span>Sanction : <strong style="color: #ef4444;">Permanente</strong></span>
+                                    @endif
                                 </div>
                             </div>
                         </div>
@@ -339,6 +347,11 @@
                                 <div class="hs-item-meta">
                                     <span>Motif : <strong>{{ $ip->reason ?: 'Non spécifié' }}</strong></span>
                                     <span>Date : <strong>{{ $ip->created_at?->format('d/m/Y H:i') }}</strong></span>
+                                    @if($ip->banned_until)
+                                        <span>Expiration : <strong style="color: #fbbf24;">{{ $ip->banned_until->format('d/m/Y H:i') }} ({{ $ip->banned_until->diffForHumans() }})</strong></span>
+                                    @else
+                                        <span>Sanction : <strong style="color: #ef4444;">Permanente</strong></span>
+                                    @endif
                                 </div>
                             </div>
                         </div>

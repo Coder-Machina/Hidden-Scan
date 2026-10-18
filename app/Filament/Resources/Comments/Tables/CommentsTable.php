@@ -14,7 +14,9 @@ use Filament\Actions\ForceDeleteAction;
 use Filament\Actions\ForceDeleteBulkAction;
 use Filament\Actions\RestoreAction;
 use Filament\Actions\RestoreBulkAction;
+use Filament\Forms\Components\DateTimePicker;
 use Filament\Forms\Components\Radio;
+use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
 use Filament\Infolists\Components\TextEntry;
@@ -186,20 +188,49 @@ class CommentsTable
                     ->label('Bannir')
                     ->icon('heroicon-o-no-symbol')
                     ->color('danger')
+                    ->visible(function (Comment $record) {
+                        $isUserBanned = $record->user && ($record->user->isBanned() || $record->user->isCommentBanned());
+                        $isIpBanned = BannedIp::isIpBlocked($record->ip_address ?: null) || BannedIp::where('ip_hash', $record->ip_hash)->exists();
+                        return !$isUserBanned && !$isIpBanned;
+                    })
                     ->modalHeading(fn (Comment $record) => 'Bannir ' . $record->pseudo)
-                    ->modalDescription('Sélectionnez la portée du bannissement et les actions associées.')
+                    ->modalDescription('Sélectionnez la portée du bannissement, la durée (temporaire ou définitive) et les actions associées.')
                     ->modalSubmitActionLabel('Confirmer le bannissement')
                     ->schema(fn (Comment $record) => [
                         Radio::make('ban_type')
                             ->label('Type de bannissement')
                             ->options($record->user_id ? [
                                 'comment_only' => 'Bannir des commentaires uniquement (le compte reste actif mais ne peut plus commenter)',
-                                'full_account' => 'Bannir le compte définitivement (connexion et accès bloqués)',
+                                'full_account' => 'Bannir le compte (accès et connexion bloqués)',
                             ] : [
                                 'ip_comments' => 'Bannir l\'adresse IP des commentaires',
+                                'ip_full' => 'Bloquer totalement l\'adresse IP (accès au site bloqué)',
                             ])
                             ->default($record->user_id ? 'comment_only' : 'ip_comments')
                             ->required(),
+                        Select::make('duration')
+                            ->label('Durée du bannissement')
+                            ->options([
+                                '1_hour' => '1 heure',
+                                '3_hours' => '3 heures',
+                                '6_hours' => '6 heures',
+                                '12_hours' => '12 heures',
+                                '24_hours' => '24 heures (1 jour)',
+                                '3_days' => '3 jours',
+                                '7_days' => '7 jours (1 semaine)',
+                                '14_days' => '14 jours (2 semaines)',
+                                '30_days' => '30 jours (1 mois)',
+                                'custom' => 'Personnalisé (date et heure)',
+                                'permanent' => 'Définitif (Permanent)',
+                            ])
+                            ->default('permanent')
+                            ->live()
+                            ->required(),
+                        DateTimePicker::make('custom_banned_until')
+                            ->label('Fin du bannissement personnalisé')
+                            ->visible(fn ($get) => $get('duration') === 'custom')
+                            ->required(fn ($get) => $get('duration') === 'custom')
+                            ->minDate(now()),
                         TextInput::make('reason')
                             ->label('Motif du bannissement')
                             ->placeholder('ex: Spam, insultes, contenu inapproprié'),
@@ -211,36 +242,54 @@ class CommentsTable
                         $reason = $data['reason'] ?? null;
                         $hideComments = $data['hide_all_comments'] ?? false;
                         $banType = $data['ban_type'] ?? 'comment_only';
+                        $duration = $data['duration'] ?? 'permanent';
+
+                        $bannedUntil = match ($duration) {
+                            '1_hour' => now()->addHour(),
+                            '3_hours' => now()->addHours(3),
+                            '6_hours' => now()->addHours(6),
+                            '12_hours' => now()->addHours(12),
+                            '24_hours' => now()->addDay(),
+                            '3_days' => now()->addDays(3),
+                            '7_days' => now()->addDays(7),
+                            '14_days' => now()->addDays(14),
+                            '30_days' => now()->addDays(30),
+                            'custom' => !empty($data['custom_banned_until']) ? \Carbon\Carbon::parse($data['custom_banned_until']) : null,
+                            default => null,
+                        };
 
                         if ($banType === 'comment_only' && $record->user) {
                             $record->user->update([
                                 'is_comment_banned' => true,
                                 'comment_banned_at' => now(),
+                                'comment_banned_until' => $bannedUntil,
                                 'comment_ban_reason' => $reason,
                             ]);
-                            BannedIp::firstOrCreate(
+                            BannedIp::updateOrInsert(
                                 ['ip_hash' => $record->ip_hash],
-                                ['reason' => $reason, 'ban_type' => 'comments', 'banned_by' => auth()->id()]
+                                ['reason' => $reason, 'ban_type' => 'comments', 'banned_by' => auth()->id(), 'banned_until' => $bannedUntil, 'updated_at' => now(), 'created_at' => now()]
                             );
-                            Notification::make()->title('Auteur banni des commentaires')->warning()->send();
+                            Notification::make()->title($bannedUntil ? 'Auteur banni temporairement des commentaires' : 'Auteur banni définitivement des commentaires')->warning()->send();
                         } elseif ($banType === 'full_account' && $record->user) {
                             $record->user->update([
                                 'is_banned' => true,
                                 'banned_at' => now(),
+                                'banned_until' => $bannedUntil,
                                 'ban_reason' => $reason,
                             ]);
-                            BannedIp::firstOrCreate(
+                            BannedIp::updateOrInsert(
                                 ['ip_hash' => $record->ip_hash],
-                                ['reason' => $reason, 'ban_type' => 'all', 'banned_by' => auth()->id()]
+                                ['reason' => $reason, 'ban_type' => 'all', 'banned_by' => auth()->id(), 'banned_until' => $bannedUntil, 'updated_at' => now(), 'created_at' => now()]
                             );
-                            Notification::make()->title('Compte utilisateur banni définitivement')->danger()->send();
+                            Notification::make()->title($bannedUntil ? 'Compte banni temporairement' : 'Compte banni définitivement')->danger()->send();
                         } else {
                             // IP ban for guest
-                            BannedIp::firstOrCreate(
+                            $ipType = ($banType === 'ip_full') ? 'all' : 'comments';
+                            BannedIp::updateOrInsert(
                                 ['ip_hash' => $record->ip_hash],
-                                ['reason' => $reason, 'ban_type' => 'comments', 'banned_by' => auth()->id()]
+                                ['reason' => $reason, 'ban_type' => $ipType, 'banned_by' => auth()->id(), 'banned_until' => $bannedUntil, 'updated_at' => now(), 'created_at' => now()]
                             );
-                            Notification::make()->title('Adresse IP bannie des commentaires')->warning()->send();
+                            Notification::make()->title($bannedUntil ? 'Adresse IP bannie temporairement' : 'Adresse IP bannie définitivement')->warning()->send();
                         }
 
                         if ($hideComments) {
@@ -254,13 +303,15 @@ class CommentsTable
                         // Audit log
                         \App\Models\AuditLog::create([
                             'user_id' => auth()->id(),
-                            'action' => $banType === 'full_account' ? 'ban_account' : 'ban_comments',
+                            'action' => in_array($banType, ['full_account', 'ip_full']) ? 'ban_account' : 'ban_comments',
                             'model_type' => Comment::class,
                             'model_id' => $record->id,
                             'new_values' => [
                                 'target_user' => $record->pseudo,
                                 'target' => $record->pseudo,
                                 'ban_type' => $banType,
+                                'duration' => $duration,
+                                'banned_until' => $bannedUntil?->toIso8601String(),
                                 'reason' => $reason,
                                 'comments_hidden' => $hideComments,
                             ],
@@ -268,13 +319,162 @@ class CommentsTable
                         ]);
                     }),
 
+                Action::make('edit_ban')
+                    ->label('Modifier sanction')
+                    ->icon('heroicon-o-adjustments-horizontal')
+                    ->color('warning')
+                    ->visible(function (Comment $record) {
+                        $isUserBanned = $record->user && ($record->user->isBanned() || $record->user->isCommentBanned());
+                        $isIpBanned = BannedIp::isIpBlocked($record->ip_address ?: null) || BannedIp::where('ip_hash', $record->ip_hash)->exists();
+                        return $isUserBanned || $isIpBanned;
+                    })
+                    ->modalHeading(fn (Comment $record) => 'Modifier la sanction de ' . $record->pseudo)
+                    ->modalDescription('Ajuster la durée (ex: retirer le caractère définitif), changer le type de restriction ou lever le bannissement.')
+                    ->fillForm(function (Comment $record): array {
+                        $user = $record->user;
+                        $ipRecord = BannedIp::where('ip_hash', $record->ip_hash)->first();
+                        $until = $user ? ($user->banned_until ?: $user->comment_banned_until) : ($ipRecord?->banned_until ? \Carbon\Carbon::parse($ipRecord->banned_until) : null);
+
+                        return [
+                            'action_choice' => 'modify',
+                            'ban_type' => ($user && $user->is_banned) || ($ipRecord && $ipRecord->ban_type === 'all') ? 'full_account' : 'comment_only',
+                            'duration' => $until ? 'custom' : 'permanent',
+                            'custom_banned_until' => $until,
+                            'reason' => $user ? ($user->ban_reason ?: $user->comment_ban_reason) : $ipRecord?->reason,
+                        ];
+                    })
+                    ->schema([
+                        Radio::make('action_choice')
+                            ->label('Action à réaliser')
+                            ->options([
+                                'modify' => 'Modifier la durée ou la portée (ex: retirer le ban définitif)',
+                                'lift' => 'Lever immédiatement la sanction (Débannir)',
+                            ])
+                            ->default('modify')
+                            ->live()
+                            ->required(),
+                        Radio::make('ban_type')
+                            ->label('Type de sanction')
+                            ->options([
+                                'full_account' => 'Bannissement Total (Accès au site et compte totalement bloqués)',
+                                'comment_only' => 'Bannissement des commentaires uniquement',
+                            ])
+                            ->visible(fn ($get) => $get('action_choice') === 'modify')
+                            ->required(fn ($get) => $get('action_choice') === 'modify'),
+                        Select::make('duration')
+                            ->label('Nouvelle durée du bannissement')
+                            ->options([
+                                '1_hour' => '1 heure',
+                                '3_hours' => '3 heures',
+                                '6_hours' => '6 heures',
+                                '12_hours' => '12 heures',
+                                '24_hours' => '24 heures (1 jour)',
+                                '3_days' => '3 jours',
+                                '7_days' => '7 jours (1 semaine)',
+                                '14_days' => '14 jours (2 semaines)',
+                                '30_days' => '30 jours (1 mois)',
+                                'custom' => 'Personnalisé (date et heure au choix)',
+                                'permanent' => 'Définitif (Permanent)',
+                            ])
+                            ->visible(fn ($get) => $get('action_choice') === 'modify')
+                            ->live()
+                            ->required(fn ($get) => $get('action_choice') === 'modify'),
+                        DateTimePicker::make('custom_banned_until')
+                            ->label('Date de fin du bannissement temporaire')
+                            ->visible(fn ($get) => $get('action_choice') === 'modify' && $get('duration') === 'custom')
+                            ->required(fn ($get) => $get('action_choice') === 'modify' && $get('duration') === 'custom')
+                            ->minDate(now()),
+                        TextInput::make('reason')
+                            ->label('Motif de la sanction')
+                            ->visible(fn ($get) => $get('action_choice') === 'modify'),
+                    ])
+                    ->action(function (Comment $record, array $data) {
+                        $choice = $data['action_choice'] ?? 'modify';
+
+                        if ($choice === 'lift') {
+                            if ($record->user) {
+                                $record->user->update([
+                                    'is_banned' => false,
+                                    'banned_at' => null,
+                                    'banned_until' => null,
+                                    'ban_reason' => null,
+                                    'is_comment_banned' => false,
+                                    'comment_banned_at' => null,
+                                    'comment_banned_until' => null,
+                                    'comment_ban_reason' => null,
+                                ]);
+                            }
+                            BannedIp::where('ip_hash', $record->ip_hash)->delete();
+                            Notification::make()->title('Sanction levée : utilisateur débanni avec succès')->success()->send();
+                            return;
+                        }
+
+                        $banType = $data['ban_type'] ?? 'comment_only';
+                        $duration = $data['duration'] ?? 'permanent';
+                        $reason = $data['reason'] ?? null;
+
+                        $bannedUntil = match ($duration) {
+                            '1_hour' => now()->addHour(),
+                            '3_hours' => now()->addHours(3),
+                            '6_hours' => now()->addHours(6),
+                            '12_hours' => now()->addHours(12),
+                            '24_hours' => now()->addDay(),
+                            '3_days' => now()->addDays(3),
+                            '7_days' => now()->addDays(7),
+                            '14_days' => now()->addDays(14),
+                            '30_days' => now()->addDays(30),
+                            'custom' => !empty($data['custom_banned_until']) ? \Carbon\Carbon::parse($data['custom_banned_until']) : null,
+                            default => null,
+                        };
+
+                        if ($record->user) {
+                            if ($banType === 'comment_only') {
+                                $record->user->update([
+                                    'is_banned' => false,
+                                    'banned_at' => null,
+                                    'banned_until' => null,
+                                    'ban_reason' => null,
+                                    'is_comment_banned' => true,
+                                    'comment_banned_at' => now(),
+                                    'comment_banned_until' => $bannedUntil,
+                                    'comment_ban_reason' => $reason,
+                                ]);
+                            } else {
+                                $record->user->update([
+                                    'is_banned' => true,
+                                    'banned_at' => now(),
+                                    'banned_until' => $bannedUntil,
+                                    'ban_reason' => $reason,
+                                    'is_comment_banned' => false,
+                                    'comment_banned_at' => null,
+                                    'comment_banned_until' => null,
+                                    'comment_ban_reason' => null,
+                                ]);
+                            }
+                        }
+
+                        BannedIp::updateOrInsert(
+                            ['ip_hash' => $record->ip_hash],
+                            [
+                                'ban_type' => $banType === 'full_account' ? 'all' : 'comments',
+                                'reason' => $reason,
+                                'banned_until' => $bannedUntil,
+                                'banned_by' => auth()->id(),
+                                'updated_at' => now(),
+                                'created_at' => now(),
+                            ]
+                        );
+
+                        Notification::make()->title($bannedUntil ? 'Sanction modifiée : ban temporaire appliqué (définitif retiré)' : 'Sanction modifiée : ban définitif appliqué')->success()->send();
+                    }),
+
                 Action::make('unban')
                     ->label('Débannir')
                     ->icon('heroicon-o-arrow-uturn-left')
                     ->color('success')
                     ->visible(function (Comment $record) {
-                        $isUserBanned = $record->user && ($record->user->is_banned || $record->user->is_comment_banned);
-                        $isIpBanned = BannedIp::where('ip_hash', $record->ip_hash)->exists();
+                        $isUserBanned = $record->user && ($record->user->isBanned() || $record->user->isCommentBanned());
+                        $isIpBanned = BannedIp::isIpBlocked($record->ip_address ?: null) || BannedIp::where('ip_hash', $record->ip_hash)->exists();
                         return $isUserBanned || $isIpBanned;
                     })
                     ->requiresConfirmation()
@@ -285,9 +485,11 @@ class CommentsTable
                             $record->user->update([
                                 'is_banned' => false,
                                 'banned_at' => null,
+                                'banned_until' => null,
                                 'ban_reason' => null,
                                 'is_comment_banned' => false,
                                 'comment_banned_at' => null,
+                                'comment_banned_until' => null,
                                 'comment_ban_reason' => null,
                             ]);
                         }

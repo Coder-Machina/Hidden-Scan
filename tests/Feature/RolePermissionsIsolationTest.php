@@ -67,7 +67,9 @@ class RolePermissionsIsolationTest extends TestCase
         $this->assertFalse(ArtistResource::canViewAny());
         $this->assertFalse(GenreResource::canViewAny());
         $this->assertFalse(TagResource::canViewAny());
-        $this->assertFalse(UserResource::canViewAny());
+        $this->assertTrue(UserResource::canViewAny());
+        $this->assertFalse(UserResource::canCreate());
+        $this->assertFalse(UserResource::canDelete(new User()));
         $this->assertFalse(AuditLogResource::canViewAny());
     }
 

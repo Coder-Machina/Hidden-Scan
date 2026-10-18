@@ -53,10 +53,21 @@ class ChapterForm
                 DateTimePicker::make('published_at')
                     ->label('Publié le'),
                 FileUpload::make('zip_file')
-                    ->label('Pages du chapitre (ZIP)')
+                    ->label('Pages du chapitre (ZIP, CBZ, TAR)')
                     ->disk('local')
                     ->directory('uploads/zips')
-                    ->acceptedFileTypes(['application/zip', 'application/x-zip-compressed'])
+                    ->acceptedFileTypes([
+                        'application/zip',
+                        'application/x-zip-compressed',
+                        'application/vnd.comicbook+zip',
+                        'application/x-cbz',
+                        'application/x-tar',
+                        'application/tar',
+                        'application/x-gtar',
+                        'multipart/x-tar',
+                        'application/octet-stream',
+                    ])
+                    ->helperText('Accepte les archives .zip, .cbz ou .tar contenant les pages d\'images du chapitre.')
                     ->maxSize(512000),
                 Select::make('max_page_width')
                     ->label('Redimensionnement des pages importées')
@@ -68,7 +79,7 @@ class ChapterForm
                         'original' => 'Taille originale (ne pas redimensionner)',
                     ])
                     ->default('1400')
-                    ->helperText('Redimensionne automatiquement les images trop volumineuses du ZIP.'),
+                    ->helperText('Redimensionne automatiquement les images trop volumineuses de l\'archive.'),
             ]);
     }
 }

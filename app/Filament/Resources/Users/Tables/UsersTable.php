@@ -113,7 +113,11 @@ class UsersTable
                     ->label('Bannir')
                     ->icon('heroicon-o-no-symbol')
                     ->color('danger')
-                    ->visible(fn (User $record) => !$record->isBanned() && $record->id !== auth()->id() && !$record->isFounder())
+                    ->visible(fn (User $record) => !$record->isBanned()
+                        && $record->id !== auth()->id()
+                        && !$record->isFounder()
+                        && (!auth()->user()?->hasAnyRole(['modo', 'Modo', 'moderateur', 'Modérateur']) || !$record->hasAnyRole(['admin', 'Admin', 'owner', 'Owner', 'modo', 'Modo', 'moderateur', 'Modérateur']))
+                    )
                     ->modalHeading(fn (User $record) => 'Sanctionner ' . $record->name)
                     ->schema([
                         Radio::make('ban_type')
@@ -267,11 +271,160 @@ class UsersTable
                         ]);
                     }),
 
+                Action::make('edit_ban')
+                    ->label('Modifier sanction')
+                    ->icon('heroicon-o-adjustments-horizontal')
+                    ->color('warning')
+                    ->visible(fn (User $record) => ($record->isBanned() || $record->isCommentBanned())
+                        && $record->id !== auth()->id()
+                        && !$record->isFounder()
+                        && (!auth()->user()?->hasAnyRole(['modo', 'Modo', 'moderateur', 'Modérateur']) || !$record->hasAnyRole(['admin', 'Admin', 'owner', 'Owner', 'modo', 'Modo', 'moderateur', 'Modérateur']))
+                    )
+                    ->modalHeading(fn (User $record) => 'Modifier la sanction de ' . $record->name)
+                    ->modalDescription('Ajuster la durée (ex: retirer le caractère définitif), changer le type de sanction ou lever le bannissement.')
+                    ->fillForm(fn (User $record): array => [
+                        'action_choice' => 'modify',
+                        'ban_type' => $record->is_banned ? 'full_account' : 'comment_only',
+                        'duration' => ($record->banned_until || $record->comment_banned_until) ? 'custom' : 'permanent',
+                        'custom_banned_until' => $record->banned_until ?: $record->comment_banned_until,
+                        'reason' => $record->ban_reason ?: $record->comment_ban_reason,
+                    ])
+                    ->schema([
+                        Radio::make('action_choice')
+                            ->label('Action à réaliser')
+                            ->options([
+                                'modify' => 'Modifier la durée ou la portée (ex: retirer le ban définitif)',
+                                'lift' => 'Lever immédiatement toute sanction (Débannir)',
+                            ])
+                            ->default('modify')
+                            ->live()
+                            ->required(),
+                        Radio::make('ban_type')
+                            ->label('Type de sanction')
+                            ->options([
+                                'full_account' => 'Bannissement Total (Accès au site et compte totalement bloqués)',
+                                'comment_only' => 'Bannissement des commentaires uniquement (peut lire mais pas commenter)',
+                            ])
+                            ->visible(fn ($get) => $get('action_choice') === 'modify')
+                            ->required(fn ($get) => $get('action_choice') === 'modify'),
+                        Select::make('duration')
+                            ->label('Nouvelle durée du bannissement')
+                            ->options([
+                                '1_hour' => '1 heure',
+                                '3_hours' => '3 heures',
+                                '6_hours' => '6 heures',
+                                '12_hours' => '12 heures',
+                                '24_hours' => '24 heures (1 jour)',
+                                '3_days' => '3 jours',
+                                '7_days' => '7 jours (1 semaine)',
+                                '14_days' => '14 jours (2 semaines)',
+                                '30_days' => '30 jours (1 mois)',
+                                'custom' => 'Personnalisé (date et heure au choix)',
+                                'permanent' => 'Définitif (Permanent)',
+                            ])
+                            ->visible(fn ($get) => $get('action_choice') === 'modify')
+                            ->live()
+                            ->required(fn ($get) => $get('action_choice') === 'modify'),
+                        DateTimePicker::make('custom_banned_until')
+                            ->label('Date de fin du bannissement temporaire')
+                            ->visible(fn ($get) => $get('action_choice') === 'modify' && $get('duration') === 'custom')
+                            ->required(fn ($get) => $get('action_choice') === 'modify' && $get('duration') === 'custom')
+                            ->minDate(now()),
+                        TextInput::make('reason')
+                            ->label('Motif de la sanction')
+                            ->visible(fn ($get) => $get('action_choice') === 'modify'),
+                    ])
+                    ->action(function (User $record, array $data) {
+                        $choice = $data['action_choice'] ?? 'modify';
+
+                        if ($choice === 'lift') {
+                            $record->update([
+                                'is_banned' => false,
+                                'banned_at' => null,
+                                'banned_until' => null,
+                                'ban_reason' => null,
+                                'is_comment_banned' => false,
+                                'comment_banned_at' => null,
+                                'comment_banned_until' => null,
+                                'comment_ban_reason' => null,
+                            ]);
+
+                            if ($record->last_ip_address) {
+                                $ip = $record->last_ip_address;
+                                DB::table('banned_ips')
+                                    ->where('ip_address', $ip)
+                                    ->orWhere('ip_hash', sha1($ip))
+                                    ->orWhere('ip_hash', hash('sha256', $ip . config('app.key')))
+                                    ->delete();
+                            }
+
+                            Notification::make()->title('Sanction levée : utilisateur débanni avec succès')->success()->send();
+                            return;
+                        }
+
+                        $banType = $data['ban_type'] ?? 'full_account';
+                        $duration = $data['duration'] ?? 'permanent';
+                        $reason = $data['reason'] ?? null;
+
+                        $bannedUntil = match ($duration) {
+                            '1_hour' => now()->addHour(),
+                            '3_hours' => now()->addHours(3),
+                            '6_hours' => now()->addHours(6),
+                            '12_hours' => now()->addHours(12),
+                            '24_hours' => now()->addDay(),
+                            '3_days' => now()->addDays(3),
+                            '7_days' => now()->addDays(7),
+                            '14_days' => now()->addDays(14),
+                            '30_days' => now()->addDays(30),
+                            'custom' => !empty($data['custom_banned_until']) ? \Carbon\Carbon::parse($data['custom_banned_until']) : null,
+                            default => null,
+                        };
+
+                        if ($banType === 'comment_only') {
+                            $record->update([
+                                'is_banned' => false,
+                                'banned_at' => null,
+                                'banned_until' => null,
+                                'ban_reason' => null,
+                                'is_comment_banned' => true,
+                                'comment_banned_at' => now(),
+                                'comment_banned_until' => $bannedUntil,
+                                'comment_ban_reason' => $reason,
+                            ]);
+                            Notification::make()->title($bannedUntil ? 'Sanction modifiée : ban commentaires temporaire' : 'Sanction modifiée : ban commentaires définitif')->warning()->send();
+                        } else {
+                            $record->update([
+                                'is_banned' => true,
+                                'banned_at' => now(),
+                                'banned_until' => $bannedUntil,
+                                'ban_reason' => $reason,
+                                'is_comment_banned' => false,
+                                'comment_banned_at' => null,
+                                'comment_banned_until' => null,
+                                'comment_ban_reason' => null,
+                            ]);
+                            Notification::make()->title($bannedUntil ? 'Sanction modifiée : ban temporaire appliqué (définitif retiré)' : 'Sanction modifiée : ban définitif appliqué')->danger()->send();
+                        }
+
+                        if ($record->last_ip_address) {
+                            $ip = $record->last_ip_address;
+                            DB::table('banned_ips')->where('ip_address', $ip)->orWhere('ip_hash', sha1($ip))->update([
+                                'ban_type' => $banType === 'full_account' ? 'all' : 'comments',
+                                'banned_until' => $bannedUntil,
+                                'reason' => $reason,
+                            ]);
+                        }
+                    }),
+
                 Action::make('unban')
                     ->label('Débannir')
                     ->icon('heroicon-o-arrow-uturn-left')
                     ->color('success')
-                    ->visible(fn (User $record) => $record->isBanned() || $record->isCommentBanned())
+                    ->visible(fn (User $record) => ($record->isBanned() || $record->isCommentBanned())
+                        && $record->id !== auth()->id()
+                        && !$record->isFounder()
+                        && (!auth()->user()?->hasAnyRole(['modo', 'Modo', 'moderateur', 'Modérateur']) || !$record->hasAnyRole(['admin', 'Admin', 'owner', 'Owner', 'modo', 'Modo', 'moderateur', 'Modérateur']))
+                    )
                     ->requiresConfirmation()
                     ->modalHeading(fn (User $record) => 'Débannir ' . $record->name)
                     ->action(function (User $record) {

@@ -32,6 +32,19 @@ class UserResource extends Resource
 
     public static function canViewAny(): bool
     {
+        return auth()->user()?->hasAnyRole([
+            'admin', 'Admin', 'owner', 'Owner',
+            'modo', 'Modo', 'moderateur', 'Modérateur',
+        ]) ?? false;
+    }
+
+    public static function canCreate(): bool
+    {
+        return auth()->user()?->hasAnyRole(['admin', 'Admin', 'owner', 'Owner']) ?? false;
+    }
+
+    public static function canDelete(\Illuminate\Database\Eloquent\Model $record): bool
+    {
         return auth()->user()?->hasAnyRole(['admin', 'Admin', 'owner', 'Owner']) ?? false;
     }
 

@@ -60,14 +60,44 @@ class ProcessChapterZip implements ShouldQueue
         $extractPath = storage_path('app/temp/chapter_' . $this->chapter->id);
 
         try {
-            if ($fullPath && $zip->open($fullPath) === true) {
-                if (!is_dir($extractPath)) {
-                    mkdir($extractPath, 0755, true);
+            $extracted = false;
+            $fileExt = strtolower(pathinfo($fullPath ?? $this->zipPath, PATHINFO_EXTENSION));
+
+            if (!is_dir($extractPath)) {
+                mkdir($extractPath, 0755, true);
+            }
+
+            // 1. Extraction si format TAR
+            if ($fileExt === 'tar' && $fullPath && file_exists($fullPath)) {
+                try {
+                    $phar = new \PharData($fullPath);
+                    $phar->extractTo($extractPath, null, true);
+                    $extracted = true;
+                } catch (\Throwable $e) {
+                    Log::warning("Échec extraction PharData TAR pour le chapitre {$this->chapter->id}: " . $e->getMessage());
                 }
+            }
+
+            // 2. Extraction si format ZIP ou CBZ
+            if (!$extracted && $fullPath && file_exists($fullPath) && $zip->open($fullPath) === true) {
                 $zip->extractTo($extractPath);
                 $zip->close();
-            } elseif (!is_dir($extractPath)) {
-                Log::error('Impossible d\'ouvrir le ZIP et aucun dossier temporaire trouvé', ['path' => $fullPath ?? $this->zipPath]);
+                $extracted = true;
+            }
+
+            // 3. Fallback PharData si le format était TAR sans extension
+            if (!$extracted && $fullPath && file_exists($fullPath)) {
+                try {
+                    $phar = new \PharData($fullPath);
+                    $phar->extractTo($extractPath, null, true);
+                    $extracted = true;
+                } catch (\Throwable $e) {
+                    // Ignorer
+                }
+            }
+
+            if (!$extracted && count(glob($extractPath . '/*')) === 0) {
+                Log::error('Impossible d\'ouvrir l\'archive (ZIP, CBZ, TAR) et aucun fichier temporaire extrait', ['path' => $fullPath ?? $this->zipPath]);
                 return;
             }
 
@@ -76,7 +106,10 @@ class ProcessChapterZip implements ShouldQueue
                 new \RecursiveDirectoryIterator($extractPath)
             );
             foreach ($iterator as $file) {
-                if ($file->isFile() && preg_match('/\.(jpg|jpeg|png|webp)$/i', $file->getFilename())) {
+                if ($file->isFile() 
+                    && !str_starts_with($file->getFilename(), '._') 
+                    && !str_contains($file->getPathname(), '__MACOSX') 
+                    && preg_match('/\.(jpg|jpeg|png|webp|avif|gif)$/i', $file->getFilename())) {
                     $files[] = $file->getPathname();
                 }
             }
