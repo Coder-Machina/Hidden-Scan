@@ -7,6 +7,7 @@ use App\Filament\Resources\Mangas\MangaResource;
 use App\Jobs\ScrapeMultiSourceMangaJob;
 use App\Jobs\ScrapeNewChaptersJob;
 use App\Models\ScraperManga;
+use App\Models\ScraperSource;
 use Filament\Actions\Action;
 use Filament\Actions\DeleteAction;
 use Filament\Notifications\Notification;
@@ -84,17 +85,51 @@ class EditManga extends EditRecord
         // 1. Gestion via le Repeater Multi-Sources
         if (isset($data['scraper_sources']) && is_array($data['scraper_sources'])) {
             $keptIds = [];
+            $priority = 1;
 
-            foreach ($data['scraper_sources'] as $index => $item) {
-                if (!empty($item['scraper_source_id']) && !empty($item['source_url'])) {
+            foreach ($data['scraper_sources'] as $item) {
+                $sourceUrl = trim($item['source_url'] ?? '');
+                if (empty($sourceUrl)) {
+                    continue;
+                }
+
+                $sourceId = $item['scraper_source_id'] ?? null;
+
+                // Auto-résolution ou création de la source si l'utilisateur a juste collé l'URL
+                if (empty($sourceId)) {
+                    $parsed = parse_url($sourceUrl);
+                    $host = $parsed['host'] ?? '';
+                    $scheme = $parsed['scheme'] ?? 'https';
+                    if ($host) {
+                        $baseUrl = "{$scheme}://{$host}";
+                        $source = ScraperSource::firstOrCreate(
+                            ['base_url' => $baseUrl],
+                            [
+                                'name'              => $host,
+                                'sel_chapter_list'  => '.wp-manga-chapter',
+                                'sel_chapter_title' => '.wp-manga-chapter a',
+                                'sel_chapter_url'   => '.wp-manga-chapter a',
+                                'sel_chapter_date'  => '.chapter-release-date',
+                                'sel_chapter_pages' => '.page-break img',
+                                'headers'           => [
+                                    'User-Agent' => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+                                ],
+                                'active'            => true,
+                            ]
+                        );
+                        $sourceId = $source->id;
+                    }
+                }
+
+                if ($sourceId) {
                     $sm = ScraperManga::updateOrCreate(
                         [
                             'manga_id'          => $this->record->id,
-                            'scraper_source_id' => $item['scraper_source_id'],
+                            'scraper_source_id' => $sourceId,
                         ],
                         [
-                            'source_url' => $item['source_url'],
-                            'priority'   => $index + 1,
+                            'source_url' => $sourceUrl,
+                            'priority'   => $priority++,
                             'status'     => $item['status'] ?? 'active',
                         ]
                     );

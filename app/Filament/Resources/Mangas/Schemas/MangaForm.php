@@ -196,16 +196,60 @@ class MangaForm
                             ->schema([
                                 Select::make('scraper_source_id')
                                     ->label('Site source')
-                                    ->placeholder('Sélectionner un site')
+                                    ->placeholder('Sélectionner ou créer un site...')
                                     ->options(fn () => \App\Models\ScraperSource::where('active', true)->pluck('name', 'id'))
-                                    ->required()
                                     ->searchable()
+                                    ->preload()
+                                    ->createOptionForm([
+                                        TextInput::make('name')
+                                            ->label('Nom du site source')
+                                            ->placeholder('Ex: Flame Comics, Asura, Reaper, etc.')
+                                            ->required(),
+                                        TextInput::make('base_url')
+                                            ->label('URL racine du site')
+                                            ->placeholder('https://flamecomics.xyz')
+                                            ->url()
+                                            ->required(),
+                                        TextInput::make('sel_chapter_list')
+                                            ->label('Sélecteur conteneur des chapitres')
+                                            ->default('.wp-manga-chapter')
+                                            ->required()
+                                            ->helperText('Ex: .wp-manga-chapter ou li.chapter-item'),
+                                        TextInput::make('sel_chapter_title')
+                                            ->label('Sélecteur titre')
+                                            ->default('.wp-manga-chapter a')
+                                            ->required(),
+                                        TextInput::make('sel_chapter_url')
+                                            ->label('Sélecteur lien')
+                                            ->default('.wp-manga-chapter a')
+                                            ->required(),
+                                        TextInput::make('sel_chapter_pages')
+                                            ->label('Sélecteur images pages')
+                                            ->default('.page-break img')
+                                            ->required()
+                                            ->helperText('Ex: .page-break img ou .reading-content img'),
+                                    ])
+                                    ->createOptionAction(fn ($action) => $action->modalHeading('Ajouter une nouvelle source de scraping')->modalSubmitActionLabel('Enregistrer ce site'))
+                                    ->helperText('Choisissez un site existant ou cliquez sur "+" pour en ajouter un nouveau.')
                                     ->columnSpan(4),
                                 TextInput::make('source_url')
                                     ->label('URL du manga sur ce site')
                                     ->placeholder('https://poseidon-scan.net/manga/solo-leveling')
                                     ->url()
                                     ->required()
+                                    ->live(onBlur: true)
+                                    ->afterStateUpdated(function ($state, callable $set, callable $get) {
+                                        if (!empty($state) && empty($get('scraper_source_id'))) {
+                                            $host = parse_url($state, PHP_URL_HOST);
+                                            if ($host) {
+                                                $existing = \App\Models\ScraperSource::where('base_url', 'like', "%{$host}%")->first();
+                                                if ($existing) {
+                                                    $set('scraper_source_id', $existing->id);
+                                                }
+                                            }
+                                        }
+                                    })
+                                    ->helperText('Collez l\'URL complète de la page manga sur ce site.')
                                     ->columnSpan(6),
                                 Select::make('status')
                                     ->label('Statut')

@@ -5,7 +5,9 @@ namespace App\Filament\Resources\Mangas\Pages;
 use App\Filament\Resources\Mangas\Actions\ImportMetadataAction;
 use App\Filament\Resources\Mangas\MangaResource;
 use App\Jobs\ScrapeFullMangaJob;
+use App\Jobs\ScrapeMultiSourceMangaJob;
 use App\Models\ScraperManga;
+use App\Models\ScraperSource;
 use Filament\Resources\Pages\CreateRecord;
 
 class CreateManga extends CreateRecord
@@ -25,13 +27,48 @@ class CreateManga extends CreateRecord
 
         if (!empty($data['scraper_sources']) && is_array($data['scraper_sources'])) {
             $createdAny = false;
-            foreach ($data['scraper_sources'] as $index => $sourceItem) {
-                if (!empty($sourceItem['scraper_source_id']) && !empty($sourceItem['source_url'])) {
+            $priority = 1;
+
+            foreach ($data['scraper_sources'] as $sourceItem) {
+                $sourceUrl = trim($sourceItem['source_url'] ?? '');
+                if (empty($sourceUrl)) {
+                    continue;
+                }
+
+                $sourceId = $sourceItem['scraper_source_id'] ?? null;
+
+                // Auto-résolution ou création de la source si l'utilisateur a juste collé l'URL
+                if (empty($sourceId)) {
+                    $parsed = parse_url($sourceUrl);
+                    $host = $parsed['host'] ?? '';
+                    $scheme = $parsed['scheme'] ?? 'https';
+                    if ($host) {
+                        $baseUrl = "{$scheme}://{$host}";
+                        $source = ScraperSource::firstOrCreate(
+                            ['base_url' => $baseUrl],
+                            [
+                                'name'              => $host,
+                                'sel_chapter_list'  => '.wp-manga-chapter',
+                                'sel_chapter_title' => '.wp-manga-chapter a',
+                                'sel_chapter_url'   => '.wp-manga-chapter a',
+                                'sel_chapter_date'  => '.chapter-release-date',
+                                'sel_chapter_pages' => '.page-break img',
+                                'headers'           => [
+                                    'User-Agent' => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+                                ],
+                                'active'            => true,
+                            ]
+                        );
+                        $sourceId = $source->id;
+                    }
+                }
+
+                if ($sourceId) {
                     ScraperManga::create([
                         'manga_id'          => $this->record->id,
-                        'scraper_source_id' => $sourceItem['scraper_source_id'],
-                        'source_url'        => $sourceItem['source_url'],
-                        'priority'          => $index + 1,
+                        'scraper_source_id' => $sourceId,
+                        'source_url'        => $sourceUrl,
+                        'priority'          => $priority++,
                         'status'            => $sourceItem['status'] ?? 'active',
                     ]);
                     $createdAny = true;
@@ -39,7 +76,7 @@ class CreateManga extends CreateRecord
             }
 
             if ($createdAny) {
-                \App\Jobs\ScrapeMultiSourceMangaJob::dispatch($this->record)->onQueue('scraper');
+                ScrapeMultiSourceMangaJob::dispatch($this->record)->onQueue('scraper');
             }
         } elseif (!empty($data['scraper_source_id']) && !empty($data['scraper_source_url'])) {
             $scraperManga = ScraperManga::create([

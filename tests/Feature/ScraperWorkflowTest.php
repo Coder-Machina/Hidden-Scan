@@ -388,4 +388,61 @@ class ScraperWorkflowTest extends TestCase
         $this->assertEquals('1', $sm2->fresh()->last_chapter_scraped);
         $this->assertEquals(1, $manga->chapters()->count());
     }
+
+    public function test_edit_manga_saves_repeater_with_uuid_keys_and_autocreates_source(): void
+    {
+        $role = Role::firstOrCreate(['name' => 'admin']);
+        $admin = User::factory()->create();
+        $admin->assignRole($role);
+
+        $genre = \App\Models\Genre::create(['name' => 'Action', 'slug' => 'action']);
+
+        $manga = Manga::create([
+            'title'       => 'Test Livewire Edit',
+            'slug'        => 'test-livewire-edit',
+            'synopsis'    => 'Synopsis',
+            'type'        => MangaType::MANGA,
+            'status'      => MangaStatus::EN_COURS,
+            'views_count' => 0,
+        ]);
+        $manga->genres()->attach($genre);
+
+        $uuid1 = '744e8ef0-99b0-4d11-8137-d5147c7975e9';
+        $uuid2 = 'b226e6ba-1111-2222-3333-444455556666';
+
+        // L'utilisateur colle une URL sans même avoir sélectionné de scraper_source_id (auto-détection de domaine)
+        Livewire::actingAs($admin)
+            ->test(\App\Filament\Resources\Mangas\Pages\EditManga::class, [
+                'record' => $manga->id,
+            ])
+            ->fillForm([
+                'scraper_sources' => [
+                    $uuid1 => [
+                        'scraper_source_id' => null,
+                        'source_url'        => 'https://new-custom-source.com/manga/solo',
+                        'status'            => 'active',
+                    ],
+                    $uuid2 => [
+                        'scraper_source_id' => null,
+                        'source_url'        => 'https://second-source.xyz/manga/solo',
+                        'status'            => 'active',
+                    ],
+                ],
+            ])
+            ->call('save')
+            ->assertHasNoFormErrors();
+
+        // Vérifie qu'aucune exception non-numérique n'a été levée et que les sources ont été créées
+        $this->assertDatabaseHas('scraper_sources', [
+            'base_url' => 'https://new-custom-source.com',
+        ]);
+        $this->assertDatabaseHas('scraper_sources', [
+            'base_url' => 'https://second-source.xyz',
+        ]);
+
+        $sources = $manga->fresh()->scraperMangas()->orderBy('priority')->get();
+        $this->assertCount(2, $sources);
+        $this->assertEquals(1, $sources[0]->priority);
+        $this->assertEquals(2, $sources[1]->priority);
+    }
 }
