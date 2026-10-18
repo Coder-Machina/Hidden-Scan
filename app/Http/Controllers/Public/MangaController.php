@@ -93,8 +93,9 @@ class MangaController extends Controller
 
         $firstChapter = $manga->chapters->sortBy('number')->first();
         $resumeChapter = $firstUnreadChapter ?? $firstChapter;
+        $ogImage = $manga->cover_url ?? asset('images/og-default.jpg');
 
-        return view('public.manga.show', compact('manga', 'readChapterIds', 'resumeChapter'));
+        return view('public.manga.show', compact('manga', 'readChapterIds', 'resumeChapter', 'ogImage'));
     }
 
     public function readFirst(string $slug)

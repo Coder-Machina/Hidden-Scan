@@ -6,6 +6,14 @@
         <meta name="color-scheme" content="dark">
         <meta name="csrf-token" content="{{ csrf_token() }}">
 
+        <meta property="og:title" content="{{ config('app.name', 'Hidden Scan') }}">
+        <meta property="og:type" content="website">
+        <meta property="og:image" content="{{ $ogImage ?? (View::hasSection('og_image') ? View::yieldContent('og_image') : asset('images/og-default.jpg')) }}">
+        <meta property="og:image:width" content="1200">
+        <meta property="og:image:height" content="630">
+        <meta name="twitter:card" content="summary_large_image">
+        <meta name="twitter:image" content="{{ $ogImage ?? (View::hasSection('og_image') ? View::yieldContent('og_image') : asset('images/og-default.jpg')) }}">
+
         <title>{{ config('app.name', 'Hidden Scan') }}</title>
 
         <link rel="icon" type="image/png" href="{{ asset('images/logo.png') }}">
@@ -20,7 +28,6 @@
     </head>
     <body class="bg-[var(--bg-base)] text-[var(--text-1)] min-h-screen antialiased font-sans">
         <div class="min-h-screen bg-[var(--bg-base)]">
-            @include('layouts.navigation')
 
             <!-- Page Heading -->
             @isset($header)

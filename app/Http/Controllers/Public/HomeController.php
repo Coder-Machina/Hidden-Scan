@@ -10,7 +10,17 @@ class HomeController extends Controller
 {
     public function index()
     {
-        $featured = Manga::where('is_featured', true)
+        $dernierChapitre = null;
+        if (auth()->check()) {
+            $dernierChapitre = auth()->user()
+                ->readingHistory()
+                ->with(['manga', 'chapter'])
+                ->latest()
+                ->first();
+        }
+
+        $featured = Manga::whereHas('chapters')
+            ->where('is_featured', true)
             ->with(['chapters' => function($q) {
                 $q->published()->orderBy('number', 'asc');
             }])
@@ -19,7 +29,10 @@ class HomeController extends Controller
             ->take(6)
             ->get();
 
-        $latest_updates = Manga::with(['chapters' => function($q) {
+        $latest_updates = Manga::whereHas('chapters', function($q) {
+                $q->where('status', \App\Enums\ChapterStatus::PUBLIE);
+            })
+            ->with(['chapters' => function($q) {
                 $q->where('status', \App\Enums\ChapterStatus::PUBLIE)
                   ->orderBy('number', 'desc')
                   ->orderBy('published_at', 'desc');
@@ -31,7 +44,8 @@ class HomeController extends Controller
             ->take(24)
             ->get();
 
-        $popular = Manga::orderBy('views_count', 'desc')
+        $popular = Manga::whereHas('chapters')
+            ->orderBy('views_count', 'desc')
             ->withCount('chapters')
             ->take(12)
             ->get();
@@ -39,6 +53,6 @@ class HomeController extends Controller
         $weeklySchedule = \App\Services\ScheduleService::getHydratedSchedule();
         $todayKey = \App\Services\ScheduleService::getTodayKey();
 
-        return view('public.home', compact('featured', 'latest_updates', 'popular', 'weeklySchedule', 'todayKey'));
+        return view('public.home', compact('featured', 'latest_updates', 'popular', 'weeklySchedule', 'todayKey', 'dernierChapitre'));
     }
 }

@@ -138,7 +138,7 @@ class AdminPanelAndProfileUpdatesTest extends TestCase
         $this->assertEquals('fr', config('app.fallback_locale'));
     }
 
-    public function test_home_page_includes_mangas_even_without_published_chapters(): void
+    public function test_home_page_excludes_mangas_without_published_chapters(): void
     {
         // 1 Manga with 0 chapters
         $manga = Manga::create([
@@ -148,7 +148,7 @@ class AdminPanelAndProfileUpdatesTest extends TestCase
             'slug' => 'one-piece-test',
         ]);
 
-        // 1 Manhwa with 0 chapters
+        // 1 Manhwa with 1 published chapter
         $manhwa = Manga::create([
             'title' => 'Solo Leveling',
             'type' => \App\Enums\MangaType::MANHWA,
@@ -156,19 +156,25 @@ class AdminPanelAndProfileUpdatesTest extends TestCase
             'slug' => 'solo-leveling-test',
         ]);
 
+        \App\Models\Chapter::create([
+            'manga_id' => $manhwa->id,
+            'number' => 1,
+            'title' => 'Ch 1',
+            'slug' => 'ch-1',
+            'status' => \App\Enums\ChapterStatus::PUBLIE,
+            'published_at' => now(),
+        ]);
+
         $response = $this->get(route('home'));
         $response->assertStatus(200);
 
-        // Both are present in the response
-        $response->assertSee('One Piece');
+        // Active manga with chapters is present, empty manga is excluded
         $response->assertSee('Solo Leveling');
+        $response->assertDontSee('One Piece');
 
-        // Both types are counted in the filter bar
         $latestUpdates = $response->viewData('latest_updates');
-        $this->assertTrue($latestUpdates->contains('slug', 'one-piece-test'));
+        $this->assertFalse($latestUpdates->contains('slug', 'one-piece-test'));
         $this->assertTrue($latestUpdates->contains('slug', 'solo-leveling-test'));
-        $this->assertEquals(1, $latestUpdates->where('type.value', 'manga')->count());
-        $this->assertEquals(1, $latestUpdates->where('type.value', 'manhwa')->count());
     }
 
     public function test_manga_show_places_comments_section_at_the_end(): void

@@ -66,6 +66,26 @@ class Manga extends Model
         return null;
     }
 
+    public function getStatutFormateAttribute(): string
+    {
+        $val = $this->status instanceof \App\Enums\MangaStatus
+            ? $this->status->value
+            : (string) ($this->status ?? $this->attributes['status'] ?? $this->attributes['statut'] ?? '');
+
+        return match($val) {
+            'en_cours'  => 'EN COURS',
+            'termine'   => 'TERMINÉ',
+            'pause'     => 'EN PAUSE',
+            'abandonne' => 'ABANDONNÉ',
+            default     => strtoupper(str_replace('_', ' ', $val)),
+        };
+    }
+
+    public function getStatusFormateAttribute(): string
+    {
+        return $this->statut_formate;
+    }
+
     public function authors()
     {
         return $this->belongsToMany(Author::class, 'author_manga');

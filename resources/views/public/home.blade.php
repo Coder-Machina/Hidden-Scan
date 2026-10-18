@@ -32,7 +32,7 @@
             <p class="hero-card__meta">
               {{ strtoupper($manga->type?->value ?? (string)$manga->type) }}
               <span>·</span>
-              {{ strtoupper($manga->status?->value ?? (string)$manga->status) }}
+              {{ $manga->statut_formate }}
             </p>
             <h1 class="hero-card__title">{{ $manga->title }}</h1>
             <p class="hero-card__synopsis">
@@ -74,54 +74,35 @@
     {{-- ═══ CONTENEUR DES SECTIONS PRINCIPALES (1360px BREATHE) ═══ --}}
     <div class="max-w-[1360px] w-full mx-auto px-4 sm:px-6 lg:px-8 space-y-14 pb-16">
 
-    {{-- ═══ 2. BANDEAU DE REPRISE DE LECTURE (Local & Sync) ═══ --}}
-    <div x-data="readingHistory()" x-init="init()" x-show="history.length > 0" x-cloak class="mb-12" data-aos="fade-in" data-aos-duration="400">
-        <div class="bg-[var(--bg-surface)] border border-[var(--border)] rounded-[6px] p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-            <div class="flex items-center gap-3 min-w-0">
-                <div class="w-9 h-9 rounded-[4px] bg-[var(--bg-raised)] border border-[var(--border)] flex items-center justify-center text-base text-[var(--accent)] flex-shrink-0">
-                    <x-lucide name="book-open" class="w-4 h-4 text-[var(--accent)]" />
-                </div>
-                <div class="min-w-0">
-                    <div class="flex items-center gap-2">
-                        <span class="text-label text-[var(--accent)] font-bold">Reprendre la lecture</span>
-                        <span class="text-[var(--border)]">•</span>
-                        <h3 class="font-heading font-semibold text-[15px] text-[var(--text-1)] truncate" x-text="latest.mangaTitle"></h3>
+    {{-- ═══ 2. BANDEAU DE REPRISE DE LECTURE (Connecté & Chapitre en cours) ═══ --}}
+    @auth
+      @if(isset($dernierChapitre) && $dernierChapitre !== null && $dernierChapitre->chapter && $dernierChapitre->manga)
+        <div class="mb-12 resume-bar" data-aos="fade-in" data-aos-duration="400">
+            <div class="bg-[var(--bg-surface)] border border-[var(--border)] rounded-[6px] p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                <div class="flex items-center gap-3 min-w-0">
+                    <div class="w-9 h-9 rounded-[4px] bg-[var(--bg-raised)] border border-[var(--border)] flex items-center justify-center text-base text-[var(--accent)] flex-shrink-0">
+                        <x-lucide name="book-open" class="w-4 h-4 text-[var(--accent)]" />
                     </div>
-                    <p class="text-caption text-[var(--text-2)] mt-0.5">
-                        Chapitre <span class="text-[var(--text-1)] font-medium" x-text="latest.chapter"></span>
-                        <template x-if="latest.percent">
-                            <span class="text-[var(--text-3)]" x-text="' (' + latest.percent + '%)'"></span>
-                        </template>
-                    </p>
+                    <div class="min-w-0">
+                        <div class="flex items-center gap-2">
+                            <span class="text-label text-[var(--accent)] font-bold">REPRENDRE LA LECTURE</span>
+                            <span class="text-[var(--border)]">•</span>
+                            <h3 class="font-heading font-semibold text-[15px] text-[var(--text-1)] truncate">{{ $dernierChapitre->manga->title ?? '' }}</h3>
+                        </div>
+                        <p class="text-caption text-[var(--text-2)] mt-0.5">
+                            <span>Chapitre {{ $dernierChapitre->chapter->number ?? '' }}</span>
+                        </p>
+                    </div>
                 </div>
+
+                <a href="{{ route('chapter.show', [$dernierChapitre->manga->slug, $dernierChapitre->chapter->slug]) }}" class="btn-primary !py-2 !px-4 !text-caption flex-shrink-0 w-full sm:w-auto text-center">
+                    <span>Continuer la lecture</span>
+                    <span>→</span>
+                </a>
             </div>
-
-            <a :href="'/chapitre/' + latest.mangaSlug + '/' + latest.slug" class="btn-primary !py-2 !px-4 !text-caption flex-shrink-0 w-full sm:w-auto text-center">
-                <span>Continuer la lecture</span>
-                <span>→</span>
-            </a>
         </div>
-    </div>
-
-    <script>
-    function readingHistory() {
-        return {
-            history: [],
-            get latest() {
-                return this.history[0] || {};
-            },
-            init() {
-                try {
-                    const data = window.HiddenScan ? window.HiddenScan.getProgress() : {};
-                    this.history = Object.values(data)
-                        .filter(item => item && item.mangaTitle && item.slug)
-                        .sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt))
-                        .slice(0, 3);
-                } catch(e) {}
-            }
-        }
-    }
-    </script>
+      @endif
+    @endauth
 
     {{-- ═══ 3. TOP TENDANCES & POPULAIRES (Grille 6 Colonnes) ═══ --}}
     @if(isset($popular) && $popular->count())

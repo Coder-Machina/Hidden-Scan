@@ -29,6 +29,14 @@ class ExampleTest extends TestCase
             'is_featured' => true,
         ]);
 
+        \App\Models\Chapter::create([
+            'manga_id' => $manga->id,
+            'number' => 1,
+            'title' => 'Chapitre 1',
+            'slug' => 'chapitre-1',
+            'status' => \App\Enums\ChapterStatus::PUBLIE,
+        ]);
+
         $response = $this->get('/');
 
         $response->assertStatus(200);

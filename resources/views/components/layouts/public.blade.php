@@ -1,4 +1,4 @@
-@props(['title' => 'Hidden Scan', 'description' => null, 'hideNavbar' => false, 'showFooter' => null, 'container' => true])
+@props(['title' => 'Hidden Scan', 'description' => null, 'hideNavbar' => false, 'showFooter' => null, 'container' => true, 'ogImage' => null])
 @php
     $authPayload = auth()->check() ? [
         'id' => auth()->id(),
@@ -26,6 +26,11 @@
     <meta property="og:title" content="{{ $title ?? 'Hidden Scan' }}">
     <meta property="og:description" content="{{ $description ?? 'Plateforme de lecture de mangas, manhwas et manhuas. Accès libre, sans compte.' }}">
     <meta property="og:type" content="website">
+    <meta property="og:image" content="{{ $ogImage ?? (View::hasSection('og_image') ? View::yieldContent('og_image') : asset('images/og-default.jpg')) }}">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:image" content="{{ $ogImage ?? (View::hasSection('og_image') ? View::yieldContent('og_image') : asset('images/og-default.jpg')) }}">
     <link rel="icon" type="image/png" href="{{ asset('images/logo.png') }}">
     <title>{{ $title ?? 'Hidden Scan' }}</title>
 
@@ -557,10 +562,18 @@
                 <a href="{{ route('leaderboard') }}" class="hover:text-[var(--text-1)] transition {{ request()->routeIs('leaderboard') ? 'text-[var(--text-1)] font-semibold' : '' }}">
                     Classement
                 </a>
-                <a href="{{ route('manga.random') }}" class="hover:text-[var(--accent)] transition flex items-center gap-1.5 text-caption font-semibold">
-                    <x-lucide name="dices" class="w-4 h-4 text-purple-400" />
-                    <span>Surprends-moi</span>
-                </a>
+
+                {{-- Lien conditionnel selon connexion --}}
+                @auth
+                    <a href="{{ route('library') }}" class="hover:text-[var(--text-1)] transition {{ request()->routeIs('library') ? 'text-[var(--text-1)] font-semibold' : '' }}">
+                        Bibliothèque
+                    </a>
+                @else
+                    <a href="{{ route('manga.random') }}" class="hover:text-[var(--accent)] transition flex items-center gap-1.5 text-caption font-semibold">
+                        <x-lucide name="dices" class="w-4 h-4 text-purple-400" />
+                        <span>Surprends-moi</span>
+                    </a>
+                @endauth
             </div>
 
             {{-- Actions Droite (Auth & Menus) --}}
@@ -728,9 +741,16 @@
             <a href="{{ route('leaderboard') }}" class="block px-3 py-2 rounded-[4px] text-body text-[var(--text-2)] hover:text-[var(--text-1)] hover:bg-[var(--bg-raised)]">
                 Classement
             </a>
+            @auth
             <a href="{{ route('library') }}" class="block px-3 py-2 rounded-[4px] text-body text-[var(--text-2)] hover:text-[var(--text-1)] hover:bg-[var(--bg-raised)]">
                 Bibliothèque
             </a>
+            @else
+            <a href="{{ route('manga.random') }}" class="block px-3 py-2 rounded-[4px] text-body text-[var(--accent)] hover:bg-[var(--bg-raised)] flex items-center gap-1.5 font-semibold">
+                <x-lucide name="dices" class="w-4 h-4 text-purple-400" />
+                <span>Surprends-moi</span>
+            </a>
+            @endauth
         </div>
     </nav>
     @endunless

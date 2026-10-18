@@ -1,5 +1,5 @@
-@use('Illuminate\Support\Facades\Storage')
-<x-layouts.public :title="$manga->title . ' — Hidden Scan'">
+<x-layouts.public :title="$manga->title . ' — Hidden Scan'" :og-image="$ogImage ?? $manga->cover_url ?? asset('images/og-default.jpg')">
+@section('og_image'){{ $manga->cover_url ?? asset('images/og-default.jpg') }}@endsection
 
     {{-- ═══ EN-TÊTE MANGA : Cover Gauche / Métadonnées Droite (Composant 6) ═══ --}}
     <div class="mb-10" data-aos="fade-in" data-aos-duration="400">
@@ -26,7 +26,7 @@
                         <span class="badge-official-hs">Projet Officiel</span>
                     @endif
                     <span class="badge-tag">{{ strtoupper($manga->type->value ?? 'MANGA') }}</span>
-                    <span class="badge-tag">{{ $manga->status->getLabel() }}</span>
+                    <span class="badge-tag">{{ $manga->statut_formate }}</span>
                     @if($manga->average_rating > 0)
                         <span class="badge-tag text-[var(--accent)] font-bold inline-flex items-center gap-1">
                             <x-lucide name="star" class="w-3.5 h-3.5 fill-current" />
@@ -122,7 +122,7 @@
                 
                 <div class="flex items-center justify-between text-caption py-1">
                     <span class="text-[var(--text-3)]">Statut</span>
-                    <span class="text-[var(--text-1)] font-semibold">{{ $manga->status->getLabel() }}</span>
+                    <span class="text-[var(--text-1)] font-semibold">{{ $manga->statut_formate }}</span>
                 </div>
                 <div class="flex items-center justify-between text-caption py-1">
                     <span class="text-[var(--text-3)]">Type</span>
