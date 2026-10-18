@@ -29,6 +29,12 @@ class ScrapeNewChaptersJob implements ShouldQueue
         @ini_set('memory_limit', '512M');
 
         try {
+            $manga = $this->scraperManga->manga;
+            if ($manga && $manga->scraperMangas()->count() > 1) {
+                $scraperService->syncMangaMultiSources($manga);
+                return;
+            }
+
             $this->scraperManga->update([
                 'last_checked_at' => now(),
             ]);

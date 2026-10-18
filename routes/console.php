@@ -12,13 +12,19 @@ Artisan::command('inspire', function () {
 Schedule::command('chapters:publish-scheduled')->everyMinute();
 
 Schedule::call(function () {
-    \App\Models\ScraperManga::where('status', 'active')
+    $mangaIds = \App\Models\ScraperManga::where('status', 'active')
         ->where(function ($q) {
             $q->whereNull('last_checked_at')
               ->orWhere('last_checked_at', '<', now()->subHour());
         })
-        ->each(fn($sm) =>
-            \App\Jobs\ScrapeNewChaptersJob::dispatch($sm)->onQueue('scraper')
-        );
+        ->distinct()
+        ->pluck('manga_id');
+
+    foreach ($mangaIds as $mangaId) {
+        $manga = \App\Models\Manga::find($mangaId);
+        if ($manga) {
+            \App\Jobs\ScrapeMultiSourceMangaJob::dispatch($manga)->onQueue('scraper');
+        }
+    }
 })->hourly()->name('auto-sync-chapitres');
 

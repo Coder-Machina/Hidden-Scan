@@ -6,6 +6,7 @@ use App\Enums\ChapterStatus;
 use App\Enums\MangaStatus;
 use App\Enums\MangaType;
 use App\Jobs\ScrapeFullMangaJob;
+use App\Jobs\ScrapeMultiSourceMangaJob;
 use App\Jobs\ScrapeNewChaptersJob;
 use App\Models\Chapter;
 use App\Models\Manga;
@@ -13,10 +14,13 @@ use App\Models\ScraperManga;
 use App\Models\ScraperSource;
 use App\Models\User;
 use App\Services\ScraperService;
+use Filament\Actions\DeleteAction;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\Facades\Storage;
+use Livewire\Livewire;
+use Spatie\Permission\Models\Role;
 use Tests\TestCase;
 
 class ScraperWorkflowTest extends TestCase
@@ -56,11 +60,13 @@ class ScraperWorkflowTest extends TestCase
             'manga_id'             => $manga->id,
             'scraper_source_id'    => $source->id,
             'source_url'           => 'https://poseidon-scan.net/manga/test-manga',
+            'priority'             => 1,
             'last_chapter_scraped' => '1',
             'status'               => 'active',
         ]);
 
         $this->assertTrue($manga->scraperManga->is($scraperManga));
+        $this->assertCount(1, $manga->scraperMangas);
         $this->assertTrue($scraperManga->manga->is($manga));
         $this->assertTrue($scraperManga->scraperSource->is($source));
     }
@@ -94,6 +100,7 @@ class ScraperWorkflowTest extends TestCase
             'manga_id'          => $manga->id,
             'scraper_source_id' => $source->id,
             'source_url'        => 'https://poseidon-scan.net/manga/test-manga-sync',
+            'priority'          => 1,
             'status'            => 'active',
         ]);
 
@@ -139,6 +146,7 @@ class ScraperWorkflowTest extends TestCase
             'manga_id'          => $manga->id,
             'scraper_source_id' => $source->id,
             'source_url'        => 'https://poseidon-scan.net/manga/solo-leveling-test',
+            'priority'          => 1,
             'status'            => 'active',
         ]);
 
@@ -162,7 +170,6 @@ class ScraperWorkflowTest extends TestCase
             </div>
         ';
 
-        // Fake 1x1 transparent GIF/JPEG image content
         $fakeImageBytes = base64_decode('R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7');
 
         Http::fake([
@@ -176,7 +183,6 @@ class ScraperWorkflowTest extends TestCase
         // 1. Test chapter list
         $chapters = $service->getChapterList($scraperManga);
         $this->assertCount(2, $chapters);
-        // Sequential check (sorted ascending)
         $this->assertEquals(1.0, $chapters[0]['number']);
         $this->assertEquals('https://poseidon-scan.net/manga/solo-leveling-test/chapitre-1', $chapters[0]['url']);
         $this->assertEquals(2.0, $chapters[1]['number']);
@@ -195,5 +201,191 @@ class ScraperWorkflowTest extends TestCase
         $this->assertEquals(ChapterStatus::PUBLIE, $chapter->status);
         $this->assertEquals(2, $chapter->pages()->count());
         $this->assertEquals('1', $scraperManga->fresh()->last_chapter_scraped);
+    }
+
+    public function test_filament_scraper_source_crud(): void
+    {
+        $role = Role::firstOrCreate(['name' => 'admin']);
+        $admin = User::factory()->create();
+        $admin->assignRole($role);
+
+        // 1. List
+        Livewire::actingAs($admin)
+            ->test(\App\Filament\Resources\ScraperSources\Pages\ListScraperSources::class)
+            ->assertSuccessful();
+
+        // 2. Create
+        Livewire::actingAs($admin)
+            ->test(\App\Filament\Resources\ScraperSources\Pages\CreateScraperSource::class)
+            ->fillForm([
+                'name'              => 'Flame Comics',
+                'base_url'          => 'https://flamecomics.xyz',
+                'sel_chapter_list'  => '.chapter-item',
+                'sel_chapter_title' => '.chapter-item a',
+                'sel_chapter_url'   => '.chapter-item a',
+                'sel_chapter_pages' => '.reading-content img',
+                'active'            => true,
+            ])
+            ->call('create')
+            ->assertHasNoFormErrors();
+
+        $this->assertDatabaseHas('scraper_sources', [
+            'name'     => 'Flame Comics',
+            'base_url' => 'https://flamecomics.xyz',
+        ]);
+    }
+
+    public function test_intelligent_relay_takes_over_when_primary_source_is_behind(): void
+    {
+        $sourcePrimary = ScraperSource::create([
+            'name'              => 'Source A (Primary)',
+            'base_url'          => 'https://source-a.test',
+            'sel_chapter_list'  => '.wp-manga-chapter',
+            'sel_chapter_title' => '.wp-manga-chapter a',
+            'sel_chapter_url'   => '.wp-manga-chapter a',
+            'sel_chapter_pages' => '.page-break img',
+            'active'            => true,
+        ]);
+
+        $sourceBackup = ScraperSource::create([
+            'name'              => 'Source B (Backup Relay)',
+            'base_url'          => 'https://source-b.test',
+            'sel_chapter_list'  => '.wp-manga-chapter',
+            'sel_chapter_title' => '.wp-manga-chapter a',
+            'sel_chapter_url'   => '.wp-manga-chapter a',
+            'sel_chapter_pages' => '.page-break img',
+            'active'            => true,
+        ]);
+
+        $manga = Manga::create([
+            'title'       => 'Multi Source Manga',
+            'slug'        => 'multi-source-manga',
+            'synopsis'    => 'Synopsis',
+            'type'        => MangaType::MANGA,
+            'status'      => MangaStatus::EN_COURS,
+            'views_count' => 0,
+        ]);
+
+        // Source 1 (Priorité 1)
+        $sm1 = ScraperManga::create([
+            'manga_id'          => $manga->id,
+            'scraper_source_id' => $sourcePrimary->id,
+            'source_url'        => 'https://source-a.test/manga/test',
+            'priority'          => 1,
+            'status'            => 'active',
+        ]);
+
+        // Source 2 (Priorité 2 - Secours)
+        $sm2 = ScraperManga::create([
+            'manga_id'          => $manga->id,
+            'scraper_source_id' => $sourceBackup->id,
+            'source_url'        => 'https://source-b.test/manga/test',
+            'priority'          => 2,
+            'status'            => 'active',
+        ]);
+
+        // Source 1 est en retard : elle a seulement le chapitre 1
+        $htmlSourceA = '<li class="wp-manga-chapter"><a href="https://source-a.test/ch1">Chapitre 1</a></li>';
+
+        // Source 2 est plus à jour : elle a le chapitre 1 ET le chapitre 2 !
+        $htmlSourceB = '
+            <li class="wp-manga-chapter"><a href="https://source-b.test/ch1">Chapitre 1</a></li>
+            <li class="wp-manga-chapter"><a href="https://source-b.test/ch2">Chapitre 2</a></li>
+        ';
+
+        $fakeImg = base64_decode('R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7');
+
+        Http::fake([
+            'https://source-a.test/manga/test' => Http::response($htmlSourceA, 200),
+            'https://source-a.test/ch1' => Http::response('<div class="page-break"><img src="https://source-a.test/p1.jpg" /></div>', 200),
+            'https://source-a.test/p1.jpg' => Http::response($fakeImg, 200, ['Content-Type' => 'image/gif']),
+
+            'https://source-b.test/manga/test' => Http::response($htmlSourceB, 200),
+            'https://source-b.test/ch2' => Http::response('<div class="page-break"><img src="https://source-b.test/p2.jpg" /></div>', 200),
+            'https://source-b.test/p2.jpg' => Http::response($fakeImg, 200, ['Content-Type' => 'image/gif']),
+        ]);
+
+        $service = new ScraperService();
+        $result = $service->syncMangaMultiSources($manga);
+
+        // 2 chapitres importés au total : Chap 1 via Source A, puis Chap 2 relayé via Source B !
+        $this->assertEquals(2, $result['imported']);
+        $this->assertEquals(2, $manga->chapters()->count());
+        $this->assertTrue($manga->chapters()->where('number', 1)->exists());
+        $this->assertTrue($manga->chapters()->where('number', 2)->exists());
+        $this->assertEquals('1', $sm1->fresh()->last_chapter_scraped);
+        $this->assertEquals('2', $sm2->fresh()->last_chapter_scraped);
+    }
+
+    public function test_intelligent_relay_falls_back_when_primary_source_fails(): void
+    {
+        $sourcePrimary = ScraperSource::create([
+            'name'              => 'Broken Source A',
+            'base_url'          => 'https://broken-a.test',
+            'sel_chapter_list'  => '.wp-manga-chapter',
+            'sel_chapter_title' => '.wp-manga-chapter a',
+            'sel_chapter_url'   => '.wp-manga-chapter a',
+            'sel_chapter_pages' => '.page-break img',
+            'active'            => true,
+        ]);
+
+        $sourceBackup = ScraperSource::create([
+            'name'              => 'Working Source B',
+            'base_url'          => 'https://working-b.test',
+            'sel_chapter_list'  => '.wp-manga-chapter',
+            'sel_chapter_title' => '.wp-manga-chapter a',
+            'sel_chapter_url'   => '.wp-manga-chapter a',
+            'sel_chapter_pages' => '.page-break img',
+            'active'            => true,
+        ]);
+
+        $manga = Manga::create([
+            'title'       => 'Broken Primary Manga',
+            'slug'        => 'broken-primary-manga',
+            'synopsis'    => 'Synopsis',
+            'type'        => MangaType::MANGA,
+            'status'      => MangaStatus::EN_COURS,
+            'views_count' => 0,
+        ]);
+
+        $sm1 = ScraperManga::create([
+            'manga_id'          => $manga->id,
+            'scraper_source_id' => $sourcePrimary->id,
+            'source_url'        => 'https://broken-a.test/manga/test',
+            'priority'          => 1,
+            'status'            => 'active',
+        ]);
+
+        $sm2 = ScraperManga::create([
+            'manga_id'          => $manga->id,
+            'scraper_source_id' => $sourceBackup->id,
+            'source_url'        => 'https://working-b.test/manga/test',
+            'priority'          => 2,
+            'status'            => 'active',
+        ]);
+
+        $fakeImg = base64_decode('R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7');
+
+        Http::fake([
+            // Source 1 plante avec une erreur 500 serveur
+            'https://broken-a.test/*' => Http::response('Internal Server Error', 500),
+
+            // Source 2 fonctionne et fournit le chapitre 1
+            'https://working-b.test/manga/test' => Http::response('<li class="wp-manga-chapter"><a href="https://working-b.test/ch1">Chapitre 1</a></li>', 200),
+            'https://working-b.test/ch1' => Http::response('<div class="page-break"><img src="https://working-b.test/p1.jpg" /></div>', 200),
+            'https://working-b.test/p1.jpg' => Http::response($fakeImg, 200, ['Content-Type' => 'image/gif']),
+        ]);
+
+        $service = new ScraperService();
+        $result = $service->syncMangaMultiSources($manga);
+
+        // Le relais a fonctionné : Source A est en erreur, Source B a pris le relais et importé le chapitre 1 !
+        $this->assertEquals(1, $result['imported']);
+        $this->assertEquals('error', $sm1->fresh()->status);
+        $this->assertNotNull($sm1->fresh()->last_error);
+
+        $this->assertEquals('active', $sm2->fresh()->status);
+        $this->assertEquals('1', $sm2->fresh()->last_chapter_scraped);
+        $this->assertEquals(1, $manga->chapters()->count());
     }
 }

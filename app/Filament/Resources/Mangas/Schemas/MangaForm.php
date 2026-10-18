@@ -3,6 +3,8 @@
 namespace App\Filament\Resources\Mangas\Schemas;
 
 use Filament\Forms\Components\FileUpload;
+use Filament\Forms\Components\Placeholder;
+use Filament\Forms\Components\Repeater;
 use Filament\Schemas\Components\Grid;
 use Filament\Schemas\Components\Section;
 use Filament\Forms\Components\Select;
@@ -178,66 +180,114 @@ class MangaForm
                             ->helperText('Laissez vide pour utiliser le salon automatique (officiel ou sorties site).'),
                     ]),
 
-                Section::make('Source des Chapitres')
-                    ->description('Lier une URL externe pour importer les chapitres automatiquement.')
+                Section::make('Sources des Chapitres (Multi-sources & Relais intelligent)')
+                    ->description('Configurez une ou plusieurs sources ordonnées par priorité. Si la source principale est en panne ou en retard, les sources suivantes prennent automatiquement le relais !')
                     ->icon('heroicon-o-bolt')
-                    ->columns(2)
                     ->schema([
-                        Select::make('scraper_source_id')
-                            ->label('Site source')
-                            ->placeholder('— Aucune source (import manuel) —')
-                            ->options(fn () => \App\Models\ScraperSource::where('active', true)->pluck('name', 'id'))
-                            ->helperText('Sélectionne le site depuis lequel importer les chapitres.')
-                            ->live()
-                            ->searchable(),
-                        TextInput::make('scraper_source_url')
-                            ->label('URL du manga sur ce site')
-                            ->placeholder('https://poseidon-scan.net/manga/solo-leveling')
-                            ->url()
-                            ->visible(fn ($get) => !empty($get('scraper_source_id')))
-                            ->helperText('Colle l\'URL exacte de la page manga sur le site source. Les chapitres seront importés automatiquement en arrière-plan.')
-                            ->columnSpanFull(),
-                        \Filament\Forms\Components\Placeholder::make('scraper_status')
-                            ->label('Statut scraping')
-                            ->visible(fn ($record) => $record && $record->scraperManga)
+                        Repeater::make('scraper_sources')
+                            ->label('Sources de chapitres')
+                            ->itemLabel(function (array $state): ?string {
+                                $sourceName = !empty($state['scraper_source_id'])
+                                    ? (\App\Models\ScraperSource::find($state['scraper_source_id'])?->name ?? 'Source')
+                                    : 'Nouvelle source';
+                                $url = !empty($state['source_url']) ? ' — ' . \Illuminate\Support\Str::limit($state['source_url'], 35) : '';
+                                return "{$sourceName}{$url}";
+                            })
+                            ->schema([
+                                Select::make('scraper_source_id')
+                                    ->label('Site source')
+                                    ->placeholder('Sélectionner un site')
+                                    ->options(fn () => \App\Models\ScraperSource::where('active', true)->pluck('name', 'id'))
+                                    ->required()
+                                    ->searchable()
+                                    ->columnSpan(4),
+                                TextInput::make('source_url')
+                                    ->label('URL du manga sur ce site')
+                                    ->placeholder('https://poseidon-scan.net/manga/solo-leveling')
+                                    ->url()
+                                    ->required()
+                                    ->columnSpan(6),
+                                Select::make('status')
+                                    ->label('Statut')
+                                    ->options([
+                                        'active' => 'Actif',
+                                        'paused' => 'En pause',
+                                    ])
+                                    ->default('active')
+                                    ->required()
+                                    ->columnSpan(2),
+                            ])
+                            ->columns(12)
+                            ->reorderable()
+                            ->collapsible()
+                            ->addActionLabel('+ Ajouter une source (principale ou relais)')
+                            ->helperText('Glissez-déposez pour définir l\'ordre de priorité : la 1ère source est principale, la 2ème est le relais de secours n°1, etc.'),
+
+                        Placeholder::make('scraper_multi_status')
+                            ->label('Tableau de bord du relais intelligent')
+                            ->visible(fn ($record) => $record && $record->scraperMangas()->exists())
                             ->columnSpanFull()
                             ->content(function ($record) {
-                                if (!$record || !$record->scraperManga) return null;
-                                $sm = $record->scraperManga;
-                                $statusBadge = match($sm->status) {
-                                    'active' => '<span class="px-2 py-1 text-xs font-semibold rounded bg-emerald-500/20 text-emerald-400">Actif</span>',
-                                    'paused' => '<span class="px-2 py-1 text-xs font-semibold rounded bg-amber-500/20 text-amber-400">En pause</span>',
-                                    'error' => '<span class="px-2 py-1 text-xs font-semibold rounded bg-rose-500/20 text-rose-400">Erreur</span>',
-                                    default => ucfirst($sm->status),
-                                };
-                                $lastChap = $sm->last_chapter_scraped ? htmlspecialchars($sm->last_chapter_scraped) : 'Aucun';
-                                $lastCheck = $sm->last_checked_at ? $sm->last_checked_at->diffForHumans() : 'Jamais';
-                                $errorHtml = $sm->last_error ? '<div class="mt-2 text-xs text-rose-400">⚠️ ' . htmlspecialchars($sm->last_error) . '</div>' : '';
-                                $syncRoute = route('admin.scraper.sync', $sm);
+                                if (!$record) return null;
+                                $sources = $record->scraperMangas()->with('scraperSource')->orderBy('priority', 'asc')->get();
+                                if ($sources->isEmpty()) return null;
+
+                                $rowsHtml = '';
+                                foreach ($sources as $index => $sm) {
+                                    $rank = $index === 0
+                                        ? '<span class="px-2 py-0.5 text-xs font-bold rounded bg-amber-500/20 text-amber-400">#1 Principale</span>'
+                                        : '<span class="px-2 py-0.5 text-xs font-semibold rounded bg-blue-500/20 text-blue-400">#' . ($index + 1) . ' Secours</span>';
+                                    $statusBadge = match($sm->status) {
+                                        'active' => '<span class="px-2 py-0.5 text-xs font-semibold rounded bg-emerald-500/20 text-emerald-400">Actif</span>',
+                                        'paused' => '<span class="px-2 py-0.5 text-xs font-semibold rounded bg-gray-500/20 text-gray-400">En pause</span>',
+                                        'error'  => '<span class="px-2 py-0.5 text-xs font-semibold rounded bg-rose-500/20 text-rose-400">Erreur</span>',
+                                        default  => ucfirst($sm->status),
+                                    };
+                                    $sourceName = htmlspecialchars($sm->scraperSource?->name ?? 'Source inconnue');
+                                    $lastChap = $sm->last_chapter_scraped ? htmlspecialchars($sm->last_chapter_scraped) : 'Aucun';
+                                    $lastCheck = $sm->last_checked_at ? $sm->last_checked_at->diffForHumans() : 'Jamais';
+                                    $errorMsg = $sm->last_error ? '<div class="text-xs text-rose-400 mt-1">⚠️ ' . htmlspecialchars($sm->last_error) . '</div>' : '';
+
+                                    $rowsHtml .= "
+                                        <tr class='border-b border-gray-800/60'>
+                                            <td class='py-2 px-3'>{$rank}</td>
+                                            <td class='py-2 px-3 font-medium text-gray-200'>{$sourceName}</td>
+                                            <td class='py-2 px-3'>{$statusBadge}</td>
+                                            <td class='py-2 px-3 font-mono font-bold text-gray-300'>{$lastChap}</td>
+                                            <td class='py-2 px-3 text-gray-400 text-xs'>{$lastCheck}{$errorMsg}</td>
+                                        </tr>
+                                    ";
+                                }
+
+                                $syncRoute = route('admin.scraper.sync', $sources->first());
                                 $csrfToken = csrf_token();
 
                                 return new \Illuminate\Support\HtmlString("
-                                    <div class='p-4 rounded-xl bg-gray-900/60 border border-gray-700/60 space-y-3 text-sm'>
+                                    <div class='p-4 rounded-xl bg-gray-900/70 border border-gray-700/60 space-y-3 text-sm'>
                                         <div class='flex items-center justify-between'>
-                                            <span class='text-gray-400 font-medium'>Statut :</span>
-                                            <div>{$statusBadge}</div>
-                                        </div>
-                                        <div class='flex items-center justify-between'>
-                                            <span class='text-gray-400 font-medium'>Dernier chapitre importé :</span>
-                                            <span class='font-mono font-bold text-gray-200'>{$lastChap}</span>
-                                        </div>
-                                        <div class='flex items-center justify-between'>
-                                            <span class='text-gray-400 font-medium'>Dernière vérification :</span>
-                                            <span class='text-gray-300'>{$lastCheck}</span>
-                                        </div>
-                                        {$errorHtml}
-                                        <div class='pt-2 border-t border-gray-800 flex justify-end'>
+                                            <span class='font-semibold text-gray-200 flex items-center gap-1.5'>
+                                                <span>⚡</span> État en temps réel des sources & relais
+                                            </span>
                                             <form method='POST' action='{$syncRoute}' class='inline'>
                                                 <input type='hidden' name='_token' value='{$csrfToken}'>
-                                                <button type='submit' class='px-3 py-1.5 text-xs font-medium rounded-lg bg-gray-800 hover:bg-gray-700 text-gray-200 border border-gray-600 transition shadow-sm'>
-                                                    ↻ Vérifier maintenant
+                                                <button type='submit' class='px-3 py-1.5 text-xs font-medium rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white transition shadow'>
+                                                    ↻ Déclencher le relais intelligent
                                                 </button>
                                             </form>
+                                        </div>
+                                        <div class='overflow-x-auto'>
+                                            <table class='w-full text-left text-xs'>
+                                                <thead>
+                                                    <tr class='text-gray-400 border-b border-gray-800 uppercase tracking-wider text-[11px]'>
+                                                        <th class='py-2 px-3'>Priorité</th>
+                                                        <th class='py-2 px-3'>Source</th>
+                                                        <th class='py-2 px-3'>Statut</th>
+                                                        <th class='py-2 px-3'>Dernier chap.</th>
+                                                        <th class='py-2 px-3'>Dernière vérif.</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>{$rowsHtml}</tbody>
+                                            </table>
                                         </div>
                                     </div>
                                 ");

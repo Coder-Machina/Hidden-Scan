@@ -138,6 +138,11 @@ class Manga extends Model
 
     public function scraperManga()
     {
-        return $this->hasOne(ScraperManga::class);
+        return $this->hasOne(ScraperManga::class)->orderBy('priority', 'asc');
+    }
+
+    public function scraperMangas()
+    {
+        return $this->hasMany(ScraperManga::class)->orderBy('priority', 'asc');
     }
 }

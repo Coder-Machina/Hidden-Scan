@@ -14,6 +14,7 @@ class ScraperManga extends Model
         'manga_id',
         'scraper_source_id',
         'source_url',
+        'priority',
         'last_chapter_scraped',
         'last_checked_at',
         'status',
@@ -21,6 +22,7 @@ class ScraperManga extends Model
     ];
 
     protected $casts = [
+        'priority'        => 'integer',
         'last_checked_at' => 'datetime',
     ];
 

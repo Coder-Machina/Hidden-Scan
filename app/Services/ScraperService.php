@@ -300,4 +300,100 @@ class ScraperService
 
         return $chapter;
     }
+
+    /**
+     * Synchronise intelligemment les chapitres d'un manga en explorant toutes ses sources configurées,
+     * selon leur ordre de priorité (Relais intelligent & Fallback en cas de panne ou de retard).
+     *
+     * @return array{imported: int, errors: array}
+     */
+    public function syncMangaMultiSources(\App\Models\Manga $manga): array
+    {
+        $sources = $manga->scraperMangas()
+            ->with('scraperSource')
+            ->where('status', '!=', 'paused')
+            ->orderBy('priority', 'asc')
+            ->get();
+
+        if ($sources->isEmpty()) {
+            return ['imported' => 0, 'errors' => []];
+        }
+
+        $importedTotal = 0;
+        $errors = [];
+
+        // 1. Récupère la liste des chapitres déjà existants avec des pages pour ce manga
+        $existingChapters = Chapter::where('manga_id', $manga->id)
+            ->whereHas('pages')
+            ->pluck('number')
+            ->map(fn($n) => (float) $n)
+            ->all();
+
+        // 2. Parcourt chaque source par ordre de priorité pour combler les manques
+        foreach ($sources as $index => $scraperManga) {
+            $sourceModel = $scraperManga->scraperSource ?? $scraperManga->source;
+            if (!$sourceModel || !$sourceModel->active) {
+                continue;
+            }
+
+            $sourceLabel = "Source #" . ($index + 1) . " (« {$sourceModel->name} »)";
+
+            try {
+                // Tente de récupérer la liste des chapitres sur cette source
+                $chapters = $this->getChapterList($scraperManga);
+
+                // Si succès, met à jour le statut et reset l'erreur éventuelle
+                $scraperManga->update([
+                    'last_checked_at' => now(),
+                    'status'          => 'active',
+                    'last_error'      => null,
+                ]);
+
+                // Identifie les chapitres disponibles sur cette source mais absents en base
+                $missingChapters = array_filter($chapters, function ($ch) use ($existingChapters) {
+                    return !in_array((float) $ch['number'], $existingChapters, true);
+                });
+
+                if (!empty($missingChapters)) {
+                    Log::info("{$sourceLabel} : " . count($missingChapters) . " nouveaux chapitres détectés pour « {$manga->title} ».");
+
+                    foreach ($missingChapters as $chData) {
+                        try {
+                            $chapter = $this->scrapeSingleChapter($scraperManga, $chData);
+                            if ($chapter && $chapter->pages()->exists()) {
+                                $existingChapters[] = (float) $chData['number'];
+                                $importedTotal++;
+                                $scraperManga->update([
+                                    'last_chapter_scraped' => (string) $chData['number'],
+                                ]);
+                                Log::info("{$sourceLabel} : Chapitre {$chData['number']} importé avec succès pour « {$manga->title} ».");
+                            }
+
+                            sleep(2); // Pause obligatoire de 2s entre chaque chapitre
+                        } catch (\Throwable $e) {
+                            Log::warning("{$sourceLabel} : Échec import chapitre {$chData['number']} : " . $e->getMessage());
+                        }
+                    }
+                } else {
+                    Log::info("{$sourceLabel} : Aucun nouveau chapitre à ajouter (à jour ou en retard).");
+                }
+
+            } catch (\Throwable $e) {
+                // Relais intelligent : en cas d'échec sur cette source, on enregistre l'erreur et on passe à la source suivante !
+                $scraperManga->update([
+                    'last_checked_at' => now(),
+                    'status'          => 'error',
+                    'last_error'      => $e->getMessage(),
+                ]);
+
+                $errors[] = "{$sourceLabel} : " . $e->getMessage();
+                Log::warning("Relais de secours activé pour « {$manga->title} » car {$sourceLabel} a échoué : " . $e->getMessage());
+            }
+        }
+
+        return [
+            'imported' => $importedTotal,
+            'errors'   => $errors,
+        ];
+    }
 }

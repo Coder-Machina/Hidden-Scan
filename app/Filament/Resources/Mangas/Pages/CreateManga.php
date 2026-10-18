@@ -23,15 +23,33 @@ class CreateManga extends CreateRecord
     {
         $data = $this->form->getRawState();
 
-        if (!empty($data['scraper_source_id']) && !empty($data['scraper_source_url'])) {
+        if (!empty($data['scraper_sources']) && is_array($data['scraper_sources'])) {
+            $createdAny = false;
+            foreach ($data['scraper_sources'] as $index => $sourceItem) {
+                if (!empty($sourceItem['scraper_source_id']) && !empty($sourceItem['source_url'])) {
+                    ScraperManga::create([
+                        'manga_id'          => $this->record->id,
+                        'scraper_source_id' => $sourceItem['scraper_source_id'],
+                        'source_url'        => $sourceItem['source_url'],
+                        'priority'          => $index + 1,
+                        'status'            => $sourceItem['status'] ?? 'active',
+                    ]);
+                    $createdAny = true;
+                }
+            }
+
+            if ($createdAny) {
+                \App\Jobs\ScrapeMultiSourceMangaJob::dispatch($this->record)->onQueue('scraper');
+            }
+        } elseif (!empty($data['scraper_source_id']) && !empty($data['scraper_source_url'])) {
             $scraperManga = ScraperManga::create([
                 'manga_id'          => $this->record->id,
                 'scraper_source_id' => $data['scraper_source_id'],
                 'source_url'        => $data['scraper_source_url'],
+                'priority'          => 1,
                 'status'            => 'active',
             ]);
 
-            // Lancer l'import initial en arrière-plan
             ScrapeFullMangaJob::dispatch($scraperManga)->onQueue('scraper');
         }
     }

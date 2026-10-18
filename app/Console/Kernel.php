@@ -15,14 +15,20 @@ class Kernel extends ConsoleKernel
     protected function schedule(Schedule $schedule): void
     {
         $schedule->call(function () {
-            ScraperManga::where('status', 'active')
+            $mangaIds = ScraperManga::where('status', 'active')
                 ->where(function ($q) {
                     $q->whereNull('last_checked_at')
                       ->orWhere('last_checked_at', '<', now()->subHour());
                 })
-                ->each(fn($sm) =>
-                    ScrapeNewChaptersJob::dispatch($sm)->onQueue('scraper')
-                );
+                ->distinct()
+                ->pluck('manga_id');
+
+            foreach ($mangaIds as $mangaId) {
+                $manga = \App\Models\Manga::find($mangaId);
+                if ($manga) {
+                    \App\Jobs\ScrapeMultiSourceMangaJob::dispatch($manga)->onQueue('scraper');
+                }
+            }
         })->hourly()->name('auto-sync-chapitres');
     }
 }
