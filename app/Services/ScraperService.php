@@ -54,7 +54,7 @@ class ScraperService
 
         $html = $response->body();
 
-        // 1. Stratégie Next.js / RSC payload (ex: Poseidon Scans, Next.js manga sites)
+        // 1. Stratégie Next.js / RSC payload (ex: Poseidon, Aniverse, sites Next.js / React)
         $chapters = $this->extractFromNextJs($html, $scraperManga->source_url);
         if (!empty($chapters)) {
             usort($chapters, fn($a, $b) => $a['number'] <=> $b['number']);
@@ -68,12 +68,15 @@ class ScraperService
             return $chapters;
         }
 
-        // 3. Stratégie DOM Crawler avec sélecteur configuré et fallbacks intelligents
+        // 3. Stratégie DOM Crawler avec sélecteurs candidats connus
         $crawler = new Crawler($html, $scraperManga->source_url);
         $candidateSelectors = array_unique(array_filter([
             $source->sel_chapter_list,
             'a[href*="/chapter/"]',
             'a[href*="/chapitre/"]',
+            'a[href*="/read/"]',
+            'a[href*="/scan/"]',
+            'a[href*="/ch/"]',
             '#chapterlist li',
             '.cl-item',
             '.eph-num',
@@ -84,13 +87,11 @@ class ScraperService
         ]));
 
         $chapterNodes = null;
-        $matchedSelector = null;
         foreach ($candidateSelectors as $sel) {
             try {
                 $nodes = $crawler->filter($sel);
                 if ($nodes->count() > 0) {
                     $chapterNodes = $nodes;
-                    $matchedSelector = $sel;
                     break;
                 }
             } catch (\Throwable $e) {
@@ -98,71 +99,105 @@ class ScraperService
             }
         }
 
-        if (!$chapterNodes || $chapterNodes->count() === 0) {
-            return [];
+        if ($chapterNodes && $chapterNodes->count() > 0) {
+            $chapterNodes->each(function (Crawler $node) use ($source, $scraperManga, &$chapters) {
+                try {
+                    // Extraction de l'URL et du titre
+                    if ($node->nodeName() === 'a') {
+                        $title = trim($node->text());
+                        $url = trim($node->attr('href') ?? '');
+                    } else {
+                        $titleNode = $source->sel_chapter_title ? $node->filter($source->sel_chapter_title) : null;
+                        if (!$titleNode || $titleNode->count() === 0) {
+                            $titleNode = $node->filter('a');
+                        }
+                        $urlNode = $source->sel_chapter_url ? $node->filter($source->sel_chapter_url) : null;
+                        if (!$urlNode || $urlNode->count() === 0) {
+                            $urlNode = $node->filter('a');
+                        }
+
+                        $title = $titleNode->count() > 0 ? trim($titleNode->text()) : trim($node->text());
+                        $url = $urlNode->count() > 0 ? trim($urlNode->attr('href') ?? '') : '';
+                    }
+
+                    if (empty($url)) {
+                        return;
+                    }
+
+                    // Normalisation URL si relative
+                    if (str_starts_with($url, '/')) {
+                        $parsedHost = parse_url($scraperManga->source_url, PHP_URL_HOST);
+                        $parsedScheme = parse_url($scraperManga->source_url, PHP_URL_SCHEME) ?? 'https';
+                        $baseUrl = $parsedHost ? ($parsedScheme . '://' . $parsedHost) : $source->base_url;
+                        $url = rtrim($baseUrl, '/') . $url;
+                    }
+
+                    // Date optionnelle
+                    $date = null;
+                    if ($source->sel_chapter_date) {
+                        try {
+                            $dateNode = $node->filter($source->sel_chapter_date);
+                            if ($dateNode->count() > 0) {
+                                $date = trim($dateNode->text());
+                            }
+                        } catch (\Throwable $e) {
+                            // ignore
+                        }
+                    }
+
+                    // Détection du numéro de chapitre
+                    $number = $this->extractChapterNumber($title, $url);
+                    if ($number === null) {
+                        return;
+                    }
+
+                    $chapters[] = [
+                        'number' => $number,
+                        'title'  => $title ?: ('Chapitre ' . $number),
+                        'url'    => $url,
+                        'date'   => $date,
+                    ];
+                } catch (\Throwable $e) {
+                    Log::warning("Erreur lors de l'analyse d'un chapitre du manga {$scraperManga->manga_id}: " . $e->getMessage());
+                }
+            });
         }
 
-        $chapterNodes->each(function (Crawler $node) use ($source, $scraperManga, &$chapters) {
-            try {
-                // Extraction de l'URL et du titre
-                if ($node->nodeName() === 'a') {
-                    $title = trim($node->text());
-                    $url = trim($node->attr('href') ?? '');
-                } else {
-                    $titleNode = $source->sel_chapter_title ? $node->filter($source->sel_chapter_title) : null;
-                    if (!$titleNode || $titleNode->count() === 0) {
-                        $titleNode = $node->filter('a');
-                    }
-                    $urlNode = $source->sel_chapter_url ? $node->filter($source->sel_chapter_url) : null;
-                    if (!$urlNode || $urlNode->count() === 0) {
-                        $urlNode = $node->filter('a');
+        // 4. Stratégie Tout-Terrain : Chasseur universel de liens
+        if (empty($chapters)) {
+            $parsedHost = parse_url($scraperManga->source_url, PHP_URL_HOST);
+            $parsedScheme = parse_url($scraperManga->source_url, PHP_URL_SCHEME) ?? 'https';
+            $baseUrl = $parsedHost ? ($parsedScheme . '://' . $parsedHost) : $source->base_url;
+
+            $crawler->filter('a')->each(function (Crawler $a) use ($scraperManga, $baseUrl, &$chapters) {
+                try {
+                    $href = trim($a->attr('href') ?? '');
+                    $text = trim($a->text());
+                    if (empty($href) || str_starts_with($href, '#') || str_starts_with($href, 'javascript:')) {
+                        return;
                     }
 
-                    $title = $titleNode->count() > 0 ? trim($titleNode->text()) : trim($node->text());
-                    $url = $urlNode->count() > 0 ? trim($urlNode->attr('href') ?? '') : '';
-                }
-
-                if (empty($url)) {
-                    return;
-                }
-
-                // Normalisation URL si relative
-                if (str_starts_with($url, '/')) {
-                    $parsedHost = parse_url($scraperManga->source_url, PHP_URL_HOST);
-                    $parsedScheme = parse_url($scraperManga->source_url, PHP_URL_SCHEME) ?? 'https';
-                    $baseUrl = $parsedHost ? ($parsedScheme . '://' . $parsedHost) : $source->base_url;
-                    $url = rtrim($baseUrl, '/') . $url;
-                }
-
-                // Date optionnelle
-                $date = null;
-                if ($source->sel_chapter_date) {
-                    try {
-                        $dateNode = $node->filter($source->sel_chapter_date);
-                        if ($dateNode->count() > 0) {
-                            $date = trim($dateNode->text());
-                        }
-                    } catch (\Throwable $e) {
-                        // ignore
+                    $num = $this->extractChapterNumber($text, $href);
+                    if ($num === null) {
+                        return;
                     }
-                }
 
-                // Détection du numéro de chapitre
-                $number = $this->extractChapterNumber($title, $url);
-                if ($number === null) {
-                    return;
-                }
+                    if (str_starts_with($href, '/')) {
+                        $href = rtrim($baseUrl, '/') . $href;
+                    }
 
-                $chapters[] = [
-                    'number' => $number,
-                    'title'  => $title ?: ('Chapitre ' . $number),
-                    'url'    => $url,
-                    'date'   => $date,
-                ];
-            } catch (\Throwable $e) {
-                Log::warning("Erreur lors de l'analyse d'un chapitre du manga {$scraperManga->manga_id}: " . $e->getMessage());
-            }
-        });
+                    $chapters[(string)$num] = [
+                        'number' => $num,
+                        'title'  => $text ?: ('Chapitre ' . $num),
+                        'url'    => $href,
+                        'date'   => null,
+                    ];
+                } catch (\Throwable $e) {
+                    // ignore
+                }
+            });
+            $chapters = array_values($chapters);
+        }
 
         // Déduplication par numéro
         $unique = [];
@@ -181,10 +216,35 @@ class ScraperService
     }
 
     /**
-     * Tente d'extraire la liste complète des chapitres depuis un payload Next.js RSC.
+     * Tente d'extraire la liste complète des chapitres depuis un payload Next.js RSC ou JSON.
      */
     protected function extractFromNextJs(string $html, string $sourceUrl): array
     {
+        // 1. Next.js RSC avec UUID et numéro (ex: Aniverse, Onefy, etc.)
+        if (preg_match_all("/\\\\?\"id\\\\?\":\s*\\\\?\"([a-f0-9\-]{36})\\\\?\",\s*\\\\?\"number\\\\?\":\s*\\\\?\"([0-9]+(?:\.[0-9]+)?)\\\\?\"/i", $html, $matches)) {
+            $parsed = parse_url($sourceUrl);
+            $scheme = $parsed['scheme'] ?? 'https';
+            $host = $parsed['host'] ?? '';
+            $path = trim($parsed['path'] ?? '', '/');
+            $slug = basename($path);
+
+            $chapters = [];
+            for ($i = 0; $i < count($matches[1]); $i++) {
+                $id = $matches[1][$i];
+                $num = (float)$matches[2][$i];
+                $chapters[(string)$num] = [
+                    'number' => $num,
+                    'title'  => "Chapitre {$num}",
+                    'url'    => "{$scheme}://{$host}/read/{$slug}/{$id}",
+                    'date'   => null,
+                ];
+            }
+            if (!empty($chapters)) {
+                return array_values($chapters);
+            }
+        }
+
+        // 2. Next.js RSC avec clé "chapters" (ex: Poseidon, Madara Next)
         if (preg_match('/\\\\?"chapters\\\\?":\s*(\[\s*\{.*?\}\s*\])(?:,\s*\\\\?"|\}\]\]|\}\s*\}|\}\s*\])/s', $html, $matches)
             || preg_match('/\\\\?"chapters\\\\?":\s*(\[.*?\])(?:,\s*\\\\?"|\}\]\])/s', $html, $matches)) {
             $rawJson = stripslashes($matches[1]);
@@ -211,7 +271,56 @@ class ScraperService
             }
         }
 
+        // 3. __NEXT_DATA__ JSON script
+        if (preg_match('/<script id="__NEXT_DATA__"[^>]*>(.*?)<\/script>/s', $html, $matches)) {
+            $data = json_decode($matches[1], true);
+            if (is_array($data)) {
+                $chapters = $this->findChaptersInNestedArray($data, $sourceUrl);
+                if (!empty($chapters)) {
+                    return $chapters;
+                }
+            }
+        }
+
         return [];
+    }
+
+    /**
+     * Recherche récursivement des chapitres dans une structure JSON imbriquée.
+     */
+    protected function findChaptersInNestedArray(array $array, string $sourceUrl): array
+    {
+        $chapters = [];
+        $baseChapterUrl = rtrim($sourceUrl, '/');
+
+        $walk = function ($item) use (&$walk, &$chapters, $baseChapterUrl) {
+            if (!is_array($item)) return;
+
+            // Détection si l'élément ressemble à un chapitre
+            if ((isset($item['number']) || isset($item['chapter']) || isset($item['chapter_number'])) && (isset($item['url']) || isset($item['slug']) || isset($item['id']))) {
+                $rawNum = $item['number'] ?? $item['chapter'] ?? $item['chapter_number'];
+                if (is_numeric($rawNum)) {
+                    $num = (float)$rawNum;
+                    $title = $item['title'] ?? $item['name'] ?? ("Chapitre " . $num);
+                    $url = $item['url'] ?? ($baseChapterUrl . '/chapter/' . ($item['slug'] ?? $item['id'] ?? $num));
+                    $chapters[(string)$num] = [
+                        'number' => $num,
+                        'title'  => (string)$title,
+                        'url'    => (string)$url,
+                        'date'   => $item['created_at'] ?? $item['createdAt'] ?? null,
+                    ];
+                }
+            }
+
+            foreach ($item as $sub) {
+                if (is_array($sub)) {
+                    $walk($sub);
+                }
+            }
+        };
+
+        $walk($array);
+        return array_values($chapters);
     }
 
     /**
@@ -316,35 +425,77 @@ class ScraperService
             }
         }
 
-        if (!$imageNodes || $imageNodes->count() === 0) {
-            return [];
-        }
-
         $imageUrls = [];
         $parsedHost = parse_url($chapterUrl, PHP_URL_HOST);
         $parsedScheme = parse_url($chapterUrl, PHP_URL_SCHEME) ?? 'https';
         $baseUrl = $parsedHost ? ($parsedScheme . '://' . $parsedHost) : $source->base_url;
 
-        $imageNodes->each(function (Crawler $img) use ($baseUrl, &$imageUrls) {
-            $src = $img->attr('data-src')
-                ?? $img->attr('data-lazy-src')
-                ?? $img->attr('data-original')
-                ?? $img->attr('src');
+        if ($imageNodes && $imageNodes->count() > 0) {
+            $imageNodes->each(function (Crawler $img) use ($baseUrl, &$imageUrls) {
+                $src = $img->attr('data-src')
+                    ?? $img->attr('data-lazy-src')
+                    ?? $img->attr('data-original')
+                    ?? $img->attr('src');
 
-            $src = trim($src ?? '');
+                $src = trim($src ?? '');
 
-            if (empty($src) || str_starts_with($src, 'data:image') || str_contains($src, 'spacer.gif')) {
-                return;
+                if (empty($src) || str_starts_with($src, 'data:image') || str_contains($src, 'spacer.gif')) {
+                    return;
+                }
+
+                if (str_starts_with($src, '//')) {
+                    $src = 'https:' . $src;
+                } elseif (str_starts_with($src, '/')) {
+                    $src = rtrim($baseUrl, '/') . $src;
+                }
+
+                $imageUrls[] = $src;
+            });
+        }
+
+        // Stratégie Tout-Terrain : Extraction automatique des images si aucun sélecteur n'a fonctionné
+        if (empty($imageUrls)) {
+            // A. Détection CDN direct (ex: raw/manga/.../001.jpg sur Aniverse, Onefy, etc.)
+            if (preg_match_all("#https?://[^\x22\x27\s\)\>\\\\]+/raw/manga/[^\x22\x27\s\)\>\\\\]+?\.(?:jpg|jpeg|png|webp)#i", $html, $mCdn)) {
+                $imageUrls = array_values(array_unique($mCdn[0]));
             }
 
-            if (str_starts_with($src, '//')) {
-                $src = 'https:' . $src;
-            } elseif (str_starts_with($src, '/')) {
-                $src = rtrim($baseUrl, '/') . $src;
+            // B. Détection de toutes les balises <img> de contenu
+            if (empty($imageUrls)) {
+                $crawler->filter('img')->each(function (Crawler $img) use ($baseUrl, &$imageUrls) {
+                    $src = $img->attr('data-src')
+                        ?? $img->attr('data-lazy-src')
+                        ?? $img->attr('data-original')
+                        ?? $img->attr('data-url')
+                        ?? $img->attr('src');
+                    $src = trim($src ?? '');
+                    if (!empty($src) && !str_starts_with($src, 'data:image') && !str_contains($src, 'spacer.gif')) {
+                        if (str_starts_with($src, '//')) {
+                            $src = 'https:' . $src;
+                        } elseif (str_starts_with($src, '/')) {
+                            $src = rtrim($baseUrl, '/') . $src;
+                        }
+                        if (!preg_match('/(?:poster|cover|banner|logo|icon|avatar|favicon|og\/|thumb)/i', $src)) {
+                            $imageUrls[] = $src;
+                        }
+                    }
+                });
             }
 
-            $imageUrls[] = $src;
-        });
+            // C. Détection d'URLs d'images dans le code source / scripts
+            if (empty($imageUrls)) {
+                if (preg_match_all("#https?://[^\x22\x27\s\)\>\\\\]+?\.(?:jpg|jpeg|png|webp)#i", $html, $mAll)) {
+                    foreach (array_unique($mAll[0]) as $img) {
+                        if (!preg_match('/(?:poster|cover|banner|logo|icon|avatar|favicon|og\/|thumb)/i', $img)) {
+                            $imageUrls[] = $img;
+                        }
+                    }
+                }
+            }
+
+            // Tri naturel des pages (001.jpg, 002.jpg, ...)
+            sort($imageUrls, SORT_NATURAL);
+        }
 
         return array_values(array_unique($imageUrls));
     }
@@ -584,7 +735,7 @@ class ScraperService
                     foreach ($missingChapters as $chData) {
                         // Vérifie si une annulation a été demandée au début du chapitre
                         $scraperManga->refresh();
-                        if ($scraperManga->cancel_requested) {
+                        if ($scraperManga->cancel_requested || $scraperManga->status === 'annulé') {
                             $scraperManga->update([
                                 'status'                   => 'annulé',
                                 'cancel_requested'         => false,
@@ -612,7 +763,7 @@ class ScraperService
 
                             // Vérifie à nouveau après le chapitre
                             $scraperManga->refresh();
-                            if ($scraperManga->cancel_requested) {
+                            if ($scraperManga->cancel_requested || $scraperManga->status === 'annulé') {
                                 $scraperManga->update([
                                     'status'                   => 'annulé',
                                     'cancel_requested'         => false,

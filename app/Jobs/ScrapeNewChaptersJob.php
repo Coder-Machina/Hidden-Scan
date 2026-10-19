@@ -71,7 +71,7 @@ class ScrapeNewChaptersJob implements ShouldQueue
             foreach ($newChapters as $chapterData) {
                 // Dans le job, à chaque début de chapitre, vérifier cancel_requested
                 $this->scraperManga->refresh();
-                if ($this->scraperManga->cancel_requested) {
+                if ($this->scraperManga->cancel_requested || $this->scraperManga->status === 'annulé') {
                     $this->scraperManga->update([
                         'status'                   => 'annulé',
                         'cancel_requested'         => false,

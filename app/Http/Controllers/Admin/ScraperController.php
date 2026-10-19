@@ -42,11 +42,11 @@ class ScraperController extends Controller
             ['base_url' => $baseUrl],
             [
                 'name'              => $sourceName,
-                'sel_chapter_list'  => 'a[href*="/chapter/"], .wp-manga-chapter',
-                'sel_chapter_title' => 'a',
-                'sel_chapter_url'   => 'a',
-                'sel_chapter_date'  => '.chapter-release-date',
-                'sel_chapter_pages' => 'img.manga-page-img, .page-break img',
+                'sel_chapter_list'  => null,
+                'sel_chapter_title' => null,
+                'sel_chapter_url'   => null,
+                'sel_chapter_date'  => null,
+                'sel_chapter_pages' => null,
                 'headers'           => [
                     'User-Agent' => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
                 ],

@@ -15,11 +15,11 @@ return new class extends Migration
             $table->id();
             $table->string('name');
             $table->string('base_url');
-            $table->string('sel_chapter_list');
-            $table->string('sel_chapter_title');
-            $table->string('sel_chapter_url');
+            $table->string('sel_chapter_list')->nullable();
+            $table->string('sel_chapter_title')->nullable();
+            $table->string('sel_chapter_url')->nullable();
             $table->string('sel_chapter_date')->nullable();
-            $table->string('sel_chapter_pages');
+            $table->string('sel_chapter_pages')->nullable();
             $table->json('headers')->nullable();
             $table->boolean('active')->default(true);
             $table->timestamps();

@@ -16,72 +16,64 @@ class ScraperSourceForm
         return $schema
             ->components([
                 Section::make('Informations du site source')
-                    ->description('Renseignez les données principales du site à scraper.')
+                    ->description('Renseignez les données principales du site à scraper. La détection des chapitres et des images est 100% automatique.')
                     ->icon('heroicon-o-globe-alt')
                     ->columns(2)
                     ->schema([
                         TextInput::make('name')
                             ->label('Nom de la source')
-                            ->placeholder('Ex: Poseidon Scan, Asura Scan, Flame Comics...')
+                            ->placeholder('Ex: Aniverse, Poseidon, Asura...')
                             ->required()
                             ->maxLength(255),
                         TextInput::make('base_url')
                             ->label('URL racine du site')
-                            ->placeholder('https://poseidon-scan.net')
+                            ->placeholder('https://aniverse.fr')
                             ->url()
                             ->required()
                             ->maxLength(255),
                         Toggle::make('active')
                             ->label('Source active')
-                            ->helperText('Si désactivée, cette source ne sera pas interrogée lors des synchronisations automatiques.')
+                            ->helperText('Active la surveillance et l\'import automatique pour cette source.')
                             ->default(true),
                     ]),
 
-                Section::make('Sélecteurs CSS — Liste des Chapitres')
-                    ->description('Sélecteurs CSS pour extraire la liste des chapitres sur la page de présentation d\'un manga.')
-                    ->icon('heroicon-o-code-bracket')
+                Section::make('Paramètres avancés — Sélecteurs CSS (Optionnel)')
+                    ->description('Laissez vide pour la détection automatique intelligente (WordPress Madara, Next.js, MangaStream, HTML standard...). Renseignez uniquement si vous souhaitez forcer un sélecteur particulier.')
+                    ->icon('heroicon-o-cog-6-tooth')
+                    ->collapsed()
                     ->columns(2)
                     ->schema([
                         TextInput::make('sel_chapter_list')
                             ->label('Conteneur de chaque chapitre')
-                            ->placeholder('.wp-manga-chapter')
-                            ->default('.wp-manga-chapter')
-                            ->required()
-                            ->helperText('Exemple WordPress Madara : .wp-manga-chapter | MangaStream : li.chapter-item'),
+                            ->placeholder('Détection automatique')
+                            ->nullable()
+                            ->helperText('Ex: .wp-manga-chapter, li.chapter-item, etc.'),
                         TextInput::make('sel_chapter_title')
                             ->label('Titre du chapitre')
-                            ->placeholder('.wp-manga-chapter a')
-                            ->default('.wp-manga-chapter a')
-                            ->required()
-                            ->helperText('Élément contenant le texte du chapitre (ex: .wp-manga-chapter a)'),
+                            ->placeholder('Détection automatique')
+                            ->nullable()
+                            ->helperText('Ex: .wp-manga-chapter a, a.chapter-title'),
                         TextInput::make('sel_chapter_url')
                             ->label('Lien vers le chapitre')
-                            ->placeholder('.wp-manga-chapter a')
-                            ->default('.wp-manga-chapter a')
-                            ->required()
-                            ->helperText('Balise lien <a href="..."> vers la page de lecture'),
+                            ->placeholder('Détection automatique')
+                            ->nullable()
+                            ->helperText('Ex: .wp-manga-chapter a, a[href*="chapter"]'),
                         TextInput::make('sel_chapter_date')
-                            ->label('Date de publication (Optionnel)')
-                            ->placeholder('.chapter-release-date')
-                            ->default('.chapter-release-date')
-                            ->helperText('Exemple : .chapter-release-date ou .chapterdate'),
-                    ]),
-
-                Section::make('Sélecteur CSS — Pages du Lecteur')
-                    ->description('Sélecteur CSS pour extraire toutes les images de pages dans le lecteur.')
-                    ->icon('heroicon-o-photo')
-                    ->schema([
+                            ->label('Date de publication')
+                            ->placeholder('Détection automatique')
+                            ->nullable(),
                         TextInput::make('sel_chapter_pages')
                             ->label('Images des pages du chapitre')
-                            ->placeholder('.page-break img')
-                            ->default('.page-break img')
-                            ->required()
-                            ->helperText('Exemple : .page-break img (supporte automatiquement data-src, data-lazy-src et src)'),
+                            ->placeholder('Détection automatique')
+                            ->nullable()
+                            ->columnSpanFull()
+                            ->helperText('Ex: .page-break img, #readerarea img (les CDN et images brutes sont aussi auto-détectés)'),
                     ]),
 
-                Section::make('En-têtes HTTP (Headers & Anti-Bot)')
+                Section::make('En-têtes HTTP & Anti-Bot (Optionnel)')
                     ->description('Configurez les en-têtes HTTP (User-Agent, Referer...) pour contourner d\'éventuels blocages.')
                     ->icon('heroicon-o-shield-check')
+                    ->collapsed()
                     ->schema([
                         KeyValue::make('headers')
                             ->label('En-têtes HTTP')

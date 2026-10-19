@@ -56,8 +56,8 @@ class ScraperSourcesTable
                     ->label('Tester')
                     ->icon('heroicon-o-beaker')
                     ->color('warning')
-                    ->modalHeading(fn (ScraperSource $record) => "Tester les sélecteurs de « {$record->name} »")
-                    ->modalDescription('Saisissez l\'URL d\'un manga sur ce site pour vérifier en direct si les sélecteurs parviennent à extraire les chapitres.')
+                    ->modalHeading(fn (ScraperSource $record) => "Tester l'extraction de « {$record->name} »")
+                    ->modalDescription('Saisissez l\'URL d\'un manga sur ce site pour tester en direct la détection automatique des chapitres.')
                     ->modalSubmitActionLabel('Lancer le test')
                     ->form([
                         TextInput::make('test_url')
@@ -81,7 +81,7 @@ class ScraperSourcesTable
                             if ($count === 0) {
                                 Notification::make()
                                     ->title('Aucun chapitre détecté')
-                                    ->body("La page a répondu mais aucun élément ne correspond au sélecteur '{$record->sel_chapter_list}'.")
+                                    ->body("La page a répondu mais aucun chapitre n'a pu être extrait automatiquement. Vérifiez l'URL de test saisie.")
                                     ->warning()
                                     ->send();
                                 return;
