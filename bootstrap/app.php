@@ -30,6 +30,7 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
 
         $middleware->alias([
+            'admin' => \App\Http\Middleware\EnsureIsAdmin::class,
             'staff' => \App\Http\Middleware\EnsureIsStaff::class,
             'throttle.comments' => \App\Http\Middleware\RateLimitComments::class,
         ]);

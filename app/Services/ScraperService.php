@@ -352,8 +352,9 @@ class ScraperService
     /**
      * Télécharge les images d'un chapitre et les enregistre en base.
      * Respecte la règle : sleep(1) entre chaque image.
+     * S'arrête proprement après avoir fini l'image en cours si annulation demandée.
      */
-    public function downloadAndSavePages(Chapter $chapter, array $imageUrls, ScraperSource $source, string $chapterUrl): int
+    public function downloadAndSavePages(Chapter $chapter, array $imageUrls, ScraperSource $source, string $chapterUrl, ?ScraperManga $scraperManga = null): int
     {
         $manager = new ImageManager(new Driver());
         $destFolder = 'chapters/' . $chapter->id;
@@ -414,6 +415,15 @@ class ScraperService
                 ]);
 
                 $savedCount++;
+
+                // Vérifie si une annulation est demandée après avoir terminé l'image en cours
+                if ($scraperManga) {
+                    $scraperManga->refresh();
+                    if ($scraperManga->cancel_requested) {
+                        Log::info("Annulation demandée : arrêt propre après la page {$pageNumber} pour le chapitre {$chapter->id}.");
+                        break;
+                    }
+                }
             } catch (\Throwable $e) {
                 Log::error("Erreur lors du traitement de la page {$pageNumber} du chapitre {$chapter->id}: " . $e->getMessage());
             }
@@ -461,14 +471,41 @@ class ScraperService
             return $chapter;
         }
 
-        // Téléchargement des pages
-        $count = $this->downloadAndSavePages($chapter, $pageUrls, $source, $chapterData['url']);
+        $expectedCount = count($pageUrls);
+
+        // Téléchargement des pages avec gestion d'annulation propre
+        $count = $this->downloadAndSavePages($chapter, $pageUrls, $source, $chapterData['url'], $scraperManga);
+
+        // Si une annulation a été demandée pendant le téléchargement des pages
+        $scraperManga->refresh();
+        if ($scraperManga->cancel_requested) {
+            if ($count < $expectedCount) {
+                // Incomplet : suppression propre
+                $chapter->pages()->delete();
+                Storage::disk('public')->deleteDirectory('chapters/' . $chapter->id);
+                $chapter->delete();
+                Log::info("Chapitre {$chapterNumber} supprimé car incomplet lors de l'annulation.");
+                $chapter = null;
+            } else {
+                // Complet : conservé
+                $scraperManga->update([
+                    'last_chapter_scraped' => (string) $chapterNumber,
+                ]);
+            }
+
+            $scraperManga->update([
+                'status'                   => 'annulé',
+                'cancel_requested'         => false,
+                'current_scraping_chapter' => null,
+            ]);
+
+            return $chapter;
+        }
 
         if ($count > 0) {
             $scraperManga->update([
                 'last_chapter_scraped' => (string) $chapterNumber,
                 'last_checked_at'      => now(),
-                'status'               => 'active',
                 'last_error'           => null,
             ]);
         }
@@ -486,7 +523,7 @@ class ScraperService
     {
         $sources = $manga->scraperMangas()
             ->with('scraperSource')
-            ->where('status', '!=', 'paused')
+            ->whereNotIn('status', ['paused', 'en pause'])
             ->orderBy('priority', 'asc')
             ->get();
 
@@ -514,14 +551,25 @@ class ScraperService
             $sourceLabel = "Source #" . ($index + 1) . " (« {$sourceModel->name} »)";
 
             try {
+                $scraperManga->refresh();
+                if ($scraperManga->cancel_requested) {
+                    $scraperManga->update([
+                        'status'                   => 'annulé',
+                        'cancel_requested'         => false,
+                        'current_scraping_chapter' => null,
+                    ]);
+                    return ['imported' => $importedTotal, 'errors' => $errors, 'cancelled' => true];
+                }
+
                 // Tente de récupérer la liste des chapitres sur cette source
                 $chapters = $this->getChapterList($scraperManga);
+                $totalDetected = count($chapters);
 
-                // Si succès, met à jour le statut et reset l'erreur éventuelle
+                // Met à jour le total détecté
                 $scraperManga->update([
-                    'last_checked_at' => now(),
-                    'status'          => 'active',
-                    'last_error'      => null,
+                    'total_chapters_detected' => $totalDetected,
+                    'last_checked_at'         => now(),
+                    'last_error'              => null,
                 ]);
 
                 // Identifie les chapitres disponibles sur cette source mais absents en base
@@ -530,9 +578,27 @@ class ScraperService
                 });
 
                 if (!empty($missingChapters)) {
+                    $scraperManga->update(['status' => 'importing']);
                     Log::info("{$sourceLabel} : " . count($missingChapters) . " nouveaux chapitres détectés pour « {$manga->title} ».");
 
                     foreach ($missingChapters as $chData) {
+                        // Vérifie si une annulation a été demandée au début du chapitre
+                        $scraperManga->refresh();
+                        if ($scraperManga->cancel_requested) {
+                            $scraperManga->update([
+                                'status'                   => 'annulé',
+                                'cancel_requested'         => false,
+                                'current_scraping_chapter' => null,
+                            ]);
+                            Log::info("{$sourceLabel} : Arrêt propre suite à annulation avant chapitre {$chData['number']}.");
+                            return ['imported' => $importedTotal, 'errors' => $errors, 'cancelled' => true];
+                        }
+
+                        $scraperManga->update([
+                            'status'                   => 'importing',
+                            'current_scraping_chapter' => (string) $chData['number'],
+                        ]);
+
                         try {
                             $chapter = $this->scrapeSingleChapter($scraperManga, $chData);
                             if ($chapter && $chapter->pages()->exists()) {
@@ -544,6 +610,17 @@ class ScraperService
                                 Log::info("{$sourceLabel} : Chapitre {$chData['number']} importé avec succès pour « {$manga->title} ».");
                             }
 
+                            // Vérifie à nouveau après le chapitre
+                            $scraperManga->refresh();
+                            if ($scraperManga->cancel_requested) {
+                                $scraperManga->update([
+                                    'status'                   => 'annulé',
+                                    'cancel_requested'         => false,
+                                    'current_scraping_chapter' => null,
+                                ]);
+                                return ['imported' => $importedTotal, 'errors' => $errors, 'cancelled' => true];
+                            }
+
                             sleep(2); // Pause obligatoire de 2s entre chaque chapitre
                         } catch (\Throwable $e) {
                             Log::warning("{$sourceLabel} : Échec import chapitre {$chData['number']} : " . $e->getMessage());
@@ -553,12 +630,24 @@ class ScraperService
                     Log::info("{$sourceLabel} : Aucun nouveau chapitre à ajouter (à jour ou en retard).");
                 }
 
+                // Fin sans annulation : statut actif
+                $scraperManga->refresh();
+                if (!$scraperManga->cancel_requested && $scraperManga->status === 'importing') {
+                    $scraperManga->update([
+                        'status'                   => 'active',
+                        'current_scraping_chapter' => null,
+                        'cancel_requested'         => false,
+                        'last_checked_at'          => now(),
+                    ]);
+                }
+
             } catch (\Throwable $e) {
                 // Relais intelligent : en cas d'échec sur cette source, on enregistre l'erreur et on passe à la source suivante !
                 $scraperManga->update([
-                    'last_checked_at' => now(),
-                    'status'          => 'error',
-                    'last_error'      => $e->getMessage(),
+                    'last_checked_at'          => now(),
+                    'status'                   => 'error',
+                    'last_error'               => $e->getMessage(),
+                    'current_scraping_chapter' => null,
                 ]);
 
                 $errors[] = "{$sourceLabel} : " . $e->getMessage();

@@ -110,7 +110,7 @@ class ScraperWorkflowTest extends TestCase
         Queue::assertPushedOn('scraper', ScrapeNewChaptersJob::class);
 
         // Toggle route test
-        $this->assertEquals('active', $scraperManga->fresh()->status);
+        $this->assertEquals('importing', $scraperManga->fresh()->status);
         $toggleResponse = $this->actingAs($user)->patch(route('admin.scraper.toggle', $scraperManga));
         $toggleResponse->assertRedirect();
         $this->assertEquals('paused', $scraperManga->fresh()->status);

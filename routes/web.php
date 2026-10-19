@@ -79,12 +79,44 @@ Route::middleware('auth')->group(function () {
 });
 
 // ═══ ADMIN SCRAPER ROUTES ═══
-Route::middleware(['auth'])->prefix('admin')->group(function () {
-    Route::post('/scraper/{scraperManga}/sync', [\App\Http\Controllers\Admin\ScraperController::class, 'syncNow'])
+Route::prefix('admin/scraper')
+     ->middleware(['auth', 'admin'])
+     ->group(function () {
+
+    // Ajouter une source à un manga
+    Route::post('/attach',
+        [\App\Http\Controllers\Admin\ScraperController::class, 'attach'])
+        ->name('admin.scraper.attach');
+
+    // Statut en temps réel (AJAX)
+    Route::get('/{scraperManga}/status',
+        [\App\Http\Controllers\Admin\ScraperController::class, 'status'])
+        ->name('admin.scraper.status');
+
+    // Forcer une sync immédiate
+    Route::post('/{scraperManga}/sync',
+        [\App\Http\Controllers\Admin\ScraperController::class, 'syncNow'])
         ->name('admin.scraper.sync');
 
-    Route::patch('/scraper/{scraperManga}/toggle', [\App\Http\Controllers\Admin\ScraperController::class, 'toggleStatus'])
+    // Annuler l'import en cours
+    Route::post('/{scraperManga}/cancel',
+        [\App\Http\Controllers\Admin\ScraperController::class, 'cancel'])
+        ->name('admin.scraper.cancel');
+
+    // Pause / reprise
+    Route::patch('/{scraperManga}/toggle',
+        [\App\Http\Controllers\Admin\ScraperController::class, 'toggleStatus'])
         ->name('admin.scraper.toggle');
+
+    // Réordonner les sources (drag and drop)
+    Route::patch('/{scraperManga}/reorder',
+        [\App\Http\Controllers\Admin\ScraperController::class, 'reorder'])
+        ->name('admin.scraper.reorder');
+
+    // Supprimer une source
+    Route::delete('/{scraperManga}',
+        [\App\Http\Controllers\Admin\ScraperController::class, 'detach'])
+        ->name('admin.scraper.detach');
 });
 
 require __DIR__.'/auth.php';

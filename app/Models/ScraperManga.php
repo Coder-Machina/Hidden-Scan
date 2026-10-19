@@ -16,14 +16,19 @@ class ScraperManga extends Model
         'source_url',
         'priority',
         'last_chapter_scraped',
+        'current_scraping_chapter',
+        'total_chapters_detected',
         'last_checked_at',
         'status',
+        'cancel_requested',
         'last_error',
     ];
 
     protected $casts = [
-        'priority'        => 'integer',
-        'last_checked_at' => 'datetime',
+        'priority'                 => 'integer',
+        'total_chapters_detected'  => 'integer',
+        'cancel_requested'         => 'boolean',
+        'last_checked_at'          => 'datetime',
     ];
 
     public function manga(): BelongsTo

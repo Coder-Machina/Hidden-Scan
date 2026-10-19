@@ -36,19 +36,6 @@ class EditManga extends EditRecord
     {
         return [
             ImportMetadataAction::make(),
-            Action::make('sync_scraper')
-                ->label('↻ Vérifier sources (Relais intelligent)')
-                ->color('info')
-                ->icon('heroicon-o-arrow-path')
-                ->visible(fn () => $this->record->scraperMangas()->exists())
-                ->action(function () {
-                    ScrapeMultiSourceMangaJob::dispatch($this->record)->onQueue('scraper');
-                    Notification::make()
-                        ->title('Relais intelligent déclenché')
-                        ->body('La vérification de toutes les sources configurées par ordre de priorité s\'exécute en arrière-plan.')
-                        ->success()
-                        ->send();
-                }),
             DeleteAction::make(),
         ];
     }
@@ -82,7 +69,6 @@ class EditManga extends EditRecord
     {
         $data = $this->form->getRawState();
 
-        // 1. Gestion via le Repeater Multi-Sources
         if (isset($data['scraper_sources']) && is_array($data['scraper_sources'])) {
             $keptIds = [];
             $priority = 1;
@@ -137,27 +123,28 @@ class EditManga extends EditRecord
                 }
             }
 
-            // Supprime les sources qui ont été retirées du repeater
+            // Supprime uniquement les sources retirées explicitement du repeater si le repeater est actif
             $this->record->scraperMangas()->whereNotIn('id', $keptIds)->delete();
 
             if (!empty($keptIds)) {
                 ScrapeMultiSourceMangaJob::dispatch($this->record)->onQueue('scraper');
             }
-        } elseif (!empty($data['scraper_source_id']) && !empty($data['scraper_source_url'])) {
+        } elseif (!empty($data['scraper_source_url'])) {
             // Rétrocompatibilité avec les formulaires simples
-            $scraperManga = ScraperManga::updateOrCreate(
-                ['manga_id' => $this->record->id],
-                [
-                    'scraper_source_id' => $data['scraper_source_id'],
-                    'source_url'        => $data['scraper_source_url'],
-                    'priority'          => 1,
-                    'status'            => 'active',
-                ]
-            );
+            $sourceId = $data['scraper_source_id'] ?? null;
+            if ($sourceId) {
+                $scraperManga = ScraperManga::updateOrCreate(
+                    ['manga_id' => $this->record->id],
+                    [
+                        'scraper_source_id' => $sourceId,
+                        'source_url'        => $data['scraper_source_url'],
+                        'priority'          => 1,
+                        'status'            => 'active',
+                    ]
+                );
 
-            ScrapeNewChaptersJob::dispatch($scraperManga)->onQueue('scraper');
-        } elseif (array_key_exists('scraper_source_id', $data) && empty($data['scraper_source_id'])) {
-            $this->record->scraperMangas()->delete();
+                ScrapeNewChaptersJob::dispatch($scraperManga)->onQueue('scraper');
+            }
         }
     }
 }

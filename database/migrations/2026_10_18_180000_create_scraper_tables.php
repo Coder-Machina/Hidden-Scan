@@ -36,7 +36,7 @@ return new class extends Migration
             $table->string('source_url');
             $table->string('last_chapter_scraped')->nullable();
             $table->timestamp('last_checked_at')->nullable();
-            $table->enum('status', ['active', 'paused', 'error'])
+            $table->string('status', 30)
                   ->default('active');
             $table->text('last_error')->nullable();
             $table->timestamps();
