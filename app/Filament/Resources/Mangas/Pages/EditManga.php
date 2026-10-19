@@ -69,7 +69,8 @@ class EditManga extends EditRecord
     {
         $data = $this->form->getRawState();
 
-        if (isset($data['scraper_sources']) && is_array($data['scraper_sources'])) {
+        // Si des sources repeater sont présentes et non vides
+        if (isset($data['scraper_sources']) && is_array($data['scraper_sources']) && !empty($data['scraper_sources'])) {
             $keptIds = [];
             $priority = 1;
 
@@ -81,7 +82,6 @@ class EditManga extends EditRecord
 
                 $sourceId = $item['scraper_source_id'] ?? null;
 
-                // Auto-résolution ou création de la source si l'utilisateur a juste collé l'URL
                 if (empty($sourceId)) {
                     $parsed = parse_url($sourceUrl);
                     $host = $parsed['host'] ?? '';
@@ -116,35 +116,33 @@ class EditManga extends EditRecord
                         [
                             'source_url' => $sourceUrl,
                             'priority'   => $priority++,
-                            'status'     => $item['status'] ?? 'active',
+                            'status'     => $item['status'] ?? 'importing',
                         ]
                     );
                     $keptIds[] = $sm->id;
                 }
             }
 
-            // Supprime uniquement les sources retirées explicitement du repeater si le repeater est actif
-            $this->record->scraperMangas()->whereNotIn('id', $keptIds)->delete();
-
+            // Ne supprime que les sources qui appartenaient au repeater explicite
+            // Ne JAMAIS effacer les sources si le repeater était vide ou géré par AJAX
             if (!empty($keptIds)) {
+                $this->record->scraperMangas()->whereNotIn('id', $keptIds)->delete();
                 ScrapeMultiSourceMangaJob::dispatch($this->record)->onQueue('scraper');
             }
-        } elseif (!empty($data['scraper_source_url'])) {
+        } elseif (!empty($data['scraper_source_url']) && !empty($data['scraper_source_id'])) {
             // Rétrocompatibilité avec les formulaires simples
-            $sourceId = $data['scraper_source_id'] ?? null;
-            if ($sourceId) {
-                $scraperManga = ScraperManga::updateOrCreate(
-                    ['manga_id' => $this->record->id],
-                    [
-                        'scraper_source_id' => $sourceId,
-                        'source_url'        => $data['scraper_source_url'],
-                        'priority'          => 1,
-                        'status'            => 'active',
-                    ]
-                );
+            $sourceId = $data['scraper_source_id'];
+            $scraperManga = ScraperManga::updateOrCreate(
+                ['manga_id' => $this->record->id],
+                [
+                    'scraper_source_id' => $sourceId,
+                    'source_url'        => $data['scraper_source_url'],
+                    'priority'          => 1,
+                    'status'            => 'importing',
+                ]
+            );
 
-                ScrapeNewChaptersJob::dispatch($scraperManga)->onQueue('scraper');
-            }
+            ScrapeNewChaptersJob::dispatch($scraperManga)->onQueue('scraper');
         }
     }
 }

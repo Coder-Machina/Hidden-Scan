@@ -69,7 +69,7 @@ class CreateManga extends CreateRecord
                         'scraper_source_id' => $sourceId,
                         'source_url'        => $sourceUrl,
                         'priority'          => $priority++,
-                        'status'            => $sourceItem['status'] ?? 'active',
+                        'status'            => $sourceItem['status'] ?? 'importing',
                     ]);
                     $createdAny = true;
                 }
@@ -84,7 +84,7 @@ class CreateManga extends CreateRecord
                 'scraper_source_id' => $data['scraper_source_id'],
                 'source_url'        => $data['scraper_source_url'],
                 'priority'          => 1,
-                'status'            => 'active',
+                'status'            => 'importing',
             ]);
 
             ScrapeFullMangaJob::dispatch($scraperManga)->onQueue('scraper');

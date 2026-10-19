@@ -216,31 +216,48 @@ class ScraperService
     }
 
     /**
-     * Tente d'extraire la liste complète des chapitres depuis un payload Next.js RSC ou JSON.
+     * Tente d'\''extraire la liste complète des chapitres depuis un payload Next.js RSC ou JSON.
      */
     protected function extractFromNextJs(string $html, string $sourceUrl): array
     {
-        // 1. Next.js RSC avec UUID et numéro (ex: Aniverse, Onefy, etc.)
-        if (preg_match_all("/\\\\?\"id\\\\?\":\s*\\\\?\"([a-f0-9\-]{36})\\\\?\",\s*\\\\?\"number\\\\?\":\s*\\\\?\"([0-9]+(?:\.[0-9]+)?)\\\\?\"/i", $html, $matches)) {
-            $parsed = parse_url($sourceUrl);
-            $scheme = $parsed['scheme'] ?? 'https';
-            $host = $parsed['host'] ?? '';
-            $path = trim($parsed['path'] ?? '', '/');
-            $slug = basename($path);
+        $parsed = parse_url($sourceUrl);
+        $scheme = $parsed['scheme'] ?? 'https';
+        $host = $parsed['host'] ?? '';
+        $path = trim($parsed['path'] ?? '', '/');
+        $slug = basename($path);
 
-            $chapters = [];
-            for ($i = 0; $i < count($matches[1]); $i++) {
-                $id = $matches[1][$i];
-                $num = (float)$matches[2][$i];
-                $chapters[(string)$num] = [
-                    'number' => $num,
-                    'title'  => "Chapitre {$num}",
-                    'url'    => "{$scheme}://{$host}/read/{$slug}/{$id}",
-                    'date'   => null,
-                ];
-            }
-            if (!empty($chapters)) {
-                return array_values($chapters);
+        // 1. Next.js RSC avec référence explicite : "chapters":"$@<id>" (ex: Aniverse, Onefy...)
+        if (preg_match('/\\\\?"chapters\\\\?":\s*\\\\?"\\\$@([a-zA-Z0-9]+)\\\\?"/', $html, $mRef)) {
+            $targetId = $mRef[1];
+            $pattern = '/(?:^|[^a-zA-Z0-9]|\\\\n|\n)' . preg_quote($targetId, '/') . ':\s*(\[)/';
+            if (preg_match($pattern, $html, $mPos, PREG_OFFSET_CAPTURE)) {
+                $bracketPos = $mPos[1][1];
+                $jsonSub = $this->extractBalancedJsonArray($html, $bracketPos);
+                if ($jsonSub) {
+                    $clean = stripslashes($jsonSub);
+                    $items = json_decode($clean, true);
+                    if (is_array($items) && !empty($items)) {
+                        $chapters = [];
+                        foreach ($items as $item) {
+                            if (!isset($item['number'])) {
+                                continue;
+                            }
+                            $num = (float)$item['number'];
+                            $id = $item['id'] ?? (string)$num;
+                            $title = !empty($item['title']) ? "Chapitre {$num} - " . trim($item['title']) : "Chapitre {$num}";
+                            $url = isset($item['url']) ? $item['url'] : "{$scheme}://{$host}/read/{$slug}/{$id}";
+                            $chapters[(string)$num] = [
+                                'number' => $num,
+                                'title'  => $title,
+                                'url'    => $url,
+                                'date'   => $item['updatedAt'] ?? $item['createdAt'] ?? null,
+                            ];
+                        }
+                        if (!empty($chapters)) {
+                            return array_values($chapters);
+                        }
+                    }
+                }
             }
         }
 
@@ -282,7 +299,64 @@ class ScraperService
             }
         }
 
+        // 4. Fallback UUID & Number (en excluant strictement recommendations, latestChapters et widgets tiers)
+        $cleanHtml = preg_replace('/\\\\?"(?:recommendations|popular|latestChapters|related)\\\\?":\s*(\[.*?\]|\$@[a-zA-Z0-9]+)/s', '', $html);
+        if (preg_match_all("/\\\\?\"id\\\\?\":\s*\\\\?\"([a-f0-9\-]{36})\\\\?\",\s*\\\\?\"number\\\\?\":\s*\\\\?\"([0-9]+(?:\.[0-9]+)?)\\\\?\"/i", $cleanHtml, $matches)) {
+            $chapters = [];
+            for ($i = 0; $i < count($matches[1]); $i++) {
+                $id = $matches[1][$i];
+                $num = (float)$matches[2][$i];
+                $chapters[(string)$num] = [
+                    'number' => $num,
+                    'title'  => "Chapitre {$num}",
+                    'url'    => "{$scheme}://{$host}/read/{$slug}/{$id}",
+                    'date'   => null,
+                ];
+            }
+            if (!empty($chapters)) {
+                return array_values($chapters);
+            }
+        }
+
         return [];
+    }
+
+    /**
+     * Extrait une chaîne de tableau JSON [ ... ] équilibrée entre crochets imbriqués.
+     */
+    protected function extractBalancedJsonArray(string $str, int $startPos): ?string
+    {
+        $len = strlen($str);
+        $depth = 0;
+        $inString = false;
+        $escape = false;
+
+        for ($i = $startPos; $i < $len; $i++) {
+            $c = $str[$i];
+            if ($escape) {
+                $escape = false;
+                continue;
+            }
+            if ($c === "\\") {
+                $escape = true;
+                continue;
+            }
+            if ($c === "\"") {
+                $inString = !$inString;
+                continue;
+            }
+            if (!$inString) {
+                if ($c === "[") {
+                    $depth++;
+                } elseif ($c === "]") {
+                    $depth--;
+                    if ($depth === 0) {
+                        return substr($str, $startPos, $i - $startPos + 1);
+                    }
+                }
+            }
+        }
+        return null;
     }
 
     /**

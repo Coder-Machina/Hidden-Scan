@@ -9,8 +9,8 @@
             --accent: #6366f1;
             --accent-hover: #4f46e5;
             --border: rgba(255, 255, 255, 0.1);
-            --bg-card: rgba(17, 24, 39, 0.6);
-            --bg-card-hover: rgba(31, 41, 55, 0.7);
+            --bg-card: rgba(17, 24, 39, 0.7);
+            --bg-card-hover: rgba(31, 41, 55, 0.8);
             --text-main: #f3f4f6;
             --text-muted: #9ca3af;
             --danger: #ef4444;
@@ -88,6 +88,7 @@
             margin-top: 2px;
             word-break: break-all;
             text-decoration: none;
+            display: inline-block;
         }
 
         .scraper-site-url:hover {
@@ -102,6 +103,7 @@
             font-size: 13px;
             margin-top: 10px;
             color: var(--text-main);
+            flex-wrap: wrap;
         }
 
         .status-dot {
@@ -111,7 +113,7 @@
 
         .status-dot.dot-importing {
             color: #38bdf8;
-            animation: pulse-dot 1.5s infinite;
+            animation: pulse-dot 1.2s infinite;
         }
 
         .status-dot.dot-active {
@@ -131,25 +133,36 @@
         }
 
         @keyframes pulse-dot {
-            0%, 100% { opacity: 1; transform: scale(1); }
-            50% { opacity: 0.4; transform: scale(0.85); }
+            0%, 100% { opacity: 1; transform: scale(1.1); }
+            50% { opacity: 0.3; transform: scale(0.85); }
         }
 
         .scraper-progress-bar-container {
             width: 100%;
-            height: 2px;
-            background: var(--border);
-            margin-top: 8px;
-            border-radius: 1px;
+            height: 6px;
+            background: rgba(255, 255, 255, 0.08);
+            margin-top: 10px;
+            border-radius: 4px;
             overflow: hidden;
             display: none;
         }
 
         .scraper-progress-bar-fill {
             height: 100%;
-            background: var(--accent);
+            background: linear-gradient(90deg, #6366f1, #38bdf8);
             width: 0%;
-            transition: width 0.3s ease;
+            transition: width 0.4s ease;
+            border-radius: 4px;
+        }
+
+        .scraper-percent-badge {
+            font-size: 11px;
+            font-weight: 600;
+            padding: 1px 6px;
+            border-radius: 9999px;
+            background: rgba(99, 102, 241, 0.2);
+            color: #a5b4fc;
+            margin-left: auto;
         }
 
         .scraper-actions-row {
@@ -166,7 +179,7 @@
             gap: 6px;
             font-size: 12px;
             font-weight: 500;
-            padding: 5px 10px;
+            padding: 6px 12px;
             border-radius: 6px;
             background: transparent;
             border: 1px solid var(--border);
@@ -182,14 +195,16 @@
         }
 
         .btn-scraper-cancel {
-            color: #f87171;
-            border-color: rgba(239, 68, 68, 0.4);
-            background: rgba(239, 68, 68, 0.1);
+            color: #fca5a5;
+            border-color: rgba(239, 68, 68, 0.5);
+            background: rgba(239, 68, 68, 0.15);
+            font-weight: 600;
         }
 
         .btn-scraper-cancel:hover {
-            background: rgba(239, 68, 68, 0.2);
+            background: rgba(239, 68, 68, 0.28);
             border-color: #ef4444;
+            color: #ffffff;
         }
 
         .btn-scraper-delete {
@@ -203,7 +218,7 @@
             background: rgba(239, 68, 68, 0.1);
         }
 
-        /* Formulaire d'ajout inline */
+        /* Formulaire d'ajout inline (pas de balise form imbriquée pour préserver Livewire) */
         .scraper-add-trigger {
             display: inline-flex;
             align-items: center;
@@ -227,7 +242,7 @@
             background: rgba(99, 102, 241, 0.05);
         }
 
-        .scraper-inline-form {
+        .scraper-inline-box {
             display: none;
             background: var(--bg-card);
             border: 1px solid var(--border);
@@ -236,7 +251,7 @@
             margin-top: 10px;
         }
 
-        .scraper-inline-form.is-open {
+        .scraper-inline-box.is-open {
             display: block;
         }
 
@@ -255,7 +270,7 @@
 
         .scraper-input-field {
             width: 100%;
-            background: rgba(0, 0, 0, 0.25);
+            background: rgba(0, 0, 0, 0.35);
             border: 1px solid var(--border);
             border-radius: 6px;
             padding: 8px 12px;
@@ -279,7 +294,7 @@
             background: var(--accent);
             color: #ffffff;
             border: 1px solid var(--accent);
-            padding: 6px 14px;
+            padding: 7px 16px;
             border-radius: 6px;
             font-size: 12px;
             font-weight: 600;
@@ -295,7 +310,7 @@
             background: transparent;
             color: var(--text-muted);
             border: 1px solid transparent;
-            padding: 6px 12px;
+            padding: 7px 12px;
             border-radius: 6px;
             font-size: 12px;
             cursor: pointer;
@@ -315,7 +330,7 @@
                 $total = $sm->total_chapters_detected ?? 0;
                 $current = $sm->current_scraping_chapter ?? '0';
                 $last = $sm->last_chapter_scraped ?? '0';
-                $percent = ($total > 0 && is_numeric($current)) ? min(100, max(1, round(((float)$current / $total) * 100))) : 0;
+                $percent = ($total > 0 && is_numeric($current)) ? min(100, max(2, (int) round(((float)$current / $total) * 100))) : ($isImporting ? 3 : ($status === 'active' ? 100 : 0));
                 $urlDisplay = preg_replace('#^https?://#', '', $sm->source_url);
             @endphp
             <div class="scraper-card"
@@ -341,22 +356,29 @@
                     <span class="status-dot dot-{{ $status === 'importing' ? 'importing' : ($status === 'active' ? 'active' : ($status === 'annulé' ? 'annule' : ($status === 'paused' ? 'paused' : 'error'))) }}">●</span>
                     <span class="status-text" id="status-text-{{ $sm->id }}">
                         @if($isImporting)
-                            Import en cours — Chapitre {{ $current }} / {{ $total ?: '...' }}
+                            @if($current !== null && is_numeric($current))
+                                Import en cours — Chapitre {{ $current }} / {{ $total ?: '...' }} ({{ $percent }}%)
+                            @else
+                                Initialisation — Analyse des chapitres sur la source...
+                            @endif
                         @elseif($status === 'active')
-                            Actif — Dernier import : Ch. {{ $last ?: '—' }} {{ $sm->last_checked_at ? $sm->last_checked_at->diffForHumans() : '' }}
+                            Terminé — {{ $total ? "{$total} chapitres importés" : "À jour" }}{{ $last ? " (Dernier : Ch. {$last})" : "" }}{{ $sm->last_checked_at ? " • " . $sm->last_checked_at->diffForHumans() : "" }}
                         @elseif($status === 'annulé')
-                            Annulé — Arrêté au Ch. {{ $last ?: '0' }} / {{ $total ?: '...' }}
+                            Annulé — Arrêté au Ch. {{ $last ?: '0' }}{{ $total ? " / {$total}" : "" }}
                         @elseif($status === 'paused')
                             En pause — Ch. {{ $last ?: '—' }} importé
                         @elseif($status === 'error')
-                            <span style="color: #f87171;">Erreur — {{ $sm->last_error ?: 'Échec du scraping' }}</span>
+                            <span style="color: #f87171;">Erreur — {{ $sm->last_error ?: 'Échec de l\'import' }}</span>
                         @else
                             {{ ucfirst($status) }}
                         @endif
                     </span>
+                    @if($isImporting)
+                        <span class="scraper-percent-badge" id="percent-badge-{{ $sm->id }}">{{ $percent }}%</span>
+                    @endif
                 </div>
 
-                {{-- Barre de progression fine (2px) --}}
+                {{-- Barre de progression fine et nette --}}
                 <div class="scraper-progress-bar-container" id="progress-bar-{{ $sm->id }}" style="{{ $isImporting ? 'display:block;' : '' }}">
                     <div class="scraper-progress-bar-fill" id="progress-fill-{{ $sm->id }}" style="width: {{ $percent }}%;"></div>
                 </div>
@@ -365,11 +387,11 @@
                 <div class="scraper-actions-row" id="actions-row-{{ $sm->id }}">
                     @if($isImporting)
                         <button type="button" class="btn-scraper btn-scraper-cancel" onclick="cancelScraping({{ $sm->id }})">
-                            ■ Annuler
+                            ■ Annuler l'import
                         </button>
                     @elseif($status === 'active')
                         <button type="button" class="btn-scraper" onclick="syncScraping({{ $sm->id }})">
-                            ↻ Sync maintenant
+                            ↻ Sync nouveaux chapitres
                         </button>
                         <button type="button" class="btn-scraper" onclick="toggleScraping({{ $sm->id }})">
                             ⏸ Pause
@@ -410,94 +432,103 @@
         @endforelse
     </div>
 
-    {{-- Déclencheur et formulaire inline d'ajout --}}
+    {{-- Déclencheur et formulaire inline d'ajout (SANS balise <form> pour ne pas interférer avec Filament) --}}
     @if($manga)
         <div>
             <button type="button" class="scraper-add-trigger" id="btn-open-add-form" onclick="toggleAddSourceForm(true)">
                 + Ajouter une source
             </button>
 
-            <div class="scraper-inline-form" id="scraper-inline-form">
-                <form id="form-attach-source" onsubmit="submitAddSource(event)">
-                    @csrf
-                    <input type="hidden" name="manga_id" value="{{ $manga->id }}">
-                    <div class="form-grid-2">
-                        <div>
-                            <input type="text"
-                                   id="input-source-name"
-                                   name="name"
-                                   placeholder="Nom du site (ex: Poseidon, Asura...)"
-                                   class="scraper-input-field">
-                        </div>
-                        <div>
-                            <input type="url"
-                                   id="input-source-url"
-                                   name="source_url"
-                                   placeholder="https://site-scan.fr/serie/nom-du-manga"
-                                   required
-                                   class="scraper-input-field">
-                        </div>
+            <div class="scraper-inline-box" id="scraper-inline-box">
+                <div class="form-grid-2">
+                    <div>
+                        <input type="text"
+                               id="input-source-name"
+                               placeholder="Nom de la source (ex: Aniverse, Poseidon...)"
+                               class="scraper-input-field">
                     </div>
-                    <div class="scraper-form-buttons">
-                        <button type="submit" class="btn-submit-import" id="btn-submit-source">
-                            Lancer l'import
-                        </button>
-                        <button type="button" class="btn-cancel-form" onclick="toggleAddSourceForm(false)">
-                            Annuler
-                        </button>
+                    <div>
+                        <input type="url"
+                               id="input-source-url"
+                               placeholder="https://aniverse.fr/manga/nom-du-manga"
+                               class="scraper-input-field">
                     </div>
-                </form>
+                </div>
+                <div class="scraper-form-buttons">
+                    <button type="button" class="btn-submit-import" id="btn-submit-source" onclick="submitAddSource()">
+                        Lancer l'import
+                    </button>
+                    <button type="button" class="btn-cancel-form" onclick="toggleAddSourceForm(false)">
+                        Annuler
+                    </button>
+                </div>
             </div>
         </div>
     @endif
 
-    {{-- Script JavaScript Livewire / Fetch pour l'interactivité complète --}}
+    {{-- Script JavaScript Livewire / Polling pour l'interactivité complète --}}
     <script>
         (function() {
             const root = document.getElementById('scraper-manager-root');
             if (!root) return;
 
-            const csrfToken = '{{ csrf_token() }}';
             let pollTimer = null;
+
+            function getCsrfToken() {
+                return document.querySelector('meta[name="csrf-token"]')?.getAttribute('content')
+                    || '{{ csrf_token() }}';
+            }
 
             // 1. Gestion de l'ouverture/fermeture du formulaire inline
             window.toggleAddSourceForm = function(open) {
-                const form = document.getElementById('scraper-inline-form');
+                const box = document.getElementById('scraper-inline-box');
                 const trigger = document.getElementById('btn-open-add-form');
-                if (!form || !trigger) return;
+                if (!box || !trigger) return;
 
                 if (open) {
-                    form.classList.add('is-open');
+                    box.classList.add('is-open');
                     trigger.style.display = 'none';
                     document.getElementById('input-source-name')?.focus();
                 } else {
-                    form.classList.remove('is-open');
+                    box.classList.remove('is-open');
                     trigger.style.display = 'inline-flex';
-                    document.getElementById('input-source-name').value = '';
-                    document.getElementById('input-source-url').value = '';
+                    const nameInput = document.getElementById('input-source-name');
+                    const urlInput = document.getElementById('input-source-url');
+                    if (nameInput) nameInput.value = '';
+                    if (urlInput) urlInput.value = '';
                 }
             };
 
-            // 2. Soumission du formulaire d'ajout inline (sans rechargement)
-            window.submitAddSource = async function(event) {
-                event.preventDefault();
-                const form = event.target;
+            // 2. Soumission du formulaire d'ajout
+            window.submitAddSource = async function() {
                 const submitBtn = document.getElementById('btn-submit-source');
                 const mangaId = root.dataset.mangaId;
-                const name = document.getElementById('input-source-name')?.value?.trim();
-                const sourceUrl = document.getElementById('input-source-url')?.value?.trim();
+                const nameInput = document.getElementById('input-source-name');
+                const urlInput = document.getElementById('input-source-url');
+                const name = nameInput?.value?.trim();
+                const sourceUrl = urlInput?.value?.trim();
 
-                if (!sourceUrl) return;
+                if (!sourceUrl) {
+                    alert('Veuillez saisir l\'URL du manga sur le site source.');
+                    urlInput?.focus();
+                    return;
+                }
+
+                if (!sourceUrl.startsWith('http://') && !sourceUrl.startsWith('https://')) {
+                    alert('L\'URL doit commencer par http:// ou https://');
+                    urlInput?.focus();
+                    return;
+                }
 
                 submitBtn.disabled = true;
-                submitBtn.textContent = 'Ajout...';
+                submitBtn.textContent = 'Démarrage de l\'import...';
 
                 try {
                     const res = await fetch('{{ route('admin.scraper.attach') }}', {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',
-                            'X-CSRF-TOKEN': csrfToken,
+                            'X-CSRF-TOKEN': getCsrfToken(),
                             'Accept': 'application/json'
                         },
                         body: JSON.stringify({
@@ -512,21 +543,22 @@
                         const sm = data.scraperManga;
                         toggleAddSourceForm(false);
 
-                        // Supprime le placeholder "Aucune source" si présent
+                        // Supprime le placeholder "Aucune source"
                         document.getElementById('no-sources-placeholder')?.remove();
 
-                        // Ajoute la carte dans la liste avec statut "Import en cours — Ch. 0 / ..."
+                        // Ajoute la carte dans la liste avec statut "Import en cours"
                         const cardHtml = createCardHtml(sm);
                         document.getElementById('scraper-cards-container').insertAdjacentHTML('beforeend', cardHtml);
 
-                        // Active la surveillance
+                        // Active la surveillance rapide (1.5s)
                         startPolling();
+                        setTimeout(() => fetchCardStatus(sm.id), 800);
                     } else {
-                        alert(data.message || 'Erreur lors de l\'ajout.');
+                        alert(data.message || 'Erreur lors de l\'ajout de la source.');
                     }
                 } catch (e) {
                     console.error('Erreur attach scraper:', e);
-                    alert('Une erreur réseau est survenue.');
+                    alert('Une erreur réseau est survenue lors de l\'ajout de la source.');
                 } finally {
                     submitBtn.disabled = false;
                     submitBtn.textContent = 'Lancer l\'import';
@@ -536,21 +568,23 @@
             // 3. Annuler l'import en cours
             window.cancelScraping = async function(id) {
                 const statusText = document.getElementById('status-text-' + id);
+                const actionsRow = document.getElementById('actions-row-' + id);
                 if (statusText) {
-                    statusText.textContent = 'Arrêt en cours...';
+                    statusText.textContent = 'Arrêt propre en cours après l\'image actuelle...';
+                }
+                if (actionsRow) {
+                    actionsRow.innerHTML = '<span style="font-size:12px; color:var(--text-muted);">Arrêt en cours...</span>';
                 }
 
                 try {
-                    const res = await fetch('/admin/scraper/' + id + '/cancel', {
+                    await fetch('/admin/scraper/' + id + '/cancel', {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',
-                            'X-CSRF-TOKEN': csrfToken,
+                            'X-CSRF-TOKEN': getCsrfToken(),
                             'Accept': 'application/json'
                         }
                     });
-                    const data = await res.json();
-                    // Interroge le statut immédiatement
                     setTimeout(() => fetchCardStatus(id), 600);
                 } catch (e) {
                     console.error('Erreur annulation scraper:', e);
@@ -563,13 +597,17 @@
                 if (statusText) {
                     statusText.textContent = 'Démarrage de l\'import...';
                 }
+                const card = document.getElementById('scraper-card-' + id);
+                if (card) {
+                    card.dataset.status = 'importing';
+                }
 
                 try {
                     await fetch('/admin/scraper/' + id + '/sync', {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',
-                            'X-CSRF-TOKEN': csrfToken,
+                            'X-CSRF-TOKEN': getCsrfToken(),
                             'Accept': 'application/json'
                         }
                     });
@@ -587,11 +625,11 @@
                         method: 'PATCH',
                         headers: {
                             'Content-Type': 'application/json',
-                            'X-CSRF-TOKEN': csrfToken,
+                            'X-CSRF-TOKEN': getCsrfToken(),
                             'Accept': 'application/json'
                         }
                     });
-                    setTimeout(() => fetchCardStatus(id), 300);
+                    setTimeout(() => fetchCardStatus(id), 400);
                 } catch (e) {
                     console.error('Erreur toggle scraper:', e);
                 }
@@ -606,7 +644,7 @@
                         method: 'DELETE',
                         headers: {
                             'Content-Type': 'application/json',
-                            'X-CSRF-TOKEN': csrfToken,
+                            'X-CSRF-TOKEN': getCsrfToken(),
                             'Accept': 'application/json'
                         }
                     });
@@ -646,7 +684,8 @@
 
                         <div class="scraper-status-line">
                             <span class="status-dot dot-importing">●</span>
-                            <span class="status-text" id="status-text-${sm.id}">Import en cours — Ch. 0 / ...</span>
+                            <span class="status-text" id="status-text-${sm.id}">Initialisation — Analyse des chapitres...</span>
+                            <span class="scraper-percent-badge" id="percent-badge-${sm.id}">2%</span>
                         </div>
 
                         <div class="scraper-progress-bar-container" id="progress-bar-${sm.id}" style="display:block;">
@@ -655,14 +694,14 @@
 
                         <div class="scraper-actions-row" id="actions-row-${sm.id}">
                             <button type="button" class="btn-scraper btn-scraper-cancel" onclick="cancelScraping(${sm.id})">
-                                ■ Annuler
+                                ■ Annuler l'import
                             </button>
                         </div>
                     </div>
                 `;
             }
 
-            // 8. Polling AJAX toutes les 10 secondes
+            // 8. Polling AJAX régulier et adaptatif (1.5s pendant import, 8s en veille)
             async function fetchCardStatus(id) {
                 try {
                     const res = await fetch('/admin/scraper/' + id + '/status', {
@@ -674,9 +713,10 @@
                     const card = document.getElementById('scraper-card-' + id);
                     if (!card) return;
 
+                    const prevStatus = card.dataset.status;
                     card.dataset.status = data.status;
 
-                    // MAJ du texte
+                    // MAJ du texte de statut
                     const textEl = document.getElementById('status-text-' + id);
                     if (textEl) {
                         if (data.status === 'error') {
@@ -692,26 +732,47 @@
                         dotEl.className = 'status-dot dot-' + (data.status === 'importing' ? 'importing' : (data.status === 'active' ? 'active' : (data.status === 'annulé' ? 'annule' : (data.status === 'paused' ? 'paused' : 'error'))));
                     }
 
-                    // MAJ de la barre de progression (2px)
+                    // MAJ du badge de pourcentage
+                    let badgeEl = document.getElementById('percent-badge-' + id);
+                    if (data.is_importing) {
+                        if (!badgeEl) {
+                            const statusLine = card.querySelector('.scraper-status-line');
+                            if (statusLine) {
+                                statusLine.insertAdjacentHTML('beforeend', `<span class="scraper-percent-badge" id="percent-badge-${id}">${data.progress_percent || 2}%</span>`);
+                            }
+                        } else {
+                            badgeEl.textContent = (data.progress_percent || 2) + '%';
+                            badgeEl.style.display = 'inline-block';
+                        }
+                    } else if (badgeEl) {
+                        badgeEl.style.display = 'none';
+                    }
+
+                    // MAJ de la barre de progression
                     const pBar = document.getElementById('progress-bar-' + id);
                     const pFill = document.getElementById('progress-fill-' + id);
                     if (pBar && pFill) {
                         if (data.is_importing) {
                             pBar.style.display = 'block';
-                            pFill.style.width = (data.progress_percent || 5) + '%';
+                            pFill.style.width = (data.progress_percent || 2) + '%';
                         } else {
                             pBar.style.display = 'none';
                         }
                     }
 
-                    // MAJ des boutons selon le statut exact demandé
+                    // MAJ des boutons si le statut a changé ou pour garantir la cohérence
                     const actionsRow = document.getElementById('actions-row-' + id);
                     if (actionsRow) {
                         actionsRow.innerHTML = renderButtonsForStatus(id, data);
                     }
 
+                    // Réajuste la fréquence du timer si l'état d'import a changé
+                    if (prevStatus !== data.status) {
+                        startPolling();
+                    }
+
                 } catch (e) {
-                    console.error('Erreur récupération statut scraper:', e);
+                    console.error('Erreur statut scraper:', e);
                 }
             }
 
@@ -719,7 +780,7 @@
                 if (data.is_importing) {
                     return `
                         <button type="button" class="btn-scraper btn-scraper-cancel" onclick="cancelScraping(${id})">
-                            ■ Annuler
+                            ■ Annuler l'import
                         </button>
                     `;
                 }
@@ -727,7 +788,7 @@
                 if (data.status === 'active') {
                     return `
                         <button type="button" class="btn-scraper" onclick="syncScraping(${id})">
-                            ↻ Sync maintenant
+                            ↻ Sync nouveaux chapitres
                         </button>
                         <button type="button" class="btn-scraper" onclick="toggleScraping(${id})">
                             ⏸ Pause
@@ -739,7 +800,7 @@
                 }
 
                 if (data.status === 'annulé') {
-                    const resumeLabel = data.next_chapter ? ('↻ Reprendre depuis Ch. ' + data.next_chapter) : '↻ Reprendre';
+                    const resumeLabel = data.next_chapter ? ('↻ Reprendre depuis Ch. ' + data.next_chapter) : '↻ Reprendre l\'import';
                     return `
                         <button type="button" class="btn-scraper" onclick="syncScraping(${id})">
                             ${resumeLabel}
@@ -772,7 +833,11 @@
                 `;
             }
 
-            function pollAllActiveSources() {
+            function hasImportingCards() {
+                return document.querySelectorAll('.scraper-card[data-status="importing"]').length > 0;
+            }
+
+            function pollAllCards() {
                 const cards = document.querySelectorAll('.scraper-card');
                 cards.forEach(c => {
                     const id = c.dataset.id;
@@ -782,8 +847,10 @@
 
             function startPolling() {
                 if (pollTimer) clearInterval(pollTimer);
-                // Toutes les 10 secondes selon la spécification
-                pollTimer = setInterval(pollAllActiveSources, 10000);
+                // Si au moins un scraper est en cours d'import, polling très réactif toutes les 1.5s
+                // Sinon, surveillance douce toutes les 8s
+                const interval = hasImportingCards() ? 1500 : 8000;
+                pollTimer = setInterval(pollAllCards, interval);
             }
 
             startPolling();
@@ -792,58 +859,71 @@
             const container = document.getElementById('scraper-cards-container');
             let draggedCard = null;
 
-            container.addEventListener('dragstart', (e) => {
-                const card = e.target.closest('.scraper-card');
-                if (!card) return;
-                draggedCard = card;
-                card.classList.add('is-dragging');
-                e.dataTransfer.effectAllowed = 'move';
-            });
+            if (container) {
+                container.addEventListener('dragstart', (e) => {
+                    const card = e.target.closest('.scraper-card');
+                    if (!card) return;
+                    draggedCard = card;
+                    card.classList.add('is-dragging');
+                    e.dataTransfer.effectAllowed = 'move';
+                });
 
-            container.addEventListener('dragend', (e) => {
-                if (draggedCard) {
-                    draggedCard.classList.remove('is-dragging');
-                    draggedCard = null;
-                }
-                document.querySelectorAll('.scraper-card').forEach(c => c.classList.remove('drag-over'));
-                saveNewOrder();
-            });
+                container.addEventListener('dragend', () => {
+                    if (draggedCard) {
+                        draggedCard.classList.remove('is-dragging');
+                        draggedCard = null;
+                    }
+                    container.querySelectorAll('.scraper-card').forEach(c => c.classList.remove('drag-over'));
+                });
 
-            container.addEventListener('dragover', (e) => {
-                e.preventDefault();
-                e.dataTransfer.dropEffect = 'move';
-                const targetCard = e.target.closest('.scraper-card');
-                if (targetCard && targetCard !== draggedCard) {
-                    const bounding = targetCard.getBoundingClientRect();
-                    const offset = e.clientY - bounding.top;
-                    if (offset > bounding.height / 2) {
+                container.addEventListener('dragover', (e) => {
+                    e.preventDefault();
+                    e.dataTransfer.dropEffect = 'move';
+                    const targetCard = e.target.closest('.scraper-card');
+                    if (targetCard && targetCard !== draggedCard) {
+                        container.querySelectorAll('.scraper-card').forEach(c => c.classList.remove('drag-over'));
+                        targetCard.classList.add('drag-over');
+                    }
+                });
+
+                container.addEventListener('drop', async (e) => {
+                    e.preventDefault();
+                    const targetCard = e.target.closest('.scraper-card');
+                    if (!targetCard || targetCard === draggedCard) return;
+
+                    const cards = Array.from(container.querySelectorAll('.scraper-card'));
+                    const draggedIndex = cards.indexOf(draggedCard);
+                    const targetIndex = cards.indexOf(targetCard);
+
+                    if (draggedIndex < targetIndex) {
                         targetCard.after(draggedCard);
                     } else {
                         targetCard.before(draggedCard);
                     }
-                }
-            });
 
-            async function saveNewOrder() {
-                const cards = document.querySelectorAll('.scraper-card');
-                const order = Array.from(cards).map(c => parseInt(c.dataset.id, 10));
-                if (order.length === 0) return;
+                    targetCard.classList.remove('drag-over');
 
-                const firstId = order[0];
-                try {
-                    await fetch('/admin/scraper/' + firstId + '/reorder', {
-                        method: 'PATCH',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'X-CSRF-TOKEN': csrfToken,
-                            'Accept': 'application/json'
-                        },
-                        body: JSON.stringify({ order: order })
-                    });
-                } catch (e) {
-                    console.error('Erreur enregistrement ordre scraper:', e);
-                }
+                    // Sauvegarde du nouvel ordre des priorités
+                    const orderedIds = Array.from(container.querySelectorAll('.scraper-card')).map(c => c.dataset.id);
+                    try {
+                        await fetch('/admin/scraper/reorder', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'X-CSRF-TOKEN': getCsrfToken(),
+                                'Accept': 'application/json'
+                            },
+                            body: JSON.stringify({
+                                manga_id: root.dataset.mangaId,
+                                ordered_ids: orderedIds
+                            })
+                        });
+                    } catch (err) {
+                        console.error('Erreur reorder scrapers:', err);
+                    }
+                });
             }
+
         })();
     </script>
 </div>

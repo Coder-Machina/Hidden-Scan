@@ -112,19 +112,19 @@ class ScraperController extends Controller
             $progressPercent = 100;
         } elseif (in_array($status, ['importing', 'en cours d\'import'])) {
             if ($total > 0 && $current !== null && is_numeric($current)) {
-                $progressPercent = min(100, max(1, (int) round(((float)$current / $total) * 100)));
+                $progressPercent = min(100, max(2, (int) round(((float)$current / $total) * 100)));
             } else {
-                $progressPercent = 1;
+                $progressPercent = 3;
             }
         }
 
-        // Libellé exact selon la spécification de design
+        // Libellé exact selon la spécification
         $statusText = match ($status) {
             'importing', 'en cours d\'import' => "Import en cours — Chapitre " . ($current ?? '0') . " / " . ($total ?? '...'),
             'active', 'actif' => "Actif — Dernier import : Ch. " . ($last ?: '—') . ($lastCheck ? " " . $lastCheck->diffForHumans() : ''),
             'annulé', 'cancelled' => "Annulé — Arrêté au Ch. " . ($last ?: '0') . ($total ? " / {$total}" : ''),
             'paused', 'en pause' => "En pause — Ch. " . ($last ?: '—') . " importé",
-            'error', 'erreur' => "Erreur — " . ($scraperManga->last_error ?: 'Erreur inconnue'),
+            'error', 'erreur' => "Erreur — " . ($scraperManga->last_error ?: 'Échec de l\'import'),
             default => ucfirst($status),
         };
 
@@ -136,6 +136,7 @@ class ScraperController extends Controller
 
         return response()->json([
             'id'               => $scraperManga->id,
+            'source_name'      => $scraperManga->scraperSource?->name ?: 'Source',
             'status'           => $status,
             'status_text'      => $statusText,
             'is_importing'     => in_array($status, ['importing', 'en cours d\'import']),
