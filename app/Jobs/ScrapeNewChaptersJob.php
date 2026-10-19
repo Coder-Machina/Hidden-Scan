@@ -30,7 +30,7 @@ class ScrapeNewChaptersJob implements ShouldQueue
 
         try {
             $manga = $this->scraperManga->manga;
-            if ($manga && $manga->scraperMangas()->count() > 1) {
+            if ($manga) {
                 $scraperService->syncMangaMultiSources($manga);
                 return;
             }

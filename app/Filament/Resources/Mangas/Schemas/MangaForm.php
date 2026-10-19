@@ -251,11 +251,20 @@ class MangaForm
 
                                         return $source->id;
                                     })
-                                    ->helperText('Choisissez un site existant ou cliquez sur "+" pour en ajouter un nouveau.')
-                                    ->columnSpan(4),
+                                    ->helperText('Choisissez un site existant ou cliquez sur « + » pour en ajouter un nouveau.')
+                                    ->columnSpan(['default' => 12, 'md' => 8]),
+                                Select::make('status')
+                                    ->label('Statut de cette source')
+                                    ->options([
+                                        'active' => '🟢 Actif (Prêt pour relais)',
+                                        'paused' => '⏸️ En pause (Désactivé)',
+                                    ])
+                                    ->default('active')
+                                    ->required()
+                                    ->columnSpan(['default' => 12, 'md' => 4]),
                                 TextInput::make('source_url')
                                     ->label('URL du manga sur ce site')
-                                    ->placeholder('https://poseidon-scan.net/manga/solo-leveling')
+                                    ->placeholder('https://poseidon-scans.net/serie/nom-du-manga')
                                     ->url()
                                     ->required()
                                     ->live(onBlur: true)
@@ -270,26 +279,18 @@ class MangaForm
                                             }
                                         }
                                     })
-                                    ->helperText('Collez l\'URL complète de la page manga sur ce site.')
-                                    ->columnSpan(6),
-                                Select::make('status')
-                                    ->label('Statut')
-                                    ->options([
-                                        'active' => 'Actif',
-                                        'paused' => 'En pause',
-                                    ])
-                                    ->default('active')
-                                    ->required()
-                                    ->columnSpan(2),
+                                    ->helperText('Collez l\'adresse complète de la page œuvre (ex: https://poseidon-scans.net/serie/omniscient-readers-viewpoint).')
+                                    ->columnSpanFull(),
                             ])
                             ->columns(12)
                             ->reorderable()
                             ->collapsible()
-                            ->addActionLabel('+ Ajouter une source (principale ou relais)')
-                            ->helperText('Glissez-déposez pour définir l\'ordre de priorité : la 1ère source est principale, la 2ème est le relais de secours n°1, etc.'),
+                            ->cloneable()
+                            ->addActionLabel('+ Ajouter une source supplémentaire (Relais de secours)')
+                            ->helperText('Glissez-déposez les cartes pour définir l\'ordre de priorité : la 1ère source est principale (#1), la 2ème prend le relais si besoin (#2), etc.'),
 
                         Placeholder::make('scraper_multi_status')
-                            ->label('Tableau de bord du relais intelligent')
+                            ->label('')
                             ->visible(fn ($record) => $record && $record->scraperMangas()->exists())
                             ->columnSpanFull()
                             ->content(function ($record) {
@@ -297,29 +298,44 @@ class MangaForm
                                 $sources = $record->scraperMangas()->with('scraperSource')->orderBy('priority', 'asc')->get();
                                 if ($sources->isEmpty()) return null;
 
+                                $totalChapters = $record->chapters()->count();
                                 $rowsHtml = '';
                                 foreach ($sources as $index => $sm) {
-                                    $rank = $index === 0
-                                        ? '<span class="px-2 py-0.5 text-xs font-bold rounded bg-amber-500/20 text-amber-400">#1 Principale</span>'
-                                        : '<span class="px-2 py-0.5 text-xs font-semibold rounded bg-blue-500/20 text-blue-400">#' . ($index + 1) . ' Secours</span>';
+                                    $isPrimary = ($index === 0);
+                                    $rankBadge = $isPrimary
+                                        ? '<span style="display:inline-flex;align-items:center;gap:4px;background:rgba(245,158,11,0.18);color:#fbbf24;border:1px solid rgba(245,158,11,0.35);padding:3px 10px;border-radius:6px;font-weight:700;font-size:11px;letter-spacing:0.02em;">★ #1 Principale</span>'
+                                        : '<span style="display:inline-flex;align-items:center;gap:4px;background:rgba(59,130,246,0.15);color:#60a5fa;border:1px solid rgba(59,130,246,0.3);padding:3px 10px;border-radius:6px;font-weight:600;font-size:11px;">#' . ($index + 1) . ' Relais secours</span>';
+
                                     $statusBadge = match($sm->status) {
-                                        'active' => '<span class="px-2 py-0.5 text-xs font-semibold rounded bg-emerald-500/20 text-emerald-400">Actif</span>',
-                                        'paused' => '<span class="px-2 py-0.5 text-xs font-semibold rounded bg-gray-500/20 text-gray-400">En pause</span>',
-                                        'error'  => '<span class="px-2 py-0.5 text-xs font-semibold rounded bg-rose-500/20 text-rose-400">Erreur</span>',
+                                        'active' => '<span style="display:inline-flex;align-items:center;gap:5px;background:rgba(16,185,129,0.15);color:#34d399;border:1px solid rgba(16,185,129,0.35);padding:3px 9px;border-radius:6px;font-weight:600;font-size:11px;"><span style="width:6px;height:6px;border-radius:50%;background:#34d399;display:inline-block;"></span> Actif</span>',
+                                        'paused' => '<span style="display:inline-flex;align-items:center;gap:5px;background:rgba(148,163,184,0.15);color:#94a3b8;border:1px solid rgba(148,163,184,0.25);padding:3px 9px;border-radius:6px;font-size:11px;">⏸️ En pause</span>',
+                                        'error'  => '<span style="display:inline-flex;align-items:center;gap:5px;background:rgba(239,68,68,0.15);color:#f87171;border:1px solid rgba(239,68,68,0.35);padding:3px 9px;border-radius:6px;font-size:11px;">⚠️ En erreur</span>',
                                         default  => ucfirst($sm->status),
                                     };
+
                                     $sourceName = htmlspecialchars($sm->scraperSource?->name ?? 'Source inconnue');
-                                    $lastChap = $sm->last_chapter_scraped ? htmlspecialchars($sm->last_chapter_scraped) : 'Aucun';
-                                    $lastCheck = $sm->last_checked_at ? $sm->last_checked_at->diffForHumans() : 'Jamais';
-                                    $errorMsg = $sm->last_error ? '<div class="text-xs text-rose-400 mt-1">⚠️ ' . htmlspecialchars($sm->last_error) . '</div>' : '';
+                                    $domain = parse_url($sm->source_url, PHP_URL_HOST) ?? '';
+                                    $lastChap = $sm->last_chapter_scraped ? ('Chapitre ' . htmlspecialchars($sm->last_chapter_scraped)) : '<span style="color:#64748b;font-style:italic;">En attente</span>';
+                                    $lastCheck = $sm->last_checked_at ? $sm->last_checked_at->diffForHumans() : '<span style="color:#64748b;">Jamais</span>';
+                                    $errorBox = $sm->last_error ? '<div style="color:#f87171;background:rgba(239,68,68,0.08);border-left:2px solid #ef4444;padding:4px 8px;border-radius:4px;font-size:11px;margin-top:6px;word-break:break-word;">⚠️ ' . htmlspecialchars($sm->last_error) . '</div>' : '';
+
+                                    $bgRow = ($index % 2 === 0) ? '#0f172a' : '#131d33';
 
                                     $rowsHtml .= "
-                                        <tr class='border-b border-gray-800/60'>
-                                            <td class='py-2 px-3'>{$rank}</td>
-                                            <td class='py-2 px-3 font-medium text-gray-200'>{$sourceName}</td>
-                                            <td class='py-2 px-3'>{$statusBadge}</td>
-                                            <td class='py-2 px-3 font-mono font-bold text-gray-300'>{$lastChap}</td>
-                                            <td class='py-2 px-3 text-gray-400 text-xs'>{$lastCheck}{$errorMsg}</td>
+                                        <tr style='background:{$bgRow};border-bottom:1px solid #1e293b;transition:background 0.15s;'>
+                                            <td style='padding:12px 16px;vertical-align:middle;white-space:nowrap;'>{$rankBadge}</td>
+                                            <td style='padding:12px 16px;vertical-align:middle;'>
+                                                <div style='color:#f8fafc;font-weight:600;font-size:13px;'>{$sourceName}</div>
+                                                <div style='color:#64748b;font-size:11px;margin-top:2px;font-family:monospace;'>{$domain}</div>
+                                            </td>
+                                            <td style='padding:12px 16px;vertical-align:middle;white-space:nowrap;'>{$statusBadge}</td>
+                                            <td style='padding:12px 16px;vertical-align:middle;white-space:nowrap;'>
+                                                <span style='background:#1e293b;color:#38bdf8;border:1px solid #334155;padding:3px 9px;border-radius:6px;font-family:monospace;font-weight:700;font-size:12px;'>{$lastChap}</span>
+                                            </td>
+                                            <td style='padding:12px 16px;vertical-align:middle;'>
+                                                <div style='color:#94a3b8;font-size:12px;'>{$lastCheck}</div>
+                                                {$errorBox}
+                                            </td>
                                         </tr>
                                     ";
                                 }
@@ -328,31 +344,58 @@ class MangaForm
                                 $csrfToken = csrf_token();
 
                                 return new \Illuminate\Support\HtmlString("
-                                    <div class='p-4 rounded-xl bg-gray-900/70 border border-gray-700/60 space-y-3 text-sm'>
-                                        <div class='flex items-center justify-between'>
-                                            <span class='font-semibold text-gray-200 flex items-center gap-1.5'>
-                                                <span>⚡</span> État en temps réel des sources & relais
-                                            </span>
-                                            <form method='POST' action='{$syncRoute}' class='inline'>
+                                    <div style='background:#0b1120;border:1px solid #1e293b;border-radius:12px;padding:20px;margin-top:8px;box-shadow:0 4px 16px rgba(0,0,0,0.3);'>
+                                        <!-- Entête du tableau de bord -->
+                                        <div style='display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:14px;margin-bottom:16px;padding-bottom:14px;border-bottom:1px solid #1e293b;'>
+                                            <div style='display:flex;align-items:center;gap:12px;'>
+                                                <div style='background:linear-gradient(135deg,rgba(245,158,11,0.2),rgba(217,119,6,0.3));border:1px solid rgba(245,158,11,0.4);border-radius:10px;width:38px;height:38px;display:inline-flex;align-items:center;justify-content:center;font-size:18px;'>
+                                                    ⚡
+                                                </div>
+                                                <div>
+                                                    <div style='color:#f8fafc;font-weight:700;font-size:15px;display:flex;align-items:center;gap:8px;'>
+                                                        Tableau de bord du relais multi-sources
+                                                        <span style='background:rgba(16,185,129,0.15);color:#34d399;border:1px solid rgba(16,185,129,0.3);border-radius:9999px;font-size:10px;font-weight:700;padding:2px 8px;text-transform:uppercase;'>Actif</span>
+                                                        <span style='background:rgba(56,189,248,0.12);color:#38bdf8;border:1px solid rgba(56,189,248,0.25);border-radius:9999px;font-size:11px;font-weight:600;padding:2px 8px;'>{$totalChapters} chapitres en ligne</span>
+                                                    </div>
+                                                    <div style='color:#94a3b8;font-size:12px;margin-top:2px;'>
+                                                        Surveillance en continu : si la source principale est en retard ou en panne, le relais de secours prend la main immédiatement.
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            <form method='POST' action='{$syncRoute}' style='margin:0;'>
                                                 <input type='hidden' name='_token' value='{$csrfToken}'>
-                                                <button type='submit' class='px-3 py-1.5 text-xs font-medium rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white transition shadow'>
-                                                    ↻ Déclencher le relais intelligent
+                                                <button type='submit' style='display:inline-flex;align-items:center;gap:8px;background:linear-gradient(135deg,#4f46e5,#4338ca);color:#ffffff;border:1px solid #6366f1;border-radius:8px;padding:9px 18px;font-size:12px;font-weight:600;cursor:pointer;transition:all 0.2s;box-shadow:0 2px 8px rgba(79,70,229,0.4);'>
+                                                    <span style='font-size:14px;'>↻</span> Déclencher le relais intelligent
                                                 </button>
                                             </form>
                                         </div>
-                                        <div class='overflow-x-auto'>
-                                            <table class='w-full text-left text-xs'>
+
+                                        <!-- Table stylisée avec CSS inline protégé du purge -->
+                                        <div style='overflow-x:auto;border-radius:8px;border:1px solid #1e293b;'>
+                                            <table style='width:100%;border-collapse:collapse;text-align:left;font-size:12px;min-width:620px;'>
                                                 <thead>
-                                                    <tr class='text-gray-400 border-b border-gray-800 uppercase tracking-wider text-[11px]'>
-                                                        <th class='py-2 px-3'>Priorité</th>
-                                                        <th class='py-2 px-3'>Source</th>
-                                                        <th class='py-2 px-3'>Statut</th>
-                                                        <th class='py-2 px-3'>Dernier chap.</th>
-                                                        <th class='py-2 px-3'>Dernière vérif.</th>
+                                                    <tr style='background:#1e293b;color:#94a3b8;text-transform:uppercase;font-size:11px;font-weight:700;letter-spacing:0.05em;border-bottom:1px solid #334155;'>
+                                                        <th style='padding:11px 16px;'>Priorité</th>
+                                                        <th style='padding:11px 16px;'>Site Source</th>
+                                                        <th style='padding:11px 16px;'>Statut</th>
+                                                        <th style='padding:11px 16px;'>Dernier Chapitre</th>
+                                                        <th style='padding:11px 16px;'>Dernière Vérif.</th>
                                                     </tr>
                                                 </thead>
-                                                <tbody>{$rowsHtml}</tbody>
+                                                <tbody>
+                                                    {$rowsHtml}
+                                                </tbody>
                                             </table>
+                                        </div>
+
+                                        <!-- Explication claire et rassurante -->
+                                        <div style='margin-top:14px;padding:12px 16px;background:rgba(30,41,59,0.5);border:1px solid #1e293b;border-radius:8px;color:#94a3b8;font-size:12px;line-height:1.5;display:flex;align-items:flex-start;gap:10px;'>
+                                            <span style='font-size:16px;'>💡</span>
+                                            <div>
+                                                <strong style='color:#e2e8f0;'>Principe du relais intelligent :</strong>
+                                                Le système cherche d'abord les nouveaux chapitres sur votre source #1. Si un chapitre est absent, incomplet ou si le site principal ne répond pas, il bascule automatiquement et de manière transparente sur les sources de relais (#2, #3...) pour que les nouveaux chapitres soient importés sans jamais bloquer votre site.
+                                            </div>
                                         </div>
                                     </div>
                                 ");

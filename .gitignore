@@ -23,6 +23,8 @@
 /public/storage
 /storage/*.key
 /storage/pail
+storage/app/public/chapters/
+storage/app/public/mangas/
 /vendor
 _ide_helper.php
 Homestead.json

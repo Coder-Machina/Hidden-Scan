@@ -53,19 +53,74 @@ class ScraperService
         }
 
         $html = $response->body();
-        $crawler = new Crawler($html, $scraperManga->source_url);
 
-        $chapterNodes = $crawler->filter($source->sel_chapter_list);
-        $chapters = [];
+        // 1. Stratégie Next.js / RSC payload (ex: Poseidon Scans, Next.js manga sites)
+        $chapters = $this->extractFromNextJs($html, $scraperManga->source_url);
+        if (!empty($chapters)) {
+            usort($chapters, fn($a, $b) => $a['number'] <=> $b['number']);
+            return $chapters;
+        }
+
+        // 2. Stratégie JSON-LD (Schema.org ComicSeries / ComicIssue)
+        $chapters = $this->extractFromJsonLd($html, $scraperManga->source_url);
+        if (!empty($chapters)) {
+            usort($chapters, fn($a, $b) => $a['number'] <=> $b['number']);
+            return $chapters;
+        }
+
+        // 3. Stratégie DOM Crawler avec sélecteur configuré et fallbacks intelligents
+        $crawler = new Crawler($html, $scraperManga->source_url);
+        $candidateSelectors = array_unique(array_filter([
+            $source->sel_chapter_list,
+            'a[href*="/chapter/"]',
+            'a[href*="/chapitre/"]',
+            '#chapterlist li',
+            '.cl-item',
+            '.eph-num',
+            '.chapter-list-item',
+            'ul.sub-chap li',
+            'div[data-number]',
+            '.wp-manga-chapter',
+        ]));
+
+        $chapterNodes = null;
+        $matchedSelector = null;
+        foreach ($candidateSelectors as $sel) {
+            try {
+                $nodes = $crawler->filter($sel);
+                if ($nodes->count() > 0) {
+                    $chapterNodes = $nodes;
+                    $matchedSelector = $sel;
+                    break;
+                }
+            } catch (\Throwable $e) {
+                // ignorer les sélecteurs invalides
+            }
+        }
+
+        if (!$chapterNodes || $chapterNodes->count() === 0) {
+            return [];
+        }
 
         $chapterNodes->each(function (Crawler $node) use ($source, $scraperManga, &$chapters) {
             try {
                 // Extraction de l'URL et du titre
-                $titleNode = $source->sel_chapter_title ? $node->filter($source->sel_chapter_title) : $node;
-                $urlNode = $source->sel_chapter_url ? $node->filter($source->sel_chapter_url) : $node;
+                if ($node->nodeName() === 'a') {
+                    $title = trim($node->text());
+                    $url = trim($node->attr('href') ?? '');
+                } else {
+                    $titleNode = $source->sel_chapter_title ? $node->filter($source->sel_chapter_title) : null;
+                    if (!$titleNode || $titleNode->count() === 0) {
+                        $titleNode = $node->filter('a');
+                    }
+                    $urlNode = $source->sel_chapter_url ? $node->filter($source->sel_chapter_url) : null;
+                    if (!$urlNode || $urlNode->count() === 0) {
+                        $urlNode = $node->filter('a');
+                    }
 
-                $title = $titleNode->count() > 0 ? trim($titleNode->text()) : '';
-                $url = $urlNode->count() > 0 ? trim($urlNode->attr('href') ?? '') : '';
+                    $title = $titleNode->count() > 0 ? trim($titleNode->text()) : trim($node->text());
+                    $url = $urlNode->count() > 0 ? trim($urlNode->attr('href') ?? '') : '';
+                }
 
                 if (empty($url)) {
                     return;
@@ -73,15 +128,22 @@ class ScraperService
 
                 // Normalisation URL si relative
                 if (str_starts_with($url, '/')) {
-                    $url = rtrim($source->base_url, '/') . $url;
+                    $parsedHost = parse_url($scraperManga->source_url, PHP_URL_HOST);
+                    $parsedScheme = parse_url($scraperManga->source_url, PHP_URL_SCHEME) ?? 'https';
+                    $baseUrl = $parsedHost ? ($parsedScheme . '://' . $parsedHost) : $source->base_url;
+                    $url = rtrim($baseUrl, '/') . $url;
                 }
 
                 // Date optionnelle
                 $date = null;
                 if ($source->sel_chapter_date) {
-                    $dateNode = $node->filter($source->sel_chapter_date);
-                    if ($dateNode->count() > 0) {
-                        $date = trim($dateNode->text());
+                    try {
+                        $dateNode = $node->filter($source->sel_chapter_date);
+                        if ($dateNode->count() > 0) {
+                            $date = trim($dateNode->text());
+                        }
+                    } catch (\Throwable $e) {
+                        // ignore
                     }
                 }
 
@@ -102,10 +164,90 @@ class ScraperService
             }
         });
 
+        // Déduplication par numéro
+        $unique = [];
+        foreach ($chapters as $ch) {
+            $numKey = (string)$ch['number'];
+            if (!isset($unique[$numKey])) {
+                $unique[$numKey] = $ch;
+            }
+        }
+        $chapters = array_values($unique);
+
         // Tri par numéro de chapitre croissant (1, 2, 3...)
         usort($chapters, fn($a, $b) => $a['number'] <=> $b['number']);
 
         return $chapters;
+    }
+
+    /**
+     * Tente d'extraire la liste complète des chapitres depuis un payload Next.js RSC.
+     */
+    protected function extractFromNextJs(string $html, string $sourceUrl): array
+    {
+        if (preg_match('/\\\\?"chapters\\\\?":\s*(\[\s*\{.*?\}\s*\])(?:,\s*\\\\?"|\}\]\]|\}\s*\}|\}\s*\])/s', $html, $matches)
+            || preg_match('/\\\\?"chapters\\\\?":\s*(\[.*?\])(?:,\s*\\\\?"|\}\]\])/s', $html, $matches)) {
+            $rawJson = stripslashes($matches[1]);
+            $cleanJson = preg_replace('/"\$D([^"]+)"/', '"$1"', $rawJson);
+            $items = json_decode($cleanJson, true);
+            if (is_array($items) && !empty($items)) {
+                $baseChapterUrl = rtrim($sourceUrl, '/');
+                $chapters = [];
+                foreach ($items as $item) {
+                    if (!isset($item['number'])) {
+                        continue;
+                    }
+                    $num = (float)$item['number'];
+                    $title = !empty($item['title']) ? "Chapitre {$num} - {$item['title']}" : "Chapitre {$num}";
+                    $url = $baseChapterUrl . '/chapter/' . $num;
+                    $chapters[] = [
+                        'number' => $num,
+                        'title'  => $title,
+                        'url'    => $url,
+                        'date'   => $item['createdAt'] ?? null,
+                    ];
+                }
+                return $chapters;
+            }
+        }
+
+        return [];
+    }
+
+    /**
+     * Tente d'extraire la liste des chapitres depuis le schema JSON-LD.
+     */
+    protected function extractFromJsonLd(string $html, string $sourceUrl): array
+    {
+        if (preg_match_all('/<script[^>]+type="application\/ld\+json"[^>]*>(.*?)<\/script>/s', $html, $scripts)) {
+            foreach ($scripts[1] as $content) {
+                $data = json_decode($content, true);
+                if (is_array($data) && isset($data['hasPart']) && is_array($data['hasPart'])) {
+                    $chapters = [];
+                    foreach ($data['hasPart'] as $part) {
+                        $num = isset($part['issueNumber']) ? (float)$part['issueNumber'] : null;
+                        $url = $part['url'] ?? '';
+                        $name = $part['name'] ?? '';
+                        if ($num === null && !empty($url)) {
+                            $num = $this->extractChapterNumber($name, $url);
+                        }
+                        if ($num !== null && !empty($url)) {
+                            $chapters[] = [
+                                'number' => $num,
+                                'title'  => $name ?: ('Chapitre ' . $num),
+                                'url'    => $url,
+                                'date'   => null,
+                            ];
+                        }
+                    }
+                    if (!empty($chapters)) {
+                        return $chapters;
+                    }
+                }
+            }
+        }
+
+        return [];
     }
 
     /**
@@ -147,10 +289,43 @@ class ScraperService
         $html = $response->body();
         $crawler = new Crawler($html, $chapterUrl);
 
-        $imageNodes = $crawler->filter($source->sel_chapter_pages);
-        $imageUrls = [];
+        $candidateSelectors = array_unique(array_filter([
+            $source->sel_chapter_pages,
+            'img.manga-page-img',
+            '.manga-page-img',
+            'img[src*="/api/chapters/"]',
+            '.page-break img',
+            'div.reading-content img',
+            '#readerarea img',
+            '.chapter-image img',
+            'div[id*="reader"] img',
+            'img[alt*="Chapter Image"]',
+            'img[alt*="Page"]',
+        ]));
 
-        $imageNodes->each(function (Crawler $img) use ($source, &$imageUrls) {
+        $imageNodes = null;
+        foreach ($candidateSelectors as $sel) {
+            try {
+                $nodes = $crawler->filter($sel);
+                if ($nodes->count() > 0) {
+                    $imageNodes = $nodes;
+                    break;
+                }
+            } catch (\Throwable $e) {
+                // ignore
+            }
+        }
+
+        if (!$imageNodes || $imageNodes->count() === 0) {
+            return [];
+        }
+
+        $imageUrls = [];
+        $parsedHost = parse_url($chapterUrl, PHP_URL_HOST);
+        $parsedScheme = parse_url($chapterUrl, PHP_URL_SCHEME) ?? 'https';
+        $baseUrl = $parsedHost ? ($parsedScheme . '://' . $parsedHost) : $source->base_url;
+
+        $imageNodes->each(function (Crawler $img) use ($baseUrl, &$imageUrls) {
             $src = $img->attr('data-src')
                 ?? $img->attr('data-lazy-src')
                 ?? $img->attr('data-original')
@@ -165,7 +340,7 @@ class ScraperService
             if (str_starts_with($src, '//')) {
                 $src = 'https:' . $src;
             } elseif (str_starts_with($src, '/')) {
-                $src = rtrim($source->base_url, '/') . $src;
+                $src = rtrim($baseUrl, '/') . $src;
             }
 
             $imageUrls[] = $src;
